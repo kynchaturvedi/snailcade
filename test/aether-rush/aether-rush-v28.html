@@ -1,0 +1,1578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a32">
+<title>AETHER RUSH - BUILD 28</title>
+<!--
+AETHER RUSH  changelog (newest entries at the bottom).
+This comment is the file memory; it survives lost chat context. Record WHAT changed,
+WHY, and any number that moved. Written for a future developer.
+
+v1 FIRST LIGHT
+  Genesis build. Ships the HYPERSCALE super scaler kernel (a reusable, dependency
+  free billboard engine): perspective projection (focal/d), a scrolling checkerboard
+  ground built from depth bands, a gradient sky with a banded sun and a horizon
+  ridge, and a back to front depth sort for scaled sprites. AETHER RUSH is the first
+  game on the kernel: a rail flyer. The harrier moves around the screen and auto
+  fires forward; you dodge stone PILLARs, shoot DRONEs and TURRETs, and dodge the
+  ORBs the turrets fire. Three lives, score, a distance based difficulty ramp,
+  GET READY and GAME OVER flow. Infrastructure first per the bootstrap doctrine:
+  on screen ERR reporter, the HOOK test marker, and the gate chain
+  (projtest, hittest, harness) all land in this build.
+  Key constants: PLAYER_D 6, WORLD_SPEED 40, BULLET_SPEED 85, FIRE_DT 0.13,
+  eye 2.6, focalFrac 0.66, horizonFrac 0.44.
+
+v2 READABILITY PASS
+  Director feel verdict on the v1 screenshot: the floor read as columns, enemies
+  were hard to see and too fast, and a floating joystick was requested. Fixes:
+  Ground rebuilt as true perspective trapezoid cells (a dark base fill plus light
+  cells whose side edges converge to the vanishing point), with thin far bands as
+  solid alternating stripes. The old flat per band rectangles were the column
+  artifact. Floor palette calmed and darkened (gA 1fc7b6 to 19a89a, gB 0e8e84 to
+  0a625d) so foreground sprites pop. Camera lifted for floor readability
+  (eye 2.6 to 3.4, focalFrac 0.66 to 0.64). Approach slowed (WORLD_SPEED 40 to 28,
+  SPEED_MAX 72 to 50, ramp 0.00055 to 0.0004, orb closing +20 to +12, drone weave
+  calmer). Enemies enlarged and given a minimum size bright marker ring so distant
+  foes stay trackable; spawn depth pulled in (SPAWN_D 215 to 150). Absolute drag
+  control replaced with a floating joystick (touch anywhere, push to fly).
+
+v3 ENEMY VARIETY AND HERO POP
+  Second feel verdict from a screenshot: floor and motion good, but enemies were
+  still hard to read (all identical, clustered in one horizontal row) and the hero
+  sank into the teal. Added the SERPENT, a six segment dragon: a head (hp 2) leads
+  and the body segments trail it by chain follow, each segment individually
+  destructible, shipped with its own completion gate (serptest). Drones now arrive
+  in two readable patterns, weavers (wide sine) and divers (sweep down into the
+  lane), spawned at staggered depths instead of a flat row, and larger. Slowed
+  again (WORLD_SPEED 28 to 24, SPEED_MAX 50 to 44, ramp 0.0004 to 0.0003). Hero
+  redesigned for contrast: white and orange with a dark rim and a warm glow halo,
+  larger (PLAYER_W 0.9 to 1.1), plus an aim reticle projected ahead so shooting is
+  deliberate rather than spraying. Calmer bullets, and a sun reflection shimmer on
+  the floor for polish.
+
+v4 RAIL SHOOTER TURN
+  Third feel verdict: the problem was enemy VOLUME, not speed; the serpent body
+  trailed in a straight line; and the Director asked to steer toward a Star Fox
+  style rail shooter (ship, environmental objects, pacing, velocity). Volume is now
+  capped by concurrency: drones limited to a handful alive at once (waves of 2 to 3
+  at widely staggered depths, longer intervals), at most one serpent and two
+  turrets at a time, pillars much rarer. The serpent body is now a SPIRAL, a
+  parametric helix trailing the head around a shared weaving axis, instead of a
+  chain strung straight behind. The player is now a SHIP (an Arwing style delta
+  seen from behind, swept wings with blue tips, twin engine thrust) instead of a
+  flying figure. Added boost RINGS, the first environmental object: fly through the
+  centre for points and a forward speed boost (speedNow carries a decaying
+  speedBoost, +20 headroom over the cap). New gate ringtest ships with the rings;
+  serptest was rewritten to prove the spiral (segments offset from the centerline).
+
+v5 ON RAILS
+  The Director committed to a Star Fox style on-rails game with squadron waves that
+  attack from many vectors. The rail camera now curves: the corridor sways and the
+  world banks through gentle turns. HYPERSCALE gained camDX (a lateral vanishing
+  point sweep) and camBank (a world tilt), both driven by a path function; the ship
+  is now drawn in cockpit space so it holds its position and only leans into the
+  turn, and syncPlayerWorld subtracts camDX so collisions stay true under the sweep.
+  Foe motion was generalised with a forward speed vf, so enemies can recede as well
+  as approach, and drones now enter on five patterns: weave (front), dive (from
+  above), rise (from below), strafe (across from a side), and overtake (from behind,
+  pulling ahead of you). Squadrons spawn as small single pattern formations under
+  the existing concurrency cap. New gate wavetest proves every entry vector.
+
+v6 STAR FOX AIMING
+  The ship gained a proper Star Fox aim. A double reticle (a near sight plus a far
+  aim point) leads ahead of the ship's velocity, and the twin lasers now converge on
+  that aim point, so you can throw fire toward enemies entering from above, below,
+  and the sides instead of only straight ahead. Bullets gained a lateral velocity to
+  perform the convergence (spawnBullet vx/vy; aimed shots set them, plain shots leave
+  them zero). Movement gained flight-box inertia (snappy push, gentle coast), which
+  also drives the aim lead, the single stick aims by where you are heading. New gate
+  aimtest proves an aimed shot converges off-axis while a straight shot does not. No
+  gameplay content changed this build.
+
+v7 BONDED FLIGHT
+  Director feel verdict on v6: the controls were too loose and sensitive, the ship
+  pinned itself to the corner, and the reticle reached the extremes too easily. The
+  ask was Star Fox 64 bonded feel. The flight is now a spring: a centring spring
+  pulls the ship back to its resting point and stick input pushes against it, so
+  holding an edge takes sustained effort and releasing drifts you home. The stick
+  response is eased in (small input barely moves, the extremes need a real push),
+  and the reticle leads less (AIM_LEAD 0.18 to 0.11) so it stays anchored rather
+  than flung to the edges. Pure control and feel; the tuning knobs are SPRING, DAMP,
+  REACH, and AIM_LEAD.
+
+v8 LEAD THE SHOT
+  Feel verdict on v7, with modern Star Fox reference shots: the reticle should sit
+  much further ahead in the steering direction, and the ship should be less in the
+  way. The reticle now leads far in the direction you steer (a smoothed position
+  lead up to about 46 percent of the play width and 42 percent of its height, plus
+  a small velocity term), so holding a direction throws the double sight well ahead
+  toward the enemies and the twin lasers converge there. The ship is smaller
+  (PLAYER_W 1.1 to 0.82), rests lower (0.55 to 0.70 down the box), and its glow is
+  softer, so it stays out of the view. The reticle became a Star Fox style double
+  bracket frame (a far frame plus a near one) instead of crosshairs. Hitbox
+  unchanged. Tuning knobs: LEADX, LEADY, AIM_LEAD, and the rest position.
+
+v9 WEIGHT AND LEAD
+  Feel verdict on v8: the ship needs weight (tapping a direction should not dart it
+  to the edge, it should move precisely but with mass), the reticle moved with too
+  much sensitivity relative to the ship, and the reticle can reach a bit further.
+  The ship spring is now heavier and over-damped (SPRING 15 to 10, REACH 0.88 to
+  0.74), so it eases over with weight and stays precise without slamming the edge.
+  The reticle is now driven purely by a smooth eased directional lead (the jumpy
+  velocity term removed) and reaches further (LEADX 0.46 to 0.52 of width, LEADY
+  0.42 to 0.48 of height); because the ship is weighty and the lead eases quickly,
+  the reticle moves faster than the ship, as intended. The ship is also a touch
+  smaller (PLAYER_W 0.82 to 0.74) and rests a touch lower (0.70 to 0.74).
+
+v10 LIGHTEN UP, CLEAR THE FIELD
+  Feel verdict on v9: the heavier spring dropped the maneuverability so far that
+  death was hard to avoid; the ship needs to feel in control again while the reticle
+  still leads a little faster. The spring is now more responsive with more travel
+  (SPRING 10 to 18, DAMP 7 to 9, REACH 0.74 to 0.86), so the ship is agile and
+  dodges well while keeping a slight damped weight; the reticle lead is unchanged and
+  still settles a touch faster than the ship. Also added a temporary ENEMIES_ON flag,
+  set false for now, so the field is clear (rings only) to judge the ship handling on
+  its own. Flip ENEMIES_ON back to true to restore drones, turrets, serpents, and
+  pillars; the functional gates spawn directly and are unaffected.
+
+v11 HOLD POSITION
+  Feel report on v10: releasing the controls dropped the ship to the bottom. Cause:
+  the bonded spring added in v7 pulled the ship back to a resting point, and because
+  that point was moved low in v8, letting go sank the ship to it. The centring spring
+  is removed entirely. The ship now uses weighty inertia: it accelerates toward the
+  stick (ACC) up to a top speed (MAXV) and coasts to a stop wherever you leave it, so
+  releasing holds position with no auto-centring. The weight is in the acceleration
+  ramp, not a spring. Enemies remain off (ENEMIES_ON false) for feel testing.
+
+v12 LIVE TUNING PANEL
+  The Director asked for a build where the key handling parameters can be adjusted in
+  real time, to fine tune feel and report back precisely. Added an in game TUNE PANEL
+  (a feel lab): a button beside the fullscreen control opens a touch friendly slider
+  panel layered over the canvas. All the live knobs now read from a single TUNE object
+  that the sliders write every frame: ship top speed (MAXV), acceleration / weight
+  (ACC), reticle lead X and Y, reticle ease, ship lean, ship size, laser converge depth,
+  and base rail speed, plus an ENEMIES on / off toggle and RESET and COPY VALUES buttons.
+  The old fixed constants (WORLD_SPEED, PLAYER_W, AIM_D, and the inline MAXV / ACC / lead
+  / bank values) were repointed at TUNE so the panel drives them; the standalone
+  ENEMIES_ON flag was folded into TUNE.enemies. The panel is DOM (range inputs) with its
+  touches isolated from the floating joystick (stopPropagation); it is browser only and
+  does not touch the headless gates. This is a tuning lab: once values are locked (COPY
+  VALUES) they get baked in and the panel is retired. Enemies still default off.
+
+v13 RETICLE LEADS, SHIP CHASES
+  Director feel direction: (1) the two reticle brackets should move in sync, the far one
+  simply further out and smaller, the near one closer and larger; (2) when steering, the
+  reticle should move first and the ship follow behind it; (3) slight reticle movement
+  should not move the ship much, but pushing the reticle to the extremes should drive the
+  ship hard that way; (4) expose controls for all of this.
+  The control model was reworked from parallel to coupled. Before, the stick drove the
+  ship velocity directly and the reticle lead was a separate eased offset (they ran in
+  parallel). Now the stick drives the RETICLE offset directly (eased fast, so it leads),
+  and the SHIP chases the reticle through a dead band plus an expo curve (expoPull):
+  inside the dead band a led reticle barely moves the ship; toward the extremes the ship
+  accelerates up to its max speed in that direction. New TUNE knobs: dead (dead band),
+  expo (pull curve), retiFar (frame separation), retiSize, retiFScale. leadX / leadY are
+  now the reticle reach and leadEase is the reticle speed (default raised 5 to 9 so the
+  reticle clearly leads). Reticle drawing fixed: both bracket frames now sit on the aim
+  point and the far frame is thrown a fixed distance further out along the aim direction,
+  so they move in perfect sync (previously the near frame sat at the ship / aim midpoint
+  and lagged). Panel reorganised into SHIP FEEL / RETICLE / WORLD groups. Enemies still
+  default off.
+
+v14 SHOTS TRACK THE FAR RETICLE, ROBUST COPY, DEFAULTS FROM TUNING
+  From a live-panel screenshot, three items. (1) The lasers were converging on the NEAR
+  frame (the aim point) while the player reads the FAR frame as the target, so shots did
+  not go where the far reticle pointed. The far frame screen position is now computed once
+  in the aim block (aimFarSX / aimFarSY = the aim point thrown retiFar further along the
+  steer direction), and BOTH the reticle draw and fire() use it, so shots and the far
+  sight are the same point. (2) COPY VALUES failed silently in the Android downloads
+  (content://) viewer, where the clipboard API is blocked. It now also reveals a
+  selectable, auto-highlighted text box holding the JSON, so the values can be copied by
+  hand or screenshotted even with no clipboard, with execCommand as a second fallback.
+  (3) The current panel values from the screenshot were baked in as the new defaults so
+  the game boots there and RESET returns to them; the panel stays available for continued
+  refining. New defaults: maxv 2.8, acc 10, dead 0.0, expo 1.0, leadX 0.19, leadY 0.13,
+  leadEase 11, bank 1.0, ship 1.22, retiFar 2.7, retiFScale 0.60, world 18. Enemies off.
+
+v15 SHIP-PRIMARY, RETICLE FOLLOWS AND RECENTRES
+  Director direction, reversing the v13 coupling. (1) The ship is once again what the stick
+  controls directly (weighty velocity via ACC, holds position on release); the reticle no
+  longer drags the ship. (2) The reticle now follows the ship: it extends in the direction
+  the ship is angling, scaled by how hard the stick is pushed (slight angle, slight
+  extension; deep angle, far extension). (3) At rest the reticle drifts back toward screen
+  centre, capped at its reach: a ship above centre gets a reticle pulled down toward the
+  middle, a ship below centre gets one pulled up, same for left and right, never reaching
+  perfect centre because the reticle can only travel so far from the ship. The dead band
+  and expo knobs were repurposed to shape the ship's stick response (a dead zone plus a
+  curve), replacing the old fixed squared ease-in, so expo 2 reproduces the previous gentle
+  feel and expo 1 (current) is linear. Sliders relabelled: Ship max speed, Stick dead zone,
+  Stick curve (expo). New default maxv 1.55 (from the latest panel values). Enemies off.
+
+v16 RECENTER SPEED SPLIT OUT, MORE RETICLE CONTROL
+  The reticle ease was doing two jobs: how fast it leads while steering and how fast it
+  drifts back to centre at rest. Split them. leadEase is now the lead speed (steering only);
+  a new recenter knob sets the drift-to-centre speed; the active ease blends between the two
+  by how hard the stick is pushed. Added a recenter pull knob (centerBias) scaling how far
+  toward centre the reticle drifts at rest: 1.0 pulls fully toward centre capped at reach
+  (the v15 behaviour), 0 parks the reticle over the ship instead. Defaults: recenter 5 (a
+  gentler drift than the steering lead of 11, matching the drift feel) and centerBias 1.0
+  (behaviour unchanged at the cap). Slider relabelled Lead speed (steer); new sliders
+  Recenter speed and Recenter pull added to the RETICLE group. Enemies off.
+
+v17 RETICLE STOPS FIGHTING THE STEER
+  Feel report: the reticle was being pulled toward centre even while actively steering toward
+  the extremes, so it fought the push. Cause: the target blended the centring bias and the
+  push extension in proportion to stick magnitude, so any partial deflection (normal on the
+  analog stick) mixed a fraction of centring in during steering. Fixed with a gate: an
+  "active" value snaps to 1 as soon as you push past a hair, so while steering the reticle is
+  PURE extension (follows your direction freely within reach, no centre pull), and centring
+  plus the slower recenter speed only take over once you release. Recenter pull still governs
+  how far it drifts back on release (0 = no centring at all). No new defaults.
+
+v18 RETICLE MOVES WITH THE TURN (NO TELEPORT)
+  Feel report: starting to move teleported the reticle from its resting (centred) spot to a
+  new place instead of sweeping there with the ship. Two causes, both fixed. The extension
+  now comes from the ship's own eased velocity rather than the raw stick, so the reticle
+  grows out as the ship actually accelerates into the turn (smooth for stick and keys alike).
+  And the centre-to-steer hand-off is no longer a hard switch: a new eased steerAmt blends
+  between following the ship and drifting to centre, and because it starts from the current
+  (centred) reticle value the target is continuous at the instant you push, so there is no
+  jump. New knob Turn follow (grip) sets how fast the reticle commits to the steer and
+  releases back (default 6); lower is smoother, higher snappier. Centring still acts only on
+  release and Recenter pull still scales it. No other defaults changed.
+
+v19 RETICLE CENTRES ON A CENTRED SHIP
+  Feel report: with the ship centred and idle the reticle still sat above or below and off to
+  one side. Cause: the far frame was thrown a FIXED distance along the lead direction, so any
+  resting centre-drift pushed the far frame far out even though the lead itself was tiny, and an
+  off-centre rest amplified it across the screen. Fixed: the far frame now extends beyond the
+  aim only by the STEER component (the ship-velocity extension gated by steerAmt), scaled by
+  Frame separation. At rest it collapses onto the aim point, so a centred idle ship gets both
+  frames and the shots sitting dead ahead. It no longer amplifies the centring drift. Frame
+  separation still controls how far the far frame spreads while steering.
+
+v20 LIVE 3D SHIP (HYPERSCALE pixel render)
+  The player ship is now the real-time 3D jet from the model viewer, rendered to a small
+  offscreen pixel buffer every frame (banded shading, hard 1px outline) and blitted into the
+  cockpit layer, replacing the flat vector ship. The ship's roll reads from the existing
+  steering lean (bank), so it banks into turns and levels on release. The dead-centre chase
+  camera is simulated by swinging the view with the ship's height in the play box: high in the
+  frame shows the belly with the nose tipping down through perspective, low shows the cockpit.
+  Single-knob constants: SHIP3D_LOOKDOWN 0.175 (base look-down, ~10deg), SHIP3D_CAMSENS 0.42
+  (height to view swing), SHIP3D_PARYAW 0.16 (x parallax), SHIP3D_SCALE (on-screen size).
+  Active nose pitch with height is left at 0 (the camera does the work). The rail keeps its own
+  bank (camBank); the ship roll layers on top as a 2D rotate. A small FPS counter was added
+  under SCORE to gauge the per-frame render cost on device.
+
+v21 SHIP RENDER TO FINE RES (cached)
+  Feel report: the in-game ship did not show the underbelly at the top of the screen the way the
+  model viewer did at FINE. Root cause was resolution: the ship was rendered to an 84px buffer,
+  less than half the viewer's FINE 172px, so the ~14deg belly tilt at the top of the play box (the
+  same angle the viewer reaches) was crushed into too few pixels to read. The offscreen buffer is
+  now 172px to match what was tuned and approved. To pay for the heavier render it is cached: the
+  buffer is only re-rendered when the quantised attitude (roll, pitch, camera elevation, parallax
+  yaw, to ~1.4deg) changes, so cruising in a steady pose costs only a blit. The mapping itself is
+  unchanged this build; the next step under discussion is whether to anchor the camera swing to the
+  horizon line rather than the play-box centre so the belly appears as the ship climbs above the
+  horizon (the Director's own framing) instead of only at the very top edge.
+
+v22 WINGS ATTACHED, FLOOR RAISED, SHIP LARGER
+  Director feedback on the in-game ship. (1) The wings read as detached from the body. The cause was in the
+  model, not the render: the wing roots sat at x 0.50 while the fuselage is only ~0.28 wide there, leaving a
+  gap the viewer's angles hid and the in-game cockpit-down view exposed. The roots are pulled inboard to x
+  0.24 so they overlap the fuselage and stay attached at every angle (the blue accent stripe moved in to
+  match). (2) The ship could drop below its own ground shadow at the bottom of the play box; the floor was
+  raised from y1 0.90 to 0.80 of the screen so the ship always sits above the shadow. (3) The ship was too
+  small: SHIP3D_SCALE 2.15 to 2.70. Camera-swing mapping still box-centre anchored; the horizon-anchor change
+  remains the pending feel decision.
+
+v23 HORIZON-ANCHORED VIEW SWING, SHADOW DROPPED
+  Feel report: barely any belly showed in the upper screen. The view swing was measured from the play-box
+  centre, so the camera only reached a belly angle in the very top sliver. It is now anchored to the horizon
+  line (SS.horizonY): neutral sits at the horizon, the swing reaches full belly at the box top and full
+  cockpit below, so belly comes in across the whole upper screen as the ship climbs toward and past the
+  horizon, the way a chase camera aimed down the track behaves. Also, the ship still overran its ground
+  shadow; rather than fence the ship in (its position is good), drawShadow gained an optional downward screen
+  offset and the player shadow is dropped by ds&middot;0.48 so it sits below the larger sprite. Serpent
+  shadows pass no offset and are unchanged.
+
+v24 BELLY MATCHED TO v13 SIMULATE
+  The belly was still not reaching the screen at the top. Two causes. The v23 horizon anchor was nearly a
+  no-op: the horizon line (~0.44H) and the play-box centre (~0.47H) are almost the same point, so switching
+  between them changed little. And the in-game camera numbers were not the v13 simulate numbers: the game had
+  SHIP3D_CAMSENS 0.42 and look-down 0.175, giving only effEl -0.245 at the top, while v13 simulate uses
+  camSens 0.55 and look-down 0.12, giving effEl -0.43 at the top (much more belly). Fixed by matching v13
+  exactly: SHIP3D_LOOKDOWN 0.175 to 0.12, SHIP3D_CAMSENS 0.42 to 0.55, and the vertical mapping reverted to
+  v13's box normalization (+1 at the box top, -1 at the bottom, neutral at centre). The render already applied
+  effEl correctly and the ship already clamps to the box top, so this is purely the camera tuning and mapping.
+
+v25 STAR FOX FEEL PASS: NOSE INTO MOTION, SNAP, ATTITUDE-COUPLED SIGHTS
+  Director-requested SF64 review. Four changes. (1) Nose into motion: the 3D render's pitch and yaw
+  arguments (plumbed since v20, fed 0 and parallax-only) now carry the ship's attitude: yaw with
+  horizontal velocity (SHIP3D_YAWVEL 0.45, ~26 deg at full speed) and pitch with vertical velocity
+  (SHIP3D_PITCHVEL 0.35, climb = nose up), the single biggest SF64 visual cue. (2) Snap: the velocity
+  ease gains SNAP_BRAKE 1.8 extra gain when the stick is released or reversed, so stops and direction
+  changes are crisp instead of trailing the single-pole exponential tail. (3) Attitude-coupled sights:
+  the reticle lead was velocity-then-eased (a double filter, so it trailed the ship); it is now driven
+  0.65 from the instant shaped stick + 0.45 from velocity, and leadEase 11 to 13, so the sights respond
+  first and the ship follows, per the standing feel direction. (4) The sight line now runs ship to near
+  frame to far frame, one readable flight vector. Fire already converged on the far frame (unchanged).
+  Watch item: continuous attitude means more cache invalidations on the 172px render; the FPS counter
+  is the check.
+
+v26 PROJECTED SIGHTS, TOP VISIBLE AT THE HORIZON
+  Two Director reports, both verified. (1) The reticle should rest near screen centre regardless of ship
+  position: correct, and structural. SF64 sights are the nose ray projected at two depths, and perspective
+  convergence pulls any projected point toward the vanishing point; ours were screen offsets pinned to the
+  ship. The sights are now a true projected ray: the eased lead converts to world units at the ship depth,
+  the near frame projects at AIM_NEAR_F (0.40) of the way to the converge depth, the far frame at
+  TUNE.aimD, and the gun fires at the far WORLD point directly (aimWFX/aimWFY), so drawn sights and shots
+  share one ray by construction (fire()'s screen-to-world inverse deleted). Resting sights now sit pulled
+  toward the vanishing point from wherever the ship is. (2) At horizon height the ship was 4 degrees off
+  edge-on, an invisible sliver. Solved LOOKDOWN 0.175 and CAMSENS 0.605 from two anchors: a bit of top
+  (+0.12) at horizon height, the approved v13 belly (-0.43) kept at the box top. Bottom of box rises to
+  0.78 top-down.
+
+v27 STEERING REACH RESTORED ON THE PROJECTED SIGHTS
+  Director report on v26: steering away from centre should still MOVE the reticle; it then settles near
+  the centre region when idle. Verified: v26 converted the lead to world units at the SHIP depth (d=6) and
+  projected it at the near sight depth (25.6), which shrank the on-screen steering reach to PLAYER_D/nearD,
+  about 23 percent of tuned, so the sights looked glued to centre. The lead now converts at the NEAR SIGHT
+  depth (sN=focal/nearD): a full steer moves the near frame by its full tuned reach again, the far frame
+  leads further (projection from the same ray, plus the retiFar extension), and the resting convergence
+  toward the vanishing point is unchanged because it comes from projecting the SHIP position, not the lead.
+  The new aimtest control then caught a second, real bug at full lead scale: the resting centre pull
+  targeted the fixed play-box centre, but the centre of the grid is the VANISHING POINT, which sweeps with
+  the rail (up to ~63px off the box centre; the squashed v26 lead had hidden it at ~15px). The horizontal
+  resting target now tracks SS.cx + camDX, so idle sights settle on the grid's convergence point.
+
+v28 BACKGROUND CATCH-UP DEFENSE (FACES 1 AND 3, VISIBILITY RESYNC)
+  Studio Head ruling: run the catch-up audit as a real build. Finding first, per evidence: BUILD 27 does
+  NOT sprint. Its loop calls update once per animation frame with dt clamped (0.05 in the loop, then MAX_DT
+  0.033 in update), so a 30s background gap advanced a single 0.033s step, not hundreds. It is a single-update
+  variable-timestep loop, not an accumulator, so it was already bounded, and a flushed-callback burst is also
+  bounded because each callback carries its own tiny dt. What 27 lacked: an explicit named ceiling, correct
+  hitch handling (it dropped time beyond 0.033 on a slow frame), any Page Visibility handling, and a gate.
+  BUILD 28 adds all four. frameStep is a pure, testable helper: it bounds the wall time simulated in one frame
+  to MAX_FRAME_GAP (0.2s, Face 1) and splits it into at most STEP_CAP (5, Face 3) sub-steps of at most MAX_DT,
+  dropping any backlog beyond that. A 60fps frame is exactly one step of the real dt, so normal feel is
+  unchanged; only hitches differ, now advancing the full (bounded) time in sub-steps instead of losing it.
+  onVisibility pauses on hidden and resyncs the frame clock on return (solo title, pause is correct; no
+  netcode, so the memo's Face 2 queue-drain is deliberately NOT ported, per the ruling). Ships with
+  frametest.js (10th gate), proven RED against 27 (its hook exposes no frameStep/onVisibility/frameClock) and
+  GREEN at 28. Final verdict is the Director's phone: background 30s, return, confirm no sprint.
+-->
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#04040f;overflow:hidden;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+  #c{position:absolute;left:0;top:0;width:100%;height:100%;display:block;
+    image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;background:#04040f;}
+  #fsbtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);
+    right:calc(env(safe-area-inset-right,0px) + 8px);
+    width:34px;height:34px;z-index:5;border:2px solid rgba(255,255,255,.55);
+    border-radius:6px;background:rgba(8,8,30,.45);color:#cfe9ff;
+    font:700 16px/30px system-ui,sans-serif;text-align:center;cursor:pointer;}
+  #fsbtn:active{background:rgba(40,40,90,.7);}
+  #tunebtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);
+    right:calc(env(safe-area-inset-right,0px) + 50px);
+    width:34px;height:34px;z-index:6;border:2px solid rgba(255,255,255,.55);
+    border-radius:6px;background:rgba(8,8,30,.45);color:#cfe9ff;
+    font:700 17px/30px system-ui,sans-serif;text-align:center;cursor:pointer;}
+  #tunebtn:active{background:rgba(40,40,90,.7);}
+  #tunepanel{position:fixed;z-index:7;display:none;
+    top:calc(env(safe-area-inset-top,0px) + 48px);
+    right:calc(env(safe-area-inset-right,0px) + 8px);
+    width:min(330px,88vw);max-height:78vh;overflow-y:auto;overscroll-behavior:contain;
+    touch-action:pan-y;-webkit-overflow-scrolling:touch;
+    background:rgba(6,6,24,.93);border:2px solid rgba(120,160,255,.5);border-radius:10px;
+    padding:10px 12px 12px;color:#dceaff;font:600 13px/1.3 system-ui,sans-serif;
+    box-shadow:0 8px 30px rgba(0,0,0,.55);}
+  #tunepanel h4{margin:2px 0 9px;font:800 13px system-ui,sans-serif;letter-spacing:.07em;color:#bcd2ff;}
+  #tunepanel .grp{margin:13px 0 2px;font:800 11px system-ui,sans-serif;letter-spacing:.12em;color:#7fb0ff;border-top:1px solid rgba(120,160,255,.22);padding-top:9px;}
+  #tunepanel .row{margin:9px 0;}
+  #tunepanel .lab{display:flex;justify-content:space-between;margin-bottom:3px;}
+  #tunepanel .val{color:#7fffd0;font-variant-numeric:tabular-nums;}
+  #tunepanel input[type=range]{width:100%;height:26px;accent-color:#5fd0ff;}
+  #tunepanel .btnrow{display:flex;gap:8px;margin-top:8px;}
+  #tunepanel button{flex:1;padding:10px 0;border-radius:7px;border:1px solid rgba(150,180,255,.5);
+    background:rgba(30,40,90,.7);color:#dceaff;font:700 13px system-ui,sans-serif;cursor:pointer;}
+  #tunepanel button:active{background:rgba(60,80,150,.85);}
+  #tunepanel button.en{background:rgba(40,95,55,.8);border-color:rgba(120,255,150,.5);}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="fsbtn" title="Fullscreen">[ ]</div>
+<div id="tunebtn" title="Live tuning">&#9636;</div>
+<div id="tunepanel"></div>
+<script>
+(function(){
+"use strict";
+
+/* =====================================================================
+   HYPERSCALE  -  the studio super scaler kernel
+   ---------------------------------------------------------------------
+   A small, dependency free billboard engine for Sega style super scaler
+   games (the Space Harrier, Out Run, After Burner, Galaxy Force lineage).
+   It owns ONLY the camera, the perspective math, and the world dressing
+   (sky and scrolling ground). It knows nothing about harriers, cars, or
+   bullets: a game pushes world space points at it and asks for screen
+   space. To start a sibling super scaler game, copy this whole block
+   verbatim and write a new game layer below it.
+
+   World space:  x  horizontal (0 = straight ahead, + = right)
+                 y  vertical    (0 = ground level, + = up)
+                 d  depth ahead of the camera (+ = farther away)
+   The camera sits at world height "eye", looking down the +d axis.
+   Projection is a single divide:  scale = focal / d.
+   ===================================================================== */
+var SS = (function(){
+  var W=900, H=540, cx=450, horizonY=238, focal=594, NEAR=3.0;
+  var groundOff=0;            // accumulated forward travel, drives ground scroll
+  var camDX=0, camBank=0;     // rail camera: lateral vanishing-point sweep and world bank (turns)
+  var stars=null;             // lazily built sky star field
+
+  // Single knob tuning. Every value here is documented in the codex SYSTEMS table.
+  var C = {
+    horizonFrac : 0.44,       // horizon line as a fraction of canvas height
+    eye         : 3.4,        // camera height above the ground, in world units
+    focalFrac   : 0.64,       // focal length as a fraction of canvas width
+    NEAR        : 3.0,        // nearest depth drawn; objects nearer are culled
+    cellD       : 8.5,        // depth of one ground checker cell (world units)
+    cellX       : 2.0,        // width of one ground checker cell (world units)
+    farGround   : 230,        // farthest ground depth painted
+    sky0:'#070726', sky1:'#3a2a8c', sky2:'#b1409a',
+    sunA:'#ffe98a', sunB:'#ff6fae',
+    ridge:'#3a1f6e',
+    gA:'#19a89a', gB:'#0a625d',
+    haze:'#ef9fd6'
+  };
+
+  function resize(w,h){
+    W=Math.max(2,w|0); H=Math.max(2,h|0); cx=W/2;
+    horizonY=Math.round(H*C.horizonFrac);
+    focal=W*C.focalFrac;
+    NEAR=C.NEAR;
+  }
+
+  function project(wx,wy,d){
+    if(d<NEAR) d=NEAR;
+    var s=focal/d;
+    return { sx: cx + camDX + wx*s, sy: horizonY + (C.eye - wy)*s, scale: s };
+  }
+  function groundScreenY(d){ if(d<NEAR) d=NEAR; return horizonY + C.eye*focal/d; }
+  function advance(dist){ groundOff += dist; }
+  function setCam(dx,bank){ camDX=dx||0; camBank=bank||0; }
+  function depthSort(a){ a.sort(function(p,q){ return q.d - p.d; }); }
+
+  function buildStars(){
+    stars=[]; var i, seed=1234;
+    function rnd(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
+    for(i=0;i<46;i++){ stars.push({ x:rnd(), y:rnd()*0.82, p:rnd(), s:(rnd()<0.2?2:1) }); }
+  }
+
+  function sky(ctx,t){
+    var g=ctx.createLinearGradient(0,0,0,horizonY);
+    g.addColorStop(0,C.sky0); g.addColorStop(0.55,C.sky1); g.addColorStop(1,C.sky2);
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,horizonY);
+
+    if(!stars) buildStars();
+    var i,st;
+    for(i=0;i<stars.length;i++){
+      st=stars[i];
+      var tw=0.55+0.45*Math.sin((t||0)*1.6 + st.p*9);
+      ctx.globalAlpha=tw*0.9; ctx.fillStyle='#dfe7ff';
+      ctx.fillRect((st.x*W)|0,(st.y*horizonY)|0,st.s,st.s);
+    }
+    ctx.globalAlpha=1;
+
+    var sunR=Math.max(22,H*0.135), sx=cx + camDX*0.5, sy=horizonY - sunR*0.12;
+    var rg=ctx.createRadialGradient(sx,sy-sunR*0.15,sunR*0.15,sx,sy,sunR);
+    rg.addColorStop(0,C.sunA); rg.addColorStop(1,C.sunB);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0,0,W,horizonY); ctx.clip();
+    ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(sx,sy,sunR,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=C.sky1;
+    for(i=0;i<5;i++){ var by=sy+sunR*0.10+i*sunR*0.155; ctx.fillRect(sx-sunR,by,sunR*2,Math.max(2,sunR*0.07)); }
+    ctx.restore();
+
+    ctx.fillStyle=C.ridge;
+    ctx.beginPath(); ctx.moveTo(0,horizonY);
+    var n=9,j;
+    for(j=0;j<=n;j++){
+      var rx=(j/n)*W;
+      var rh=((j%2===0)?0.05:0.022)*H*(0.7+0.6*Math.abs(Math.sin(j*1.7)));
+      ctx.lineTo(rx,horizonY-rh);
+    }
+    ctx.lineTo(W,horizonY); ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle=C.haze; ctx.fillRect(0,horizonY-2,W,3);
+  }
+
+  function ground(ctx){
+    // base is the dark cell colour; we then paint only the light cells as
+    // proper perspective trapezoids whose side edges converge to the vanishing
+    // point. Thin far bands collapse to solid alternating stripes (perf + clarity).
+    ctx.fillStyle=C.gB; ctx.fillRect(0,horizonY,W,H-horizonY);
+    var cxx=cx+camDX;
+    var frac=((groundOff % C.cellD)+C.cellD)%C.cellD;
+    var phase=Math.floor(groundOff / C.cellD);
+    var kMax=Math.ceil((C.farGround+frac)/C.cellD), k;
+    for(k=kMax;k>=1;k--){
+      var dFar=k*C.cellD - frac;
+      var dNear=(k-1)*C.cellD - frac;
+      if(dNear<NEAR) dNear=NEAR;
+      if(dFar<=NEAR) continue;
+      var yFar=groundScreenY(dFar);
+      var yNear=groundScreenY(dNear);
+      if(yNear-yFar<0.7) continue;
+      var bandPar=(k+phase)&1;
+      if(yNear-yFar<5){
+        if(bandPar){ ctx.fillStyle=C.gA; var yA=Math.floor(yFar); ctx.fillRect(0,yA,W,Math.ceil(yNear)-yA); }
+        continue;
+      }
+      var sN=focal/dNear, sF=focal/dFar;
+      var jMax=Math.ceil(cx/(C.cellX*sN))+1, j;
+      if(jMax>200) jMax=200;
+      for(j=-jMax;j<jMax;j++){
+        if(((j+bandPar)&1)===0) continue;
+        var xL=j*C.cellX, xR=xL+C.cellX;
+        var aN=cxx+xL*sN, bN=cxx+xR*sN, aF=cxx+xL*sF, bF=cxx+xR*sF;
+        if(bN<0&&bF<0) continue; if(aN>W&&aF>W) continue;
+        ctx.fillStyle=C.gA;
+        ctx.beginPath(); ctx.moveTo(aN,yNear); ctx.lineTo(bN,yNear); ctx.lineTo(bF,yFar); ctx.lineTo(aF,yFar); ctx.closePath(); ctx.fill();
+      }
+    }
+  }
+
+  return {
+    resize:resize, project:project, groundScreenY:groundScreenY,
+    advance:advance, setCam:setCam, depthSort:depthSort, sky:sky, ground:ground, config:C,
+    get W(){return W;}, get H(){return H;}, get cx(){return cx;},
+    get focal(){return focal;}, get horizonY(){return horizonY;},
+    get eye(){return C.eye;}, get NEAR(){return NEAR;}, get groundOff(){return groundOff;},
+    get camDX(){return camDX;}, get camBank(){return camBank;}
+  };
+})();
+try{ window.HYPERSCALE = SS; }catch(e){}
+
+/* =====================================================================
+   AETHER RUSH  -  the game layer (first game powered by HYPERSCALE)
+   ===================================================================== */
+
+var BUILD = 28;
+
+/* ---- tuning constants (single knobs; documented in the codex) ---- */
+var PLAYER_D    = 6;      // depth plane the harrier flies on
+var SPEED_MAX   = 44;     // cap on the difficulty ramp
+
+// ---- BUILD 13 live tuning. The TUNE PANEL (button by the fullscreen control) writes
+//      these in real time: ship feel, reticle lead/look and pacing all read from TUNE. ----
+var DEFAULT_TUNE = { maxv:1.55, acc:10, dead:0.0, expo:1.0, leadX:0.19, leadY:0.13, leadEase:13, recenter:5, centerBias:1.0, grip:6, bank:1.0, ship:1.22, retiFar:2.7, retiSize:1.0, retiFScale:0.6, aimD:55, world:18, enemies:0 };
+var TUNE = JSON.parse(JSON.stringify(DEFAULT_TUNE));
+(function buildTunePanel(){
+  var panel = document.getElementById('tunepanel'); if(!panel) return;
+  function fx0(v){ return v.toFixed(0); }
+  function fx1(v){ return v.toFixed(1); }
+  function fx2(v){ return v.toFixed(2); }
+  function fxx(v){ return v.toFixed(2)+'\u00d7'; }
+  var defs = [
+    { head:'SHIP FEEL' },
+    { k:'maxv',      label:'Ship max speed',         min:0.6, max:3.5, step:0.05, fmt:fxx },
+    { k:'acc',       label:'Weight / inertia (ACC)', min:2,   max:20,  step:0.5,  fmt:fx1 },
+    { k:'dead',      label:'Stick dead zone',        min:0,   max:0.8, step:0.02, fmt:fx2 },
+    { k:'expo',      label:'Stick curve (expo)',     min:1,   max:4.0, step:0.1,  fmt:fx1 },
+    { k:'bank',      label:'Ship lean',              min:0,   max:1.0, step:0.05, fmt:fx2 },
+    { k:'ship',      label:'Ship size',              min:0.4, max:1.4, step:0.02, fmt:fx2 },
+    { head:'RETICLE' },
+    { k:'leadX',     label:'Lead reach X',           min:0.05,max:1.2, step:0.02, fmt:fx2 },
+    { k:'leadY',     label:'Lead reach Y',           min:0.05,max:1.2, step:0.02, fmt:fx2 },
+    { k:'leadEase',  label:'Lead speed (steer)',     min:1,   max:18,  step:0.5,  fmt:fx1 },
+    { k:'recenter',  label:'Recenter speed',         min:0.5, max:18,  step:0.5,  fmt:fx1 },
+    { k:'centerBias',label:'Recenter pull',          min:0,   max:1.0, step:0.05, fmt:fx2 },
+    { k:'grip',      label:'Turn follow (grip)',     min:1,   max:18,  step:0.5,  fmt:fx1 },
+    { k:'retiFar',   label:'Frame separation',       min:0,   max:3.0, step:0.1,  fmt:fx1 },
+    { k:'retiSize',  label:'Reticle size',           min:0.4, max:2.0, step:0.05, fmt:fx2 },
+    { k:'retiFScale',label:'Far frame scale',        min:0.3, max:1.0, step:0.02, fmt:fx2 },
+    { head:'WORLD' },
+    { k:'aimD',      label:'Laser converge depth',   min:25,  max:90,  step:5,    fmt:fx0 },
+    { k:'world',     label:'Base rail speed',        min:10,  max:60,  step:1,    fmt:fx0 }
+  ];
+  var h4 = document.createElement('h4'); h4.textContent = 'LIVE TUNING  \u00b7  BUILD '+BUILD; panel.appendChild(h4);
+  var ui = {};
+  defs.forEach(function(d){
+    if(d.head){ var hd=document.createElement('div'); hd.className='grp'; hd.textContent=d.head; panel.appendChild(hd); return; }
+    var row = document.createElement('div'); row.className='row';
+    var lab = document.createElement('div'); lab.className='lab';
+    var nm = document.createElement('span'); nm.textContent = d.label;
+    var vl = document.createElement('span'); vl.className='val'; vl.textContent = d.fmt(TUNE[d.k]);
+    lab.appendChild(nm); lab.appendChild(vl); row.appendChild(lab);
+    var s = document.createElement('input'); s.type='range'; s.min=d.min; s.max=d.max; s.step=d.step; s.value=TUNE[d.k];
+    s.addEventListener('input', function(){ var v=parseFloat(s.value); TUNE[d.k]=v; vl.textContent=d.fmt(v); });
+    row.appendChild(s); panel.appendChild(row);
+    ui[d.k] = { s:s, vl:vl, fmt:d.fmt };
+  });
+  var br = document.createElement('div'); br.className='btnrow';
+  var en = document.createElement('button');
+  function enLabel(){ en.textContent = 'ENEMIES: '+(TUNE.enemies?'ON':'OFF'); en.className = TUNE.enemies?'en':''; }
+  enLabel();
+  en.addEventListener('click', function(){ TUNE.enemies = TUNE.enemies?0:1; enLabel(); });
+  var rs = document.createElement('button'); rs.textContent='RESET';
+  rs.addEventListener('click', function(){
+    var k; for(k in DEFAULT_TUNE){ TUNE[k] = DEFAULT_TUNE[k]; }
+    defs.forEach(function(d){ if(d.head) return; ui[d.k].s.value = TUNE[d.k]; ui[d.k].vl.textContent = d.fmt(TUNE[d.k]); });
+    enLabel();
+  });
+  br.appendChild(en); br.appendChild(rs); panel.appendChild(br);
+  var cp = document.createElement('button'); cp.textContent='COPY VALUES'; cp.style.width='100%'; cp.style.marginTop='8px';
+  var out = document.createElement('textarea'); out.readOnly=true;
+  out.style.cssText='width:100%;margin-top:8px;height:56px;display:none;background:#02020c;color:#7fffd0;border:1px solid rgba(150,180,255,.4);border-radius:7px;padding:7px;font:600 11px/1.35 monospace;-webkit-user-select:text;user-select:text;';
+  cp.addEventListener('click', function(){
+    var t = JSON.stringify(TUNE), ok=false;
+    out.style.display='block'; out.value=t;
+    try{ out.focus(); out.select(); if(out.setSelectionRange) out.setSelectionRange(0,t.length); }catch(e){}
+    try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t); ok=true; } }catch(e){}
+    if(!ok){ try{ ok=document.execCommand('copy'); }catch(e){} }
+    cp.textContent = ok ? 'COPIED' : 'SELECT / SHOT BELOW';
+    setTimeout(function(){ cp.textContent='COPY VALUES'; }, 1600);
+  });
+  panel.appendChild(cp); panel.appendChild(out);
+  ['pointerdown','pointermove','pointerup','touchstart','touchmove','wheel'].forEach(function(ev){
+    panel.addEventListener(ev, function(e){ e.stopPropagation(); });
+  });
+  var tbtn = document.getElementById('tunebtn');
+  if(tbtn) tbtn.addEventListener('click', function(){ panel.style.display = (panel.style.display==='block'?'none':'block'); });
+})();
+var BULLET_SPEED= 85;     // shot travel away from camera (depth units / sec)
+var FIRE_DT     = 0.13;   // seconds between auto fired shots
+var DEPTH_HIT   = 5.0;    // depth tolerance for a shot vs foe (covers per frame closing)
+var MAX_DT      = 0.033;  // frame clamp; the slowest frame the collision math assumes
+var MAX_FRAME_GAP = 0.2;  // Face 1 (catch-up memo): longest wall time simulated in one frame
+var STEP_CAP      = 5;    // Face 3: hard cap on sim sub-steps per animation frame
+var INVULN_HIT  = 1.6;    // invulnerable seconds after a hit
+var SPAWN_D     = 150;    // depth foes and pillars enter at
+
+/* world sizes and hit radii (world units) */
+var AIM_LEAD = 0.11;      // how far the reticle leads ahead of ship velocity (s)
+var P_HALFW  = 0.34, P_HALFH = 0.50;
+var BULLET_W = 0.34;
+
+/* ---- canvas / context (filled in init) ---- */
+var canvas=null, ctx=null;
+var W=900, H=540;                 // logical canvas size (mirrors SS)
+var playerScale=99;               // px per world unit at PLAYER_D (set on resize)
+
+/* ---- run state ---- */
+var state='TITLE';                // TITLE | READY | PLAY | OVER
+var readyT=0, overT=0, titleT=0;
+var dist=0, score=0, hi=0, lives=3, zone=1;
+var shake=0, flash=0, timeT=0;
+
+/* ---- the harrier ---- */
+var psx=450, psy=432;             // screen position (input drives this)
+var px=0, py=0;                   // world position at PLAYER_D (derived; collisions use this)
+var bank=0, bob=0, alive=true, invuln=0, fireT=0, muz=0, speedBoost=0;
+// ---- BUILD 20: live 3D ship sprite (ported from the ship model viewer) ----
+var SHIP3D_LOOKDOWN = 0.175;   // solved so a bit of TOP shows at horizon height (effEl +0.12 there)
+var SHIP3D_CAMSENS  = 0.605;   // solved with LOOKDOWN: keeps the approved v13 belly (-0.43) at the box top
+var SHIP3D_PARYAW   = 0.16;    // slight horizontal parallax yaw with ship x
+var SHIP3D_SCALE    = 2.70;    // on-screen size multiplier for the rendered ship (screenshot-tuned)
+var SHIP3D_YAWVEL   = 0.45;    // nose-into-motion yaw at full horizontal speed (rad, ~26 deg): Star Fox nose lead
+var SHIP3D_PITCHVEL = 0.35;    // nose-into-motion pitch at full vertical speed (rad, ~20 deg): climb = nose up
+var SNAP_BRAKE      = 1.8;     // extra velocity gain when braking or reversing: fast settle, crisp stops
+var AIM_NEAR_F      = 0.40;    // near sight depth, as a fraction of the way from the ship to the converge depth
+var fpsVal=0, _fpsAcc=0, _fpsN=0;
+var railX=0, railBank=0, railXp=0;   // on-rails path: lateral sweep + bank
+var vsx=0, vsy=0, aimSX=0, aimSY=0, aimLeadX=0, aimLeadY=0, aimFarSX=0, aimFarSY=0, aimWFX=0, aimWFY=0, steerAmt=0;  // ship velocity + reticle aim/lead + far frame (screen) + far aim WORLD point + steer/centre blend
+
+/* ---- entity pools ---- */
+var foes=[];      // {kind:'drone'|'turret', wx,wy,d,pd, t, hp, pts, rx,ry, fired, arm, ph, alive}
+var pillars=[];   // {wx, d, pd, h, alive}
+var bullets=[];   // {wx,wy,d,pd, alive}
+var orbs=[];      // {wx,wy,d,pd, alive}
+var serpents=[];  // {head, segs:[...], t, bx, baseY, ph, leadD, alive}
+var rings=[];     // {wx,wy,d,pd, rad, passed, alive}  boost rings (Star Fox style)
+var fx=[];        // particles {x,y,vx,vy,life,max,col,sz,kind}
+
+/* ---- spawn director ---- */
+var spP=0, spD=0, spT=0, spS=0, spR=0;
+
+/* ---- input ---- */
+var ptrActive=false, ptrX=0, ptrY=0;
+var joyActive=false, joyX0=0, joyY0=0, joyX=0, joyY=0, joyR=40;
+var keyL=false, keyR=false, keyU=false, keyD=false;
+
+/* ---- audio (optional; degrades silently) ---- */
+var AC = (typeof window!=='undefined') ? (window.AudioContext||window.webkitAudioContext) : null;
+var actx=null, audioOK=false;
+function audioInit(){
+  if(audioOK||!AC) return;
+  try{ actx=new AC(); audioOK=true; }catch(e){ audioOK=false; }
+}
+function beep(freq,dur,type,vol){
+  if(!audioOK||!actx) return;
+  try{
+    var o=actx.createOscillator(), g=actx.createGain(), t=actx.currentTime;
+    o.type=type||'square'; o.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime((vol||0.05),t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+dur);
+  }catch(e){}
+}
+function noise(dur,vol){
+  if(!audioOK||!actx) return;
+  try{
+    var n=Math.floor(actx.sampleRate*dur), b=actx.createBuffer(1,n,actx.sampleRate), d=b.getChannelData(0), i;
+    for(i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+    var s=actx.createBufferSource(), g=actx.createGain(); s.buffer=b;
+    g.gain.value=(vol||0.06); s.connect(g); g.connect(actx.destination); s.start();
+  }catch(e){}
+}
+function sfxShoot(){ beep(640,0.05,'square',0.03); }
+function sfxBoom(){ noise(0.18,0.07); beep(150,0.18,'sawtooth',0.04); }
+function sfxHit(){ beep(220,0.3,'triangle',0.08); beep(110,0.34,'sawtooth',0.06); }
+
+/* ---- helpers ---- */
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function rand(a,b){ return a+Math.random()*(b-a); }
+function diff(){ return clamp(1+dist*0.0003, 1, 2.3); }
+// non-linear ship response to the reticle offset: a dead band near centre then an
+// expo ramp, so slight reticle moves barely move the ship and extremes pull hard.
+function expoPull(off, reach){
+  if(reach<1) return 0;
+  var t=off/reach; if(t>1)t=1; if(t<-1)t=-1;
+  var s=(t<0)?-1:1, m=Math.abs(t);
+  m=(m-TUNE.dead)/(1-TUNE.dead); if(m<0) m=0;
+  return s*Math.pow(m, TUNE.expo);
+}
+function speedNow(){ return Math.min(SPEED_MAX+20, TUNE.world*diff()+speedBoost); }
+function playRect(){ return { x0:W*0.06, x1:W*0.94, y0:H*0.14, y1:H*0.80 }; }
+
+// derive the harrier world position from its screen position at PLAYER_D
+function syncPlayerWorld(){
+  px=(psx-SS.cx-SS.camDX)*PLAYER_D/SS.focal;
+  py=SS.eye-(psy-SS.horizonY)*PLAYER_D/SS.focal;
+}
+
+function resetPlayer(){
+  var r=playRect();
+  psx=SS.cx; psy=(r.y0+r.y1)*0.74;
+  bank=0; bob=0; alive=true; fireT=0; muz=0;
+  syncPlayerWorld();
+}
+
+function resetGame(){
+  foes.length=0; pillars.length=0; bullets.length=0; orbs.length=0; serpents.length=0; rings.length=0; fx.length=0;
+  railX=0; railBank=0; railXp=0; SS.setCam(0,0); vsx=0; vsy=0; aimLeadX=0; aimLeadY=0;
+  score=0; lives=3; dist=0; zone=1; shake=0; flash=0; invuln=0;
+  spP=0.8; spD=1.4; spT=3.0; spS=7.0; spR=4.0;
+  resetPlayer();
+  state='TITLE'; titleT=0;
+}
+
+function startPlay(){
+  foes.length=0; pillars.length=0; bullets.length=0; orbs.length=0; serpents.length=0; rings.length=0; fx.length=0;
+  railX=0; railBank=0; railXp=0; SS.setCam(0,0); vsx=0; vsy=0; aimLeadX=0; aimLeadY=0;
+  score=0; lives=3; dist=0; zone=1; shake=0; flash=0;
+  spP=0.8; spD=1.4; spT=3.0; spS=7.0; spR=4.0;
+  resetPlayer();
+  invuln=1.0;            // brief spawn grace
+  state='PLAY';
+}
+
+function beginReady(){
+  audioInit();
+  state='READY'; readyT=1.4;
+}
+
+/* ---- spawns ---- */
+function spawnFoe(kind,wx,wy,d){
+  var f={kind:kind, wx:wx, wy:wy, d:d, pd:d, t:0, alive:true, fired:false, arm:rand(0.2,0.7), ph:rand(0,6.28), vf:0, pat:'weave'};
+  if(kind==='drone'){ f.hp=1; f.pts=120; f.rx=0.55; f.ry=0.55; f.baseY=wy; f.y0=wy; f.y1=wy; f.x0=wx; f.x1=wx; }
+  else { f.hp=2; f.pts=300; f.rx=0.5; f.ry=0.72; f.wy=0; }   // turret sits on the ground
+  foes.push(f); return f;
+}
+function spawnPillar(wx,d,h){
+  var p={wx:wx, d:d, pd:d, h:h, alive:true}; pillars.push(p); return p;
+}
+function spawnBullet(wx,wy,d){
+  var b={wx:wx, wy:wy, d:d, pd:d, vx:0, vy:0, alive:true}; bullets.push(b); return b;
+}
+function spawnOrb(wx,wy,d){
+  var o={wx:wx, wy:wy, d:d, pd:d, alive:true}; orbs.push(o); return o;
+}
+function spawnSerpent(wx,d){
+  var by=rand(1.6,3.4);
+  var head={wx:wx, wy:by, d:d, pd:d, alive:true, hp:2, isHead:true};
+  var segs=[], i;
+  for(i=0;i<6;i++){ segs.push({wx:wx, wy:by, d:d+(i+1)*1.0, pd:d+(i+1)*1.0, alive:true, hp:1}); }
+  var s={head:head, segs:segs, t:0, bx:wx, baseY:by, ph:rand(0,6.28), leadD:d, alive:true};
+  serpents.push(s); return s;
+}
+function spawnRing(wx,wy,d){
+  var r={wx:wx, wy:wy, d:d, pd:d, rad:1.7, passed:false, alive:true}; rings.push(r); return r;
+}
+function updateSerpents(dt,sp){
+  var si,i, GAPD=1.0, TURN=2.3, SPIN=1.5, R=1.05;
+  for(si=0;si<serpents.length;si++){
+    var s=serpents[si]; if(!s.alive) continue; s.t+=dt;
+    s.leadD-=sp*dt;
+    var axisX=s.bx+Math.sin(s.t*0.9+s.ph)*2.0;
+    var head=s.head;
+    head.pd=head.d; head.d=s.leadD;
+    head.wx=axisX; head.wy=s.baseY+Math.sin(s.t*1.3+s.ph)*0.5;
+    if(head.d<SS.NEAR) head.alive=false;
+    for(i=0;i<s.segs.length;i++){
+      var seg=s.segs[i]; seg.pd=seg.d; seg.d=s.leadD+(i+1)*GAPD;
+      var ang=(i+1)*TURN+s.t*SPIN;
+      seg.wx=axisX+Math.cos(ang)*R; seg.wy=s.baseY+Math.sin(ang)*R*0.8;
+      if(seg.d<SS.NEAR) seg.alive=false;
+    }
+    var any=head.alive; for(i=0;i<s.segs.length;i++) if(s.segs[i].alive) any=true;
+    if(!any) s.alive=false;
+  }
+}
+function serpentBulletHits(){
+  var bi,si,i;
+  for(bi=0;bi<bullets.length;bi++){
+    var b=bullets[bi]; if(!b.alive) continue;
+    for(si=0;si<serpents.length;si++){
+      var s=serpents[si]; if(!s.alive) continue;
+      var head=s.head, hit=false;
+      if(head.alive && Math.abs(b.d-head.d)<DEPTH_HIT && Math.abs(b.wx-head.wx)<(0.62+BULLET_W) && Math.abs(b.wy-head.wy)<(0.62+BULLET_W)){
+        head.hp--; b.alive=false; var h1=SS.project(head.wx,head.wy,head.d);
+        if(head.hp<=0){ head.alive=false; score+=500; explode(h1.sx,h1.sy,'#d6a8ff',16); sfxBoom(); } else { explode(h1.sx,h1.sy,'#ffffff',5); }
+        hit=true;
+      }
+      if(!hit) for(i=0;i<s.segs.length;i++){
+        var seg=s.segs[i]; if(!seg.alive) continue;
+        if(Math.abs(b.d-seg.d)<DEPTH_HIT && Math.abs(b.wx-seg.wx)<(0.5+BULLET_W) && Math.abs(b.wy-seg.wy)<(0.5+BULLET_W)){
+          seg.alive=false; b.alive=false; score+=150; var s2=SS.project(seg.wx,seg.wy,seg.d); explode(s2.sx,s2.sy,'#b15cff',10); sfxBoom(); hit=true; break;
+        }
+      }
+      if(hit) break;
+    }
+  }
+}
+function serpentPlayerHits(){
+  if(!alive||invuln>0) return;
+  var si,i;
+  for(si=0;si<serpents.length;si++){
+    var s=serpents[si]; if(!s.alive) continue;
+    var head=s.head;
+    if(head.alive && crossedPlayer(head) && Math.abs(px-head.wx)<(P_HALFW+0.62) && Math.abs(py-head.wy)<(P_HALFH+0.62)){ playerHit(); return; }
+    for(i=0;i<s.segs.length;i++){
+      var seg=s.segs[i]; if(!seg.alive) continue;
+      if(crossedPlayer(seg) && Math.abs(px-seg.wx)<(P_HALFW+0.5) && Math.abs(py-seg.wy)<(P_HALFH+0.5)){ playerHit(); return; }
+    }
+  }
+}
+
+function fire(){
+  if(!alive) return;
+  syncPlayerWorld();
+  fireAimed(aimWFX,aimWFY);   // v26: the drawn far sight IS the projection of this world point
+  muz=1; fireT=FIRE_DT; sfxShoot();
+}
+function fireAimed(ax,ay){
+  syncPlayerWorld();
+  var dd=TUNE.aimD-PLAYER_D; if(dd<1) dd=1; var tof=dd/BULLET_SPEED;
+  var L=spawnBullet(px-0.25, py, PLAYER_D+0.6); L.vx=(ax-(px-0.25))/tof; L.vy=(ay-py)/tof;
+  var R=spawnBullet(px+0.25, py, PLAYER_D+0.6); R.vx=(ax-(px+0.25))/tof; R.vy=(ay-py)/tof;
+}
+
+/* ---- effects ---- */
+function explode(sx,sy,col,n){
+  var i;
+  for(i=0;i<(n||10);i++){
+    var a=rand(0,6.283), sp=rand(40,180);
+    fx.push({x:sx,y:sy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rand(0.25,0.55),max:0.55,col:col,sz:rand(2,4),kind:'spark'});
+  }
+  fx.push({x:sx,y:sy,vx:0,vy:0,life:0.34,max:0.34,col:'#fff',sz:0,kind:'ring',r0:4,r1:38});
+}
+function stepFx(dt){
+  var i,p;
+  for(i=fx.length-1;i>=0;i--){
+    p=fx[i]; p.life-=dt;
+    if(p.life<=0){ fx.splice(i,1); continue; }
+    if(p.kind==='spark'){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=220*dt; p.vx*=0.96; }
+  }
+}
+
+function playerHit(){
+  if(invuln>0||!alive) return;
+  lives--; invuln=INVULN_HIT; shake=0.45; flash=0.5; sfxHit();
+  var sp=SS.project(px,py,PLAYER_D);
+  explode(sp.sx,sp.sy,'#9fe9ff',16);
+  if(lives<=0){ alive=false; state='OVER'; overT=0; if(score>hi) hi=score; }
+  else { resetPlayer(); invuln=INVULN_HIT; }
+}
+
+/* ---- spawn director ---- */
+function spawnSquadron(){
+  var roll=Math.random(), n, j, base, spread;
+  if(roll<0.30){                 // FRONT weave line
+    n=Math.round(rand(2,3)); base=rand(-2.0,2.0); spread=rand(1.1,1.6);
+    for(j=0;j<n;j++){ var a=spawnFoe('drone', base+(j-(n-1)/2)*spread, rand(1.4,3.6), SPAWN_D+j*8+rand(0,6)); a.pat='weave'; a.bx=base+(j-(n-1)/2)*spread; a.ph=j*0.7; }
+  } else if(roll<0.50){          // DIVE from above
+    n=Math.round(rand(2,3)); base=rand(-1.8,1.8);
+    for(j=0;j<n;j++){ var x=base+(j-(n-1)/2)*1.0, b=spawnFoe('drone', x, 5.6, SPAWN_D+j*9+rand(0,6)); b.pat='dive'; b.bx=x; b.y0=5.6; b.y1=rand(0.8,1.6); b.ph=j*0.5; }
+  } else if(roll<0.68){          // RISE from below
+    n=Math.round(rand(2,3)); base=rand(-1.8,1.8);
+    for(j=0;j<n;j++){ var x2=base+(j-(n-1)/2)*1.0, c=spawnFoe('drone', x2, 0.2, SPAWN_D+j*9+rand(0,6)); c.pat='rise'; c.bx=x2; c.y0=0.1; c.y1=rand(2.2,3.2); c.ph=j*0.5; }
+  } else if(roll<0.86){          // STRAFE from a side
+    n=Math.round(rand(2,3)); var side=(Math.random()<0.5?-1:1), x0=side*5.2;
+    for(j=0;j<n;j++){ var s=spawnFoe('drone', x0, rand(1.2,3.2), SPAWN_D+j*7+rand(0,6)); s.pat='strafe'; s.x0=x0; s.x1=-side*rand(1.0,2.2); s.ph=j*0.6; }
+  } else {                        // OVERTAKE from behind
+    n=Math.round(rand(2,3));
+    for(j=0;j<n;j++){ var o=spawnFoe('drone', rand(-2.2,2.2), rand(1.2,3.0), PLAYER_D-2+j*0.5); o.pat='overtake'; o.vf=SPEED_MAX*1.4; o.bx=o.wx; o.ph=j*0.6; }
+  }
+}
+function spawnDirector(dt){
+  var df=diff(), i;
+  var nd=0, nt=0, ns=0;
+  for(i=0;i<foes.length;i++){ if(!foes[i].alive)continue; if(foes[i].kind==='drone')nd++; else nt++; }
+  for(i=0;i<serpents.length;i++){ if(serpents[i].alive)ns++; }
+
+  spP-=dt;
+  if(spP<=0){
+    if(TUNE.enemies && Math.random()<0.2) spawnPillar(rand(-3.4,3.4), SPAWN_D+rand(0,12), rand(1.5,4.2));
+    spP=rand(1.6,2.8)/df;
+  }
+  spD-=dt;
+  if(spD<=0){
+    if(TUNE.enemies && nd<5) spawnSquadron();
+    spD=rand(3.4,5.4)/df;
+  }
+  spT-=dt;
+  if(spT<=0){ if(TUNE.enemies && nt<2) spawnFoe('turret', rand(-3.2,3.2), 0, SPAWN_D+rand(0,10)); spT=rand(5.5,8.5)/df; }
+  spS-=dt;
+  if(spS<=0){ if(TUNE.enemies && ns<1) spawnSerpent(rand(-2.0,2.0), SPAWN_D+rand(0,10)); spS=rand(14,22)/df; }
+  spR-=dt;
+  if(spR<=0){ spawnRing(rand(-2.2,2.2), rand(1.2,3.6), SPAWN_D+rand(0,8)); spR=rand(5,9)/df; }
+}
+
+function compact(arr){ var i; for(i=arr.length-1;i>=0;i--){ if(!arr[i].alive) arr.splice(i,1); } }
+function crossedPlayer(o){ return (o.pd>PLAYER_D && o.d<=PLAYER_D) || Math.abs(o.d-PLAYER_D)<0.9; }
+
+/* ---- the simulation step ---- */
+function update(dt){
+  if(dt>MAX_DT) dt=MAX_DT; if(dt<0) dt=0;
+  timeT+=dt;
+  if(shake>0) shake=Math.max(0,shake-dt*1.6);
+  if(flash>0) flash=Math.max(0,flash-dt*1.8);
+  if(speedBoost>0) speedBoost=Math.max(0,speedBoost-dt*22);
+
+  if(state==='TITLE'){ titleT+=dt; SS.advance(10*dt); return; }
+  if(state==='READY'){ readyT-=dt; SS.advance(20*dt); if(readyT<=0) startPlay(); return; }
+  if(state==='OVER'){ overT+=dt; SS.advance(6*dt); stepFx(dt); return; }
+
+  /* ---------- PLAY ---------- */
+  var sp=speedNow();
+  dist+=sp*dt; SS.advance(sp*dt); zone=1+Math.floor(dist/600);
+
+  // on-rails path: the corridor gently curves; the world sweeps and banks into turns
+  var pathT=Math.sin(dist*0.0032)*0.62+Math.sin(dist*0.0015+1.3)*0.38;
+  var railTarget=pathT*(W*0.07);
+  railXp=railX; railX+=(railTarget-railX)*Math.min(1,dt*2.2);
+  var dX=railX-railXp;
+  railBank+=((-dX*0.020)-railBank)*Math.min(1,dt*5);
+  if(railBank>0.08) railBank=0.08; if(railBank<-0.08) railBank=-0.08;
+  SS.setCam(railX, railBank);
+
+  // move the harrier
+  var r=playRect(), hdir=0, ix=0, iy=0;
+  if(joyActive){
+    var dxj=joyX-joyX0, dyj=joyY-joyY0, mag=Math.sqrt(dxj*dxj+dyj*dyj);
+    joyR=Math.min(W,H)*0.16; var dead=joyR*0.18;
+    if(mag>dead){ var nx=dxj/mag, ny=dyj/mag, str=clamp((mag-dead)/(joyR-dead),0,1);
+      ix=nx*str; iy=ny*str; }   // raw deflection; the stick curve (expo) shapes it below
+  } else {
+    ix=(keyR?1:0)-(keyL?1:0); iy=(keyD?1:0)-(keyU?1:0);
+  }
+  // SHIP is what you control: the stick (shaped by the dead zone + curve) drives the ship
+  // velocity, weighty via ACC, and the ship holds position when you release.
+  var MAXV=TUNE.maxv*W, ACC=TUNE.acc;
+  var cix=expoPull(ix,1), ciy=expoPull(iy,1); hdir=cix;
+  // Star Fox snap: full gain on attack, extra gain when the stick is released or reversed,
+  // so the ship stops and changes direction crisply instead of trailing an exponential tail.
+  var accX=ACC*((Math.abs(cix)<0.05||cix*vsx<0)?SNAP_BRAKE:1);
+  var accY=ACC*((Math.abs(ciy)<0.05||ciy*vsy<0)?SNAP_BRAKE:1);
+  vsx += (cix*MAXV - vsx)*Math.min(1,dt*accX);
+  vsy += (ciy*MAXV - vsy)*Math.min(1,dt*accY);
+  psx += vsx*dt; psy += vsy*dt;
+  if(psx<r.x0){ psx=r.x0; if(vsx<0)vsx=0; } if(psx>r.x1){ psx=r.x1; if(vsx>0)vsx=0; }
+  if(psy<r.y0){ psy=r.y0; if(vsy<0)vsy=0; } if(psy>r.y1){ psy=r.y1; if(vsy>0)vsy=0; }
+  var tb=clamp(hdir,-1,1)*TUNE.bank; bank+=(tb-bank)*Math.min(1,dt*9);
+  // RETICLE follows the SHIP: it extends in the direction the ship is angling (more push,
+  // further out), and when the stick is idle it drifts back toward screen centre, capped at
+  // its reach, so an off-centre ship gets a reticle pulled toward the middle (never all the
+  // way, since the reticle can only travel so far from the ship).
+  var REACHX=(r.x1-r.x0)*TUNE.leadX, REACHY=(r.y1-r.y0)*TUNE.leadY;
+  // v27: the horizontal resting target is the VANISHING POINT (the centre of the grid),
+  // which sweeps with the rail; the fixed box centre drifted up to ~63px off it.
+  var ccx=SS.cx+(SS.camDX||0), ccy=(r.y0+r.y1)*0.5;
+  var inMag=Math.min(1,Math.sqrt(cix*cix+ciy*ciy));
+  // The extension comes from the ship's own (already eased) velocity, so the reticle MOVES
+  // out with the turn rather than teleporting. steerAmt eases between following the ship and
+  // centring; because it starts from the resting (centred) value, the target is continuous
+  // at the instant you push, so there is no jump. While steering it is pure extension (no
+  // centre pull, never fights you); on release it drifts to centre. Turn follow (grip) sets
+  // how fast it commits to the steer and lets go again.
+  // v25: the lead is attitude-coupled like Star Fox: mostly the instant shaped stick (the
+  // ship's nose) with a velocity share, so the sights respond first and the ship follows.
+  var dirX=clamp(cix*0.65+(vsx/MAXV)*0.45,-1,1), dirY=clamp(ciy*0.65+(vsy/MAXV)*0.45,-1,1);
+  var exX=dirX*REACHX, exY=dirY*REACHY;
+  var ceX=clamp(ccx-psx,-REACHX,REACHX)*TUNE.centerBias, ceY=clamp(ccy-psy,-REACHY,REACHY)*TUNE.centerBias;
+  var want=(inMag>0.06)?1:0;
+  steerAmt += (want - steerAmt)*Math.min(1, dt*TUNE.grip);
+  var tgX=ceX+(exX-ceX)*steerAmt, tgY=ceY+(exY-ceY)*steerAmt;
+  var rEase=TUNE.recenter+(TUNE.leadEase-TUNE.recenter)*steerAmt;
+  aimLeadX += (tgX - aimLeadX)*Math.min(1,dt*rEase);
+  aimLeadY += (tgY - aimLeadY)*Math.min(1,dt*rEase);
+  // v26: the sights are the nose ray PROJECTED AT DEPTH (the actual Star Fox construction).
+  // The eased lead becomes world units at the ship's depth; the aim point is projected at a
+  // near sight depth (AIM_NEAR_F of the way out) and at the laser converge depth. Perspective
+  // convergence pulls the resting sights toward the vanishing point (near screen centre)
+  // wherever the ship sits, and the gun fires at the far WORLD point directly, so the drawn
+  // sights and the shots share one ray by construction. The far frame still extends by the
+  // steer component (retiFar), now in world units along the same ray.
+  syncPlayerWorld();
+  // v27: the LEAD converts to world units at the NEAR SIGHT depth (not the ship depth), so a
+  // full steer moves the near frame by its full tuned screen reach; the resting pull toward
+  // the vanishing point is untouched (it comes from projecting the SHIP position at depth).
+  var nearD=PLAYER_D+(TUNE.aimD-PLAYER_D)*AIM_NEAR_F, sN=SS.focal/nearD;
+  var aimWX=px+aimLeadX/sN, aimWY=py-aimLeadY/sN;
+  aimWFX=aimWX+exX*steerAmt*TUNE.retiFar/sN; aimWFY=aimWY-exY*steerAmt*TUNE.retiFar/sN;
+  var gN=SS.project(aimWX,aimWY,nearD), gF=SS.project(aimWFX,aimWFY,TUNE.aimD);
+  aimSX=clamp(gN.sx, W*0.03, W*0.97); aimSY=clamp(gN.sy, H*0.03, H*0.97);
+  aimFarSX=clamp(gF.sx, W*0.03, W*0.97); aimFarSY=clamp(gF.sy, H*0.03, H*0.97);
+  bob+=dt*6; muz=Math.max(0,muz-dt*6);
+  if(invuln>0) invuln-=dt;
+  syncPlayerWorld();
+
+  // auto fire forward
+  if(alive){ fireT-=dt; if(fireT<=0) fire(); }
+
+  // advance bullets
+  var i,b,f,o,p;
+  for(i=0;i<bullets.length;i++){ b=bullets[i]; if(!b.alive)continue; b.pd=b.d; b.d+=BULLET_SPEED*dt; b.wx+=b.vx*dt; b.wy+=b.vy*dt; if(b.d>SPAWN_D+30) b.alive=false; }
+
+  // advance foes
+  for(i=0;i<foes.length;i++){
+    f=foes[i]; if(!f.alive)continue; f.pd=f.d; f.d+=(f.vf-sp)*dt; f.t+=dt;
+    if(f.kind==='drone'){
+      if(f.bx==null){ f.bx=f.wx; f.baseY=f.wy; }
+      var fr=clamp((f.d-PLAYER_D)/(SPAWN_D-PLAYER_D),0,1);
+      if(f.pat==='dive' || f.pat==='rise'){ f.wy=f.y1+(f.y0-f.y1)*fr; f.wx=f.bx+Math.sin(f.t*0.8+f.ph)*0.6; }
+      else if(f.pat==='strafe'){ f.wx=f.x1+(f.x0-f.x1)*fr; f.wy=f.baseY+Math.sin(f.t*1.4+f.ph)*0.35; }
+      else if(f.pat==='overtake'){ f.wx=f.bx+Math.sin(f.t*1.0+f.ph)*0.5; f.wy=f.baseY+Math.sin(f.t*1.2+f.ph)*0.4; }
+      else { f.wx=f.bx+Math.sin(f.t*0.95+f.ph)*1.2; f.wy=f.baseY+Math.sin(f.t*1.7+f.ph)*0.45; }
+    } else {
+      f.wy=0;
+      if(!f.fired && f.d<150 && f.d>28){ f.arm-=dt; if(f.arm<=0){ spawnOrb(f.wx,0.85,f.d-0.5); f.fired=true; beep(330,0.12,'square',0.03); } }
+    }
+    if(f.d<SS.NEAR || f.d>SPAWN_D+40) f.alive=false;
+  }
+
+  // advance orbs (slow homing toward the harrier)
+  for(i=0;i<orbs.length;i++){
+    o=orbs[i]; if(!o.alive)continue; o.pd=o.d; o.d-=(sp+12)*dt;
+    o.wx+=(px-o.wx)*Math.min(1,dt*0.8); o.wy+=(py-o.wy)*Math.min(1,dt*0.8);
+    if(o.d<SS.NEAR) o.alive=false;
+  }
+
+  updateSerpents(dt,sp);
+  for(i=0;i<rings.length;i++){ var rg=rings[i]; if(!rg.alive)continue; rg.pd=rg.d; rg.d-=sp*dt;
+    if(!rg.passed && rg.pd>PLAYER_D && rg.d<=PLAYER_D){ rg.passed=true;
+      if(Math.abs(px-rg.wx)<rg.rad*0.85 && Math.abs(py-rg.wy)<rg.rad*0.85){
+        score+=250; speedBoost=Math.max(speedBoost,16);
+        var rp=SS.project(rg.wx,rg.wy,Math.max(rg.d,SS.NEAR)); explode(rp.sx,rp.sy,'#ffe27a',14); beep(880,0.12,'sine',0.05); } }
+    if(rg.d<SS.NEAR) rg.alive=false; }
+
+  // shots vs foes
+  for(i=0;i<bullets.length;i++){
+    b=bullets[i]; if(!b.alive)continue;
+    for(var fi=0;fi<foes.length;fi++){
+      f=foes[fi]; if(!f.alive)continue;
+      if(Math.abs(b.d-f.d)<DEPTH_HIT && Math.abs(b.wx-f.wx)<(f.rx+BULLET_W) && Math.abs(b.wy-f.wy)<(f.ry+BULLET_W)){
+        f.hp--; b.alive=false;
+        var sp2=SS.project(f.wx,f.wy,f.d);
+        if(f.hp<=0){ f.alive=false; score+=f.pts; explode(sp2.sx,sp2.sy, f.kind==='drone'?'#ff7ad9':'#ffb24a', 12); sfxBoom(); }
+        else { explode(sp2.sx,sp2.sy,'#ffffff',5); }
+        break;
+      }
+    }
+  }
+
+  serpentBulletHits();
+
+  // hazards vs the harrier (first contact only)
+  if(alive && invuln<=0){
+    var hit=false;
+    for(i=0;i<foes.length && !hit;i++){
+      f=foes[i]; if(!f.alive)continue;
+      if(crossedPlayer(f) && Math.abs(px-f.wx)<(P_HALFW+f.rx) && Math.abs(py-f.wy)<(P_HALFH+f.ry)){ f.alive=false; playerHit(); hit=true; }
+    }
+    for(i=0;i<pillars.length && !hit;i++){
+      p=pillars[i]; if(!p.alive)continue;
+      if(crossedPlayer(p) && Math.abs(px-p.wx)<(P_HALFW+0.5) && py<p.h){ playerHit(); hit=true; }
+    }
+    for(i=0;i<orbs.length && !hit;i++){
+      o=orbs[i]; if(!o.alive)continue;
+      if(crossedPlayer(o) && Math.abs(px-o.wx)<(P_HALFW+0.35) && Math.abs(py-o.wy)<(P_HALFH+0.35)){ o.alive=false; playerHit(); hit=true; }
+    }
+  }
+
+  serpentPlayerHits();
+  compact(foes); compact(pillars); compact(bullets); compact(orbs); compact(serpents); compact(rings);
+  spawnDirector(dt);
+  stepFx(dt);
+}
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+var lastError=null;
+
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath(); ctx.fill();
+}
+function drawShadow(wx,d,rw,syoff){
+  var g=SS.project(wx,0,d); var w=rw*g.scale*2.0, h=Math.max(2,w*0.32);
+  ctx.globalAlpha=0.28; ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(g.sx,g.sy+(syoff||0),w*0.5,h*0.5,0,0,6.283); ctx.fill();
+  ctx.globalAlpha=1;
+}
+function drawPillar(p){
+  var base=SS.project(p.wx,0,p.d), top=SS.project(p.wx,p.h,p.d);
+  var hw=0.5*base.scale; if(hw<0.5)hw=0.5;
+  drawShadow(p.wx,p.d,0.6);
+  var x=base.sx-hw, w=hw*2, y=top.sy, hgt=base.sy-top.sy;
+  if(hgt<1)return;
+  ctx.fillStyle='#5a5f7e'; ctx.fillRect(x,y,w,hgt);
+  ctx.fillStyle='#7c83a8'; ctx.fillRect(x,y,Math.max(1,w*0.32),hgt);
+  ctx.fillStyle='#3c4060'; ctx.fillRect(x+w*0.7,y,Math.max(1,w*0.3),hgt);
+  ctx.fillStyle='#8a91b6'; ctx.beginPath(); ctx.ellipse(base.sx,y,hw,Math.max(2,hw*0.5),0,0,6.283); ctx.fill();
+}
+function drawTurret(f){
+  var g=SS.project(f.wx,0,f.d), s=g.scale;
+  drawShadow(f.wx,f.d,0.6);
+  var bw=1.25*s, bh=0.75*s, x=g.sx, y=g.sy;
+  ctx.fillStyle='#9a5018';
+  ctx.beginPath(); ctx.moveTo(x-bw*0.5,y); ctx.lineTo(x+bw*0.5,y); ctx.lineTo(x+bw*0.34,y-bh); ctx.lineTo(x-bw*0.34,y-bh); ctx.closePath(); ctx.fill();
+  var dr=0.55*s;
+  ctx.fillStyle=(!f.fired && f.arm<0.3)?'#ffe06a':'#ff9a32';
+  ctx.beginPath(); ctx.arc(x,y-bh,dr,Math.PI,0); ctx.fill();
+  ctx.fillStyle='#5a2f10'; ctx.fillRect(x-dr*0.16,y-bh-dr*1.15,dr*0.32,dr*0.95);
+  ctx.fillStyle='#fff2c0'; ctx.beginPath(); ctx.arc(x,y-bh-dr*0.2,dr*0.22,0,6.283); ctx.fill();
+  var mr=Math.max(8,dr*1.6);
+  ctx.globalAlpha=0.85; ctx.strokeStyle='#ffd36a'; ctx.lineWidth=Math.max(1.5,dr*0.16);
+  ctx.beginPath(); ctx.arc(x,y-bh*0.5,mr,0,6.283); ctx.stroke(); ctx.globalAlpha=1;
+}
+function drawDrone(f){
+  var p=SS.project(f.wx,f.wy,f.d), s=p.scale, r=Math.max(2.5,0.62*s);
+  drawShadow(f.wx,f.d,0.4);
+  ctx.fillStyle='#7a1f5e';
+  ctx.fillRect(p.sx-r*1.7,p.sy-r*0.18,r*1.4,r*0.36);
+  ctx.fillRect(p.sx+r*0.3,p.sy-r*0.18,r*1.4,r*0.36);
+  ctx.fillStyle='#ff4fb4'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r,0,6.283); ctx.fill();
+  ctx.fillStyle='#ffb0e4'; ctx.beginPath(); ctx.arc(p.sx-r*0.25,p.sy-r*0.25,r*0.5,0,6.283); ctx.fill();
+  ctx.fillStyle='#220018'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r*0.42,0,6.283); ctx.fill();
+  var ep=0.5+0.5*Math.sin(timeT*8+f.ph);
+  ctx.fillStyle='#ff3030'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r*0.42*(0.5+0.5*ep),0,6.283); ctx.fill();
+  var mr=Math.max(7,r*1.25);
+  ctx.globalAlpha=0.9; ctx.strokeStyle='#9ffcff'; ctx.lineWidth=Math.max(1.5,r*0.16);
+  ctx.beginPath(); ctx.arc(p.sx,p.sy,mr,0,6.283); ctx.stroke(); ctx.globalAlpha=1;
+}
+function drawOrb(o){
+  var p=SS.project(o.wx,o.wy,o.d), s=p.scale, r=Math.max(3.5,0.5*s), pu=0.7+0.3*Math.sin(timeT*12);
+  ctx.globalAlpha=0.5; ctx.fillStyle='#ffd34a'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r*1.8*pu,0,6.283); ctx.fill(); ctx.globalAlpha=1;
+  ctx.fillStyle='#ff7a2a'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r,0,6.283); ctx.fill();
+  ctx.fillStyle='#fff7d6'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r*0.5,0,6.283); ctx.fill();
+  ctx.globalAlpha=0.9; ctx.strokeStyle='#ffffff'; ctx.lineWidth=Math.max(1.2,r*0.12);
+  ctx.beginPath(); ctx.arc(p.sx,p.sy,r*1.15,0,6.283); ctx.stroke(); ctx.globalAlpha=1;
+}
+function drawBullet(b){
+  var p=SS.project(b.wx,b.wy,b.d), s=p.scale, r=Math.max(1.3,BULLET_W*s*0.72);
+  ctx.globalAlpha=0.3; ctx.fillStyle='#7af6ff'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r*1.5,0,6.283); ctx.fill(); ctx.globalAlpha=1;
+  ctx.fillStyle='#bdfcff'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r,0,6.283); ctx.fill();
+  ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r*0.45,0,6.283); ctx.fill();
+}
+var SHIP3D = (function(){
+  var PX=172, buf=null, bx=null, ok=false, lastKey='';
+  try{ buf=document.createElement('canvas'); buf.width=PX; buf.height=PX; bx=buf.getContext('2d'); ok=!!bx; }catch(e){ ok=false; }
+  var HULL=[178,188,204],TOPC=[210,218,230],NOSE=[200,208,222],DARK=[44,48,62],
+      WING=[170,180,198],FIN=[154,166,186],GLASS=[120,206,232],FRAME=[28,42,60],ACC=[66,108,200];
+  var V=[],F=[];
+  function addV(x,y,z){ V.push([x,y,z]); return V.length-1; }
+  function quad(a,b,c,d,col){ F.push({v:[a,b,c,d],c:col}); }
+  function tri(a,b,c,col){ F.push({v:[a,b,c],c:col}); }
+  var prof=[[0.55,0.30],[1.0,0.06],[1.0,-0.06],[0.55,-0.34],[-0.55,-0.34],[-1.0,-0.06],[-1.0,0.06],[-0.55,0.30]];
+  var NP=prof.length;
+  var rings=[{z:-1.05,r:0.30},{z:-0.45,r:0.35},{z:0.35,r:0.30},{z:0.95,r:0.17},{z:1.45,r:0.075}];
+  var rIdx=rings.map(function(rg){ var a=[],i; for(i=0;i<NP;i++) a.push(addV(prof[i][0]*rg.r,prof[i][1]*rg.r,rg.z)); return a; });
+  function topish(i){ return (i===7||i===0||i===6); }
+  for(var k=0;k<rIdx.length-1;k++){ var a=rIdx[k],b=rIdx[k+1],i; for(i=0;i<NP;i++){ var j=(i+1)%NP; quad(a[i],a[j],b[j],b[i],topish(i)?TOPC:HULL); } }
+  var tip=addV(0,0,2.05),fr=rIdx[rIdx.length-1];
+  for(var i2=0;i2<NP;i2++){ var j=(i2+1)%NP; tri(fr[i2],fr[j],tip,topish(i2)?NOSE:HULL); }
+  var tl=rIdx[0],tlc=addV(0,0,-1.14);
+  for(var i3=0;i3<NP;i3++){ var j=(i3+1)%NP; tri(tl[i3],tl[j],tlc,DARK); }
+  function wing(s){ var rLE=addV(s*0.24,0.05,0.46),rTE=addV(s*0.24,0,-0.55),tLE=addV(s*1.55,0.02,-0.52),tTE=addV(s*1.55,-0.02,-0.88); quad(rLE,tLE,tTE,rTE,WING);
+    var a1=addV(s*0.40,0.06,0.42),a2=addV(s*1.34,0.03,-0.48),a3=addV(s*1.30,0.03,-0.55); tri(a1,a2,a3,ACC); }
+  wing(1); wing(-1);
+  function tailfin(s){ var bf=addV(s*0.17,0.10,-0.40),br=addV(s*0.17,0.05,-0.96),tp=addV(s*0.40,0.60,-0.72); tri(bf,tp,br,FIN); }
+  tailfin(1); tailfin(-1);
+  (function(){ var z0=0.50,z1=0.96,cb=0.05,ch=0.24,cw=0.09;
+    var a=addV(-cw,cb,z0),b=addV(cw,cb,z0),c=addV(cw*0.6,cb,z1),d=addV(-cw*0.6,cb,z1),pf=addV(0,ch,z0+0.08),pr=addV(0,ch*0.78,z1-0.02);
+    quad(a,pf,pr,d,GLASS); quad(b,c,pr,pf,GLASS); tri(a,b,pf,FRAME); tri(d,pr,c,FRAME); })();
+  var camZ=5.0,FOC=3.6;
+  var LX=-0.3,LY=0.66,LZ=0.69,LM=Math.sqrt(LX*LX+LY*LY+LZ*LZ); LX/=LM;LY/=LM;LZ/=LM;
+  var LV=[0.50,0.66,0.80,0.93,1.08];
+  function qsh(s){ var best=LV[0],bd=9,i; for(i=0;i<LV.length;i++){ var dd=Math.abs(LV[i]-s); if(dd<bd){bd=dd;best=LV[i];} } return best; }
+  function snap(v){ return Math.min(255,Math.round(v/12)*12); }
+  function rot(p,roll,pitch,yawOff,effEl){
+    var x=p[0],y=p[1],z=p[2];
+    var cr=Math.cos(roll),sr=Math.sin(roll);
+    var x1=x*cr-y*sr,y1=x*sr+y*cr,z1=z;
+    var cp=Math.cos(pitch),spp=Math.sin(pitch);
+    var y2=y1*cp+z1*spp,z2=-y1*spp+z1*cp,x2=x1;
+    var yw=Math.PI+yawOff,cyw=Math.cos(yw),syw=Math.sin(yw);
+    var x3=x2*cyw+z2*syw,z3=-x2*syw+z2*cyw,y3=y2;
+    var ce=Math.cos(effEl),se=Math.sin(effEl);
+    return [x3, y3*ce-z3*se, y3*se+z3*ce];
+  }
+  function proj(p){ var per=FOC/(camZ-p[2]),S=PX*0.34; return [PX/2+p[0]*per*S, PX/2-p[1]*per*S]; }
+  function render(roll,pitch,effEl,yawOff){
+    if(!ok) return buf;
+    var key=Math.round(roll*40)+'_'+Math.round(pitch*40)+'_'+Math.round(effEl*40)+'_'+Math.round(yawOff*20);
+    if(key===lastKey) return buf;
+    lastKey=key;
+    bx.clearRect(0,0,PX,PX);
+    var P=new Array(V.length),i; for(i=0;i<V.length;i++) P[i]=rot(V[i],roll,pitch,yawOff,effEl);
+    var faces=F.map(function(ff){ var vs=ff.v,nn=vs.length,az=0,q; for(q=0;q<nn;q++) az+=P[vs[q]][2]; return {f:ff,az:az/nn}; });
+    faces.sort(function(a,b){ return a.az-b.az; });
+    for(i=0;i<faces.length;i++){
+      var f=faces[i].f,vs=f.v,p0=P[vs[0]],p1=P[vs[1]],p2=P[vs[2]];
+      var nx=(p1[1]-p0[1])*(p2[2]-p0[2])-(p1[2]-p0[2])*(p2[1]-p0[1]);
+      var ny=(p1[2]-p0[2])*(p2[0]-p0[0])-(p1[0]-p0[0])*(p2[2]-p0[2]);
+      var nz=(p1[0]-p0[0])*(p2[1]-p0[1])-(p1[1]-p0[1])*(p2[0]-p0[0]);
+      var nm=Math.sqrt(nx*nx+ny*ny+nz*nz)||1; nx/=nm;ny/=nm;nz/=nm; if(nz<0){nx=-nx;ny=-ny;nz=-nz;}
+      var diff=Math.max(0,nx*LX+ny*LY+nz*LZ),sh=qsh(0.42+0.66*diff),c=f.c,q;
+      bx.beginPath();
+      for(q=0;q<vs.length;q++){ var s2=proj(P[vs[q]]); if(q===0) bx.moveTo(s2[0],s2[1]); else bx.lineTo(s2[0],s2[1]); }
+      bx.closePath();
+      bx.fillStyle='rgb('+(Math.min(255,c[0]*sh)|0)+','+(Math.min(255,c[1]*sh)|0)+','+(Math.min(255,c[2]*sh)|0)+')'; bx.fill();
+    }
+    var tailZ=rot([0,0,-1.1],roll,pitch,yawOff,effEl)[2], noseZ=rot([0,0,2.05],roll,pitch,yawOff,effEl)[2];
+    if(tailZ>noseZ){ var ex=[[0.20,-0.03,-1.10],[-0.20,-0.03,-1.10]],e; for(e=0;e<2;e++){ var pp=rot(ex[e],roll,pitch,yawOff,effEl),s3=proj(pp),per=FOC/(camZ-pp[2]),rad=Math.max(1.6,PX*0.05*per/(FOC/camZ));
+      bx.fillStyle='#e8641e'; bx.beginPath(); bx.arc(s3[0],s3[1],rad,0,6.283); bx.fill();
+      bx.fillStyle='#ff9a32'; bx.beginPath(); bx.arc(s3[0],s3[1],rad*0.62,0,6.283); bx.fill();
+      bx.fillStyle='#ffe6a0'; bx.beginPath(); bx.arc(s3[0],s3[1],rad*0.30,0,6.283); bx.fill(); } }
+    var img; try{ img=bx.getImageData(0,0,PX,PX); }catch(e){ return buf; }
+    var d=img.data,P2=PX*PX,p,o,yy,xx;
+    for(p=0;p<P2;p++){ o=p*4; if(d[o+3]<120){ d[o+3]=0; } else { d[o+3]=255; d[o]=snap(d[o]); d[o+1]=snap(d[o+1]); d[o+2]=snap(d[o+2]); } }
+    var A=new Uint8Array(P2); for(p=0;p<P2;p++) A[p]=d[p*4+3];
+    for(yy=0;yy<PX;yy++){ for(xx=0;xx<PX;xx++){ p=yy*PX+xx; if(A[p]) continue;
+      var nb=(xx>0&&A[p-1])||(xx<PX-1&&A[p+1])||(yy>0&&A[p-PX])||(yy<PX-1&&A[p+PX]);
+      if(nb){ o=p*4; d[o]=18; d[o+1]=22; d[o+2]=38; d[o+3]=255; } } }
+    bx.putImageData(img,0,0);
+    return buf;
+  }
+  return { render:render, ok:ok, PX:PX };
+})();
+function drawPlayer(){
+  var h=TUNE.ship*playerScale, ds=h*SHIP3D_SCALE;
+  drawShadow(px,PLAYER_D,0.6, ds*0.48);   // drop the shadow below the larger sprite
+  if(invuln>0 && (Math.floor(timeT*20)%2===0)) return;
+  var by=Math.sin(bob)*h*0.03, gx=psx, gy=psy+by;
+  // warm glow so the ship separates from the floor
+  var gg=ctx.createRadialGradient(gx,gy,h*0.1,gx,gy,h*0.78);
+  gg.addColorStop(0,'rgba(255,200,150,0.26)'); gg.addColorStop(1,'rgba(255,200,150,0)');
+  ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(gx,gy,h*0.78,0,6.283); ctx.fill();
+  // ship height (and x) in the play box drives the chase-camera view swing; the ship's own
+  // roll is the steering lean (bank); the rail tilt (camBank) is layered on as a 2D rotate.
+  var r=playRect(), midY=(r.y0+r.y1)*0.5, midX=(r.x0+r.x1)*0.5;
+  var shipYn=clamp((midY-psy)/((r.y1-r.y0)*0.5),-1,1);       // v13 simulate normalization: +1 top, -1 bottom, 0 centre
+  var shipXn=clamp((psx-midX)/((r.x1-r.x0)*0.5),-1,1);
+  var effEl=SHIP3D_LOOKDOWN - shipYn*SHIP3D_CAMSENS;
+  // nose into the motion (Star Fox): yaw with horizontal velocity, pitch with vertical
+  // velocity (climb = nose up); attitude is instant while position carries the weight.
+  var _mv=TUNE.maxv*W, nvx=clamp(vsx/_mv,-1,1), nvy=clamp(vsy/_mv,-1,1);
+  var bufc=SHIP3D.render(bank, -nvy*SHIP3D_PITCHVEL, effEl, shipXn*SHIP3D_PARYAW - nvx*SHIP3D_YAWVEL);
+  ctx.save(); ctx.translate(gx,gy); ctx.rotate((SS.camBank||0)*0.6);
+  if(bufc) ctx.drawImage(bufc, -ds*0.5, -ds*0.5, ds, ds);
+  if(muz>0){ ctx.fillStyle='#bdfcff'; ctx.beginPath(); ctx.arc(0,-ds*0.30,h*0.08*muz+2,0,6.283); ctx.fill(); }
+  ctx.restore();
+}
+function drawRing(rg){
+  var p=SS.project(rg.wx,rg.wy,rg.d), R=Math.max(5,rg.rad*p.scale), a=rg.passed?0.4:1;
+  ctx.globalAlpha=0.28*a; ctx.strokeStyle='#ffd86a'; ctx.lineWidth=Math.max(3,R*0.32);
+  ctx.beginPath(); ctx.arc(p.sx,p.sy,R,0,6.283); ctx.stroke();
+  ctx.globalAlpha=a; ctx.strokeStyle='#ffe9a8'; ctx.lineWidth=Math.max(1.5,R*0.15);
+  ctx.beginPath(); ctx.arc(p.sx,p.sy,R,0,6.283); ctx.stroke();
+  ctx.strokeStyle='#fff7e0'; ctx.lineWidth=Math.max(1,R*0.06);
+  ctx.beginPath(); ctx.arc(p.sx,p.sy,R*0.98,0,6.283); ctx.stroke();
+  ctx.globalAlpha=1;
+}
+function bracketMark(x,y,s,a,col,lw){
+  ctx.globalAlpha=a; ctx.strokeStyle=col; ctx.lineWidth=lw; var c=s*0.45;
+  ctx.beginPath(); ctx.moveTo(x-s,y-s+c); ctx.lineTo(x-s,y-s); ctx.lineTo(x-s+c,y-s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+s-c,y-s); ctx.lineTo(x+s,y-s); ctx.lineTo(x+s,y-s+c); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-s,y+s-c); ctx.lineTo(x-s,y+s); ctx.lineTo(x-s+c,y+s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+s-c,y+s); ctx.lineTo(x+s,y+s); ctx.lineTo(x+s,y+s-c); ctx.stroke();
+  ctx.globalAlpha=1;
+}
+function drawReticle(){
+  // twin bracket reticle: the NEAR (large) frame sits on the aim point, the FAR (small)
+  // frame is thrown a fixed distance further out along the aim direction, so both move
+  // in perfect sync; they overlap at rest and separate as you steer.
+  var nxp=aimSX, nyp=aimSY;
+  var fxp=aimFarSX, fyp=aimFarSY;
+  var nS=Math.max(12,SS.W*0.040)*TUNE.retiSize, fS=nS*TUNE.retiFScale;
+  var lw=Math.max(2,SS.W*0.006);
+  var sep=Math.abs(fxp-nxp)+Math.abs(fyp-nyp);
+  if(sep>1){ ctx.globalAlpha=0.10; ctx.strokeStyle='#8ffcff'; ctx.lineWidth=Math.max(1,SS.W*0.003);
+    ctx.beginPath(); ctx.moveTo(psx,psy); ctx.lineTo(nxp,nyp); ctx.lineTo(fxp,fyp); ctx.stroke(); ctx.globalAlpha=1; }
+  bracketMark(nxp,nyp, nS, 0.88, '#8ffcff', lw);
+  bracketMark(fxp,fyp, fS, 0.5, '#8ffcff', Math.max(1.5,lw*0.7));
+}
+function drawSerpentPart(o,isHead){
+  var p=SS.project(o.wx,o.wy,o.d), s=p.scale, r=Math.max(2.5,(isHead?0.72:0.55)*s);
+  drawShadow(o.wx,o.d,isHead?0.5:0.4);
+  ctx.fillStyle='#5f2390'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r*1.05,0,6.283); ctx.fill();
+  ctx.fillStyle='#b15cff'; ctx.beginPath(); ctx.arc(p.sx,p.sy,r,0,6.283); ctx.fill();
+  ctx.fillStyle='#d9a8ff'; ctx.beginPath(); ctx.arc(p.sx-r*0.28,p.sy-r*0.28,r*0.45,0,6.283); ctx.fill();
+  if(isHead){
+    ctx.fillStyle='#ffd36a';
+    ctx.beginPath(); ctx.moveTo(p.sx-r*0.5,p.sy-r*0.75); ctx.lineTo(p.sx-r*0.18,p.sy-r*0.42); ctx.lineTo(p.sx-r*0.72,p.sy-r*0.45); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(p.sx+r*0.5,p.sy-r*0.75); ctx.lineTo(p.sx+r*0.18,p.sy-r*0.42); ctx.lineTo(p.sx+r*0.72,p.sy-r*0.45); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#0c0020'; ctx.beginPath(); ctx.arc(p.sx-r*0.38,p.sy-r*0.05,r*0.22,0,6.283); ctx.fill(); ctx.beginPath(); ctx.arc(p.sx+r*0.38,p.sy-r*0.05,r*0.22,0,6.283); ctx.fill();
+    ctx.fillStyle='#7fe6ff'; ctx.beginPath(); ctx.arc(p.sx-r*0.38,p.sy-r*0.05,r*0.1,0,6.283); ctx.fill(); ctx.beginPath(); ctx.arc(p.sx+r*0.38,p.sy-r*0.05,r*0.1,0,6.283); ctx.fill();
+  }
+  var mr=Math.max(6,r*1.18);
+  ctx.globalAlpha=0.85; ctx.strokeStyle='#e2b6ff'; ctx.lineWidth=Math.max(1.2,r*0.14);
+  ctx.beginPath(); ctx.arc(p.sx,p.sy,mr,0,6.283); ctx.stroke(); ctx.globalAlpha=1;
+}
+function drawFx(){
+  var i,p;
+  for(i=0;i<fx.length;i++){
+    p=fx[i]; var a=clamp(p.life/p.max,0,1);
+    if(p.kind==='spark'){ ctx.globalAlpha=a; ctx.fillStyle=p.col; ctx.fillRect(p.x-p.sz*0.5,p.y-p.sz*0.5,p.sz,p.sz); }
+    else { var t=1-a, r=p.r0+(p.r1-p.r0)*t; ctx.globalAlpha=a*0.8; ctx.strokeStyle=p.col; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(p.x,p.y,r,0,6.283); ctx.stroke(); }
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawJoystick(){
+  var R=Math.min(W,H)*0.16;
+  var dxj=joyX-joyX0, dyj=joyY-joyY0, mag=Math.sqrt(dxj*dxj+dyj*dyj), tx, ty;
+  if(mag>R){ tx=joyX0+dxj/mag*R; ty=joyY0+dyj/mag*R; } else { tx=joyX0+dxj; ty=joyY0+dyj; }
+  ctx.globalAlpha=0.35; ctx.strokeStyle='#bff8ff'; ctx.lineWidth=Math.max(2,R*0.06);
+  ctx.beginPath(); ctx.arc(joyX0,joyY0,R,0,6.283); ctx.stroke();
+  ctx.globalAlpha=0.5; ctx.fillStyle='#9fe9ff'; ctx.beginPath(); ctx.arc(tx,ty,R*0.42,0,6.283); ctx.fill();
+  ctx.globalAlpha=1;
+}
+function render(){
+  ctx.save();
+  ctx.fillStyle='#070726'; ctx.fillRect(0,0,W,H);   // base so a banked frame has no corner gaps
+  if(shake>0){ var s=shake*8; ctx.translate(rand(-s,s),rand(-s,s)); }
+  // ---- world layer: banks with the rail; slight overscan covers the tilt ----
+  ctx.save();
+  var cb=SS.camBank||0;
+  ctx.translate(W/2,H/2); ctx.rotate(cb); ctx.scale(1.09,1.09); ctx.translate(-W/2,-H/2);
+  SS.sky(ctx,timeT); SS.ground(ctx);
+  (function(){ var hy=SS.horizonY, rg=ctx.createLinearGradient(0,hy,0,H);
+    rg.addColorStop(0,'rgba(255,150,196,0.26)'); rg.addColorStop(0.55,'rgba(255,150,196,0.05)'); rg.addColorStop(1,'rgba(255,150,196,0)');
+    ctx.fillStyle=rg; var bw=Math.max(40,W*0.22); ctx.fillRect(SS.cx+SS.camDX*0.5-bw*0.5,hy,bw,H-hy); })();
+  var dl=[],i;
+  for(i=0;i<pillars.length;i++) dl.push({d:pillars[i].d,k:'pillar',o:pillars[i]});
+  for(i=0;i<foes.length;i++) dl.push({d:foes[i].d,k:foes[i].kind,o:foes[i]});
+  for(i=0;i<orbs.length;i++) dl.push({d:orbs[i].d,k:'orb',o:orbs[i]});
+  for(i=0;i<bullets.length;i++) dl.push({d:bullets[i].d,k:'bullet',o:bullets[i]});
+  for(i=0;i<serpents.length;i++){ var sp_=serpents[i]; if(!sp_.alive)continue;
+    if(sp_.head.alive) dl.push({d:sp_.head.d,k:'shead',o:sp_.head});
+    for(var sj=0;sj<sp_.segs.length;sj++){ if(sp_.segs[sj].alive) dl.push({d:sp_.segs[sj].d,k:'sseg',o:sp_.segs[sj]}); }
+  }
+  for(i=0;i<rings.length;i++){ if(rings[i].alive) dl.push({d:rings[i].d,k:'ring',o:rings[i]}); }
+  SS.depthSort(dl);
+  for(i=0;i<dl.length;i++){
+    var it=dl[i];
+    if(it.k==='pillar') drawPillar(it.o);
+    else if(it.k==='drone') drawDrone(it.o);
+    else if(it.k==='turret') drawTurret(it.o);
+    else if(it.k==='orb') drawOrb(it.o);
+    else if(it.k==='bullet') drawBullet(it.o);
+    else if(it.k==='shead') drawSerpentPart(it.o,true);
+    else if(it.k==='sseg') drawSerpentPart(it.o,false);
+    else if(it.k==='ring') drawRing(it.o);
+  }
+  drawFx();
+  ctx.restore();   // end world layer
+  if(state==='PLAY'||state==='OVER') drawPlayer();   // ship in cockpit space, leans into turns
+  ctx.restore();
+  if(flash>0){ ctx.globalAlpha=flash*0.5; ctx.fillStyle='#ff406a'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+  if(state==='PLAY'){ drawReticle(); drawHUD(); if(joyActive) drawJoystick(); }
+  else if(state==='TITLE') drawTitle();
+  else if(state==='READY'){ drawHUD(); drawReady(); }
+  else if(state==='OVER'){ drawHUD(); drawOver(); }
+  if(lastError) drawErr();
+}
+
+/* =====================================================================
+   HUD, SCREENS, TEXT
+   ===================================================================== */
+function txt(s,x,y,size,col,al,outline){
+  ctx.font='700 '+size+'px "Trebuchet MS", system-ui, sans-serif';
+  ctx.textAlign=al||'left'; ctx.textBaseline='alphabetic';
+  if(outline){ ctx.lineWidth=Math.max(2,size*0.14); ctx.strokeStyle='#0a0a2a'; ctx.lineJoin='round'; ctx.strokeText(s,x,y); }
+  ctx.fillStyle=col; ctx.fillText(s,x,y);
+}
+function drawHUD(){
+  var pad=Math.max(8,W*0.02), sz=Math.max(12,H*0.034), i;
+  txt('SCORE '+score, pad, pad+sz, sz, '#eafdff','left',true);
+  txt('ZONE '+zone, W*0.5, pad+sz, sz, '#ffe49a','center',true);
+  txt(Math.round(fpsVal)+' FPS', pad, pad+sz*2.0, Math.max(10,sz*0.62), (fpsVal>=50?'#7fffba':(fpsVal>=30?'#ffe49a':'#ff8a8a')), 'left', true);
+  var cw=sz*0.9, x=W-pad-cw, y=pad+sz*0.2;
+  for(i=0;i<lives;i++){
+    var xx=x-i*cw*1.05;
+    ctx.fillStyle='#9fe9ff'; ctx.strokeStyle='#0a0a2a'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(xx,y); ctx.lineTo(xx+cw*0.5,y+sz*0.72); ctx.lineTo(xx+cw,y); ctx.lineTo(xx+cw*0.5,y+sz*0.3); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+}
+function drawTitle(){
+  ctx.globalAlpha=0.22; ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
+  var cxs=W*0.5, ty=H*0.34;
+  txt('AETHER RUSH', cxs, ty, Math.max(26,H*0.10), '#ffe49a','center',true);
+  txt('powered by HYPERSCALE', cxs, ty+H*0.07, Math.max(11,H*0.028), '#9fe9ff','center',true);
+  txt('BUILD '+BUILD, cxs, ty+H*0.115, Math.max(10,H*0.024), '#cfe9ff','center',true);
+  if(Math.floor(timeT*1.6)%2===0) txt('TAP  /  PRESS  TO  START', cxs, H*0.74, Math.max(12,H*0.034), '#ffffff','center',true);
+  txt('move to aim, you fire automatically', cxs, H*0.83, Math.max(9,H*0.022), '#bfe0ef','center',true);
+  if(hi>0) txt('BEST '+hi, cxs, H*0.89, Math.max(9,H*0.022), '#ffd34a','center',true);
+}
+function drawReady(){
+  var pulse=0.85+0.15*Math.sin(timeT*8);
+  txt('GET READY', W*0.5, H*0.5, Math.max(26,H*0.10)*pulse, '#ffe49a','center',true);
+}
+function drawOver(){
+  ctx.globalAlpha=0.45; ctx.fillStyle='#10001a'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
+  var cxs=W*0.5;
+  txt('GAME OVER', cxs, H*0.4, Math.max(26,H*0.10), '#ff6a8a','center',true);
+  txt('SCORE '+score, cxs, H*0.52, Math.max(16,H*0.045), '#eafdff','center',true);
+  txt('BEST '+hi, cxs, H*0.6, Math.max(12,H*0.032), '#ffd34a','center',true);
+  if(Math.floor(timeT*1.6)%2===0) txt('TAP  /  PRESS  TO  RETRY', cxs, H*0.76, Math.max(13,H*0.036), '#ffffff','center',true);
+}
+function drawErr(){
+  ctx.font='12px monospace'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  ctx.fillStyle='#ff5050'; ctx.fillText('ERR: '+lastError, 4, H-6);
+}
+
+/* =====================================================================
+   CANVAS FIT, INPUT, LOOP, INIT
+   ===================================================================== */
+function fitCanvas(){
+  var vw=(window.innerWidth||900), vh=(window.innerHeight||540);
+  var targetLong=460, lng=Math.max(vw,vh), sc=Math.max(1,Math.round(lng/targetLong));
+  var lw=Math.max(2,Math.round(vw/sc)), lh=Math.max(2,Math.round(vh/sc));
+  canvas.width=lw; canvas.height=lh;
+  canvas.style.width=vw+'px'; canvas.style.height=vh+'px';
+  W=lw; H=lh;
+  if(ctx) ctx.imageSmoothingEnabled=false;
+  SS.resize(lw,lh);
+  playerScale=SS.project(0,0,PLAYER_D).scale;
+  syncPlayerWorld();
+}
+function locFromEvent(e){
+  var r=canvas.getBoundingClientRect();
+  var X=(e.clientX!=null)?e.clientX:(e.touches&&e.touches[0]?e.touches[0].clientX:0);
+  var Y=(e.clientY!=null)?e.clientY:(e.touches&&e.touches[0]?e.touches[0].clientY:0);
+  ptrX=(X-r.left)/Math.max(1,r.width)*W; ptrY=(Y-r.top)/Math.max(1,r.height)*H;
+}
+function onDown(e){
+  audioInit();
+  if(state==='TITLE'||state==='OVER'){ beginReady(); if(e.preventDefault)e.preventDefault(); return; }
+  locFromEvent(e); joyX0=joyX=ptrX; joyY0=joyY=ptrY; joyActive=true; ptrActive=true; if(e.preventDefault)e.preventDefault();
+}
+function onMove(e){ if(ptrActive){ locFromEvent(e); joyX=ptrX; joyY=ptrY; if(e.preventDefault)e.preventDefault(); } }
+function onUp(){ ptrActive=false; joyActive=false; }
+function onKey(e,down){
+  var k=e.key;
+  if(down && (state==='TITLE'||state==='OVER') && (k===' '||k==='Enter')){ beginReady(); if(e.preventDefault)e.preventDefault(); return; }
+  if(k==='ArrowLeft'||k==='a'||k==='A') keyL=down;
+  else if(k==='ArrowRight'||k==='d'||k==='D') keyR=down;
+  else if(k==='ArrowUp'||k==='w'||k==='W') keyU=down;
+  else if(k==='ArrowDown'||k==='s'||k==='S') keyD=down;
+  if(down && k===' ' && e.preventDefault) e.preventDefault();
+}
+function toggleFs(){
+  try{
+    var el=document.documentElement;
+    if(!document.fullscreenElement){ if(el.requestFullscreen) el.requestFullscreen(); }
+    else { if(document.exitFullscreen) document.exitFullscreen(); }
+  }catch(e){}
+}
+var lastTs=0, gamePaused=false;
+// Background catch-up defense (BACKGROUND-CATCHUP-MEMO-v3, Faces 1 and 3). Pure and testable:
+// bound the wall time simulated in one animation frame (Face 1) and split it into at most
+// STEP_CAP bounded sub-steps (Face 3). A 60fps frame is a single step of the real dt, so
+// normal feel is unchanged; a long gap or hitch advances at most MAX_FRAME_GAP, in <= STEP_CAP
+// steps of <= MAX_DT each, and the backlog beyond that is dropped (never replayed).
+function frameStep(nowMs, lastMs){
+  var gap=(nowMs-lastMs)/1000; if(!(gap>=0)) gap=0;
+  var longGap = gap > MAX_FRAME_GAP;
+  var advance = longGap ? MAX_FRAME_GAP : gap;
+  var steps = Math.ceil(advance/MAX_DT); if(steps<1) steps=1; if(steps>STEP_CAP) steps=STEP_CAP;
+  var dt = advance/steps; if(dt>MAX_DT) dt=MAX_DT;
+  return { dt:dt, steps:steps, longGap:longGap };
+}
+// Page Visibility (solo title: pause on hidden, resync on return, never resume into a backlog).
+function onVisibility(hidden){
+  if(hidden){ gamePaused=true; }
+  else { gamePaused=false; lastTs=0; }
+}
+function loop(ts){
+  if(!lastTs) lastTs=ts;
+  if(gamePaused){ lastTs=ts; requestAnimationFrame(loop); return; }
+  var fs=frameStep(ts,lastTs); lastTs=ts;
+  var fdt=fs.dt*fs.steps;
+  if(fdt>0){ _fpsAcc+=1/fdt; _fpsN++; if(_fpsN>=12){ fpsVal=_fpsAcc/_fpsN; _fpsAcc=0; _fpsN=0; } }
+  try{ for(var _s=0;_s<fs.steps;_s++) update(fs.dt); render(); }
+  catch(e){ lastError=(e&&e.message)?e.message:String(e); try{ drawErr(); }catch(_e){} }
+  requestAnimationFrame(loop);
+}
+function init(){
+  canvas=document.getElementById('c'); ctx=canvas.getContext('2d');
+  fitCanvas(); resetGame();
+  window.addEventListener('resize',fitCanvas);
+  window.addEventListener('orientationchange',fitCanvas);
+  document.addEventListener('visibilitychange',function(){ onVisibility(document.hidden); });
+  if(window.PointerEvent){
+    canvas.addEventListener('pointerdown',onDown);
+    window.addEventListener('pointermove',onMove);
+    window.addEventListener('pointerup',onUp);
+    window.addEventListener('pointercancel',onUp);
+  } else {
+    canvas.addEventListener('mousedown',onDown);
+    window.addEventListener('mousemove',onMove);
+    window.addEventListener('mouseup',onUp);
+    canvas.addEventListener('touchstart',onDown,{passive:false});
+    canvas.addEventListener('touchmove',onMove,{passive:false});
+    window.addEventListener('touchend',onUp);
+  }
+  window.addEventListener('keydown',function(e){ onKey(e,true); });
+  window.addEventListener('keyup',function(e){ onKey(e,false); });
+  var fb=document.getElementById('fsbtn'); if(fb) fb.addEventListener('click',toggleFs);
+  requestAnimationFrame(loop);
+}
+init();
+
+/*HOOK*/
+})();
+</script>
+</body>
+</html>
