@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>GUNMETAL OVERTHRUST controllab v2.00</title>
+<style>
+:root{color-scheme:dark;--bg:#0d0b14;--panel:#16131f;--line:#2e2740;--ink:#e8e2f2;--dim:#9a90ad;--hot:#ffb766;--on:#34405a;--ok:#1f5a33;--bad:#6a1f1f}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);height:100%;overflow:hidden;font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;-webkit-user-select:none;user-select:none}
+body{box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#bar{height:34px;display:flex;align-items:center;gap:5px;padding:0 6px;background:var(--panel);border-bottom:1px solid var(--line);box-sizing:border-box;position:relative;z-index:5}
+#badge{font-weight:bold;color:var(--hot);white-space:nowrap}
+#dev{flex:1;min-width:0;color:var(--dim);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button{font:bold 11px ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:#221d30;border:1px solid var(--line);border-radius:4px;padding:5px 7px;cursor:pointer;touch-action:manipulation;white-space:nowrap}
+button.on{background:var(--on);border-color:#7188a6;color:#fff}
+#play{position:fixed;left:0;right:0;bottom:0;top:calc(34px + env(safe-area-inset-top));touch-action:none;background:#000}
+#stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+canvas#cv{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#help.drawer{position:fixed;top:34px;right:0;bottom:0;width:min(380px,94vw);background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:6px 8px 40px;box-sizing:border-box;transform:translateX(105%);transition:transform .15s;z-index:6}
+#help.drawer.open{transform:none}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:4px 0}
+.lbl{min-width:74px;color:var(--dim)}
+.row input{flex:1;min-width:90px}
+.val{min-width:60px;text-align:right;color:var(--dim)}
+.gate{padding:6px;border-radius:4px;border:1px solid var(--line);cursor:pointer;margin:6px 0}
+.gate.green{background:var(--ok)}
+.gate.red{background:var(--bad)}
+.sub{margin:10px 0 3px;color:var(--hot)}
+table{border-collapse:collapse;width:100%}
+td{border-top:1px solid var(--line);padding:3px 4px;vertical-align:top}
+td:first-child{color:var(--dim);white-space:nowrap}
+#notes{color:var(--dim);margin-top:14px;border-top:1px solid var(--line);padding-top:8px}
+#notes b{color:var(--ink)}
+#turn{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--bg);z-index:20;text-align:center;padding:20px}
+#turn .ph{width:46px;height:80px;border:3px solid var(--hot);border-radius:8px;transform:rotate(90deg);margin:18px}
+#boot{display:none;position:fixed;left:0;right:0;bottom:0;background:#000;color:#ff4a4a;padding:6px;z-index:30}
+</style>
+</head>
+<body>
+<div id="bar"><span id="badge">GO CONTROL LAB v2.00</span><button id="bScheme">SCHEME A</button><button id="bGrid">480x270</button><button id="bHelp">HELP</button><button id="bBuzz">BUZZ</button><button id="bFs">FULL</button><span id="dev"></span></div>
+<div id="play"><div id="stage"><canvas id="cv" width="480" height="270"></canvas></div><canvas id="ov"></canvas></div>
+<div id="help" class="drawer"><div class="sub">TUNE (the lab's knobs)</div><div id="helpDyn"></div>
+<div class="sub">CONTROLS</div>
+<table>
+<tr><td>Phone, left thumb</td><td>Move. Push clearly UP to jump; keep holding to fly (burns EN). A diagonal run never jumps. Push clearly DOWN on a girder to drop through. Scheme B: a quick sideways FLICK is a boost dash.</td></tr>
+<tr><td>Phone, right thumb</td><td>Relative to the target, not the screen: push TOWARD it fires the machine gun (hold keeps firing); UP charges the cannon (release to fire; the phone buzzes when full); DOWN fires the missiles; flick AWAY cycles targets; hold AWAY drops the lock. Scheme A: a quick TAP is a boost dash.</td></tr>
+<tr><td>Gamepad</td><td>Left stick moves; A jumps and flies; B boosts; RT machine gun, LT charge cannon, RB missiles; LB cycles targets (hold LB to drop the lock).</td></tr>
+<tr><td>Keyboard</td><td>A D or arrows move; Space or W jumps and flies; S drops; Shift boosts; J K L fire; Tab cycles (hold Tab to drop the lock).</td></tr>
+<tr><td>Forgiving</td><td>A jump still counts just after leaving a ledge, and a jump pressed just before landing is remembered. The pit costs armor (AP), not a life.</td></tr>
+</table>
+<div id="notes">
+<b>NOTES</b> (append only, below the controls)<br><br>
+<b>What to judge.</b> Your thumbs pick the scheme: A (boost on a right-stick tap, your first scheme) or B (boost on a left-stick flick, pitch section 5). Try both on the strip: the girders, the pit, the targets, and the SENTRY turret on the right that shoots back.<br><br>
+<b>What to judge in v2.00.</b> The feel you called stiff. The jump now squats before it leaves the ground, rises high while you hold up and cuts short when you let go, falls faster than it rises, and lands with a bounce and dust; reversing at speed skids; the walk strides with the ground. The guns kick: the machine gun flashes and throws casings, the cannon blasts with a ring and a shake, the missiles pop the shoulder pods. The mech is the art lab's new VANGUARD, on the same street.<br><br>
+<b>The device line</b> in the bar says what this page was allowed to do. VIBRATE reads "accepted" when the phone took a buzz, "refused" or "blocked" when the viewer stopped it (try BUZZ). GAMEPAD reads "connected" once a pad is seen (press a button on it), "blocked" when the viewer forbids it. Inside a claude.ai page either may be blocked; if so, say which, and the seat asks the Studio Head for a public test page.<br><br>
+<b>Provenance.</b> The mech is the art lab's STANDARD set (go-parts.js v1.00); the city is go-art.js v1.00; the mover and the controls are go-mech.js v1.00; the shell is go-shell.js v1.01, from STUDIO SEED v1.06. Assembled by build-labs.js from verbatim slices, each named with its sha256 in the page source.<br>
+From v2.00: go-art.js v2.00 and go-parts.js v2.00 (the new mechs and the street), go-mech.js v2.00 (the mover), go-view.js v2.00 (how the mover is drawn: poses, effects), the same slices the art lab carries.<br><br>
+VERSION HISTORY<br>
+v2.00 (2026-09-28): the Director's notes on feel and art. A jump squat, a variable jump height (let go of up to cut it short), a faster fall, landing and skid recovery; the new SD VANGUARD drawn by go-view with its poses, recoil and gun effects; the street at human scale; shots leave the barrel on screen.<br>
+v1.01 (2026-09-28): the canvas declares its logical grid (data-logical-width and data-logical-height, doc 11 v1.02 section 3), so studio tools read it in grid pixels; go-shell.js v1.01. Nothing on screen changes.<br>
+v1.00 (2026-09-28): first cut. Schemes A and B, touch, gamepad and keyboard, lock-on with cycling and release, machine gun, charge cannon, missiles, stagger, jump, flight, boost, coyote time and the jump buffer, the pit, the turret, the live palette gate, the device line.
+</div></div>
+<div id="turn"><div class="ph"></div><b>TURN YOUR PHONE SIDEWAYS</b><div>GUNMETAL OVERTHRUST plays wide (16:9). Unfolded, the frame shows letterboxed.</div></div>
+<div id="boot"></div>
+<script>
+/* ==== SLICE src/go-art.js sha256:68d1095c7fa295f96b3c7a789dceeef39d2efb63f1cc4288ef47df59e6c166fe : BEGIN ==== */
+/* =============================================================================
+   GO-ART v2.00 | GUNMETAL OVERTHRUST | the art data and the index renderer
+   -----------------------------------------------------------------------------
+   One source for every pixel the title owns (pitch section 6, doc 12 section 7):
+   the master palette, the level palette with its grades, the mech assembler
+   (SD mechs built from hand-placed parts and animated by clips), the shading
+   passes, the backdrop painters, the effects particles, the pixel font, and
+   the compositor. Environment neutral: no DOM, so the labs, the gates and the
+   game all run the same code. Labs carry this file verbatim (08 section 3).
+
+   v2.00 (2026-09-28), the Director's art notes of the day: chunkier, more
+   vibrant, anime inspired and animated mechs after pxmlst's SD mobile suits
+   (thick outlines, 4 to 5 saturated tones a plate, the checker shine, the flat
+   ground shadow, big weapons with animated fire), more fluid movement, and
+   Metal Slug's density of detail in the backdrop. The palette becomes vibrant
+   (blue and white, hazard orange, enemy green), the mech becomes a compound
+   of parts placed by clip frames, and every part casts a hard shadow on what
+   sits behind it.
+
+   THE COHESION RULES, BY CONSTRUCTION (pitch section 6):
+   1. One pixel grid: every layer and sprite writes palette INDICES into one
+      W x H index frame at whole-pixel positions; the frame is resolved through
+      one LUT and presented at an integer scale with smoothing off.
+   2. One palette: the LUT is the level palette under its grade; nothing else
+      can reach the screen. The palette gate checks the presented pixels.
+   3. One key light: the sun (+x, from above) casts every part's shadow down
+      and away, lights every building edge, and places the player's rim.
+   4. Depth by lower contrast and a shift toward the sky colour, never another
+      drawing style: far layers draw from ramps next to the sky's.
+   5. The same edge and cluster rules for props and characters: a dark outline
+      ('k'), ramps of 4 to 5 steps, no stray single pixels.
+   ============================================================================= */
+var GOART=(function(){
+'use strict';
+var VERSION='v2.00';
+
+/* ---- 1. PALETTE. Index 0 is transparent. MASTER 1..47 (mechs, metal, glow,
+        UI), LEVEL 48..79 (the place), RIM 80 (reserved: the player's rim
+        light, used by nothing else in any grade; the gate proves it). ---- */
+var MASTER=[
+ null,
+ '#0d0b14','#1b1624',                                    //  1 K0 outline,  2 K1 deep shadow
+ '#0f1b4d','#1b3d9e','#2468d8','#3f9af6','#95d8ff',      //  3..7   cobalt paint (STANDARD)
+ '#3e1203','#8c2c05','#d6510a','#ff8b1d','#ffcd5e',      //  8..12  hazard orange paint (HEAVY)
+ '#252a35','#3d4457','#5f687f','#8f99b1','#ccd4e5',      // 13..17  frame steel (blue grey)
+ '#0c2233','#15506e','#2fa3cf','#a6f2ff',                // 18..21  glass and eyes
+ '#7a1a14','#d8332a','#ff7d2a','#ffc94a','#fff6d8',      // 22..26  glow: deep red to white hot
+ '#e0a824','#f2eee4',                                    // 27 hazard yellow, 28 decal white
+ '#7dff8a','#ff4a4a',                                    // 29 lock green (UI), 30 ERR red (UI)
+ '#132410','#234318','#386a25','#58993a','#94cf5a',      // 31..35  enemy green paint
+ '#3b3640','#5d5763','#8a8390',                          // 36..38  smoke
+ '#16131d','#241f2c',                                    // 39 FG silhouette, 40 FG edge
+ '#4e5874','#98a4c0','#d9e1f0','#ffffff',                // 41..44  white panels (STANDARD)
+ '#16171c','#272a33','#3c404c'                           // 45..47  charcoal panels (HEAVY)
+];
+var MASTER_N=MASTER.length-1;
+var RAMPS=[[3,4,5,6,7],[8,9,10,11,12],[13,14,15,16,17],[31,32,33,34,35],[18,19,20,21],[41,42,43,44],[45,46,47],[36,37,38]];
+var L0=48;                                               // first level index
+var LEVEL_NAMES=['sky0','sky1','sky2','sky3','sky4','sky5','sky6','sky7','sky8','sun',
+                 'far','farLit','mid','midLit','near','nearLit','nearDark','nearLight',
+                 'street','asphalt','walk','curb','woodDark','wood','woodLight','rustDark','rust',
+                 'leafDark','leaf','neonPink','signCream','stain'];
+var LI={}; for(var li=0;li<LEVEL_NAMES.length;li++)LI[LEVEL_NAMES[li]]=L0+li;
+var RIM=80;
+function grade(sky,rest){ var o={},i; for(i=0;i<9;i++)o['sky'+i]=sky[i]; for(var k in rest)o[k]=rest[k]; return o; }
+var LEVELS={
+  'CITY':{
+    name:'CITY STREETS', light:{dx:1},                    // the sun sits to the right: every lit edge faces +x
+    grades:{
+      SUNSET:{ rim:'#ffb766', shift:0, cols:grade(
+        ['#1b1236','#2c1747','#47205a','#6e2961','#9c3561','#c94d59','#ec7350','#f9a257','#fdd58a'],
+        {sun:'#fff3cf',far:'#4a2156',farLit:'#7a3a5e',mid:'#2a163b',midLit:'#4c2448',near:'#190f26',nearLit:'#2e1a36',nearDark:'#0e0816',nearLight:'#3a2444',
+         street:'#110b19',asphalt:'#2b2230',walk:'#3d3140',curb:'#574856',woodDark:'#27160f',wood:'#4d2c1b',woodLight:'#7e4829',rustDark:'#3c1b14',rust:'#733523',
+         leafDark:'#172014',leaf:'#2f4020',neonPink:'#ff4fa3',signCream:'#dcc39a',stain:'#241428'})},
+      DUSK:{ rim:'#ff8e7c', shift:0, cols:grade(
+        ['#120d2a','#1d1238','#2d1845','#43205a','#5e2a66','#7f3569','#a9476a','#cf6a67','#e89a7a'],
+        {sun:'#f7dcc4',far:'#33183f',farLit:'#562a52',mid:'#1e1130',midLit:'#381b3d',near:'#130b1f',nearLit:'#23142c',nearDark:'#0a0612',nearLight:'#2c1c36',
+         street:'#0d0814',asphalt:'#211a27',walk:'#302634',curb:'#443845',woodDark:'#1d100c',wood:'#3a2116',woodLight:'#5e3522',rustDark:'#2d1410',rust:'#54271a',
+         leafDark:'#101810',leaf:'#233019',neonPink:'#ff5cb2',signCream:'#b8a07e',stain:'#1a0f1f'})},
+      NIGHT:{ rim:'#7cf0d8', shift:-1, cols:grade(
+        ['#06070f','#0a0d1b','#0e1326','#131a31','#18213b','#1e2845','#25304f','#2d395a','#384568'],
+        {sun:'#d6e2ee',far:'#161c33',farLit:'#232c48',mid:'#0e1224',midLit:'#1a2138',near:'#090b17',nearLit:'#131729',nearDark:'#04050b',nearLight:'#1c2540',
+         street:'#07080f',asphalt:'#15161f',walk:'#1e1f2a',curb:'#2c2d3a',woodDark:'#110d0d',wood:'#211919',woodLight:'#382a27',rustDark:'#1b110f',rust:'#301c17',
+         leafDark:'#0a110c',leaf:'#15221a',neonPink:'#ff66c8',signCream:'#8e8c9e',stain:'#0b0c17'})}
+    }
+  }
+};
+function hexRGB(h){ return [parseInt(h.substr(1,2),16),parseInt(h.substr(3,2),16),parseInt(h.substr(5,2),16)]; }
+/* makeLut(level, grade): the graded palette as 256 RGB triples (null = unused).
+   A grade may SHIFT the master paint and steel ramps (night darkens the paint by
+   one step inside its own ramp), so the grade never invents a colour. */
+function makeLut(levelKey,gradeKey){
+  var lv=LEVELS[levelKey], gr=lv.grades[gradeKey], rgb=new Array(256), i, r, j;
+  for(i=0;i<256;i++)rgb[i]=null;
+  for(i=1;i<=MASTER_N;i++)rgb[i]=hexRGB(MASTER[i]);
+  if(gr.shift){
+    for(r=0;r<RAMPS.length;r++){ var rp=RAMPS[r];
+      for(j=0;j<rp.length;j++){ var k=Math.max(0,Math.min(rp.length-1,j+gr.shift)); rgb[rp[j]]=hexRGB(MASTER[rp[k]]); } }
+  }
+  for(i=0;i<LEVEL_NAMES.length;i++){ var c=gr.cols[LEVEL_NAMES[i]]; if(!c)throw new Error('GOART: grade '+gradeKey+' has no colour for '+LEVEL_NAMES[i]); rgb[L0+i]=hexRGB(c); }
+  rgb[RIM]=hexRGB(gr.rim);
+  var u32=new Uint32Array(256);
+  for(i=0;i<256;i++){ var cc=rgb[i]; u32[i]=cc?((255<<24)|(cc[2]<<16)|(cc[1]<<8)|cc[0])>>>0:0; }
+  return {rgb:rgb,u32:u32,level:levelKey,grade:gradeKey};
+}
+
+/* ---- 2. PART SETS AND THE PIXEL LEGEND. Every map is text, one character a
+        pixel. Shared by every set:
+        .  clear          k  outline (1)        x  deep shadow (2)
+        a..e  frame steel, dark to light       g h i j  glass and eyes
+        q r o y w  glow, deep red to white hot  H  hazard yellow   W  decal white
+        Per mech set: 1..5 the paint ramp, A..D the panel ramp, s t the accents.
+        The CITY set (props) adds the level's materials by letter. ---- */
+var BASECH={'.':0,k:1,x:2,a:13,b:14,c:15,d:16,e:17,g:18,h:19,i:20,j:21,q:22,r:23,o:24,y:25,w:26,H:27,W:28};
+var SETS={
+  STANDARD:{ name:'STANDARD', plate:[3,4,5,6,7], panel:[41,42,43,44], s:23, t:22 },
+  HEAVY:   { name:'HEAVY',    plate:[8,9,10,11,12], panel:[45,46,47,15], s:27, t:1 },
+  ENEMY:   { name:'ENEMY',    plate:[31,32,33,34,35], panel:[13,14,15,16], s:23, t:22 },
+  FX:      { name:'FX',       plate:[36,37,38,38,38], panel:[36,37,38,38], s:23, t:22 },
+  CITY:    { name:'CITY', plate:[62,63,64,65,65], panel:[66,67,68,69], s:23, t:22,
+             extra:{ P:'woodDark', Q:'wood', R:'woodLight', U:'rustDark', V:'rust', F:'leafDark', G:'leaf', N:'nearDark', M:'near', L:'nearLight',
+                     Z:'stain', S:'street', T:'asphalt', K:'walk', C:'curb', Y:'signCream', n:'neonPink' } }
+};
+var PARTS={};   // id -> part; filled by addParts (go-parts.js)
+var SPR_CACHE=Object.create(null), ASM_CACHE=Object.create(null);
+/* the authored pixels live in go-parts.js (data only), registered through
+   addParts so an editor can later add parts without touching this file */
+function addParts(list){ for(var i=0;i<list.length;i++){ var p=list[i]; if(!p.id||!p.family||!SETS[p.set])throw new Error('GOART: bad part '+p.id); PARTS[p.id]=p; }
+  SPR_CACHE=Object.create(null); ASM_CACHE=Object.create(null); return list.length; }
+/* compileMap: text to indices. mat marks what the shading passes may touch:
+   1 paint, panel, accent or steel (shadowed and rim lit), 2 outline, 3 glass
+   or glow (never shaded: it is the light). */
+function compileMap(map,setKey){
+  var set=SETS[setKey], h=map.length, w=0, y, x;
+  if(!set)throw new Error('GOART: MISSING SET '+setKey);
+  for(y=0;y<h;y++)if(map[y].length>w)w=map[y].length;
+  var px=new Uint8Array(w*h), mat=new Uint8Array(w*h);
+  for(y=0;y<h;y++)for(x=0;x<w;x++){
+    var ch=map[y].charAt(x)||'.', v, m=0;
+    if(ch>='1'&&ch<='5'){ v=set.plate[ch.charCodeAt(0)-49]; m=1; }
+    else if(ch>='A'&&ch<='D'){ v=set.panel[ch.charCodeAt(0)-65]; m=1; }
+    else if(ch==='s'){ v=set.s; m=1; } else if(ch==='t'){ v=set.t; m=1; }
+    else if(set.extra&&set.extra[ch]){ v=LI[set.extra[ch]]; m=1; }
+    else if(BASECH.hasOwnProperty(ch)){ v=BASECH[ch]; m=(ch>='a'&&ch<='e')?1:(ch==='k'?2:(v?3:0)); if(ch==='x'||ch==='H'||ch==='W')m=1; }
+    else throw new Error('GOART: unknown pixel "'+ch+'" in a '+setKey+' map row '+y);
+    px[y*w+x]=v; mat[y*w+x]=m;
+  }
+  return {w:w,h:h,px:px,mat:mat};
+}
+function mirror(spr){
+  var w=spr.w,h=spr.h,px=new Uint8Array(w*h),mat=new Uint8Array(w*h),own=spr.own?new Uint8Array(w*h):null,x,y;
+  for(y=0;y<h;y++)for(x=0;x<w;x++){ var s=y*w+(w-1-x), d=y*w+x; px[d]=spr.px[s]; mat[d]=spr.mat[s]; if(own)own[d]=spr.own[s]; }
+  return {w:w,h:h,px:px,mat:mat,own:own};
+}
+/* SHIFT_DOWN: one step darker inside its own ramp (far limbs, cast shadows) */
+var SHIFT_DOWN=(function(){ var t=new Uint8Array(256),i,r,j; for(i=0;i<256;i++)t[i]=i;
+  for(r=0;r<RAMPS.length;r++)for(j=1;j<RAMPS[r].length;j++)t[RAMPS[r][j]]=RAMPS[r][j-1];
+  t[RAMPS[0][0]]=2; t[RAMPS[1][0]]=2; t[RAMPS[2][0]]=2; t[RAMPS[3][0]]=2; t[45]=1;
+  t[27]=10; t[28]=43; t[23]=22; t[22]=2; return t; })();
+/* the rim: a lit-material pixel whose neighbour toward the light is outline or
+   clear (the outer contour, not an inner seam) takes the reserved RIM index. */
+function bakeRim(spr,lightDx){
+  var w=spr.w,h=spr.h,out=new Uint8Array(spr.px),x,y;
+  for(y=0;y<h;y++)for(x=0;x<w;x++){
+    var i=y*w+x; if(spr.mat[i]!==1)continue;
+    var nx=x+lightDx, n=(nx<0||nx>=w)?0:spr.px[y*w+nx], n2=(nx+lightDx<0||nx+lightDx>=w)?0:spr.px[y*w+nx+lightDx];
+    if(n===0||(n===1&&n2===0))out[i]=RIM;                        // the OUTER contour only, never an inner seam
+  }
+  return out;
+}
+/* the cast shadow: the key light comes from above and +x, so a part in front
+   (a higher owner) one or two pixels up and toward the light shades what sits
+   behind it by one ramp step. Metal Slug's hard shadows under every plate. */
+function castShadows(spr,lightDx){
+  var w=spr.w,h=spr.h,px=spr.px,own=spr.own,mat=spr.mat,out=new Uint8Array(px),x,y,s;
+  for(y=0;y<h;y++)for(x=0;x<w;x++){
+    var i=y*w+x; if(mat[i]!==1)continue;
+    for(s=1;s<=2;s++){ var sx=x+lightDx*s, sy=y-s; if(sx<0||sx>=w||sy<0)continue; var j=sy*w+sx;
+      if(px[j]&&own[j]>own[i]){ out[i]=SHIFT_DOWN[px[i]]; break; } }
+  }
+  return out;
+}
+
+/* ---- 3. THE INDEX FRAME AND THE COMPOSITOR ---- */
+function Frame(W,H){ this.W=W; this.H=H; this.idx=new Uint8Array(W*H); }
+Frame.prototype.clear=function(v){ this.idx.fill(v||0); };
+/* blit a sprite's index pixels at whole-pixel x,y (top left); 0 is clear;
+   remap (optional Uint8Array) recolours by index, never by blending */
+Frame.prototype.blit=function(px,w,h,x,y,remap){
+  x=Math.round(x); y=Math.round(y);
+  var W=this.W,H=this.H,d=this.idx,sx,sy;
+  for(sy=0;sy<h;sy++){ var ty=y+sy; if(ty<0||ty>=H)continue;
+    for(sx=0;sx<w;sx++){ var tx=x+sx; if(tx<0||tx>=W)continue;
+      var v=px[sy*w+sx]; if(v){ d[ty*W+tx]=remap?remap[v]:v; } } }
+};
+/* blit every other pixel (a checker veil): afterimages and ghosts, never alpha */
+Frame.prototype.blitVeil=function(px,w,h,x,y,remap,phase){
+  x=Math.round(x); y=Math.round(y); phase=phase||0;
+  var W=this.W,H=this.H,d=this.idx,sx,sy;
+  for(sy=0;sy<h;sy++){ var ty=y+sy; if(ty<0||ty>=H)continue;
+    for(sx=0;sx<w;sx++){ var tx=x+sx; if(tx<0||tx>=W||((tx+ty+phase)&1))continue;
+      var v=px[sy*w+sx]; if(v){ d[ty*W+tx]=remap?remap[v]:v; } } }
+};
+/* darken whatever is already there (shadows on the ground), by ramp step */
+Frame.prototype.shade=function(x,y,remap){ x=Math.round(x); y=Math.round(y); if(x>=0&&y>=0&&x<this.W&&y<this.H){ var i=y*this.W+x; this.idx[i]=remap[this.idx[i]]; } };
+/* a baked layer scrolls by whole pixels and wraps horizontally */
+Frame.prototype.layer=function(L,camX,camY){
+  var W=this.W,H=this.H,d=this.idx,lw=L.w,lh=L.h,src=L.px;
+  var off=Math.floor(camX*L.speed); off=((off%lw)+lw)%lw;
+  var oy=L.y-Math.round((camY||0)*L.speed), x,y;
+  for(y=0;y<H;y++){ var ly=y-oy; if(ly<0||ly>=lh)continue; var row=ly*lw, drow=y*W, lx=off;
+    for(x=0;x<W;x++){ var v=src[row+lx]; if(v)d[drow+x]=v; lx++; if(lx===lw)lx=0; } }
+};
+Frame.prototype.rect=function(x,y,w,h,v){
+  x=Math.round(x); y=Math.round(y); var X0=Math.max(0,x),Y0=Math.max(0,y),X1=Math.min(this.W,x+w),Y1=Math.min(this.H,y+h),i,j;
+  for(j=Y0;j<Y1;j++)for(i=X0;i<X1;i++)this.idx[j*this.W+i]=v;
+};
+Frame.prototype.px=function(x,y,v){ x=Math.round(x); y=Math.round(y); if(x>=0&&y>=0&&x<this.W&&y<this.H)this.idx[y*this.W+x]=v; };
+Frame.prototype.line=function(x0,y0,x1,y1,v){                    // whole-pixel Bresenham
+  x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);
+  var dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,e=dx+dy,n=0;
+  for(;;){ this.px(x0,y0,v); if(x0===x1&&y0===y1)break; var e2=2*e; if(e2>=dy){e+=dy;x0+=sx;} if(e2<=dx){e+=dx;y0+=sy;} if(++n>4096)break; }
+};
+Frame.prototype.disc=function(cx,cy,r,v){ cx=Math.round(cx); cy=Math.round(cy); var r2=r*r+r*0.8; for(var y=-r;y<=r;y++)for(var x=-r;x<=r;x++)if(x*x+y*y<=r2)this.px(cx+x,cy+y,v); };
+/* resolve: indices to RGBA through the graded LUT (the one road to the screen) */
+function resolve(frame,lut,out32){
+  var d=frame.idx,u=lut.u32,n=d.length,i; for(i=0;i<n;i++)out32[i]=u[d[i]];
+}
+
+/* ---- 4. BACKDROP LAYERS (pre-drawn at the native grid, scrolled by whole
+        pixels). Seeded, so a layer is the same picture every run. ---- */
+function rng(seed){ var s=seed>>>0; return function(){ s=(s+0x6D2B79F5)>>>0; var t=s; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; }
+var BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+function bayer(x,y){ return (BAYER[(y&3)*4+(x&3)]+0.5)/16; }
+function Layer(name,w,h,y,speed){ this.name=name; this.w=w; this.h=h; this.y=y; this.speed=speed; this.px=new Uint8Array(w*h); }
+Layer.prototype.set=function(x,y,v){ if(x<0||y<0||x>=this.w||y>=this.h)return; this.px[y*this.w+x]=v; };
+Layer.prototype.get=function(x,y){ if(y<0||y>=this.h)return 0; x=((x%this.w)+this.w)%this.w; return this.px[y*this.w+x]; };
+Layer.prototype.fill=function(x,y,w,h,v){ for(var j=y;j<y+h;j++)for(var i=x;i<x+w;i++)this.set(((i%this.w)+this.w)%this.w,j,v); };
+Layer.prototype.setW=function(x,y,v){ this.set(((x%this.w)+this.w)%this.w,y,v); };          // wrapping set
+Layer.prototype.stamp=function(spr,x,y,remap){ for(var j=0;j<spr.h;j++)for(var i=0;i<spr.w;i++){ var v=spr.px[j*spr.w+i]; if(v)this.setW(x+i,y+j,remap?remap[v]:v); } };
+
+/* GEOMETRY, shared by every painter and by the mover: the horizon and the
+   street line are fractions of the grid, so both grids draw natively */
+function geo(W,H){ return { horizon:Math.round(H*0.63), ground:H-Math.round(H*0.148), sunX:Math.round(W*0.70), sunY:Math.round(H*0.53), sunR:Math.max(9,Math.round(H*0.068)) }; }
+
+function paintSky(W,H){
+  var G=geo(W,H), L=new Layer('SKY',W,H,0,0), n=9, x, y;
+  for(y=0;y<H;y++){
+    var t=Math.min(1,y/(G.horizon+4)), f=Math.pow(t,1.25)*(n-1), i=Math.floor(f), fr=f-i;
+    for(x=0;x<W;x++){
+      var k=i; if(fr>0.55&&((fr-0.55)/0.45)>bayer(x,y))k=i+1;   // solid bands, dithered hand-off
+      L.set(x,y,LI.sky0+Math.min(n-1,k));
+    }
+  }
+  return L;
+}
+function paintSun(W,H){
+  var G=geo(W,H), L=new Layer('SUN',W*2,H,0,0.03), cx=G.sunX, cy=G.sunY, r=G.sunR, x, y;
+  for(y=0;y<H;y++)for(x=0;x<L.w;x++){
+    var dx=x-cx, dy=(y-cy)*1.15, d=Math.sqrt(dx*dx+dy*dy);
+    if(d<=r){ L.set(x,y,(d>r-1.5)?LI.sky8:LI.sun); continue; }
+    // the glow: two dithered rings climbing the sky ramp toward the disc
+    if(d<r*1.7){ if(bayer(x,y)<0.62)L.set(x,y,LI.sky8); else L.set(x,y,LI.sky7); }
+    else if(d<r*2.6){ if(bayer(x,y)<(1-(d-r*1.7)/(r*0.9))*0.55)L.set(x,y,LI.sky7); }
+    else if(d<r*3.8&&y<G.horizon){ if(bayer(x,y)<(1-(d-r*2.6)/(r*1.2))*0.22)L.set(x,y,LI.sky6); }
+  }
+  // three thin streaks across the disc (the stripes read as haze in front of it)
+  var s=[Math.round(r*0.35),Math.round(r*0.62),Math.round(r*0.84)];
+  for(var si=0;si<s.length;si++){ var yy=cy+s[si]; for(x=cx-r;x<=cx+r;x++)if(L.get(x,yy)===LI.sun||L.get(x,yy)===LI.sky8)L.set(x,yy,LI.sky7); }
+  return L;
+}
+function paintClouds(W,H){
+  var G=geo(W,H), L=new Layer('CLOUDS',W*3,H,0,0.08), R=rng(71), c, x, y;
+  var mask=new Uint8Array(L.w*H);
+  var banks=[[0.16,1.0],[0.27,0.8],[0.39,0.9],[0.50,0.55]];
+  for(var b=0;b<banks.length;b++){
+    var by=Math.round(H*banks[b][0]), count=Math.round(7*banks[b][1]*(L.w/W)/2);
+    for(c=0;c<count;c++){
+      var cx=Math.floor(R()*L.w), len=Math.round(W*(0.10+R()*0.22)), th=Math.max(2,Math.round(H*(0.012+R()*0.018)));
+      var puffs=3+Math.floor(R()*4);
+      for(var p=0;p<puffs;p++){
+        var px0=cx+Math.round((R()-0.5)*len), rx=Math.round(len*(0.18+R()*0.25)), ry=Math.max(2,Math.round(th*(0.7+R()*0.9)));
+        var py0=by+Math.round((R()-0.5)*th*2);
+        for(y=py0-ry;y<=py0+ry;y++)for(x=px0-rx;x<=px0+rx;x++){
+          var ex=(x-px0)/rx, ey=(y-py0)/ry; if(ex*ex+ey*ey<=1&&y>=0&&y<H){ var xx=((x%L.w)+L.w)%L.w; mask[y*L.w+xx]=1; }
+        }
+      }
+    }
+  }
+  for(y=0;y<H;y++)for(x=0;x<L.w;x++){
+    if(!mask[y*L.w+x])continue;
+    var below=(y+1<H)?mask[(y+1)*L.w+x]:0, below2=(y+2<H)?mask[(y+2)*L.w+x]:0, above=(y>0)?mask[(y-1)*L.w+x]:0;
+    var hi=Math.max(0,1-y/(G.horizon*0.9));                    // high banks sit in darker sky
+    var v;
+    if(!below)v=(y>H*0.32)?LI.sky7:LI.sky6;                    // the underside catches the low sun
+    else if(!below2)v=(bayer(x,y)<0.5)?LI.sky6:LI.sky5;
+    else if(!above)v=LI.sky4;
+    else v=(hi>0.55)?LI.sky2:LI.sky3;
+    L.set(x,y,v);
+  }
+  return L;
+}
+function skyline(L,R,base,minH,maxH,minW,maxW,body,lit,winCol,winP,top,gapP,gapMax){
+  var x=0, blds=[];
+  while(x<L.w){
+    var w=minW+Math.floor(R()*(maxW-minW+1)), h=minH+Math.floor(R()*(maxH-minH+1));
+    if(x+w>L.w)w=L.w-x;
+    if(w<3)break;
+    var y0=base-h, j, i;
+    for(j=y0;j<L.h;j++)for(i=x;i<x+w;i++)L.set(i,j,body);
+    // stepped crowns on some, antennas on others
+    if(top&&R()<0.45&&w>8){ var sw=Math.max(3,Math.floor(w*(0.35+R()*0.3))), sh=2+Math.floor(R()*Math.max(2,h*0.12)), sx=x+Math.floor((w-sw)/2);
+      for(j=y0-sh;j<y0;j++)for(i=sx;i<sx+sw;i++)L.set(i,j,body);
+      for(j=y0-sh;j<y0;j++)L.set(sx+sw-1,j,lit); }
+    if(top&&R()<0.35){ var ax=x+1+Math.floor(R()*(w-2)), ah=3+Math.floor(R()*Math.max(3,h*0.25)); for(j=y0-ah;j<y0;j++)L.set(ax,j,body); if(R()<0.6)L.set(ax,y0-ah-1,23); }
+    for(j=y0;j<L.h;j++)L.set(x+w-1,j,lit);                        // the lit edge faces the sun
+    if(winCol){ for(j=y0+2;j<L.h-1;j+=3)for(i=x+1;i<x+w-2;i+=2){ if(R()<winP)L.set(i,j,winCol[Math.floor(R()*winCol.length)]); } }
+    blds.push([x,w,y0]);
+    x+=w+(R()<(gapP||0.25)?1+Math.floor(R()*(gapMax||3)):0);
+  }
+  return blds;
+}
+function paintFar(W,H){
+  var G=geo(W,H), L=new Layer('FAR CITY',W*3,H,0,0.16), R=rng(1203);
+  skyline(L,R,G.horizon+Math.round(H*0.04),Math.round(H*0.04),Math.round(H*0.17),Math.round(W*0.015),Math.round(W*0.05),LI.far,LI.farLit,[LI.sky7,LI.sky6],0.03,true,0.2,3);
+  return L;
+}
+function paintFog(W,H){
+  var G=geo(W,H), L=new Layer('FOG',W,H,0,0), x, y, top=G.horizon-Math.round(H*0.10), bot=G.horizon+Math.round(H*0.08);
+  for(y=top;y<bot;y++){ var t=(y-top)/(bot-top), dens=0.5*Math.sin(t*Math.PI);
+    for(x=0;x<W;x++)if(bayer(x,y)<dens)L.set(x,y,LI.sky5); }
+  return L;
+}
+function paintMid(W,H){
+  var G=geo(W,H), L=new Layer('MID CITY',W*3,H,0,0.34), R=rng(5501);
+  skyline(L,R,G.horizon+Math.round(H*0.13),Math.round(H*0.10),Math.round(H*0.32),Math.round(W*0.03),Math.round(W*0.075),LI.mid,LI.midLit,[25,24,LI.sky8],0.06,true,0.45,Math.round(W*0.05));
+  return L;
+}
+/* ---- 4b. THE NEAR CITY AND THE STREET, v2.00: Metal Slug's density of
+        detail (the Director's note): every facade carries window frames and
+        sills, ledges with their shadow lines, AC units with drip stains,
+        drainpipes on brackets, cracks with a lit lip, balconies, hanging signs
+        (painted and neon) in the city's own invented script, and a storefront;
+        the street carries cracks, patches, a manhole, puddles that mirror the
+        sunset, and hand-placed props from go-parts.js (cones, crates, barrels,
+        planks, a wrecked car, bags, hydrants, weeds). Backlit by the low sun:
+        the faces sit in shadow, the details read by value, the sun edge and the
+        lit windows carry the colour. ---- */
+var GLYPHS=[                                                    // the city's script: invented, 5x5, never a real language
+ ['11111','00100','01110','00100','11111'],['10101','11111','00100','01010','10001'],['11110','10010','11111','00010','01110'],
+ ['01110','10101','11111','10101','01110'],['11111','10001','10101','10001','11111'],['00100','11111','00100','01010','11011'],
+ ['11011','01010','11111','01010','11011'],['10000','11110','10010','11111','00001'],['01010','11111','01010','11111','01010']];
+function glyph(L,x,y,g,col,sc){ var G=GLYPHS[g%GLYPHS.length]; sc=sc||1; for(var j=0;j<5;j++)for(var i=0;i<5;i++)if(G[j].charAt(i)==='1')for(var a=0;a<sc;a++)for(var b=0;b<sc;b++)L.setW(x+i*sc+a,y+j*sc+b,col); }
+function winPane(L,R,x,y,w,h,style){
+  var i,j,r=R(), lit=r<0.09, warm=r<0.05;
+  for(i=x-1;i<=x+w;i++){ L.setW(i,y-1,LI.nearLight); }                                  // the lintel catches the sky
+  for(j=y;j<y+h;j++)for(i=x;i<x+w;i++){
+    var v=LI.nearDark;
+    if(lit)v=(warm?(j===y?24:25):(j===y?20:21));
+    else if(style<0.35&&((j-y)&1))v=LI.near;                                               // blinds
+    L.setW(i,j,v);
+  }
+  if(lit){ for(i=x;i<x+w;i++)L.setW(i,y+h-1,warm?24:20); if(w>3)L.setW(x+1,y+1,26); }    // a figure of light at the pane
+  else if(R()<0.08){ L.setW(x+1,y+1,LI.near); L.setW(x+2,y+2,LI.near); L.setW(x+1,y+3,LI.nearLight); }   // a broken pane
+  for(i=x-1;i<=x+w;i++){ L.setW(i,y+h,LI.nearLight); L.setW(i,y+h+1,LI.nearDark); }        // the sill and its shadow
+  L.setW(x+w,y,LI.nearLit);                                                                // the pane's sun edge
+}
+function acUnit(L,R,x,y,w){
+  var i,j; w=Math.max(5,w+1);
+  for(i=x;i<x+w;i++){ L.setW(i,y,15); L.setW(i,y+1,14); L.setW(i,y+2,(i&1)?13:14); L.setW(i,y+3,1); }
+  L.setW(x,y+1,13); L.setW(x+w-1,y+1,LI.nearLit); L.setW(x+w-1,y,16);
+  var dl=2+Math.floor(R()*6); for(j=y+4;j<y+4+dl;j++)if(bayer(x+1,j)<0.7)L.setW(x+1,j,LI.stain);  // the drip stain
+}
+function balcony(L,R,x,y,w){
+  var i; for(i=x;i<x+w;i++){ L.setW(i,y,LI.nearLight); L.setW(i,y+4,LI.nearLight); L.setW(i,y+5,LI.nearDark); if((i-x)%3===0){ L.setW(i,y+1,LI.nearDark); L.setW(i,y+2,LI.nearDark); L.setW(i,y+3,LI.nearDark); } }
+  if(R()<0.6){ var lx=x+2+Math.floor(R()*(w-6)); for(i=0;i<5;i++)L.setW(lx+i,y-3+(i===2?1:0),i&1?LI.signCream:LI.rust); }   // washing on a line
+}
+function crack(L,R,x,y,len){
+  for(var n=0;n<len;n++){ L.setW(x,y,LI.nearDark); L.setW(x+1,y,LI.nearLight); y++; var r=R(); if(r<0.3)x--; else if(r>0.7)x++; if(R()<0.12){ L.setW(x-1,y,LI.nearDark); L.setW(x-2,y+1,LI.nearDark); } }
+}
+function drainpipe(L,x,y0,y1){
+  for(var j=y0;j<y1;j++){ L.setW(x,j,LI.nearDark); L.setW(x+1,j,LI.nearLight); if((j-y0)%11===5){ L.setW(x-1,j,LI.nearLight); L.setW(x+2,j,LI.nearLight); } }
+  L.setW(x-1,y1,LI.nearLight); L.setW(x,y1,LI.nearLight); L.setW(x+1,y1,LI.nearLight); L.setW(x+2,y1,LI.nearLight);
+}
+function hangingSign(L,R,x,y,h,neon){
+  var w=9, i, j, board=neon?LI.nearDark:LI.rust, edge=neon?LI.near:LI.rustDark;
+  for(i=x-3;i<x+2;i++)L.setW(i,y,14); L.setW(x-3,y+1,14);                                 // the bracket
+  for(j=y+2;j<y+2+h;j++)for(i=x;i<x+w;i++)L.setW(i,j,(i===x||j===y+2)?edge:board);
+  for(j=y+2;j<y+2+h;j++){ L.setW(x+w,j,1); L.setW(x+w-1,j,neon?LI.near:LI.nearLit); }
+  for(i=x;i<=x+w;i++)L.setW(i,y+2+h,1);
+  var g=Math.floor(R()*9), col=neon?(R()<0.5?LI.neonPink:21):LI.signCream;
+  for(var k=0;k*7+4<h;k++)glyph(L,x+2,y+4+k*7,g+k*3,col,1);
+  if(neon){ for(j=y+2;j<y+2+h;j++)if(bayer(x-1,j)<0.5)L.setW(x-1,j,LI.nearLight); }       // the tube's glow on the wall
+}
+function storefront(L,R,x,y,w,h){
+  var i,j,lit=R()<0.45, sh=R();
+  for(i=x;i<x+w;i++){ L.setW(i,y,(((i-x)>>2)&1)?LI.signCream:LI.rust); L.setW(i,y+1,(((i-x)>>2)&1)?LI.rustDark:LI.rustDark); L.setW(i,y+2,LI.nearDark); }   // the awning
+  for(j=y+3;j<y+h;j++)for(i=x+1;i<x+w-1;i++){
+    var v=lit?((j<y+5)?25:24):(((j-y)&1)?LI.nearLight:LI.near);                           // a lit shop or a shutter
+    if(lit&&sh<0.5&&i>x+3&&i<x+7&&j>y+6)v=LI.nearDark;                                   // someone inside
+    L.setW(i,j,v);
+  }
+  for(j=y+3;j<y+h;j++){ L.setW(x,j,LI.nearDark); L.setW(x+w-1,j,LI.nearLit); }
+}
+function paintNear(W,H){
+  var G=geo(W,H), L=new Layer('NEAR CITY',W*3,H,0,0.6), R=rng(9127), x=Math.round(W*0.02), i, j;
+  var base=G.ground-Math.round(H*0.02), S=H/270;
+  while(x<L.w-Math.round(W*0.08)){
+    var w=Math.round(W*(0.10+R()*0.10)), h=Math.round(H*(0.22+R()*0.24)); if(x+w>L.w-2)break;
+    var y0=base-h;
+    for(j=y0;j<H;j++)for(i=x;i<x+w;i++)L.set(i,j,LI.near);
+    for(j=y0;j<H;j++){ L.set(x,j,LI.nearDark); L.set(x+w-1,j,LI.nearLit); L.set(x+w-2,j,LI.nearLit); }
+    for(i=x;i<x+w;i++){ L.set(i,y0,LI.nearLight); L.set(i,y0+1,LI.nearLit); L.set(i,y0+2,LI.nearDark); }   // the parapet
+    var fh=Math.max(11,Math.round(12*S)), ww=Math.max(3,Math.round(4*S)), wh=Math.max(4,Math.round(6*S)), pitch=ww+Math.max(4,Math.round(4*S)), style=R();
+    var store=Math.round(15*S), fy;
+    for(fy=y0+5; fy+fh<base-store; fy+=fh){
+      for(i=x+1;i<x+w-2;i++){ L.set(i,fy+fh-2,LI.nearLight); L.set(i,fy+fh-1,LI.nearDark); }            // the ledge and its shadow
+      for(var wx=x+3; wx+ww<x+w-4; wx+=pitch){ winPane(L,R,wx,fy+2,ww,wh,style); if(R()<0.2)acUnit(L,R,wx-1,fy+wh+5,ww); }
+      if(R()<0.16&&w>26)balcony(L,R,x+3,fy+fh-7,w-7);
+      for(i=x+2;i<x+w-3;i++)if(R()<0.05){ var sl=2+Math.floor(R()*5); for(j=fy+wh+4;j<fy+wh+4+sl;j++)if(bayer(i,j)<0.6)L.set(i,j,LI.stain); }   // streaks
+    }
+    if(R()<0.55)drainpipe(L,x+2+Math.floor(R()*3),y0+3,base-2);
+    if(R()<0.45&&w>30){ var fx=x+Math.floor(w*0.52), fe; for(fe=y0+10;fe<base-store-4;fe+=fh){ for(i=fx;i<fx+12;i++){ L.set(i,fe,14); L.set(i,fe+1,1); } for(j=fe-5;j<fe;j++){ L.set(fx,j,13); L.set(fx+11,j,13); } for(i=fx;i<fx+12;i+=3)L.set(i,fe-5,13); for(j=0;j<fh-2;j++)L.set(fx+2+Math.round(j*8/(fh-2)),fe+2+j,13); } }   // a fire escape, landing by landing
+    for(var c=0;c<1+Math.floor(R()*3);c++)crack(L,R,x+4+Math.floor(R()*(w-8)),y0+6+Math.floor(R()*(h-20)),6+Math.floor(R()*12));
+    if(R()<0.55&&h>50)hangingSign(L,R,x+w+2,y0+8+Math.floor(R()*10),Math.max(16,Math.round(h*0.28)),R()<0.5);
+    storefront(L,R,x+2,base-store,w-4,store);
+    if(R()<0.4){ var tx=x+4+Math.floor(R()*(w-16)); for(j=0;j<7;j++)for(i=0;i<9;i++)L.set(tx+i,y0-9+j,(i===0||j===0)?LI.woodDark:(i===8?LI.woodLight:LI.wood)); for(i=1;i<8;i+=2){ L.set(tx+i,y0-2,LI.woodDark); L.set(tx+i,y0-1,LI.woodDark); } }   // a water tank
+    else if(R()<0.5){ var ax=x+3+Math.floor(R()*(w-6)), ah=6+Math.floor(R()*10); for(j=y0-ah;j<y0;j++)L.set(ax,j,LI.nearLight); L.set(ax,y0-ah-1,23); L.set(ax-1,y0-ah+2,LI.nearLight); L.set(ax+1,y0-ah+2,LI.nearLight); }
+    x+=w+Math.round(W*(0.06+R()*0.20));                                                   // always a gap: the sky shows between
+  }
+  return L;
+}
+function prop(id){ var p=PARTS[id]; if(!p)throw new Error('GOART: MISSING PROP '+id); return compileMap(p.map,p.set); }
+function paintStreet(W,H){
+  var G=geo(W,H), L=new Layer('STREET',W*2,H,0,1), R=rng(333), x, y, i, j, gy=G.ground, lane=gy+Math.round((H-gy)*0.62);
+  for(y=gy;y<H;y++)for(x=0;x<L.w;x++){
+    var v=LI.asphalt;
+    if(y===gy)v=LI.curb; else if(y<gy+3)v=((x%14)===0)?LI.street:LI.walk; else if(y===gy+3)v=LI.street; else if(y===gy+4)v=LI.nearDark;
+    else if(y===lane&&((x>>3)%3===0))v=27;                                              // the lane dashes
+    else if((x*7+y*13)%23===0)v=LI.walk;                                                 // grit
+    L.set(x,y,v);
+  }
+  for(var p=0;p<Math.round(L.w/70);p++){                                                  // patches and cracks
+    var px0=Math.floor(R()*L.w), py0=gy+6+Math.floor(R()*(H-gy-9)), pw=6+Math.floor(R()*16);
+    if(R()<0.5){ for(j=0;j<3;j++)for(i=0;i<pw;i++)L.setW(px0+i,py0+j,LI.street); for(i=0;i<pw;i++)L.setW(px0+i,py0-1,LI.walk); }
+    else { var cx=px0, cy=py0; for(i=0;i<pw;i++){ L.setW(cx,cy,LI.street); cx++; if(R()<0.4)cy+=(R()<0.5?-1:1); cy=Math.max(gy+5,Math.min(H-2,cy)); } }
+  }
+  for(x=Math.round(W*0.33);x<L.w;x+=Math.round(W*0.71)){                               // a manhole cover
+    var my=gy+Math.round((H-gy)*0.4); for(j=-2;j<=2;j++)for(i=-7;i<=7;i++){ if(i*i/49+j*j/4.5<=1)L.setW(x+i,my+j,(j===-2||i===-7)?14:((i+j)&1?13:14)); }
+  }
+  for(x=Math.round(W*0.58);x<L.w;x+=Math.round(W*0.83)){                               // a puddle that mirrors the sunset
+    var py=gy+Math.round((H-gy)*0.45), rw=16+Math.floor(R()*12);
+    for(j=-2;j<=2;j++)for(i=-rw;i<=rw;i++){ var e=i*i/(rw*rw)+j*j/5; if(e>1)continue;
+      var vv=(e>0.75)?LI.curb:(j<0?LI.sky6:(j===0?LI.sky7:LI.sky5)); if(e<0.3&&bayer(x+i,py+j)<0.3)vv=LI.sky8; L.setW(x+i,py+j,vv); }
+  }
+  for(x=12;x<L.w;x+=Math.round(W*0.30)){                                                // lamp posts, 9 m: a third of a mech
+    var lh=Math.round(H*0.115); for(j=gy-lh;j<gy;j++){ L.setW(x,j,15); L.setW(x+1,j,13); }
+    for(i=x-6;i<=x+1;i++)L.setW(i,gy-lh,15); L.setW(x-6,gy-lh+1,14); L.setW(x-5,gy-lh+1,25); L.setW(x-4,gy-lh+1,26); L.setW(x-3,gy-lh+1,25); L.setW(x-7,gy-lh+1,14);
+    for(j=gy-lh+2;j<gy-lh+8;j++)for(i=x-8;i<=x;i++)if(bayer(i,j)<0.10*(1-(j-gy+lh-2)/6))L.setW(i,j,24);     // the lamp's light falling
+    L.setW(x-1,gy-1,15); L.setW(x+2,gy-1,13); L.setW(x-1,gy-2,14); L.setW(x+2,gy-2,14);
+    var span=Math.round(W*0.30), cy0=gy-lh+1; for(i=2;i<span-2;i++){ var sag=Math.round(Math.sin(i/span*Math.PI)*H*0.02); L.setW(x+i,cy0+sag,13); }   // the power line to the next post
+  }
+  // the props, hand-placed from go-parts.js, standing on the kerb
+  var PLAN=[['PR-TREE',0.05],['PR-CAR',0.12],['PR-CONE',0.19],['PR-CONE',0.20],['PR-CONE',0.215],['PR-BARRIER',0.24],['PR-CRATE',0.29],['PR-CRATE',0.30],['PR-BARREL',0.315],
+            ['PR-SIGNPOST',0.36],['PR-WRECK',0.43],['PR-BAGS',0.50],['PR-HYDRANT',0.54],['PR-TREE',0.60],['PR-BUS',0.74],['PR-BARRIER',0.86],['PR-BARRIER',0.885],
+            ['PR-CAR',0.95],['PR-CAR',1.00],['PR-WEEDS',1.04],['PR-TREE',1.10],['PR-BARREL',1.16],['PR-BARREL',1.17],['PR-CONE',1.21],['PR-WRECK',1.28],['PR-SIGNPOST',1.34],
+            ['PR-CRATE',1.40],['PR-BAGS',1.44],['PR-TREE',1.52],['PR-CAR',1.60],['PR-HYDRANT',1.66],['PR-BARRIER',1.72],['PR-CONE',1.78],['PR-WEEDS',1.84],['PR-CAR',1.90],['PR-WEEDS',0.66],['PR-WEEDS',1.47]];
+  for(var q=0;q<PLAN.length;q++){ var s=prop(PLAN[q][0]), sx=Math.round(W*PLAN[q][1]), a=PARTS[PLAN[q][0]].anchors.base; L.stamp(s,sx-a[0],gy+1-a[1]); }
+  return L;
+}
+function paintFore(W,H){
+  var G=geo(W,H), L=new Layer('FOREGROUND',W*3,H,0,1.35), R=rng(4242), x, i, j;
+  for(x=Math.round(W*0.5);x<L.w;x+=Math.round(W*(1.1+R()*0.8))){
+    // a broken pillar with rebar: the darkest thing on screen, in front of the play
+    var pw=Math.round(W*0.026), ph=Math.round(H*(0.13+R()*0.12)), jag=[], q;
+    for(i=0;i<pw;i++)jag.push(Math.round(R()*5));                     // a snapped top, never a flat lid
+    for(i=0;i<pw;i++)for(j=H-ph+jag[i];j<H;j++)L.set(x+i,j,(i===pw-1||i===pw-2&&jag[i]>jag[i+1])?40:39);
+    for(j=H-ph+8;j<H;j+=9)for(i=x+1;i<x+pw-3;i++)if(R()<0.7)L.set(i,j,40);   // form-work seams
+    for(var rb=0;rb<3;rb++){ var rx=x+2+Math.floor(R()*(pw-4)), rl=4+Math.floor(R()*8), top=H-ph+jag[rx-x];
+      for(j=1;j<=rl;j++){ q=(j>rl/2)?(rb&1?1:-1):0; L.set(rx+q,top-j,40); } }
+    var cable=Math.round(W*0.3); for(i=0;i<cable;i++){ var cy=H-ph+jag[0]-2+Math.round(Math.sin(i/cable*Math.PI)*H*0.08); L.set(x-i,cy,39); }   // a sagging cable
+  }
+  for(x=0;x<L.w;x++){ var hh=Math.round(2+2*Math.abs(Math.sin(x*0.07))+R()*1.2); for(j=H-hh;j<H;j++)L.set(x,j,39); }
+  return L;
+}
+var LAYER_ORDER=['SKY','SUN','CLOUDS','FAR CITY','FOG','MID CITY','NEAR CITY','STREET','FOREGROUND'];
+var PAINTERS={'SKY':paintSky,'SUN':paintSun,'CLOUDS':paintClouds,'FAR CITY':paintFar,'FOG':paintFog,'MID CITY':paintMid,'NEAR CITY':paintNear,'STREET':paintStreet,'FOREGROUND':paintFore};
+function bakeLayers(W,H){ var out={},i; for(i=0;i<LAYER_ORDER.length;i++)out[LAYER_ORDER[i]]=PAINTERS[LAYER_ORDER[i]](W,H); return out; }
+
+/* ---- 5. THE MECH ASSEMBLER (v2.00). A build is a part id per slot. The legs
+        part owns the gait: its CLIPS are frames of part offsets and leg maps
+        (idle, walk, squat, rise, fall, land, dash, hover, skid), authored by
+        eye. Assembly places each part at its parent's anchor (facing right),
+        mirrors for the facing, casts every part's hard shadow on what sits
+        behind it, then bakes the rim. Cached per build, clip frame and state.
+        The ROOT is the ground point under the mech's centre. o.flat skips the
+        two light passes (the art gate's control: lit against flat). ---- */
+var SLOTS=['legs','core','head','arms','shoulder','weapon'];
+/* a DERIVED map: an authored map sheared by whole pixels about a pivot column
+   (each column shifts up or down as a whole: a 2:1 slope, no new colours, no
+   interpolation), so one authored weapon aims level, up and down. Viewed on
+   the boards like every authored map. */
+function shearOf(base,s,pivot){
+  var w=base.w,h=base.h,lo=0,hi=0,x,y,d;
+  for(x=0;x<w;x++){ d=Math.floor((x-pivot)*s); lo=Math.min(lo,d); hi=Math.max(hi,d); }
+  var H2=h+hi-lo, px=new Uint8Array(w*H2), mat=new Uint8Array(w*H2);
+  for(x=0;x<w;x++){ d=Math.floor((x-pivot)*s)-lo; for(y=0;y<h;y++){ var v=base.px[y*w+x]; if(!v)continue; px[(y+d)*w+x]=v; mat[(y+d)*w+x]=base.mat[y*w+x]; } }
+  return {w:w,h:H2,px:px,mat:mat,off:-lo};
+}
+function derived(p,key){ return p.derive&&p.derive[key]; }
+function spr(id,key){
+  var ck=id+'|'+(key||''); if(SPR_CACHE[ck])return SPR_CACHE[ck];
+  var p=PARTS[id]; if(!p)throw new Error('GOART: MISSING PART '+id);
+  var dv=key&&derived(p,key);
+  if(dv){ var b=spr(id,dv.from), pv=anchor(p,dv.from,'grip')[0]; return (SPR_CACHE[ck]=shearOf(b,dv.shear,pv)); }
+  var m=key?(p.maps&&p.maps[key]):p.map; if(!m)throw new Error('GOART: MISSING MAP '+id+' '+key);
+  return (SPR_CACHE[ck]=compileMap(m,p.set));
+}
+function anchor(p,key,name){
+  var dv=key&&derived(p,key);
+  if(dv&&!(p.anchorsBy&&p.anchorsBy[key])){ var a0=anchor(p,dv.from,name), pv=anchor(p,dv.from,'grip')[0], b=spr(p.id,key);
+    return [a0[0],a0[1]+Math.floor((a0[0]-pv)*dv.shear)+b.off]; }
+  var a=(key&&p.anchorsBy&&p.anchorsBy[key]&&p.anchorsBy[key][name])||(p.anchors&&p.anchors[name]);
+  if(!a)throw new Error('GOART: MISSING ANCHOR '+p.id+' '+(key||'')+' '+name); return a;
+}
+function clip(build,name){ var LG=PARTS[build.legs]; if(!LG)throw new Error('GOART: MISSING PART '+build.legs); return LG.clips[name]||LG.clips.idle; }
+function assemble(build,clipName,fi,o){
+  o=o||{}; var face=o.face<0?-1:1, aim=o.aim||'lv', recoil=o.recoil||0, pod=o.pod||'closed', lightDx=o.lightDx||1, flat=!!o.flat;
+  var key=[build.legs,build.core,build.head,build.arms,build.shoulder,build.weapon,clipName,fi,face,aim,recoil,pod,lightDx,flat].join('|');
+  if(ASM_CACHE[key])return ASM_CACHE[key];
+  var LG=PARTS[build.legs], CR=PARTS[build.core], HD=PARTS[build.head], AR=PARTS[build.arms], SH=PARTS[build.shoulder], WP=PARTS[build.weapon];
+  [['legs',LG],['core',CR],['head',HD],['arms',AR],['shoulder',SH],['weapon',WP]].forEach(function(s){ if(!s[1])throw new Error('GOART: MISSING PART '+s[0]+' '+build[s[0]]); });
+  var C=LG.clips[clipName]||LG.clips.idle, F=C.frames[((fi%C.frames.length)+C.frames.length)%C.frames.length];
+  var B=F.body||[0,0], items=[], z=0;
+  function add(s,x,y,remap,tag){ items.push({s:s,x:Math.round(x),y:Math.round(y),r:remap,tag:tag,z:++z}); }
+  // the skirt sits on the root through the stand layout; the torso sits on the skirt
+  var sk=spr(LG.id,'skirt'), skA=anchor(LG,'skirt','hip'), L0y=LG.layout;
+  var skx=L0y.skirt[0]+B[0]-skA[0], sky=L0y.skirt[1]+B[1]-skA[1], wa=anchor(LG,'skirt','waist');
+  var body=spr(CR.id,'body'), tA=anchor(CR,'body','hip'), lean=F.lean||0;
+  var tx=skx+wa[0]-tA[0]+lean, ty=sky+wa[1]-tA[1];
+  function at(name){ var a=anchor(CR,'body',name); return [tx+a[0],ty+a[1]]; }
+  var S0=F.shield||[0,0], P0=F.pack||[0,0], H0=F.head||[0,0], U0=F.shoulder||[0,0], W0=F.weapon||[0,0];
+  // 1 the shield (far shoulder, behind the body)
+  var sh=spr(AR.id,null), shA=anchor(AR,null,'mount'), sf=at('shoulderF'); add(sh,sf[0]+S0[0]-shA[0],sf[1]+S0[1]-shA[1],null,'shield');
+  // 2 the backpack
+  var pk=spr(CR.id,'pack'), pkA=anchor(CR,'pack','mount'), pp=at('pack'); add(pk,pp[0]+P0[0]-pkA[0],pp[1]+P0[1]-pkA[1],null,'pack');
+  var packPos=[pp[0]+P0[0]-pkA[0],pp[1]+P0[1]-pkA[1]];
+  // 3,4 the legs (far one step darker), each hung from its hip in the stand layout
+  ['far','near'].forEach(function(side){ var Lg=F[side]||{m:'stand'}, m=Lg.m||'stand', s=spr(LG.id,m), hA=anchor(LG,m,'hip'), hp=L0y[side];
+    add(s,hp[0]+(Lg.dx||0)-hA[0],hp[1]+(Lg.dy||0)-hA[1],side==='far'?SHIFT_DOWN:null,side); });
+  // 5 skirt, 6 torso, 7 head
+  add(sk,skx,sky,null,'skirt'); add(body,tx,ty,null,'body');
+  var hd=spr(HD.id,null), hdA=anchor(HD,null,'neck'), nk=at('neck'); add(hd,nk[0]+H0[0]-hdA[0],nk[1]+H0[1]-hdA[1],null,'head');
+  // 8 the weapon in the near hand, recoiling along its aim
+  var wm=(WP.maps[aim]||derived(WP,aim))?aim:'lv', ws=spr(WP.id,wm), wg=anchor(WP,wm,'grip'), hn=at('hand');
+  var rv=(wm==='up')?[-recoil,Math.round(recoil*0.6)]:(wm==='dn'?[-recoil,-Math.round(recoil*0.6)]:[-recoil,0]);
+  var wx=hn[0]+W0[0]+rv[0]-wg[0], wy=hn[1]+W0[1]+rv[1]-wg[1]; add(ws,wx,wy,null,'weapon');
+  // 9 the near shoulder unit, on top
+  var um=(SH.maps&&SH.maps[pod])?pod:'closed', us=spr(SH.id,um), uA=anchor(SH,um,'mount'), sn=at('shoulderN');
+  var ux=sn[0]+U0[0]-uA[0], uy=sn[1]+U0[1]-uA[1]; add(us,ux,uy,null,'shoulder');
+  // compose with owners
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,i;
+  for(i=0;i<items.length;i++){ var it=items[i]; x0=Math.min(x0,it.x); y0=Math.min(y0,it.y); x1=Math.max(x1,it.x+it.s.w); y1=Math.max(y1,it.y+it.s.h); }
+  var w=x1-x0, h=y1-y0, px=new Uint8Array(w*h), mat=new Uint8Array(w*h), own=new Uint8Array(w*h);
+  for(i=0;i<items.length;i++){ var t=items[i], sp=t.s, ox=t.x-x0, oy=t.y-y0, yy, xx;
+    for(yy=0;yy<sp.h;yy++)for(xx=0;xx<sp.w;xx++){ var v=sp.px[yy*sp.w+xx]; if(!v)continue; var di=(oy+yy)*w+ox+xx; px[di]=t.r?t.r[v]:v; mat[di]=sp.mat[yy*sp.w+xx]; own[di]=t.z; } }
+  var S={w:w,h:h,px:px,mat:mat,own:own};
+  if(face<0)S=mirror(S);
+  if(!flat)S.px=castShadows(S,lightDx);
+  var outPx=flat?S.px:bakeRim(S,lightDx);
+  function pt(x,y){ var lx=x-x0; return [face<0?(w-1-lx):lx, y-y0]; }
+  function wpt(name){ try{ var q=anchor(WP,wm,name); return pt(wx+q[0],wy+q[1]); }catch(e){ return null; } }
+  var out={w:w,h:h,px:outPx,mat:S.mat,own:S.own,root:pt(0,0),face:face,
+    muzzle:wpt('muzzle'), eject:wpt('eject'), back:wpt('back'),
+    launch:(SH.anchors&&SH.anchors.launch)?pt(ux+SH.anchors.launch[0],uy+SH.anchors.launch[1]):null,
+    thrust:(CR.anchorsBy&&CR.anchorsBy.pack&&CR.anchorsBy.pack.thrust)?pt(packPos[0]+CR.anchorsBy.pack.thrust[0],packPos[1]+CR.anchorsBy.pack.thrust[1]):null,
+    feet:[pt(L0y.near[0]+((F.near&&F.near.dx)||0),0),pt(L0y.far[0]+((F.far&&F.far.dx)||0),0)]};
+  ASM_CACHE[key]=out; return out;
+}
+/* draw a build with its root at world-to-screen (x,y); returns the assembly,
+   whose anchors are in sprite space (add a.x, a.y for the screen) */
+function drawMech(frame,build,st,x,y,remap){
+  var a=assemble(build,st.clip||'idle',st.frame||0,st), sx=Math.round(x)-a.root[0], sy=Math.round(y)-a.root[1];
+  if(st.veil)frame.blitVeil(a.px,a.w,a.h,sx,sy,remap,st.veil); else frame.blit(a.px,a.w,a.h,sx,sy,remap||null);
+  return {x:sx,y:sy,a:a};
+}
+/* the ground shadow: a flat two-step ellipse darkening whatever it lies on
+   (pxmlst's SD suits stand on one), shrinking as the mech rises */
+var GROUND_DARK=(function(){ var t=new Uint8Array(SHIFT_DOWN); t[LI.asphalt]=LI.street; t[LI.walk]=LI.asphalt; t[LI.curb]=LI.walk; t[LI.street]=LI.nearDark;
+  t[LI.nearDark]=1; t[LI.near]=LI.nearDark; t[LI.nearLit]=LI.near; t[LI.nearLight]=LI.near; t[27]=LI.woodDark; for(var i=0;i<9;i++)t[LI['sky'+i]]=LI['sky'+Math.max(0,i-2)]; t[LI.sun]=LI.sky7; return t; })();
+function groundShadow(frame,x,y,halfW,lift){
+  var k=Math.max(0.25,1-Math.min(0.75,(lift||0)/110)), rw=Math.round(halfW*k), rh=Math.max(2,Math.round(rw/5)), i, j;
+  for(j=-rh;j<=rh;j++)for(i=-rw;i<=rw;i++){ var e=i*i/(rw*rw)+j*j/(rh*rh); if(e>1)continue;
+    frame.shade(x+i,y+j,GROUND_DARK); if(e<0.55&&k>0.5)frame.shade(x+i,y+j,GROUND_DARK); }
+}
+
+/* ---- 6. EFFECTS: particles for the gun, the boosters and the ground (brass
+        casings that spin and bounce, dust, barrel smoke, sparks, embers).
+        Seeded, palette only, drawn by whole pixels. ---- */
+function FX(seed){ this.p=[]; this.R=rng(seed||7); }
+FX.prototype.spawn=function(k,x,y,vx,vy,o){ o=o||{}; this.p.push({k:k,x:x,y:y,vx:vx||0,vy:vy||0,t:0,life:o.life||0.5,g:o.g||0,s:o.s||1,gy:(o.gy===undefined)?null:o.gy,b:0,c:o.c||0}); if(this.p.length>600)this.p.shift(); };
+FX.prototype.burst=function(k,x,y,n,spd,o){ for(var i=0;i<n;i++){ var a=(o&&o.a!==undefined?o.a:0)+(this.R()-0.5)*((o&&o.spread)||6.28), v=spd*(0.4+this.R()*0.6); this.spawn(k,x,y,Math.cos(a)*v,Math.sin(a)*v,o); } };
+FX.prototype.step=function(dt){
+  for(var i=this.p.length-1;i>=0;i--){ var q=this.p[i]; q.t+=dt; q.vy+=q.g*dt; q.x+=q.vx*dt; q.y+=q.vy*dt;
+    if(q.gy!==null&&q.y>=q.gy&&q.vy>0){ q.y=q.gy; if(q.b<2){ q.vy*=-0.38; q.vx*=0.55; q.b++; } else { q.vy=0; q.vx*=0.8; } }
+    if(q.k==='smoke'||q.k==='dust'){ q.vx*=0.96; q.vy*=0.96; }
+    if(q.t>=q.life)this.p.splice(i,1); }
+};
+FX.prototype.draw=function(F,cx,cy){
+  for(var i=0;i<this.p.length;i++){ var q=this.p[i], x=Math.round(q.x-cx), y=Math.round(q.y-cy), p=q.t/q.life;
+    if(q.k==='casing'){ var spin=((q.t*30)|0)&1; if(q.b>=2){ F.px(x,y,27); } else { F.px(x,y,spin?27:25); F.px(x+(spin?1:0),y+(spin?0:1),spin?25:27); } }
+    else if(q.k==='dust'){ var r=Math.round(q.s*(1+p*2)), col=p<0.35?38:(p<0.7?37:36);
+      for(var yy=-r;yy<=r;yy++)for(var xx=-r;xx<=r;xx++){ if(xx*xx+yy*yy>r*r+r)continue; if(bayer(x+xx,y+yy)<(1-p)*0.85)F.px(x+xx,y+yy,col); } }
+    else if(q.k==='smoke'){ var rs=Math.round(q.s*(0.6+p*1.6)), cs=p<0.4?38:(p<0.75?37:36);
+      for(var y2=-rs;y2<=rs;y2++)for(var x2=-rs;x2<=rs;x2++){ if(x2*x2+y2*y2>rs*rs+rs)continue; if(bayer(x+x2,y+y2)<(1-p)*0.9)F.px(x+x2,y+y2,cs); } }
+    else if(q.k==='spark'){ F.px(x,y,p<0.4?26:(p<0.7?25:24)); F.px(x-Math.sign(q.vx),y-Math.sign(q.vy),24); }
+    else if(q.k==='ember'){ F.px(x,y,p<0.5?25:23); }
+    else if(q.k==='debris'){ F.px(x,y,p<0.5?16:14); }
+    else if(q.k==='ring'){ var rr=Math.round(q.s*(1+p*3)); for(var a=0;a<24;a++){ var ang=a/24*6.283; if(bayer(a,rr)<1-p)F.px(x+Math.round(Math.cos(ang)*rr),y+Math.round(Math.sin(ang)*rr*0.6),p<0.5?26:25); } }
+  }
+};
+
+/* ---- 7. THE PIXEL FONT (3x5, palette only: text never anti-aliases onto the
+        frame). Each glyph is 15 bits, rows top to bottom. ---- */
+var FONT={
+ 'A':'010101111101101','B':'110101110101110','C':'011100100100011','D':'110101101101110','E':'111100110100111',
+ 'F':'111100110100100','G':'011100101101011','H':'101101111101101','I':'111010010010111','J':'001001001101010',
+ 'K':'101101110101101','L':'100100100100111','M':'101111111101101','N':'110101101101101','O':'010101101101010',
+ 'P':'110101110100100','Q':'010101101110011','R':'110101110101101','S':'011100010001110','T':'111010010010010',
+ 'U':'101101101101111','V':'101101101101010','W':'101101111111101','X':'101101010101101','Y':'101101010010010',
+ 'Z':'111001010100111','0':'111101101101111','1':'010110010010111','2':'110001010100111','3':'110001010001110',
+ '4':'101101111001001','5':'111100110001110','6':'011100111101111','7':'111001010010010','8':'111101111101111',
+ '9':'111101111001110','.':'000000000000010',':':'000010000010000','-':'000000111000000','/':'001001010100100',
+ '+':'000010111010000','%':'101001010100101','>':'100010001010100','<':'001010100010001','(':'010100100100010',
+ ')':'010001001001010','!':'010010010000010','?':'110001010000010',"'":'010010000000000','=':'000111000111000',
+ ',':'000000000010100','[':'110100100100110',']':'011001001001011','x':'000101010101000','_':'000000000000111',
+ '#':'101111101111101','*':'000101010101000','|':'010010010010010',' ':'000000000000000'
+};
+function text(frame,str,x,y,col,shadow,scale){
+  str=String(str).toUpperCase(); scale=scale||1; x=Math.round(x); y=Math.round(y);
+  for(var c=0;c<str.length;c++){
+    var g=FONT[str.charAt(c)]||FONT['?'];
+    for(var r=0;r<5;r++)for(var q=0;q<3;q++)if(g.charAt(r*3+q)==='1'){
+      if(shadow)frame.rect(x+c*4*scale+q*scale+scale,y+r*scale+scale,scale,scale,shadow);
+      frame.rect(x+c*4*scale+q*scale,y+r*scale,scale,scale,col);
+    }
+  }
+  return str.length*4*scale-scale;
+}
+function textWidth(str,scale){ return String(str).length*4*(scale||1)-(scale||1); }
+
+return { VERSION:VERSION, MASTER:MASTER, RAMPS:RAMPS, LEVELS:LEVELS, LEVEL_NAMES:LEVEL_NAMES, LI:LI, L0:L0, RIM:RIM, makeLut:makeLut, hexRGB:hexRGB,
+  SETS:SETS, PARTS:PARTS, SLOTS:SLOTS, compileMap:compileMap, bakeRim:bakeRim, castShadows:castShadows, mirror:mirror, SHIFT_DOWN:SHIFT_DOWN,
+  Frame:Frame, resolve:resolve, geo:geo, bayer:bayer, rng:rng, LAYER_ORDER:LAYER_ORDER, PAINTERS:PAINTERS, bakeLayers:bakeLayers, GLYPHS:GLYPHS,
+  assemble:assemble, drawMech:drawMech, clip:clip, spr:spr, anchor:anchor, groundShadow:groundShadow, GROUND_DARK:GROUND_DARK, FX:FX,
+  addParts:addParts, shearOf:shearOf, FONT:FONT, text:text, textWidth:textWidth };
+})();
+if(typeof module!=='undefined'&&module.exports)module.exports=GOART;
+/* ==== SLICE src/go-art.js : END ==== */
+/* ==== SLICE src/go-parts.js sha256:085c05feb8b55cdb37c3e34486b90c81658cb57336439969bfe0d594da1c690c : BEGIN ==== */
+/* =============================================================================
+   GO-PARTS v2.00 | GUNMETAL OVERTHRUST | the authored parts (data only)
+   -----------------------------------------------------------------------------
+   Every pixel here was placed by hand and viewed (doc 12 section 9: author by
+   eye, render and view between steps). v2.00 redraws the mechs after the
+   Director's references of 2026-09-28 (pxmlst's SD mobile suits): chunky SD
+   proportions, big dome heads, stubby legs in big boots, a tall shield on the
+   far shoulder, a unit on the near shoulder, oversized weapons, 4 to 5 tones a
+   plate with a checker shine, thick outlines. Our own designs: the STANDARD
+   VANGUARD (cobalt and white, a forward blade, twin eyes, the studio's snail
+   spiral on its shield), the HEAVY BULWARK (hazard orange, a T visor, a
+   shoulder cannon, a gatling), the green ENEMY hardware.
+   Facing right, in three-quarter view. The legs part owns the gait: its clips
+   are frames of part offsets, authored by eye. The ROOT is the ground point
+   under the mech's centre. Legend in go-art.js section 2.
+   ============================================================================= */
+(typeof GOART!=='undefined'?GOART:require('./go-art.js')).addParts([
+
+/* ================= STANDARD: VANGUARD (cobalt, white, red) ================= */
+{ id:'LG-01', family:'legs', set:'STANDARD', name:'STRIDER two-leg', kind:'twoleg',
+  layout:{ skirt:[0,-15], near:[5,-17], far:[-6,-17] },
+  anchorsBy:{ skirt:{hip:[11,4],waist:[11,1]}, stand:{hip:[6,1]}, crouch:{hip:[6,1]}, point:{hip:[6,1]} },
+  maps:{
+  skirt:[
+    "....kkkkkkkkkkkkkk....",
+    "...kabbccccccccdddk...",
+    "..kkkkkkkkkkkkkkkkkk..",
+    ".k1233kk23344kk34455k.",
+    ".k1233kx23345kx34455k.",
+    ".k1223kx23345kx34455k.",
+    "..k122kxk2344kxk3445k.",
+    "...kkkk.kkkkkk.kkkkk.."],
+  stand:[
+    "....kkkkk......",
+    "....kbcdk......",
+    "....kbcdk......",
+    "...kkkkkkk.....",
+    "..kABBCCDDk....",
+    "..kAABCCCDk....",
+    "..kkkkkkkkk....",
+    "..k1234455k....",
+    ".k12334455k....",
+    ".k12334445kk...",
+    "k1123344455kk..",
+    "k11233344455kk.",
+    "k112233344455sk",
+    "k112233334444sk",
+    "kkkkkkkkkkkkkkk",
+    "kaabbbbcccddddk",
+    ".kkkkkkkkkkkkk."],
+  crouch:[
+    "....kkkkk......",
+    "....kbcdk......",
+    "...kkkkkkkk....",
+    "..kABBCCDDDk...",
+    "..kAABBCCDDk...",
+    "..kkkkkkkkkk...",
+    ".k12334455k....",
+    "k1123344455kk..",
+    "k11233344455kk.",
+    "k112233344455sk",
+    "k112233334444sk",
+    "kkkkkkkkkkkkkkk",
+    "kaabbbbcccddddk",
+    ".kkkkkkkkkkkkk."],
+  point:[
+    "....kkkkk......",
+    "....kbcdk......",
+    "....kbcdk......",
+    "...kkkkkkk.....",
+    "..kABBCCDDk....",
+    "..kAABCCCDk....",
+    "..kkkkkkkkk....",
+    "..k1234455k....",
+    "..k1233445k....",
+    "..k12334455k...",
+    "..k112334455k..",
+    "..k1123344455k.",
+    "...k112334455kk",
+    "...k1122333445sk",
+    "....kk1122334sk.",
+    ".....kakk1123k..",
+    "......kabbkkk...",
+    ".......kkk......"]
+  },
+  /* THE GAIT. Frames move parts from the stand layout: body [dx,dy] carries
+     skirt, torso, head, shoulders and weapon; near and far pick a leg map and
+     shift it. The walk plants each boot for four frames while it slides back
+     3 px a frame (stride 24 px a cycle), then swings it forward lifted. */
+  clips:{
+    idle:{ fps:5, frames:[
+      {body:[0,0]},
+      {body:[0,0],head:[0,0]},
+      {body:[0,1],head:[0,0],shield:[0,1],shoulder:[0,1],weapon:[0,1]},
+      {body:[0,1],head:[0,1],shield:[0,1],shoulder:[0,0],weapon:[0,1]} ]},
+    walk:{ stride:24, frames:[
+      {body:[0,1], near:{m:'stand',dx:6}, far:{m:'stand',dx:-6}, head:[0,0], shield:[0,1], weapon:[0,1]},
+      {body:[0,0], near:{m:'stand',dx:3}, far:{m:'point',dx:-4,dy:-3}, head:[0,1], shield:[0,1], weapon:[0,0]},
+      {body:[0,-1],near:{m:'stand',dx:0}, far:{m:'point',dx:0,dy:-4}, head:[0,1], shield:[0,0], weapon:[0,-1]},
+      {body:[0,0], near:{m:'stand',dx:-3},far:{m:'point',dx:4,dy:-2}, head:[0,0], shield:[0,-1], weapon:[0,0]},
+      {body:[0,1], near:{m:'stand',dx:-6},far:{m:'stand',dx:6}, head:[0,0], shield:[0,1], weapon:[0,1]},
+      {body:[0,0], near:{m:'point',dx:-4,dy:-3},far:{m:'stand',dx:3}, head:[0,1], shield:[0,1], weapon:[0,0]},
+      {body:[0,-1],near:{m:'point',dx:0,dy:-4}, far:{m:'stand',dx:0}, head:[0,1], shield:[0,0], weapon:[0,-1]},
+      {body:[0,0], near:{m:'point',dx:4,dy:-2}, far:{m:'stand',dx:-3}, head:[0,0], shield:[0,-1], weapon:[0,0]} ]},
+    squat:{ frames:[ {body:[0,3],near:{m:'crouch',dy:3},far:{m:'crouch',dy:3},head:[0,1],shield:[0,1],weapon:[0,1]} ]},
+    rise:{ frames:[ {body:[0,0],near:{m:'point',dx:2,dy:-3},far:{m:'point',dx:-3,dy:-5},head:[0,1],shield:[0,2],shoulder:[0,1],weapon:[0,1]} ]},
+    apex:{ frames:[ {body:[0,0],near:{m:'point',dx:1,dy:-2},far:{m:'point',dx:-2,dy:-3},head:[0,0],shield:[0,0],weapon:[0,0]} ]},
+    fall:{ frames:[ {body:[0,0],near:{m:'stand',dx:1,dy:0},far:{m:'stand',dx:-2,dy:-1},head:[0,-1],shield:[0,-1],shoulder:[0,-1],weapon:[0,-1]} ]},
+    land:{ frames:[ {body:[0,3],near:{m:'crouch',dx:1,dy:3},far:{m:'crouch',dx:-1,dy:3},head:[0,2],shield:[0,2],shoulder:[0,1],weapon:[0,2]},
+                    {body:[0,1],near:{m:'stand',dx:0,dy:0},far:{m:'stand',dx:0,dy:0},head:[0,1],shield:[0,1],weapon:[0,1]} ]},
+    dash:{ frames:[ {body:[1,1],lean:1,near:{m:'point',dx:-3,dy:-3},far:{m:'point',dx:-7,dy:-4},head:[1,0],shield:[-1,1],shoulder:[0,0],weapon:[1,1]} ]},
+    hover:{ fps:8, frames:[ {body:[0,0],near:{m:'point',dx:1,dy:-2},far:{m:'point',dx:-2,dy:-3},head:[0,0],shield:[0,1]},
+                            {body:[0,1],near:{m:'point',dx:1,dy:-1},far:{m:'point',dx:-2,dy:-2},head:[0,1],shield:[0,1],weapon:[0,1]} ]},
+    skid:{ frames:[ {body:[-1,2],lean:-1,near:{m:'crouch',dx:4,dy:2},far:{m:'stand',dx:-4,dy:0},head:[-1,1],shield:[-1,2],weapon:[-1,2]} ]}
+  }},
+
+{ id:'CR-01', family:'core', set:'STANDARD', name:'BASTION core',
+  anchorsBy:{ body:{hip:[11,14],neck:[11,3],shoulderF:[3,4],shoulderN:[20,8],hand:[15,11],pack:[3,6]},
+              pack:{mount:[10,5],thrust:[4,13]} },
+  maps:{
+  body:[
+    ".....kkkkkkkkkkk......",
+    "....kkabbccccdddk.....",
+    "...k1kkkkkkkkkkkkk....",
+    "..k1233334444445k5k...",
+    "..k12333444444455k5k..",
+    ".k112333kkkkkkk455k5k.",
+    ".k11233kACCDDDDk45kk..",
+    ".k11223kABsssCDk44k...",
+    ".k11223kABstsCDk44k...",
+    ".k11222kAABBCCDk34k...",
+    ".k11122kkkkkkkkk33k...",
+    "..k111222yyyoo3333k...",
+    "..kx1111222223333k....",
+    "...kkx1111222233kk....",
+    ".....kkkkkkkkkkk......"],
+  pack:[
+    "..kkkkkkk...",
+    ".k2334445k..",
+    "k12334445k..",
+    "k12333444kk.",
+    "k1223334444k",
+    "k12aabbcc44k",
+    "k12kkkkkk34k",
+    "k1kakakak.3k",
+    "k12kkkkkk33k",
+    "k12233333kk.",
+    ".kk12222kk..",
+    "..kabbcck...",
+    "..kakkkck...",
+    "..kk...kk..."]
+  }},
+
+{ id:'HD-01', family:'head', set:'STANDARD', name:'VANGUARD head',
+  anchors:{neck:[9,17]},
+  map:[
+    "............kk.....",
+    "...........kyk.....",
+    "..........kywk.....",
+    "......kkkkyokk.....",
+    "....kk2334yk445kk..",
+    "...k123344445454k..",
+    "..k1233444545455k..",
+    "..k12334445454555k.",
+    ".k112334444545455k.",
+    ".k112333444445455k.",
+    ".k112333344444555k.",
+    ".kkkkkkkkkkkkkkkkkk",
+    ".kakkkkkkkkkkhhijkk",
+    ".kakkkkkkkkkkhijjkk",
+    ".kakkkkkkkkkkkkkkk.",
+    ".k1k112ABBCCDDDk...",
+    "..kk11ABBCCCDk.....",
+    "....kkkkkkkkk......"]},
+
+{ id:'AR-01', family:'arms', set:'STANDARD', name:'SNAIL shield',
+  anchors:{mount:[10,9]},
+  map:[
+    "..kkkkkkkk..",
+    ".kCDDDDDDDk.",
+    "kCk2233444Dk",
+    "kCk2333444Dk",
+    "kCk23kkkk4Dk",
+    "kCk2kyyyyk4k",
+    "kCk2kykkyk4k",
+    "kCk2kykyyk4k",
+    "kCk2kykkkk4k",
+    "kCk23kyyyyk4k",
+    "kCk2333kkk44k",
+    "kCk23334444Dk",
+    "kCk22333444Dk",
+    "kCk22333344Dk",
+    "kCk12233344Dk",
+    "kCk12233344Dk",
+    "kBk11223334Dk",
+    "kBk11222333Ck",
+    ".kAk1112233Ck",
+    "..kkAAABBBCk.",
+    "....kkkkkkk.."]},
+
+{ id:'SH-01', family:'shoulder', set:'STANDARD', name:'PODS pauldron',
+  anchorsBy:{ closed:{mount:[4,6]}, open:{mount:[4,8]} }, anchors:{launch:[8,1]},
+  maps:{
+  closed:[
+    ".....kkkk.....",
+    "....kyyk......",
+    "..kkkyokkkk...",
+    ".k234yok445k..",
+    "k1234444455kk.",
+    "k12334444555k.",
+    "k12ACCCDDD55k.",
+    "k12ACCCCDD45k.",
+    "k112333444455k",
+    ".k1123334444k.",
+    "..kk1122333kk.",
+    "....kkkkkkk..."],
+  open:[
+    "....kkkkkk....",
+    "...krkrkrk....",
+    "..kkyk.kyk....",
+    ".....kkkk.....",
+    "....kyyk......",
+    "..kkkyokkkk...",
+    ".k234yok445k..",
+    "k1234444455kk.",
+    "k12334444555k.",
+    "k12ACCCDDD55k.",
+    "k12ACCCCDD45k.",
+    "k112333444455k",
+    ".k1123334444k.",
+    "..kk1122333kk.",
+    "....kkkkkkk..."]
+  }},
+
+{ id:'WP-01', family:'weapon', set:'STANDARD', name:'RC-9 drum rifle', kind:'mg',
+  anchorsBy:{ lv:{grip:[9,9],muzzle:[31,4],eject:[17,2],back:[0,4]} },
+  derive:{ up:{from:'lv',shear:-0.5}, dn:{from:'lv',shear:0.5} },
+  maps:{
+  lv:[
+    ".........kkkkkkkkkkk............",
+    "........kbcccdddddek............",
+    "..kkkkkkabbbbbbbbbbbkkkkkkkkkkkk",
+    ".kbbbbbkabcccccccccbbcddddddkbdk",
+    "kabbbbbkabcccccccbbbbccccccckbck",
+    "kaaaaaakaabbbbbbbbbbaaaaaaaakabk",
+    ".kkkkkkkaaaaaaaaaaakkkkkkkkkkkkk",
+    ".......kDDCkkkbbbbbk............",
+    "......kDDCCBkbcHHcbk............",
+    "......kDCCBBkbcHHcbk............",
+    "......kCBBAAkbccccbk............",
+    ".......kkkkk.kkbbbkk............",
+    "..............kkkk.............."]
+  }},
+
+/* ================= HEAVY: BULWARK (hazard orange, charcoal) ================= */
+{ id:'LG-02', family:'legs', set:'HEAVY', name:'BULWARK two-leg', kind:'twoleg',
+  layout:{ skirt:[0,-16], near:[6,-18], far:[-7,-18] },
+  anchorsBy:{ skirt:{hip:[12,4],waist:[12,1]}, stand:{hip:[7,1]}, crouch:{hip:[7,1]}, point:{hip:[7,1]} },
+  maps:{
+  skirt:[
+    "....kkkkkkkkkkkkkkkk....",
+    "...kaabbccccccccdddk....",
+    "..kkkkkkkkkkkkkkkkkkkk..",
+    ".kABBCkk1223344kkCCDDk..",
+    ".kAsBCkx1233445kxCsDDk..",
+    ".kAsBCkx1233445kxCsCDk..",
+    "..kABkxxk123344kxkCCk...",
+    "...kkk..kkkkkkkk..kkk..."],
+  stand:[
+    ".....kkkkk.......",
+    ".....kbcdk.......",
+    "....kkkkkkkk.....",
+    "...kAABBCCDDk....",
+    "..kABsBsBsCCDk...",
+    "..kkkkkkkkkkkk...",
+    "..k12334455k.....",
+    ".k1233444555k....",
+    ".k1233444555k....",
+    "k11233444555kk...",
+    "k112334444555kk..",
+    "k1123334444555kk.",
+    "k11223334444555sk",
+    "k11223333444455sk",
+    "kkkkkkkkkkkkkkkkk",
+    "kAABBBBBCCCCCDDDk",
+    "kaabbbbbbccccdddk",
+    ".kkkkkkkkkkkkkkk."],
+  crouch:[
+    ".....kkkkk.......",
+    "....kkkkkkkk.....",
+    "...kAABBCCDDk....",
+    "..kABsBsBsCCDk...",
+    "..kkkkkkkkkkkk...",
+    ".k1233444555k....",
+    "k11233444555kk...",
+    "k112334444555kk..",
+    "k1123334444555kk.",
+    "k11223334444555sk",
+    "k11223333444455sk",
+    "kkkkkkkkkkkkkkkkk",
+    "kAABBBBBCCCCCDDDk",
+    "kaabbbbbbccccdddk",
+    ".kkkkkkkkkkkkkkk."],
+  point:[
+    ".....kkkkk.......",
+    ".....kbcdk.......",
+    "....kkkkkkkk.....",
+    "...kAABBCCDDk....",
+    "..kABsBsBsCCDk...",
+    "..kkkkkkkkkkkk...",
+    "..k12334455k.....",
+    "..k1233444555k...",
+    "..k12334445555k..",
+    "..k112334444555k.",
+    "...k11233444455k.",
+    "...k112233444455k",
+    "....k112233344sk.",
+    "....kkk1122333sk.",
+    ".....kAkk11223k..",
+    "......kAABkkkk...",
+    ".......kkkk......"]
+  },
+  clips:{
+    idle:{ fps:4, frames:[ {body:[0,0]},{body:[0,0]},{body:[0,1],shield:[0,1],shoulder:[0,1],weapon:[0,1]},{body:[0,1],head:[0,1],shield:[0,1],weapon:[0,1]} ]},
+    walk:{ stride:22, frames:[
+      {body:[0,2], near:{m:'stand',dx:6}, far:{m:'stand',dx:-5}, shield:[0,1], weapon:[0,1]},
+      {body:[0,1], near:{m:'stand',dx:3}, far:{m:'point',dx:-3,dy:-2}, head:[0,1], shield:[0,1]},
+      {body:[0,0], near:{m:'stand',dx:0}, far:{m:'point',dx:0,dy:-3}, head:[0,1], weapon:[0,-1]},
+      {body:[0,1], near:{m:'stand',dx:-3},far:{m:'point',dx:3,dy:-1}, shield:[0,-1]},
+      {body:[0,2], near:{m:'stand',dx:-5},far:{m:'stand',dx:6}, shield:[0,1], weapon:[0,1]},
+      {body:[0,1], near:{m:'point',dx:-3,dy:-2},far:{m:'stand',dx:3}, head:[0,1], shield:[0,1]},
+      {body:[0,0], near:{m:'point',dx:0,dy:-3}, far:{m:'stand',dx:0}, head:[0,1], weapon:[0,-1]},
+      {body:[0,1], near:{m:'point',dx:3,dy:-1}, far:{m:'stand',dx:-3}, shield:[0,-1]} ]},
+    squat:{ frames:[ {body:[0,3],near:{m:'crouch',dy:3},far:{m:'crouch',dy:3},head:[0,1],shield:[0,1],weapon:[0,1]} ]},
+    rise:{ frames:[ {body:[0,0],near:{m:'point',dx:2,dy:-3},far:{m:'point',dx:-3,dy:-4},head:[0,1],shield:[0,2],weapon:[0,1]} ]},
+    apex:{ frames:[ {body:[0,0],near:{m:'point',dx:1,dy:-2},far:{m:'point',dx:-2,dy:-3}} ]},
+    fall:{ frames:[ {body:[0,0],near:{m:'stand',dx:1},far:{m:'stand',dx:-2,dy:-1},head:[0,-1],shield:[0,-1],weapon:[0,-1]} ]},
+    land:{ frames:[ {body:[0,3],near:{m:'crouch',dx:1,dy:3},far:{m:'crouch',dx:-1,dy:3},head:[0,2],shield:[0,2],shoulder:[0,1],weapon:[0,2]},
+                    {body:[0,1],head:[0,1],shield:[0,1],weapon:[0,1]} ]},
+    dash:{ frames:[ {body:[1,1],lean:1,near:{m:'point',dx:-3,dy:-3},far:{m:'point',dx:-7,dy:-4},head:[1,0],shield:[-1,1],weapon:[1,1]} ]},
+    hover:{ fps:8, frames:[ {near:{m:'point',dx:1,dy:-2},far:{m:'point',dx:-2,dy:-3}}, {body:[0,1],near:{m:'point',dx:1,dy:-1},far:{m:'point',dx:-2,dy:-2},head:[0,1],weapon:[0,1]} ]},
+    skid:{ frames:[ {body:[-1,2],lean:-1,near:{m:'crouch',dx:4,dy:2},far:{m:'stand',dx:-4},head:[-1,1],shield:[-1,2],weapon:[-1,2]} ]}
+  }},
+
+{ id:'CR-02', family:'core', set:'HEAVY', name:'ANVIL core',
+  anchorsBy:{ body:{hip:[12,15],neck:[12,3],shoulderF:[2,4],shoulderN:[21,8],hand:[16,12],pack:[3,7]},
+              pack:{mount:[10,5],thrust:[5,12]} },
+  maps:{
+  body:[
+    "....kkkkkkkkkkkkkkk.....",
+    "...kaabbbccccccdddk.....",
+    "..kkkkkkkkkkkkkkkkkkk...",
+    ".k1123344444444455kk5k..",
+    "k11233444444444555k55k..",
+    "k1123344kkkkkkk4455k5k..",
+    "k112334kAABBCCDk455kk...",
+    "k112334kABBsCCDk445k....",
+    "k112334kABsssCDk445k....",
+    "k112334kAABBCCDk445k....",
+    "k1122333kkkkkkk4444k....",
+    "k11223333333444444k.....",
+    ".k1ssss2ssss2ssss3k.....",
+    ".kx11112222223333k......",
+    "..kkx111122222233k......",
+    "....kkkkkkkkkkkkk......."],
+  pack:[
+    "...kkkkkkk..",
+    "..kABBCCDk..",
+    ".kAABBCCDDk.",
+    "kAAkkkkkkDk.",
+    "kAka.a.a.kDk",
+    "kAAkkkkkkDk.",
+    "kAABBBCCCDk.",
+    ".kAABBBCCk..",
+    "..kaabbcck..",
+    "..kakkkcck..",
+    "..kak..kck..",
+    "..kk....kk.."]
+  }},
+
+{ id:'HD-02', family:'head', set:'HEAVY', name:'BRUTE head',
+  anchors:{neck:[8,14]},
+  map:[
+    "......kkkk.......",
+    "....kk5455kk.....",
+    "...k23445455k....",
+    "..k1234454545k...",
+    ".k112334445455k..",
+    ".k112333444455k..",
+    "k1122kkkkkkkk45k.",
+    "k112kkrrokkkkk5k.",
+    "k112kkkkkrookkkk.",
+    "k1122kkkkkkkk44k.",
+    "k112233AABBCC44k.",
+    ".k1123AABBBCC3k..",
+    "..kk11ABBCCC3k...",
+    "....kkkkkkkkk....",
+    "......kkkkk......"]},
+
+{ id:'AR-02', family:'arms', set:'HEAVY', name:'SLAB shield',
+  anchors:{mount:[11,8]},
+  map:[
+    "..kkkkkkkkkk.",
+    ".kABBBBCCCDDk",
+    "kAk11223344Dk",
+    "kAk11223344Dk",
+    "kAkHkHkHkH4Dk",
+    "kAkkHkHkHk4Dk",
+    "kAk11223344Dk",
+    "kAk11223344Dk",
+    "kAk1122334kDk",
+    "kAk112233k4Dk",
+    "kAk11223k44Dk",
+    "kAk1122k344Dk",
+    "kAk112k3344Dk",
+    "kAk11223344Dk",
+    "kAk11223344Dk",
+    "kAk11223344Dk",
+    "kAk11222334Ck",
+    "kAk11122233Ck",
+    ".kAAABBBBCCk.",
+    "..kkkkkkkkk.."]},
+
+{ id:'SH-02', family:'shoulder', set:'HEAVY', name:'HC-1 shoulder cannon',
+  anchorsBy:{ closed:{mount:[5,11]}, open:{mount:[5,11]} }, anchors:{launch:[26,2]},
+  maps:{
+  closed:[
+    "............kkkkkkkkkkkkkk.kkk",
+    "..kkkkkkkkkkbcddddddddddddkbdk",
+    ".kAABBBCCCkbccccccccccccckkbck",
+    "kAABBBCCCDkabbbbbbbbbbbbbkkbbk",
+    "kAAkkkkkkDkkkkkkkkkkkkkkk.kkk.",
+    "kAk11223kDk...................",
+    "kAk11233kDk...................",
+    "kAAkkkkkkDk...................",
+    "kAAABBBCCCk...................",
+    ".kAABBBCCk....................",
+    "..kkbcckk.....................",
+    "...kbcck......................",
+    "...kkkkk......................"],
+  open:[
+    "............kkkkkkkkkkkkkk.kkk",
+    "..kkkkkkkkkkbcddddddddddddkbdk",
+    ".kAABBBCCCkbccccccccccccckkbck",
+    "kAABBBCCCDkabbbbbbbbbbbbbkkbbk",
+    "kAAkkkkkkDkkkkkkkkkkkkkkk.kkk.",
+    "kAk11223kDk...................",
+    "kAk11233kDk...................",
+    "kAAkkkkkkDk...................",
+    "kAAABBBCCCk...................",
+    ".kAABBBCCk....................",
+    "..kkbcckk.....................",
+    "...kbcck......................",
+    "...kkkkk......................"]
+  }},
+
+{ id:'WP-02', family:'weapon', set:'HEAVY', name:'GR-4 gatling', kind:'mg',
+  anchorsBy:{ lv:{grip:[9,10],muzzle:[32,5],eject:[16,12],back:[0,5]} },
+  derive:{ up:{from:'lv',shear:-0.5}, dn:{from:'lv',shear:0.5} },
+  maps:{
+  lv:[
+    ".........kkkkkkkkkk...............",
+    "........kABBBCCCDDk...............",
+    "..kkkkkkkABBBCCCDDkkkkkkkkkkkkkk..",
+    ".kbbbbbkkABBBCCCDkbcddddddddddkkk.",
+    "kabbbbbbkAABBBCCDkkkkkkkkkkkkkkbdk",
+    "kaaaaaaakAABBBCCkbcddddddddddkkbck",
+    ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkbbk",
+    "........kAABBBCCkbcddddddddddkkbk.",
+    ".......kDDCkaaakkkkkkkkkkkkkkkkkk.",
+    "......kDDCCBkaaaakk...............",
+    "......kDCCBBkHkHkHk...............",
+    "......kCBBAAkkkkkkk...............",
+    ".......kkkkk......................"]
+  }},
+
+/* ================= EFFECTS: muzzle flashes and booster flames ================= */
+{ id:'FX-MUZZLE', family:'fx', set:'FX', name:'muzzle flash, 3 frames (pointing +x)',
+  anchors:{origin:[0,3]},
+  maps:{
+  f0:[
+    "..yy......",
+    "..wyy.o...",
+    "oywwwyyo..",
+    "ywwwwwwyyo",
+    "oywwwyyo..",
+    "..wyy.o...",
+    "..yy......"],
+  f1:[
+    "....o.....",
+    ".yyyo..o..",
+    "ywwwyoo...",
+    "wwwwwwyyoo",
+    "ywwwyoo...",
+    ".yyyo..o..",
+    "....o....."],
+  f2:[
+    "..........",
+    "..o.......",
+    ".oyyo.....",
+    "oywwyoo...",
+    ".oyyo.....",
+    "..o.......",
+    ".........."]
+  }},
+{ id:'FX-BLAST', family:'fx', set:'FX', name:'cannon blast (pointing +x)',
+  anchors:{origin:[0,5]},
+  map:[
+    "....yy..........",
+    "...ywwyy..o.....",
+    ".oyywwwwyy.o....",
+    "oywwwwwwwwyyoo..",
+    "ywwwwwwwwwwwwyyo",
+    "ywwwwwwwwwwwwwyy",
+    "ywwwwwwwwwwwwyyo",
+    "oywwwwwwwwyyoo..",
+    ".oyywwwwyy.o....",
+    "...ywwyy..o.....",
+    "....yy.........."]},
+{ id:'FX-FLAME', family:'fx', set:'FX', name:'booster flame, 3 frames (pointing down)',
+  anchors:{origin:[2,0]},
+  maps:{
+  f0:[".yy.","ywwy","ywwy","owwo",".yo.",".oo.","..r."],
+  f1:[".yy.","ywwy","ywwy","ywyo","owyo",".oy.",".oo.","..r.",".r.."],
+  f2:[".yy.","ywwy","owwo",".yo.",".o..","..r."]
+  }},
+
+/* ================= ENEMY hardware for the control lab (green) ================= */
+{ id:'EN-TURRET', family:'turret', set:'ENEMY', name:'SENTRY turret',
+  anchors:{base:[9,16], muzzle:[0,5]},
+  map:[
+    "......kkkkkkk.....",
+    ".....k2344554k....",
+    "kkkkk123445554k...",
+    "kbcdd1233kkkk4k...",
+    "kbcdd123krrrk3k...",
+    "kkkkk123kkkkk3k...",
+    ".....k1122332k....",
+    "......kkkkkkk.....",
+    ".......kbcbk......",
+    ".......kbcbk......",
+    ".....kkkbcbkkk....",
+    "....k123444432k...",
+    "...k12334444332k..",
+    "...k1ss1ss1ss12k..",
+    "..k1122222222211k.",
+    "..kkkkkkkkkkkkkkk.",
+    ".................."]},
+
+{ id:'EN-DRONE', family:'drone', set:'ENEMY', name:'GNAT drone',
+  anchors:{c:[8,5]},
+  map:[
+    "kkkkk.....kkkkk.",
+    ".kbk.......kbk..",
+    "..kkkkkkkkkkk...",
+    ".k12344455543k..",
+    "k1233krrrk4443k.",
+    "k1223kkkkk3332k.",
+    ".k11222222221k..",
+    "..kkkkbcbkkkk...",
+    ".....kbcbk......",
+    "......kkk......."]},
+
+{ id:'EN-DUMMY', family:'dummy', set:'ENEMY', name:'PLATE target',
+  anchors:{base:[6,21]},
+  map:[
+    "...kkkkkkk...",
+    "..k1234554k..",
+    ".k123444554k.",
+    "k12334kk4443k",
+    "k1233krrk443k",
+    "k1233krrk443k",
+    "k12233kk3332k",
+    ".k112233332k.",
+    "..k1122221k..",
+    "...kkkkkkk...",
+    ".....kbk.....",
+    ".....kbk.....",
+    ".....kbk.....",
+    ".....kbk.....",
+    ".....kbk.....",
+    ".....kbk.....",
+    ".....kbk.....",
+    "....kkbkk....",
+    "...kbcccbk...",
+    "..kbcdddcbk..",
+    ".kkkkkkkkkkk.",
+    "............."]},
+/* ================= CITY STREETS props (the street layer stamps them) =================
+   HUMAN SCALE (the Director's note: the mechs are massive). The facades put a
+   floor at about 12 px, so a metre is about 3.5 px and a mech about 15 m: a
+   car is 16 px long, a cone 3 px, a barrel 4. The giants read as giants
+   because the street is drawn at the scale of the people who fled it. */
+{ id:'PR-CAR', family:'prop', set:'CITY', name:'parked sedan (4.5 m)', anchors:{base:[8,6]},
+  map:[
+    ".....kkkkkk......",
+    "....kVhghgVk.....",
+    ".kkkVVVVVVVVkkk..",
+    "kVVVVVVVVVVVVVYk.",
+    "kUUkkUUUUUUkkUUk.",
+    ".kkaak....kaak...",
+    "..kk......kk....."]},
+{ id:'PR-WRECK', family:'prop', set:'CITY', name:'burned-out car (4.5 m)', anchors:{base:[8,5]},
+  map:[
+    "......kkkk.......",
+    "..kkkUkxxkUkk....",
+    "kkUUUUUUUUUUUkk..",
+    "kUUZUUUUUZUUUUk..",
+    "kkkkakkkkkkakkk..",
+    "....k......k....."]},
+{ id:'PR-BUS', family:'prop', set:'CITY', name:'wrecked bus (12 m)', anchors:{base:[20,12]},
+  map:[
+    "..kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk...",
+    ".kYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYk..",
+    ".kYkhgkhgkxxkhgkhgkhgkxkkhgkhgkhgkhgkYk..",
+    ".kYkggkhgkxxkggkhgkggkxxkggkhgkggkghkYk..",
+    ".kYkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkYk..",
+    ".kVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVk..",
+    ".kVVVZZVVVVVVVVVVVVVVVVVZVVVVVVVVVVVVVYk.",
+    ".kUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUk.",
+    ".kUUUkkkkUUUUUUUUUUUUUUUUUUUUUkkkkUUUUUk.",
+    ".kkkkaaaakkkkkkkkkkkkkkkkkkkkkaaaakkkkkk.",
+    ".....kaak......................kaak......",
+    "......kk........................kk.......",
+    "........................................."]},
+{ id:'PR-BARRIER', family:'prop', set:'CITY', name:'jersey barrier (3 m)', anchors:{base:[5,4]},
+  map:[
+    "..kkkkkkk..",
+    ".kCHCHCHCk.",
+    "kKKKKKKKKCk",
+    "kkkkkkkkkkk"]},
+{ id:'PR-CONE', family:'prop', set:'CITY', name:'traffic cone (0.7 m)', anchors:{base:[1,3]},
+  map:[
+    ".o.",
+    ".W.",
+    "roo"]},
+{ id:'PR-CRATE', family:'prop', set:'CITY', name:'crate (1.2 m)', anchors:{base:[2,4]},
+  map:[
+    "kkkkk",
+    "kQPRk",
+    "kPQRk",
+    "kkkkk"]},
+{ id:'PR-BARREL', family:'prop', set:'CITY', name:'oil drum (0.9 m)', anchors:{base:[1,4]},
+  map:[
+    "kVk",
+    "kHk",
+    "kVk",
+    "kkk"]},
+{ id:'PR-BAGS', family:'prop', set:'CITY', name:'rubbish bags', anchors:{base:[3,2]},
+  map:[
+    ".kMk.k.",
+    "kNMLkMk"]},
+{ id:'PR-HYDRANT', family:'prop', set:'CITY', name:'fire hydrant', anchors:{base:[1,3]},
+  map:[
+    ".b.",
+    "qrr",
+    ".r."]},
+{ id:'PR-SIGNPOST', family:'prop', set:'CITY', name:'street sign (3 m)', anchors:{base:[2,11]},
+  map:[
+    "kkkkk",
+    "kYYYk",
+    "kYkYk",
+    "kkkkk",
+    "..b..",
+    "..b..",
+    "..b..",
+    "..b..",
+    "..b..",
+    "..b..",
+    ".kbk."]},
+{ id:'PR-TREE', family:'prop', set:'CITY', name:'street tree in a planter (6 m)', anchors:{base:[5,21]},
+  map:[
+    "...GGG.....",
+    ".GGFGGGG...",
+    "GGFFGGGGG..",
+    "GFFFFGGGGG.",
+    ".FFFFFGGGG.",
+    "GFFFFFFGGGG",
+    ".FFxFFFFGG.",
+    "..FFxFFFF..",
+    "...FFxFF...",
+    ".....P.....",
+    ".....P.....",
+    ".....P.....",
+    ".....P.....",
+    ".....P.....",
+    ".....P.....",
+    ".....P.....",
+    "....QPQ....",
+    "..kkkkkkk..",
+    "..kKKKKCk..",
+    "..kKKKKCk..",
+    "..kkkkkkk.."]},
+{ id:'PR-WEEDS', family:'prop', set:'CITY', name:'weeds in the kerb', anchors:{base:[2,2]},
+  map:[
+    "G.G.F",
+    "FGFGF"]}
+]);
+/* ==== SLICE src/go-parts.js : END ==== */
+/* ==== SLICE src/go-shell.js sha256:3ae7d8303454f520af151f41e07fe16ce610ef60ca1a863882206a4c674a9ad8 : BEGIN ==== */
+/* =============================================================================
+   GO-SHELL v1.01 | GUNMETAL OVERTHRUST | the wide shell (labs now, the game at BUILD 1)
+   -----------------------------------------------------------------------------
+   Derived from STUDIO SEED v1.06 (commons/seed/): the error reporter first, the
+   closed-loop fit, fullscreen, the audio first gesture, frameStep with its
+   200 ms ceiling and STEP_CAP 5, the visibility resync and the pagehide audio
+   close are the seed's patterns, kept. What changes, and why:
+   - WIDE (doc 11 v1.01 section 2): a 16:9 logical grid, 480x270 or 640x360
+     (the Director picks at the art lab); a portrait hold shows the turn-the-
+     phone card, never a squeezed frame; the unfolded foldable (nearly square)
+     shows the frame letterboxed.
+   - PIXEL LAW (pitch section 6, cohesion rules 1 and 2): the game draws palette
+     indices into a native W x H frame; the shell resolves it through the level
+     LUT and presents it at an INTEGER number of DEVICE pixels per grid pixel
+     (the backing store is sized from the device, doc 11 section 3), smoothing
+     off, so no pixel is ever smoothly scaled.
+   - DEVICES: gamepad polling and haptics, each reporting what the page was
+     allowed to do, so a device pass inside any viewer tells us the truth.
+   Environment neutral where it can be: the pure parts (computeFit, isPortrait,
+   frameStep, readGamepads) run headless in the gates.
+   v1.01 (2026-09-28): the canvas DECLARES its logical grid, data-logical-width
+   and data-logical-height, wherever the store is sized (doc 11 v1.02 section 3;
+   MEMO-PLAYTEST-DRIVER-v1.03-v1.00), so tools read it in grid pixels.
+   ============================================================================= */
+var GOSHELL=(function(){
+'use strict';
+var VERSION='v1.01';
+var S={ lastError:null, ERRMSG:'', W:480, H:270, fit:null, portrait:false, hidden:false, frames:0, tapped:false };
+
+/* ---- 1. ERROR REPORTER (seed section 1): crashes become photographable ---- */
+function reportErr(site,e){ S.lastError=String(site)+': '+(e&&e.message?e.message:String(e)); S.ERRMSG='ERR: '+S.lastError; }
+
+/* ---- 2. THE FIT (pure, gated). vw,vh: the CSS box the frame may fill; dpr:
+        device pixels per CSS pixel. k is DEVICE pixels per grid pixel, the
+        largest whole number that fits; below 1 (a tiny window) it is the exact
+        fraction and flagged, never rounded up past the box. ---- */
+var PORTRAIT_RATIO=0.8;      // width/height below this is a phone held upright (about 0.46); the unfolded foldable (about 0.93) letterboxes
+function computeFit(vw,vh,dpr,W,H){
+  dpr=Math.max(1,Math.min(4,dpr||1));
+  var pw=Math.floor(vw*dpr), ph=Math.floor(vh*dpr), k=Math.floor(Math.min(pw/W,ph/H)), integer=true;
+  if(k<1){ k=Math.min(pw/W,ph/H); integer=false; if(!(k>0))k=0.25; }
+  var bw=Math.max(1,Math.floor(W*k)), bh=Math.max(1,Math.floor(H*k));
+  return {k:k,integer:integer,dpr:dpr,backW:bw,backH:bh,cssW:bw/dpr,cssH:bh/dpr};
+}
+function isPortrait(vw,vh){ return vh>0&&(vw/vh)<PORTRAIT_RATIO; }
+
+/* ---- 3. FRAME PACING (seed section 7, verbatim law; doc 11 section 1) ---- */
+var STEP_CAP=5, STEP_MS=16.6667;
+function frameStep(prevLast,now){
+  var acc=now-prevLast;
+  if(acc>200)return {steps:1,last:now,resync:true};   // drop the backlog, never sprint
+  var steps=Math.floor(acc/STEP_MS);
+  if(steps>STEP_CAP)steps=STEP_CAP;                    // the belt: cap regardless
+  return {steps:steps,last:prevLast+steps*STEP_MS,resync:false};
+}
+
+/* ---- 4. DEVICES: gamepad and haptics. Each reports what it was allowed. ---- */
+var DEV={ vibrate:'untried', gamepad:'untried', pads:0, padId:'' };
+function vibrate(pattern){
+  try{
+    if(typeof navigator==='undefined'||!navigator.vibrate){ DEV.vibrate='no API'; return false; }
+    if(!S.tapped){ DEV.vibrate='waits for a first tap'; return false; }   // Chrome refuses a buzz before the first tap
+    var r=navigator.vibrate(pattern); DEV.vibrate=r?'accepted':'refused'; return !!r;
+  }catch(e){ DEV.vibrate='blocked: '+(e&&e.name?e.name:'error'); return false; }
+}
+/* the standard mapping (w3c gamepad): 0 A, 1 B, 2 X, 3 Y, 4 LB, 5 RB, 6 LT, 7 RT,
+   8 back, 9 start, 12..15 dpad; axes 0,1 left stick, 2,3 right stick */
+function readGamepads(nav){
+  nav=nav||(typeof navigator!=='undefined'?navigator:null);
+  try{
+    if(!nav||!nav.getGamepads){ DEV.gamepad='no API'; DEV.pads=0; return null; }
+    var list=nav.getGamepads(), pad=null, n=0, i;
+    for(i=0;list&&i<list.length;i++)if(list[i]&&list[i].connected!==false){ n++; if(!pad)pad=list[i]; }
+    DEV.pads=n; DEV.gamepad=n?'connected':'allowed, none seen (press a button)'; DEV.padId=pad?String(pad.id||'').slice(0,40):'';
+    if(!pad)return null;
+    var b=function(j){ var x=pad.buttons&&pad.buttons[j]; return x?(typeof x==='object'?(x.pressed||x.value>0.5):x>0.5):false; };
+    var ax=function(j){ var v=pad.axes&&pad.axes[j]; return (typeof v==='number')?v:0; };
+    return {lx:ax(0),ly:ax(1),rx:ax(2),ry:ax(3),a:b(0),b:b(1),x:b(2),y:b(3),lb:b(4),rb:b(5),lt:b(6),rt:b(7),
+            back:b(8),start:b(9),up:b(12),down:b(13),left:b(14),right:b(15)};
+  }catch(e){ DEV.gamepad='blocked: '+(e&&e.name?e.name:'error'); DEV.pads=0; return null; }
+}
+
+/* ---- 5. AUDIO behind a first gesture (seed section 4), degrades silently ---- */
+var AC=null;
+function firstGesture(){
+  try{
+    if(!AC){ var C=(typeof AudioContext!=='undefined')?AudioContext:(typeof webkitAudioContext!=='undefined'?webkitAudioContext:null); if(C)AC=new C(); }
+    if(AC&&AC.state==='suspended'&&AC.resume)AC.resume();   // resume INSIDE the gesture (seed v1.01)
+  }catch(e){}
+}
+function beep(freq,dur,type,vol){
+  if(!AC)return;
+  try{ var o=AC.createOscillator(),g=AC.createGain(); o.frequency.value=freq||440; o.type=type||'square';
+    g.gain.setValueAtTime(vol||0.05,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+(dur||0.08));
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+(dur||0.08)); }catch(e){}
+}
+
+/* ---- 6. THE PAGE BINDING (browser only). opts:
+        canvas: the display canvas     box(): the CSS box it may fill {w,h}
+        update(dt)  render() -> {frame, lut}   (index frame and its graded LUT)
+        onFit(fit)  turnCard: element shown in a portrait hold
+        gridW, gridH ---- */
+var P=null;
+function setGrid(w,h){
+  S.W=w; S.H=h;
+  if(!P)return;
+  P.buf.width=w; P.buf.height=h; P.bctx=P.buf.getContext('2d'); P.img=P.bctx.createImageData(w,h);
+  P.u32=new Uint32Array(P.img.data.buffer); fit();
+}
+function fit(){
+  if(!P)return;
+  var vv=viewSize(); S.portrait=isPortrait(vv.w,vv.h);
+  if(P.turnCard)P.turnCard.style.display=S.portrait?'flex':'none';
+  var box=P.box?P.box(vv):vv, dpr=(typeof window!=='undefined'&&window.devicePixelRatio)?window.devicePixelRatio:1;
+  var f=computeFit(box.w,box.h,dpr,S.W,S.H), cv=P.canvas;
+  for(var i=0;i<6;i++){                          // CLOSED LOOP (seed v1.03): apply, measure, step down
+    cv.width=f.backW; cv.height=f.backH; cv.style.width=f.cssW+'px'; cv.style.height=f.cssH+'px';
+    var r=cv.getBoundingClientRect?cv.getBoundingClientRect():null;
+    if(!r||!r.width)break;
+    if(r.width<=box.w+0.5&&r.height<=box.h+0.5)break;
+    var k2=f.integer?Math.max(1,f.k-1):f.k*0.9; if(k2===f.k)break;
+    f={k:k2,integer:f.integer&&k2>=1,dpr:f.dpr,backW:Math.floor(S.W*k2),backH:Math.floor(S.H*k2),cssW:Math.floor(S.W*k2)/f.dpr,cssH:Math.floor(S.H*k2)/f.dpr};
+  }
+  cv.setAttribute('data-logical-width',String(S.W)); cv.setAttribute('data-logical-height',String(S.H));   // v1.01: the declared logical grid (doc 11 v1.02 s3)
+  P.ctx=cv.getContext('2d'); P.ctx.imageSmoothingEnabled=false;   // re-off after every resize (it resets)
+  S.fit=f; if(P.onFit)P.onFit(f);
+}
+function viewSize(){                             // seed v1.02: the truthful space, MIN of all readings
+  var vw=window.innerWidth, vh=window.innerHeight;
+  try{ if(window.visualViewport){ vw=Math.min(vw,window.visualViewport.width); vh=Math.min(vh,window.visualViewport.height); } }catch(e){}
+  return {w:vw,h:vh};
+}
+function settleFit(){ fit(); setTimeout(fit,150); setTimeout(fit,450); setTimeout(fit,1000); }
+/* present: the one road to the screen. Indices -> LUT -> native buffer ->
+   integer blit, smoothing off. Returns nothing; the gate reads the canvas. */
+function present(frame,lut){
+  GOART.resolve(frame,lut,P.u32);
+  P.bctx.putImageData(P.img,0,0);
+  var c=P.ctx; c.imageSmoothingEnabled=false;
+  c.drawImage(P.buf,0,0,S.W,S.H,0,0,S.fit.backW,S.fit.backH);
+}
+function drawErr(){
+  if(!S.ERRMSG||!P||!P.ctx)return;                  // the ERR line: LAST, full brightness, above everything
+  var c=P.ctx, s=Math.max(10,Math.round(S.fit.backH/30));
+  c.font='bold '+s+'px monospace'; c.textAlign='left'; c.textBaseline='bottom';
+  c.fillStyle='#000'; c.fillRect(0,S.fit.backH-s-6,S.fit.backW,s+6);
+  c.fillStyle='#ff4a4a'; c.fillText(S.ERRMSG.slice(0,120),6,S.fit.backH-3);
+}
+var tick={last:0};
+function loop(){
+  var now=performance.now();
+  try{
+    if(!tick.last)tick.last=now;
+    var fs=frameStep(tick.last,now); tick.last=fs.last;
+    if(!S.portrait&&!S.hidden)for(var i=0;i<fs.steps;i++)P.update(1/60);
+    var out=P.render(); if(out)present(out.frame,out.lut);
+    S.frames++;
+  }catch(e){ reportErr('frame',e); }
+  try{ drawErr(); }catch(e){}
+  requestAnimationFrame(loop);
+}
+function toggleFullscreen(){
+  try{ var d=document, el=d.documentElement;
+    if(d.fullscreenElement||d.webkitFullscreenElement){ (d.exitFullscreen||d.webkitExitFullscreen).call(d); }
+    else if(el.requestFullscreen){ var p=el.requestFullscreen(); if(p&&p.catch)p.catch(function(){ S.fsNote='full screen refused by this viewer'; }); }
+    else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
+    else S.fsNote='no full screen here';
+  }catch(e){ S.fsNote='full screen blocked'; }
+  settleFit();
+}
+function start(opts){
+  P={canvas:opts.canvas,box:opts.box,update:opts.update,render:opts.render,onFit:opts.onFit,turnCard:opts.turnCard,
+     buf:document.createElement('canvas')};
+  setGrid(opts.gridW||480,opts.gridH||270);
+  var tap=function(){ S.tapped=true; if(DEV.vibrate==='untried'||DEV.vibrate==='waits for a first tap')DEV.vibrate='ready (tapped)'; };
+  document.addEventListener('pointerdown',tap,true); document.addEventListener('touchstart',tap,{capture:true,passive:true});
+  window.addEventListener('resize',fit);
+  window.addEventListener('orientationchange',settleFit);
+  window.addEventListener('pageshow',settleFit);
+  try{ if(window.visualViewport)window.visualViewport.addEventListener('resize',fit); }catch(e){}
+  document.addEventListener('fullscreenchange',settleFit);
+  document.addEventListener('visibilitychange',function(){        // seed section 8: resync on return, every mode
+    var now=performance.now();
+    if(document.hidden){ S.hidden=true; }
+    else { S.hidden=false; tick.last=now; }
+  });
+  window.addEventListener('pagehide',function(){ try{ if(AC&&AC.close)AC.close(); AC=null; }catch(e){} });   // audio never outlives the page
+  settleFit();
+  requestAnimationFrame(loop);
+}
+
+/* ---- 7. THE PALETTE GATE (pitch section 6, cohesion rules 1 and 2), shared by
+        every page: read the presented pixels back; each must be a colour of the
+        level palette under the active grade, and each k x k block one colour
+        (nothing smoothly scaled). data: RGBA bytes, w x h device pixels. ---- */
+function paletteCheck(data,w,h,lut,k,integer){
+  var ok=Object.create(null), used=Object.create(null), i, rgb, x, y;
+  for(i=0;i<256;i++)if(lut.rgb[i])ok[(lut.rgb[i][0]<<16)|(lut.rgb[i][1]<<8)|lut.rgb[i][2]]=i;
+  var stray=0, strayAt=null, blockBad=0, n=w*h;
+  for(i=0;i<n;i++){ rgb=(data[i*4]<<16)|(data[i*4+1]<<8)|data[i*4+2];
+    if(ok[rgb]===undefined){ if(!stray)strayAt=[i%w,Math.floor(i/w)]; stray++; } else used[rgb]=(used[rgb]||0)+1; }
+  if(integer&&k>=1){ for(y=0;y+k<=h;y+=k)for(x=0;x+k<=w;x+=k){ var b=(y*w+x)*4, j, q, bad=false;
+    for(j=0;j<k&&!bad;j++)for(q=0;q<k;q++){ var o=((y+j)*w+x+q)*4; if(data[o]!==data[b]||data[o+1]!==data[b+1]||data[o+2]!==data[b+2]){ bad=true; break; } }
+    if(bad)blockBad++; } }
+  return {pass:stray===0&&blockBad===0&&!!integer&&k>=1, px:n, colours:Object.keys(used).length, palette:Object.keys(ok).length,
+          stray:stray, strayAt:strayAt, blockBad:blockBad, k:k, integer:!!integer, used:used, grade:lut.grade, level:lut.level};
+}
+function paletteGate(canvas,lut){
+  var f=S.fit; if(!f)return {pass:false,error:'no fit yet'};
+  try{ var c=canvas.getContext('2d'), d=c.getImageData(0,0,canvas.width,canvas.height).data; return paletteCheck(d,canvas.width,canvas.height,lut,f.k,f.integer); }
+  catch(e){ return {pass:false,error:String(e&&e.message||e)}; }
+}
+
+return { VERSION:VERSION, S:S, DEV:DEV, paletteCheck:paletteCheck, paletteGate:paletteGate, reportErr:reportErr, computeFit:computeFit, isPortrait:isPortrait, PORTRAIT_RATIO:PORTRAIT_RATIO,
+  frameStep:frameStep, STEP_CAP:STEP_CAP, vibrate:vibrate, readGamepads:readGamepads, firstGesture:firstGesture, beep:beep,
+  start:start, fit:fit, settleFit:settleFit, setGrid:setGrid, present:present, toggleFullscreen:toggleFullscreen, tick:tick };
+})();
+if(typeof module!=='undefined'&&module.exports)module.exports=GOSHELL;
+/* ==== SLICE src/go-shell.js : END ==== */
+/* ==== SLICE src/go-mech.js sha256:899b33ec9c878a7834d9adeb973e68392f987f2cc6f3fed5fe958a22432aee5a : BEGIN ==== */
+/* =============================================================================
+   GO-MECH v2.00 | GUNMETAL OVERTHRUST | the mover, the controls and the fight
+   -----------------------------------------------------------------------------
+   Pure and deterministic (no DOM, no clock of its own): the control lab and the
+   gates drive the same code. ONE mover (pitch section 4): step 2 turns the
+   tuning table T into leg parts; the two-leg rules live here now.
+   The input layer turns raw devices (two touch sticks, keyboard, gamepad) into
+   INTENTS, per the scheme under test (pitch section 10, step 1):
+     scheme A, the Director's first scheme: boost is a RIGHT-stick tap
+     scheme B, pitch section 5: boost is a LEFT-stick flick
+   Keyboard and gamepad are the same in both.
+   v2.00 (2026-09-28, the Director's note: the movement felt stiff): a short
+   jump crouch, jump height set by how long up is held, a snappier fall, a skid
+   on reversing, a landing squash, and the animation state the view draws from
+   (walk distance, idle time, recoil, the pod, the aim). The muzzle and the pod
+   come from the drawn mech (W.muzzleOff, W.launchOff), so every shot leaves
+   the barrel you see.
+   ============================================================================= */
+var GOMECH=(function(){
+'use strict';
+var VERSION='v2.00';
+
+/* ---- 1. TUNING: every number named with its intent (07: single-knob tuning) ---- */
+var T={
+  GRAV:900,          // px/s^2 rising, at the 480 scale
+  GRAV_FALL:1350,    // px/s^2 falling: a snappier arc, weight on the way down
+  JUMP_SQUAT:0.05,   // s of crouch before the legs push (3 frames): the jump reads as a push, not a pop
+  JUMP_CUT:0.5,      // vy kept when up is let go while rising: a tap hops, a hold jumps
+  JUMP_MIN:0.12,     // s of rise every jump gets before a cut: a tap is a real hop (about 38 px, the low girder), never a twitch
+  SKID_SPEED:70,     // px/s: reversing faster than this skids
+  SKID_DECEL:1500,   // px/s^2 while skidding
+  LAND_TIME:0.12,    // s of landing squash (drawn; movement is never held)
+  FOOT:8,            // px either side of the centre the feet reach: the mech stands, and lands, while a foot is on the floor
+  RUN:125,           // px/s, the two-leg top speed on the ground
+  ACCEL:950,         // px/s^2 toward the stick's speed on the ground
+  AIR_ACCEL:520,     // px/s^2 in the air: steerable, not twitchy
+  JUMP_V:320,        // px/s: a held jump clears about 57 px, the mid platforms
+  FLY_DELAY:0.16,    // s of holding up after a jump before the booster lifts (so a tap is a jump)
+  FLY_ACCEL:1300,    // px/s^2 of lift while flying; beats gravity by 400
+  FLY_UP_MAX:115,    // px/s, the climb cap
+  FLY_COST:32,       // EN per s of flight
+  BOOST_COST:24,     // EN per boost dash
+  BOOST_SPEED:340,   // px/s during the dash
+  BOOST_TIME:0.20,   // s the dash lasts
+  BOOST_COOL:0.22,   // s before the next dash
+  EN_MAX:100, EN_REGEN:48, EN_REGEN_AIR:6,   // EN per s: refills on the ground, barely in the air
+  EN_DELAY:0.35,     // s after spending before the refill starts
+  AP_MAX:100,
+  COYOTE:0.10,       // s after leaving a ledge when a jump still counts (forgiveness)
+  JUMP_BUFFER:0.12,  // s a jump press is remembered before landing (forgiveness)
+  FALL_COST:15,      // AP a fall costs: armor, not a life (pitch section 5)
+  INV_TIME:1.2,      // s of mercy after a fall or a hit
+  LOCK_RANGE:300,    // px, the head's lock range (step 2: from the head part)
+  LOCK_KEEP:390,     // px before a held lock drops
+  MG_RATE:0.085, MG_DMG:3, MG_SPEED:560, MG_STAGGER:5,
+  CH_TIME:0.9, CH_DMG:30, CH_MIN:0.25, CH_SPEED:420, CH_STAGGER:48,
+  MS_COUNT:4, MS_DMG:7, MS_COOL:2.2, MS_SPEED:230, MS_TURN:5.5, MS_STAGGER:14,
+  STAGGER_MAX:100, STAGGER_DECAY:22, STAGGER_TIME:2.0, STAGGER_MULT:1.5,
+  RESPAWN:4.0        // s before a lab target returns
+};
+var INP={            // the input thresholds under test (the lab exposes the key ones)
+  DZ:0.22,           // stick dead zone
+  UP_CONE:30,        // degrees either side of straight up that count as a CLEAR up push
+  UP_MAG:0.62,       // how far the stick must travel for a clear up
+  DOWN_CONE:30, DOWN_MAG:0.7,
+  FLICK_MODE:'snap', // 'snap': centre to edge fast; 'out-back': out and back to centre fast
+  FLICK_MS:110,      // ms from leaving the centre to the edge (snap) or back (out-back, doubled)
+  FLICK_MAG:0.85, FLICK_CONE:35,
+  TAP_MS:180, TAP_MAG:0.35,   // a right-stick tap: down and up fast without travelling
+  FIRE_MAG:0.5,      // right stick: past this a zone is live
+  ZONE_TOWARD:45,    // degrees either side of the target direction for the main weapon
+  AWAY_FLICK_MS:300, AWAY_HOLD_MS:450
+};
+
+/* ---- 2. THE TEST STRIP (world pixels at the 480 scale; floors are one-way) ---- */
+function makeStrip(){
+  return {
+    w:1800, ground:230, killY:340, ceiling:40,
+    floors:[ {x0:0,x1:700,y:230,ground:true}, {x0:760,x1:1800,y:230,ground:true},
+             {x0:260,x1:340,y:196}, {x0:400,x1:470,y:160}, {x0:520,x1:600,y:122},
+             {x0:860,x1:940,y:180}, {x0:1000,x1:1080,y:138} ],
+    pit:{x0:700,x1:760},          // 60 px: a running jump clears it with room (about 89 px), flight rescues a bad one
+    start:{x:80,y:230},
+    targets:[ {kind:'dummy',x:200,y:230,hp:40}, {kind:'dummy',x:560,y:122,hp:40},
+              {kind:'drone',x:650,y:110,hp:30,swing:22}, {kind:'dummy',x:980,y:230,hp:40},
+              {kind:'drone',x:1150,y:140,hp:30,swing:16}, {kind:'turret',x:1290,y:230,hp:90} ]
+  };
+}
+
+/* ---- 3. THE INPUT LAYER: raw devices to intents (pure; gated) ----
+   raw = { left:{active,x,y}, right:{active,x,y}, keys:{...}, pad:{...}|null }
+   stick y is screen down; up is y<0. */
+function newInput(){ return { t:0,
+  l:{active:false,x:0,y:0,leftAt:-1,maxH:0,peakDir:0,flickDone:false,upWas:false,downWas:false},
+  r:{active:false,downAt:-1,max:0,zone:null,zoneAt:0,awayDone:false,thirdWas:false},
+  k:{jumpWas:false,boostWas:false,thirdWas:false,cycleWas:false,cycleAt:-1,cycleReleased:false,downWas:false},
+  p:{aWas:false,bWas:false,rbWas:false,lbWas:false,lbAt:-1,lbReleased:false,downWas:false} }; }
+function deg(a){ return a*180/Math.PI; }
+function stickAngles(x,y){ var m=Math.sqrt(x*x+y*y); return {m:m, fromUp:deg(Math.acos(Math.max(-1,Math.min(1,-y/(m||1))))), fromDown:deg(Math.acos(Math.max(-1,Math.min(1,y/(m||1))))), fromH:deg(Math.atan2(Math.abs(y),Math.abs(x)))}; }
+function axis(v,dz){ var a=Math.abs(v); if(a<dz)return 0; return (v<0?-1:1)*Math.min(1,(a-dz)/(1-dz)); }
+function zoneOf(x,y,dir,cfg){                       // the right stick, relative to the target
+  var along=x*dir, perp=y, m=Math.sqrt(x*x+y*y); if(m<cfg.FIRE_MAG)return null;
+  var ang=deg(Math.atan2(Math.abs(perp),Math.abs(along)));   // 0 = on the target line
+  if(along>0&&ang<=cfg.ZONE_TOWARD)return 'toward';
+  if(along<0&&ang<=45)return 'away';
+  return perp<0?'up':'down';
+}
+function readIntents(IS,raw,dt,scheme,dir,cfg){
+  cfg=cfg||INP; IS.t+=dt; var t=IS.t, I={mx:0,jump:false,up:false,drop:false,boost:0,main:false,sec:false,third:false,cycle:false,release:false,src:''};
+  var L=raw.left||{active:false,x:0,y:0}, R=raw.right||{active:false,x:0,y:0}, K=raw.keys||{}, P=raw.pad, l=IS.l, r=IS.r;
+  /* left stick: move, a CLEAR up jumps (hold flies), a clear down drops, (B) a flick boosts */
+  if(L.active){
+    var a=stickAngles(L.x,L.y);
+    I.mx=axis(L.x,cfg.DZ);
+    var upNow=a.m>=cfg.UP_MAG&&a.fromUp<=cfg.UP_CONE, downNow=a.m>=cfg.DOWN_MAG&&a.fromDown<=cfg.DOWN_CONE;
+    if(upNow&&!l.upWas)I.jump=true; if(upNow)I.up=true; l.upWas=upNow;
+    if(downNow&&!l.downWas)I.drop=true; l.downWas=downNow;
+    // the flick tracker: time since the stick left the centre
+    if(a.m<0.3){ if(scheme==='B'&&cfg.FLICK_MODE==='out-back'&&l.leftAt>=0&&!l.flickDone&&l.maxH>=cfg.FLICK_MAG&&(t-l.leftAt)*1000<=cfg.FLICK_MS*2){ I.boost=l.peakDir; l.flickDone=true; }
+                 l.leftAt=-1; l.maxH=0; l.flickDone=false; }
+    else { if(l.leftAt<0){ l.leftAt=t-dt; l.maxH=0; }
+      if(a.fromH<=cfg.FLICK_CONE&&Math.abs(L.x)>l.maxH){ l.maxH=Math.abs(L.x); l.peakDir=L.x<0?-1:1; }
+      if(scheme==='B'&&cfg.FLICK_MODE==='snap'&&!l.flickDone&&a.m>=cfg.FLICK_MAG&&a.fromH<=cfg.FLICK_CONE&&(t-l.leftAt)*1000<=cfg.FLICK_MS){ I.boost=L.x<0?-1:1; l.flickDone=true; } }
+    I.src='touch';
+  } else {
+    if(scheme==='B'&&cfg.FLICK_MODE==='out-back'&&l.leftAt>=0&&!l.flickDone&&l.maxH>=cfg.FLICK_MAG&&(t-l.leftAt)*1000<=cfg.FLICK_MS*2){ I.boost=l.peakDir; }
+    l.leftAt=-1; l.maxH=0; l.flickDone=false; l.upWas=false; l.downWas=false;
+  }
+  /* right stick: zones relative to the target; (A) a tap boosts */
+  if(R.active){
+    if(!r.active){ r.active=true; r.downAt=t-dt; r.max=0; r.zone=null; r.awayDone=false; }
+    var m=Math.sqrt(R.x*R.x+R.y*R.y); if(m>r.max)r.max=m;
+    var z=zoneOf(R.x,R.y,dir,cfg);
+    if(z!==r.zone){ if(r.zone==='away'&&!r.awayDone&&(t-r.zoneAt)*1000<=cfg.AWAY_FLICK_MS)I.cycle=true; r.zone=z; r.zoneAt=t; r.awayDone=false; }
+    if(z==='toward')I.main=true;
+    if(z==='up')I.sec=true;
+    if(z==='down'&&!r.thirdWas)I.third=true; r.thirdWas=(z==='down');
+    if(z==='away'&&!r.awayDone&&(t-r.zoneAt)*1000>=cfg.AWAY_HOLD_MS){ I.release=true; r.awayDone=true; }
+    I.src='touch';
+  } else if(r.active){
+    if(r.zone==='away'&&!r.awayDone&&(t-r.zoneAt)*1000<=cfg.AWAY_FLICK_MS)I.cycle=true;
+    if(scheme==='A'&&(t-r.downAt)*1000<=cfg.TAP_MS&&r.max<cfg.TAP_MAG)I.boost=2;      // 2: boost the way you move or face
+    r.active=false; r.zone=null; r.thirdWas=false;
+  }
+  /* keyboard: A D or arrows move, Space or W jumps and flies, S drops, Shift boosts,
+     J K L fire, Tab cycles (hold Tab to release) */
+  var kx=(K.right?1:0)-(K.left?1:0);
+  if(kx){ I.mx=kx; I.src='keys'; }
+  if(K.jump&&!IS.k.jumpWas){ I.jump=true; I.src='keys'; } if(K.jump)I.up=true; IS.k.jumpWas=!!K.jump;
+  if(K.down&&!IS.k.downWas)I.drop=true; IS.k.downWas=!!K.down;
+  if(K.boost&&!IS.k.boostWas)I.boost=kx||2; IS.k.boostWas=!!K.boost;
+  if(K.main)I.main=true; if(K.sec)I.sec=true;
+  if(K.third&&!IS.k.thirdWas)I.third=true; IS.k.thirdWas=!!K.third;
+  if(K.cycle&&!IS.k.cycleWas){ IS.k.cycleAt=t; IS.k.cycleReleased=false; }
+  if(K.cycle&&IS.k.cycleAt>=0&&!IS.k.cycleReleased&&(t-IS.k.cycleAt)*1000>=cfg.AWAY_HOLD_MS){ I.release=true; IS.k.cycleReleased=true; }
+  if(!K.cycle&&IS.k.cycleWas&&!IS.k.cycleReleased)I.cycle=true;
+  IS.k.cycleWas=!!K.cycle;
+  /* gamepad (standard mapping): left stick or d-pad moves, A jumps and flies, B
+     boosts, RT main, LT secondary, RB third, LB cycles (hold LB to release);
+     stick clearly down drops */
+  if(P){
+    var px=axis(P.lx,cfg.DZ); if(P.left)px=-1; if(P.right)px=1;
+    if(px){ I.mx=px; I.src='pad'; }
+    if(P.a&&!IS.p.aWas){ I.jump=true; I.src='pad'; } if(P.a)I.up=true; IS.p.aWas=!!P.a;
+    var pd=(P.ly>cfg.DOWN_MAG&&Math.abs(P.lx)<0.5)||P.down; if(pd&&!IS.p.downWas)I.drop=true; IS.p.downWas=!!pd;
+    if(P.b&&!IS.p.bWas)I.boost=(px>0?1:px<0?-1:2); IS.p.bWas=!!P.b;
+    if(P.rt)I.main=true; if(P.lt)I.sec=true;
+    if(P.rb&&!IS.p.rbWas)I.third=true; IS.p.rbWas=!!P.rb;
+    if(P.lb&&!IS.p.lbWas){ IS.p.lbAt=t; IS.p.lbReleased=false; }
+    if(P.lb&&IS.p.lbAt>=0&&!IS.p.lbReleased&&(t-IS.p.lbAt)*1000>=cfg.AWAY_HOLD_MS){ I.release=true; IS.p.lbReleased=true; }
+    if(!P.lb&&IS.p.lbWas&&!IS.p.lbReleased)I.cycle=true;
+    IS.p.lbWas=!!P.lb;
+    if(P.rt||P.lt||P.rb||P.lb||P.a||P.b||px)I.src='pad';
+  }
+  return I;
+}
+
+/* ---- 4. THE WORLD ---- */
+function newWorld(opts){
+  opts=opts||{};
+  var S=makeStrip();
+  var W={ t:0, strip:S, events:[], evN:0, shots:[], shells:[], fx:[], rounds:{mg:0,ch:0,ms:0}, lock:null, lockSuppressed:false,
+    m:{ x:S.start.x, y:S.start.y, vx:0, vy:0, face:1, ground:true, floor:S.floors[0], coyote:0, buf:0, en:T.EN_MAX, ap:T.AP_MAX,
+        enWait:0, boostT:0, boostCool:0, boostDir:0, flying:false, upT:0, inv:0, landT:0, dropT:0, safeX:S.start.x, charge:0, charging:false,
+        mgCool:0, msCool:0, jumps:0, boosts:0, falls:0, hits:0, flyT:0, anim:0,
+        squatT:0, jumpCut:false, riseT:0, skidT:0, walkDist:0, idleT:0, recoilT:0, recoilMax:1, recoilPx:0, podT:0, aim:'lv', streak:0, skids:0 },
+    targets:[] };
+  for(var i=0;i<S.targets.length;i++){ var d=S.targets[i];
+    W.targets.push({ id:i, kind:d.kind, x:d.x, y:d.y, x0:d.x, y0:d.y, hpMax:d.hp, hp:d.hp, alive:true, dead:0, stagger:0, staggerT:0, hitT:0, flash:0,
+      swing:d.swing||0, face:-1, cool:1.2+i*0.1, tele:0, kills:0 }); }
+  return W;
+}
+function ev(W,type,data){ W.events.push({t:W.t,type:type,data:data||null,n:++W.evN}); }   // n: a sequence number, so readers survive the trim
+function targetBox(tg){                              // hurt boxes by kind (feet or centre anchored)
+  if(tg.kind==='dummy')return {x0:tg.x-6,x1:tg.x+6,y0:tg.y-21,y1:tg.y-12,cx:tg.x,cy:tg.y-16};
+  if(tg.kind==='drone')return {x0:tg.x-8,x1:tg.x+8,y0:tg.y-5,y1:tg.y+5,cx:tg.x,cy:tg.y};
+  return {x0:tg.x-9,x1:tg.x+9,y0:tg.y-16,y1:tg.y,cx:tg.x,cy:tg.y-11};
+}
+function mechCentre(m){ return {x:m.x,y:m.y-32}; }
+function dist(ax,ay,bx,by){ var dx=bx-ax,dy=by-ay; return Math.sqrt(dx*dx+dy*dy); }
+function candidates(W,range){
+  var c=mechCentre(W.m), out=[], i;
+  for(i=0;i<W.targets.length;i++){ var tg=W.targets[i]; if(!tg.alive)continue; var b=targetBox(tg), d=dist(c.x,c.y,b.cx,b.cy); if(d<=range)out.push({tg:tg,d:d}); }
+  out.sort(function(a,b){return a.d-b.d;}); return out;
+}
+function lockOn(W,tg,why){ if(W.lock===tg)return; W.lock=tg; W.lockSuppressed=false; if(tg)ev(W,'lock',{id:tg.id,why:why}); }
+function targetDir(W){ if(W.lock){ var b=targetBox(W.lock); return (b.cx>=W.m.x)?1:-1; } return W.m.face; }
+
+/* ---- 5. THE STEP (fixed 1/60 from the shell's frameStep) ---- */
+function step(W,I,dt){
+  W.t+=dt; var m=W.m, S=W.strip, i;
+  /* the lock: keep, drop, acquire nearest when nothing is locked */
+  if(W.lock&&(!W.lock.alive||dist(m.x,m.y-32,targetBox(W.lock).cx,targetBox(W.lock).cy)>T.LOCK_KEEP)){ ev(W,'lockLost',{id:W.lock.id}); W.lock=null; }
+  if(I.release&&W.lock){ ev(W,'release',{id:W.lock.id}); W.lock=null; W.lockSuppressed=true; }
+  if(I.cycle){ var cs=candidates(W,T.LOCK_RANGE); if(cs.length){ var k=0; if(W.lock){ for(i=0;i<cs.length;i++)if(cs[i].tg===W.lock)k=(i+1)%cs.length; } lockOn(W,cs[k].tg,'cycle'); ev(W,'cycle',{id:cs[k].tg.id,of:cs.length}); } }
+  if(W.lockSuppressed&&(I.main||I.sec||I.third||I.cycle))W.lockSuppressed=false;   // any weapon input re-arms the lock
+  if(!W.lock&&!W.lockSuppressed){ var cn=candidates(W,T.LOCK_RANGE); if(cn.length)lockOn(W,cn[0].tg,'nearest'); }
+  /* facing follows the lock, else the stick */
+  if(W.lock)m.face=targetDir(W); else if(I.mx)m.face=I.mx<0?-1:1;
+  /* timers */
+  m.coyote=m.ground?T.COYOTE:Math.max(0,m.coyote-dt);
+  m.buf=I.jump?T.JUMP_BUFFER:Math.max(0,m.buf-dt);
+  m.boostCool=Math.max(0,m.boostCool-dt); m.inv=Math.max(0,m.inv-dt); m.landT=Math.max(0,m.landT-dt); m.dropT=Math.max(0,m.dropT-dt);
+  m.skidT=Math.max(0,m.skidT-dt); m.recoilT=Math.max(0,m.recoilT-dt); m.podT=Math.max(0,m.podT-dt);
+  m.enWait=Math.max(0,m.enWait-dt);
+  /* boost: a dash in a direction, EN permitting */
+  if(I.boost&&m.boostT<=0&&m.boostCool<=0){
+    if(m.en>=T.BOOST_COST){ var bd=(I.boost===2)?(I.mx?(I.mx<0?-1:1):m.face):I.boost; m.boostT=T.BOOST_TIME; m.boostDir=bd; m.en-=T.BOOST_COST; m.enWait=T.EN_DELAY; m.boosts++; ev(W,'boost',{dir:bd}); if(!m.ground&&m.vy>0)m.vy=0; }
+    else ev(W,'boostRefused',{en:m.en});
+  }
+  /* horizontal */
+  if(m.boostT>0){ m.boostT-=dt; m.vx=m.boostDir*T.BOOST_SPEED; if(m.boostT<=0){ m.boostCool=T.BOOST_COOL; m.vx=m.boostDir*T.RUN; } }
+  else { var want=I.mx*T.RUN, acc=(m.ground?T.ACCEL:T.AIR_ACCEL)*dt;
+    if(m.ground&&I.mx*m.vx<0&&Math.abs(m.vx)>T.SKID_SPEED){ if(m.skidT<=0){ m.skids++; ev(W,'skid',{x:m.x,y:m.y,dir:m.vx<0?-1:1}); } m.skidT=0.15; acc=T.SKID_DECEL*dt; }   // reversing at speed skids
+    if((!m.ground||I.jump||m.squatT>0)&&(want===0||want*m.vx>0)&&Math.abs(want)<=Math.abs(m.vx))want=m.vx;   // the air (and the crouch before it) keeps a run's momentum: pushing up to jump never brakes it
+    if(m.vx<want)m.vx=Math.min(want,m.vx+acc); else if(m.vx>want)m.vx=Math.max(want,m.vx-acc); }
+  /* jump: a buffered press meets a floor or the coyote window */
+  if(m.buf>0&&(m.ground||m.coyote>0)&&m.boostT<=0.05&&m.squatT<=0){
+    m.buf=0;
+    if(m.ground)m.squatT=T.JUMP_SQUAT; else launch(W,m);          // the crouch on the ground; a coyote jump pushes at once
+  }
+  if(m.squatT>0){ m.squatT-=dt; if(m.squatT<=0)launch(W,m); }
+  if(!m.ground)m.riseT+=dt;
+  if(!m.ground&&m.vy<0&&!I.up&&!m.jumpCut&&!m.flying&&m.boostT<=0&&m.riseT>=T.JUMP_MIN){ m.vy*=T.JUMP_CUT; m.jumpCut=true; }   // let go early: a hop
+  /* drop through a thin platform */
+  if(I.drop&&m.ground&&m.floor&&!m.floor.ground){ m.ground=false; m.dropT=0.18; m.dropFloor=m.floor; m.floor=null; ev(W,'drop',null); }
+  /* flight: hold up after the jump; lift burns EN */
+  if(!m.ground&&I.up){ m.upT+=dt; } else if(!I.up){ m.upT=0; }
+  m.flying=!m.ground&&I.up&&m.upT>=T.FLY_DELAY&&m.en>0;
+  if(m.flying){ m.vy-=T.FLY_ACCEL*dt; if(m.vy<-T.FLY_UP_MAX)m.vy=-T.FLY_UP_MAX; m.en=Math.max(0,m.en-T.FLY_COST*dt); m.enWait=T.EN_DELAY; m.flyT+=dt; }
+  if(!m.ground&&m.boostT<=0)m.vy+=(m.vy>0?T.GRAV_FALL:T.GRAV)*dt;
+  if(m.boostT>0&&!m.ground&&m.vy>0)m.vy=0;                      // a dash holds altitude
+  if(m.vy>600)m.vy=600;
+  /* energy refills on the ground */
+  if(m.enWait<=0)m.en=Math.min(T.EN_MAX,m.en+(m.ground?T.EN_REGEN:T.EN_REGEN_AIR)*dt);
+  /* integrate and collide: walls at the strip ends, one-way floors, the ceiling */
+  var oy=m.y; m.x+=m.vx*dt; m.y+=m.vy*dt;
+  if(m.x<10){ m.x=10; m.vx=0; } if(m.x>S.w-10){ m.x=S.w-10; m.vx=0; }
+  if(m.y-56<S.ceiling){ m.y=S.ceiling+56; if(m.vy<0)m.vy=0; }
+  if(m.ground){                                                  // walked off the edge?
+    if(!(m.floor&&m.x>=m.floor.x0-T.FOOT&&m.x<=m.floor.x1+T.FOOT)){ m.ground=false; m.floor=null; }
+    else m.y=m.floor.y;
+  }
+  if(!m.ground&&m.vy>=0){
+    for(i=0;i<S.floors.length;i++){ var f=S.floors[i];
+      if(m.dropT>0&&f===m.dropFloor)continue;
+      if(m.x>=f.x0-T.FOOT&&m.x<=f.x1+T.FOOT&&oy<=f.y+0.01&&m.y>=f.y){ var iv=m.vy; m.y=f.y; m.vy=0; m.ground=true; m.floor=f; m.landT=T.LAND_TIME; m.upT=0; ev(W,'land',{vy:iv,x:m.x,y:m.y}); if(f.ground)m.safeX=Math.max(f.x0+14,Math.min(f.x1-14,m.x)); break; }
+    }
+  }
+  if(m.ground&&m.floor&&m.floor.ground)m.safeX=Math.max(m.floor.x0+14,Math.min(m.floor.x1-14,m.x));
+  /* a fall costs armor, not a life */
+  if(m.y>S.killY){ m.ap=Math.max(0,m.ap-T.FALL_COST); m.falls++; ev(W,'fall',{ap:m.ap});
+    m.x=m.safeX; m.y=S.ground; m.vx=0; m.vy=0; m.ground=true; m.floor=floorAt(S,m.x,S.ground); m.inv=T.INV_TIME; m.boostT=0; }
+  if(m.ground&&Math.abs(m.vx)>8)m.anim+=Math.abs(m.vx)*dt; else if(m.ground)m.anim=0;
+  if(m.ground&&Math.abs(m.vx)>8){ m.walkDist+=Math.abs(m.vx)*dt; m.idleT=0; } else if(m.ground){ m.idleT+=dt; } else { m.idleT=0; }
+  m.aim=aimOf(W);
+  /* weapons */
+  weapons(W,I,dt);
+  /* targets, shots, enemy shells */
+  targetsStep(W,dt); shotsStep(W,dt); shellsStep(W,dt);
+  for(i=W.fx.length-1;i>=0;i--){ W.fx[i].t+=dt; if(W.fx[i].t>=W.fx[i].life)W.fx.splice(i,1); }
+  if(W.events.length>400)W.events.splice(0,W.events.length-400);
+}
+function floorAt(S,x,y){ for(var i=0;i<S.floors.length;i++){ var f=S.floors[i]; if(x>=f.x0&&x<=f.x1&&Math.abs(f.y-y)<0.5)return f; } return null; }
+function launch(W,m){ m.vy=-T.JUMP_V; m.ground=false; m.floor=null; m.coyote=0; m.upT=0; m.squatT=0; m.jumpCut=false; m.riseT=0; m.jumps++; ev(W,'jump',{x:m.x,y:m.y}); }
+/* the aim the drawn weapon takes: level, up or down, from the lock's angle */
+function aimOf(W){ var m=W.m; if(W.forceAim)return W.forceAim; if(!W.lock)return 'lv'; var b=targetBox(W.lock), dx=Math.abs(b.cx-m.x), dy=(m.y-30)-b.cy, a=Math.atan2(dy,dx||1); return a>0.33?'up':(a<-0.33?'dn':'lv'); }
+/* the muzzle of the drawn weapon (W.muzzleOff from the art, facing right, root relative) */
+function muzzle(W){ var m=W.m, o=W.muzzleOff&&W.muzzleOff[m.aim||'lv']; if(o)return {x:m.x+m.face*o[0],y:m.y+o[1]}; return {x:m.x+m.face*22,y:m.y-27}; }
+function aimAt(W,from){ if(W.lock){ var b=targetBox(W.lock); var dx=b.cx-from.x, dy=b.cy-from.y, d=Math.sqrt(dx*dx+dy*dy)||1; return {x:dx/d,y:dy/d}; }
+  var a=W.m.aim; return a==='up'?{x:W.m.face*0.894,y:-0.447}:(a==='dn'?{x:W.m.face*0.894,y:0.447}:{x:W.m.face,y:0}); }   // no lock: along the drawn barrel (a 2:1 slope)
+function weapons(W,I,dt){
+  var m=W.m;
+  m.mgCool=Math.max(0,m.mgCool-dt); m.msCool=Math.max(0,m.msCool-dt);
+  if(I.main&&m.mgCool<=0){
+    var mz=muzzle(W), a=aimAt(W,mz), sp=((W.rounds.mg%3)-1)*0.03;
+    var ax=a.x*Math.cos(sp)-a.y*Math.sin(sp), ay=a.x*Math.sin(sp)+a.y*Math.cos(sp);
+    W.shots.push({k:'mg',x:mz.x,y:mz.y,vx:ax*T.MG_SPEED,vy:ay*T.MG_SPEED,life:0.7,dmg:T.MG_DMG,st:T.MG_STAGGER});
+    W.rounds.mg++; m.mgCool=T.MG_RATE; m.streak++; m.recoilT=0.06; m.recoilMax=0.06; m.recoilPx=2; ev(W,'fire',{w:'mg',x:mz.x,y:mz.y,dx:ax,dy:ay,n:W.rounds.mg});
+  }
+  if(!I.main&&m.streak>=4){ var me=muzzle(W); ev(W,'burstEnd',{x:me.x,y:me.y,n:m.streak}); } if(!I.main)m.streak=0;
+  if(I.sec){ if(!m.charging){ m.charging=true; m.charge=0; }
+    var was=m.charge; m.charge=Math.min(1,m.charge+dt/T.CH_TIME); if(was<1&&m.charge>=1)ev(W,'chargeFull',null); }
+  else if(m.charging){
+    m.charging=false;
+    if(m.charge>=T.CH_MIN){ var mz2=muzzle(W), a2=aimAt(W,mz2), full=m.charge>=1;
+      W.shots.push({k:full?'cannon':'pellet',x:mz2.x,y:mz2.y,vx:a2.x*T.CH_SPEED,vy:a2.y*T.CH_SPEED,life:1.2,dmg:full?T.CH_DMG:Math.round(T.CH_DMG*0.25*m.charge*4)/4,st:full?T.CH_STAGGER:8,r:full?5:2});
+      W.rounds.ch++; m.recoilT=full?0.16:0.08; m.recoilMax=m.recoilT; m.recoilPx=full?4:2; ev(W,'fire',{w:full?'cannon':'pellet',x:mz2.x,y:mz2.y,dx:a2.x,dy:a2.y}); }
+    m.charge=0;
+  }
+  if(I.third&&m.msCool<=0){
+    var lo=W.launchOff||[-6,-58], lx=m.x+m.face*lo[0], ly=m.y+lo[1]; m.podT=0.45;
+    for(var i=0;i<T.MS_COUNT;i++){ W.shots.push({k:'missile',x:lx,y:ly,vx:(-m.face*40)+(i-1.5)*28,vy:-150-i*12,life:2.4,dmg:T.MS_DMG,st:T.MS_STAGGER,target:W.lock,age:0,ang:0}); }
+    W.rounds.ms+=T.MS_COUNT; m.msCool=T.MS_COOL; ev(W,'fire',{w:'missile',locked:!!W.lock,x:lx,y:ly});
+  }
+}
+function hitTarget(W,tg,s){
+  var dmg=s.dmg*(tg.staggerT>0?T.STAGGER_MULT:1);
+  tg.hp-=dmg; tg.flash=0.06; tg.hitT=0; tg.stagger+=s.st;
+  if(tg.stagger>=T.STAGGER_MAX&&tg.staggerT<=0){ tg.staggerT=T.STAGGER_TIME; tg.stagger=0; ev(W,'stagger',{id:tg.id}); }
+  ev(W,'hit',{id:tg.id,w:s.k,dmg:dmg});
+  if(tg.hp<=0){ tg.alive=false; tg.dead=0; tg.kills++; ev(W,'destroyed',{id:tg.id,kind:tg.kind}); var b=targetBox(tg); W.fx.push({k:'boom',x:b.cx,y:b.cy,t:0,life:0.5,r:tg.kind==='turret'?18:12}); if(W.lock===tg)W.lock=null; }
+}
+function targetsStep(W,dt){
+  var m=W.m;
+  for(var i=0;i<W.targets.length;i++){ var tg=W.targets[i];
+    if(!tg.alive){ tg.dead+=dt; if(tg.dead>=T.RESPAWN){ tg.alive=true; tg.hp=tg.hpMax; tg.stagger=0; tg.staggerT=0; tg.x=tg.x0; tg.y=tg.y0; ev(W,'respawn',{id:tg.id}); } continue; }
+    tg.flash=Math.max(0,tg.flash-dt); tg.hitT+=dt; tg.staggerT=Math.max(0,tg.staggerT-dt);
+    if(tg.hitT>1)tg.stagger=Math.max(0,tg.stagger-T.STAGGER_DECAY*dt);
+    if(tg.kind==='drone'){ tg.x=tg.x0+Math.sin(W.t*1.3+i)*tg.swing*1.6; tg.y=tg.y0+Math.sin(W.t*2.1+i*2)*tg.swing*0.5; }
+    if(tg.kind==='turret'){
+      tg.face=(m.x<tg.x)?-1:1;
+      var b=targetBox(tg), d=dist(b.cx,b.cy,m.x,m.y-30);
+      if(tg.staggerT>0){ tg.tele=0; continue; }                     // a staggered turret cannot shoot
+      if(tg.tele>0){ tg.tele-=dt; if(tg.tele<=0){ var mzx=tg.x+tg.face*10, mzy=tg.y-11, dx=m.x-mzx, dy=(m.y-30)-mzy, dd=Math.sqrt(dx*dx+dy*dy)||1;
+          W.shells.push({x:mzx,y:mzy,vx:dx/dd*175,vy:dy/dd*175,life:3}); ev(W,'turretFire',{id:tg.id}); tg.cool=1.6; } }
+      else if(d<330){ tg.cool-=dt; if(tg.cool<=0){ tg.tele=0.5; ev(W,'turretAim',{id:tg.id}); } }
+    }
+  }
+}
+function shotsStep(W,dt){
+  for(var i=W.shots.length-1;i>=0;i--){ var s=W.shots[i], hit=false, j;
+    if(s.k==='missile'){ s.age+=dt;
+      var tgt=(s.target&&s.target.alive)?s.target:null;
+      if(s.age>0.25&&tgt){ var b=targetBox(tgt), want=Math.atan2(b.cy-s.y,b.cx-s.x), cur=Math.atan2(s.vy,s.vx), dd=want-cur;
+        while(dd>Math.PI)dd-=2*Math.PI; while(dd<-Math.PI)dd+=2*Math.PI; var turn=Math.max(-T.MS_TURN*dt,Math.min(T.MS_TURN*dt,dd)), sp=Math.min(T.MS_SPEED,Math.sqrt(s.vx*s.vx+s.vy*s.vy)+400*dt);
+        cur+=turn; s.vx=Math.cos(cur)*sp; s.vy=Math.sin(cur)*sp; }
+      else if(s.age>0.25){ s.vx+=W.m.face*300*dt; s.vy+=60*dt; }
+      else { s.vy+=260*dt; }
+      if(((s.age*60)|0)%3===0)W.fx.push({k:'smoke',x:s.x,y:s.y,t:0,life:0.4});
+    }
+    s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=dt;
+    for(j=0;j<W.targets.length;j++){ var tg=W.targets[j]; if(!tg.alive)continue; var bx=targetBox(tg), r=s.r||1;
+      if(s.x+r>=bx.x0&&s.x-r<=bx.x1&&s.y+r>=bx.y0&&s.y-r<=bx.y1){ hitTarget(W,tg,s); hit=true; W.fx.push({k:'spark',x:s.x,y:s.y,t:0,life:0.12}); break; } }
+    if(!hit&&s.y>=W.strip.ground&&!(s.x>W.strip.pit.x0&&s.x<W.strip.pit.x1)){ hit=true; W.fx.push({k:'spark',x:s.x,y:W.strip.ground-1,t:0,life:0.1}); }
+    if(hit||s.life<=0||s.x<-50||s.x>W.strip.w+50)W.shots.splice(i,1);
+  }
+}
+function shellsStep(W,dt){
+  var m=W.m;
+  for(var i=W.shells.length-1;i>=0;i--){ var s=W.shells[i]; s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=dt;
+    var hit=s.x>=m.x-9&&s.x<=m.x+9&&s.y>=m.y-50&&s.y<=m.y;
+    if(hit&&m.inv<=0){ m.ap=Math.max(0,m.ap-8); m.inv=0.5; m.hits++; ev(W,'hurt',{ap:m.ap}); W.fx.push({k:'spark',x:s.x,y:s.y,t:0,life:0.15}); }
+    if(hit||s.life<=0||s.y>=W.strip.ground)W.shells.splice(i,1);
+  }
+  if(m.ap<=0){ m.ap=T.AP_MAX; ev(W,'repaired',null); }             // the lab never ends: a wreck is patched on the spot
+}
+
+return { VERSION:VERSION, T:T, INP:INP, makeStrip:makeStrip, newInput:newInput, readIntents:readIntents, zoneOf:zoneOf, stickAngles:stickAngles,
+  newWorld:newWorld, step:step, targetBox:targetBox, candidates:candidates, targetDir:targetDir, muzzle:muzzle, aimOf:aimOf };
+})();
+if(typeof module!=='undefined'&&module.exports)module.exports=GOMECH;
+/* ==== SLICE src/go-mech.js : END ==== */
+/* ==== SLICE src/go-view.js sha256:58fe4396a6b69d9c5dd3418b719dd8e8ec888b992bac5468973b90cc3fd40e1b : BEGIN ==== */
+/* =============================================================================
+   GO-VIEW v2.00 | GUNMETAL OVERTHRUST | the mech's presentation
+   -----------------------------------------------------------------------------
+   Between the sim (go-mech.js) and the pixels (go-art.js): picks the clip frame
+   from the mech's state (squat, dash, hover, rise, apex, fall, land, skid, the
+   walk by distance so the boots never slide, backpedalling when the lock is
+   behind, idle by time), and turns the sim's events into the gun and ground
+   effects the Director asked for: muzzle flashes that cycle, recoil, brass
+   casings that spin and bounce, barrel smoke after a burst, the cannon's blast
+   with its ring and sparks and screen kick, the missile pod's backblast, dust
+   on every jump, landing, skid and dash, booster flames, and afterimages on a
+   dash. Both labs and the game draw through it. Palette only, whole pixels.
+   ============================================================================= */
+var GOVIEW=(function(){
+'use strict';
+var VERSION='v2.00';
+var A=GOART;
+var GHOST=(function(){ var t=new Uint8Array(256); for(var i=1;i<256;i++)t[i]=20; t[1]=19; t[2]=19; return t; })();   // the dash's cyan afterimage
+/* the drawn muzzle and pod, relative to the root facing right, for the sim */
+function offsets(build){
+  var o={}; ['lv','up','dn'].forEach(function(aim){ var a=A.assemble(build,'idle',0,{face:1,aim:aim}); o[aim]=[a.muzzle[0]-a.root[0],a.muzzle[1]-a.root[1]]; });
+  var a0=A.assemble(build,'idle',0,{face:1});
+  return {muzzle:o, launch:a0.launch?[a0.launch[0]-a0.root[0],a0.launch[1]-a0.root[1]]:null};
+}
+/* the clip frame for the mech's state */
+function poseOf(W,build){
+  var m=W.m, c, n, f;
+  if(m.squatT>0)return {clip:'squat',frame:0};
+  if(m.boostT>0)return {clip:'dash',frame:0};
+  if(!m.ground){
+    if(m.flying){ c=A.clip(build,'hover'); return {clip:'hover',frame:Math.floor(W.t*(c.fps||8))%c.frames.length}; }
+    if(m.vy<-70)return {clip:'rise',frame:0}; if(m.vy<70)return {clip:'apex',frame:0}; return {clip:'fall',frame:0};
+  }
+  if(m.landT>0)return {clip:'land',frame:m.landT>0.06?0:1};
+  if(m.skidT>0)return {clip:'skid',frame:0};
+  if(Math.abs(m.vx)>8){ c=A.clip(build,'walk'); n=c.frames.length; f=Math.floor(m.walkDist/(c.stride||24)*n)%n; if(m.vx*m.face<0)f=(n-f)%n; return {clip:'walk',frame:f}; }
+  c=A.clip(build,'idle'); return {clip:'idle',frame:Math.floor(m.idleT*(c.fps||5))%c.frames.length};
+}
+function groundBelow(W){
+  var m=W.m, best=W.strip.ground+60, i;
+  if(m.ground)return m.y;
+  for(i=0;i<W.strip.floors.length;i++){ var fl=W.strip.floors[i]; if(m.x>=fl.x0&&m.x<=fl.x1&&fl.y>=m.y-1&&fl.y<best)best=fl.y; }
+  return best;
+}
+/* sprite transforms for the effects (lossless: mirror, rotate a quarter, shear) */
+var FXC=Object.create(null);
+function rot90(s){ var w=s.h,h=s.w,px=new Uint8Array(w*h),x,y; for(y=0;y<s.h;y++)for(x=0;x<s.w;x++)px[x*w+(s.h-1-y)]=s.px[y*s.w+x]; return {w:w,h:h,px:px}; }   // down becomes left
+function fxSprite(id,key,face,aim){
+  var k=id+key+face+aim; if(FXC[k])return FXC[k];
+  var s=A.spr(id,key), o=A.PARTS[id].anchors.origin, ox=o[0], oy=o[1];
+  if(aim==='up'||aim==='dn'){ var sh=A.shearOf(s,aim==='up'?-0.5:0.5,0); oy+=sh.off; s=sh; }
+  if(aim==='back'){ s=rot90(s); var t=ox; ox=s.w-1-oy; oy=t; }
+  if(face<0){ s=A.mirror({w:s.w,h:s.h,px:s.px,mat:new Uint8Array(s.w*s.h)}); ox=s.w-1-ox; }
+  return (FXC[k]={s:s,ox:ox,oy:oy});
+}
+function View(build,seed){ this.build=build; this.fx=new A.FX(seed||11); this.ghosts=[]; this.shake=0; this.flashT=0; this.flashK=0; this.blastT=0; this.t=0; this.lastGhost=0; this.last=null; this.shots=0; }
+View.prototype.setBuild=function(b){ this.build=b; this.last=null; };
+View.prototype.consume=function(W,fromSeq){             // every event with a sequence number above fromSeq
+  var m=W.m, i, e, k;
+  for(i=0;i<W.events.length;i++){ e=W.events[i]; if(e.n<=fromSeq)continue; var d=e.data||{};
+    if(e.type==='fire'&&d.w==='mg'){ this.flashT=0.05; this.flashK=(d.n||0)%3; this.casing(W); if((d.n||0)%5===0)this.fx.spawn('smoke',d.x,d.y,m.face*10,-12,{life:0.5,s:1}); }
+    else if(e.type==='fire'&&(d.w==='cannon'||d.w==='pellet')){ var big=d.w==='cannon';
+      if(big){ this.blastT=0.1; this.shake=Math.max(this.shake,3); this.fx.spawn('ring',d.x,d.y,0,0,{life:0.3,s:3}); this.fx.burst('spark',d.x,d.y,8,160,{life:0.3,a:(d.dx||1)>=0?0:3.14,spread:1.6});
+        for(k=0;k<4;k++)this.fx.spawn('smoke',d.x,d.y,m.face*(20+k*8),-10-k*4,{life:0.8,s:2}); }
+      else { this.flashT=0.06; this.flashK=1; this.shake=Math.max(this.shake,1); } }
+    else if(e.type==='fire'&&d.w==='missile'){ for(k=0;k<5;k++)this.fx.spawn('smoke',d.x-m.face*(4+k*2),d.y+2,-m.face*(30+k*12),-8+k*4,{life:0.7,s:2}); }
+    else if(e.type==='boost'){ for(k=0;k<5;k++)this.fx.spawn('dust',m.x-d.dir*(6+k*3),groundBelow(W)-1,-d.dir*(40+k*14),-6-k*3,{life:0.45,s:2}); this.shake=Math.max(this.shake,1); }
+    else if(e.type==='land'){ var hard=(d.vy||0)>300; for(var s=-1;s<=1;s+=2)for(k=0;k<(hard?4:2);k++)this.fx.spawn('dust',m.x+s*(8+k*3),m.y-1,s*(40+k*25),-8-k*4,{life:0.5,s:hard?2:1}); if(hard)this.shake=Math.max(this.shake,2); }
+    else if(e.type==='skid'){ for(k=0;k<4;k++)this.fx.spawn('dust',d.x+(d.dir||1)*(4+k*3),d.y-1,(d.dir||1)*(30+k*15),-10,{life:0.4,s:1}); }
+    else if(e.type==='jump'){ for(k=0;k<3;k++)this.fx.spawn('dust',d.x+(k-1)*8,d.y-1,(k-1)*40,-10,{life:0.35,s:1}); }
+    else if(e.type==='burstEnd'){ for(k=0;k<3;k++)this.fx.spawn('smoke',d.x,d.y,m.face*(6+k*6),-14-k*6,{life:0.9,s:1}); }
+    else if(e.type==='destroyed'){ this.shake=Math.max(this.shake,3); }
+    else if(e.type==='hurt'||e.type==='fall'){ this.shake=Math.max(this.shake,2); }
+  }
+};
+View.prototype.casing=function(W){
+  var m=W.m, L=this.last; if(!L||!L.a.eject)return; this.shots++;
+  var ex=m.x+(L.a.eject[0]-L.a.root[0]), ey=m.y+(L.a.eject[1]-L.a.root[1]);
+  this.fx.spawn('casing',ex,ey,-m.face*(40+this.fx.R()*50),-(90+this.fx.R()*60),{life:1.2,g:700,gy:groundBelow(W)});
+};
+View.prototype.step=function(W,dt){
+  this.t+=dt; this.fx.step(dt);
+  this.shake=Math.max(0,this.shake-10*dt); this.flashT=Math.max(0,this.flashT-dt); this.blastT=Math.max(0,this.blastT-dt);
+  var m=W.m;
+  if(m.boostT>0&&this.t-this.lastGhost>0.035&&this.last){ this.ghosts.push({st:this.last.st,x:m.x,y:m.y,t:this.t}); this.lastGhost=this.t; if(this.ghosts.length>4)this.ghosts.shift(); }
+  for(var i=this.ghosts.length-1;i>=0;i--)if(this.t-this.ghosts[i].t>0.22)this.ghosts.splice(i,1);
+};
+View.prototype.shakeOffset=function(){ if(this.shake<0.5)return [0,0]; var R=this.fx.R; return [Math.round((R()-0.5)*2*this.shake),Math.round((R()-0.5)*2*this.shake)]; };
+/* draw the mech with its ground shadow, flames, flash and afterimages */
+View.prototype.draw=function(F,W,cx,cy,hide){
+  var m=W.m, p=poseOf(W,this.build), rc=m.recoilT>0?Math.ceil(m.recoilPx*m.recoilT/m.recoilMax):0;
+  var st={clip:p.clip,frame:p.frame,face:m.face,aim:m.aim||'lv',recoil:rc,pod:m.podT>0?'open':'closed'};
+  var sx=Math.round(m.x-cx), sy=Math.round(m.y-cy), gy=groundBelow(W), i;
+  for(i=0;i<this.ghosts.length;i++){ var g=this.ghosts[i]; A.drawMech(F,this.build,{clip:g.st.clip,frame:g.st.frame,face:g.st.face,aim:g.st.aim,veil:1+(i&1)},Math.round(g.x-cx),Math.round(g.y-cy),GHOST); }
+  A.groundShadow(F,sx,Math.round(gy-cy)+1,21,gy-m.y);
+  if(hide){ this.last={a:A.assemble(this.build,st.clip,st.frame,st),st:st,x:sx,y:sy}; return this.last; }
+  var d=A.drawMech(F,this.build,st,sx,sy), a=d.a; this.last={a:a,st:st,x:d.x,y:d.y};
+  if(a.thrust&&(m.flying||m.boostT>0)){
+    var fk='f'+(Math.floor(this.t*20)%3), dash=m.boostT>0;
+    var fs=dash?fxSprite('FX-FLAME',fk,m.boostDir>0?1:-1,'back'):fxSprite('FX-FLAME',fk,1,'');   // a dash flame streams behind the dash, a hover flame down
+    F.blit(fs.s.px,fs.s.w,fs.s.h,d.x+a.thrust[0]-fs.ox,d.y+a.thrust[1]-fs.oy);
+  }
+  if(this.flashT>0&&a.muzzle){ var ms=fxSprite('FX-MUZZLE','f'+this.flashK,m.face,st.aim); F.blit(ms.s.px,ms.s.w,ms.s.h,d.x+a.muzzle[0]-ms.ox+m.face,d.y+a.muzzle[1]-ms.oy); }
+  if(this.blastT>0&&a.muzzle){ var bs=fxSprite('FX-BLAST',null,m.face,st.aim); F.blit(bs.s.px,bs.s.w,bs.s.h,d.x+a.muzzle[0]-bs.ox+m.face,d.y+a.muzzle[1]-bs.oy); }
+  return this.last;
+};
+View.prototype.drawFX=function(F,cx,cy){ this.fx.draw(F,cx,cy); };
+/* the sim's own ordnance and its hits: machine gun tracers, cannon and pellet
+   orbs, missiles, enemy shells, sparks, missile smoke, explosions */
+function drawShots(F,W,cx,cy){
+  var i;
+  function sx(x){ return Math.round(x-cx); } function sy(y){ return Math.round(y-cy); }
+  for(i=0;i<W.shots.length;i++){ var s2=W.shots[i], X=sx(s2.x), Y=sy(s2.y);
+    if(s2.k==='mg'){ var vl=Math.sqrt(s2.vx*s2.vx+s2.vy*s2.vy)||1, ux=s2.vx/vl, uy=s2.vy/vl; F.px(X,Y,26); F.px(X-ux,Y-uy,26); F.px(X-ux*2.5,Y-uy*2.5,25); F.px(X-ux*4,Y-uy*4,24); }
+    else if(s2.k==='missile'){ F.rect(X-1,Y-1,3,2,16); F.px(X,Y-1,17); F.px(X-Math.sign(s2.vx||1)*2,Y,25); F.px(X-Math.sign(s2.vx||1)*3,Y,24); }
+    else { var r=s2.r||2; for(var y2=-r;y2<=r;y2++)for(var x2=-r;x2<=r;x2++){ var dd=x2*x2+y2*y2; if(dd<=r*r)F.px(X+x2,Y+y2,dd<=r*r*0.25?26:dd<=r*r*0.6?25:24); } }
+  }
+  for(i=0;i<W.shells.length;i++){ var sh=W.shells[i]; F.rect(sx(sh.x)-1,sy(sh.y)-1,3,3,23); F.px(sx(sh.x),sy(sh.y),25); }
+  for(i=0;i<W.fx.length;i++){ var e=W.fx[i], ex=sx(e.x), ey=sy(e.y), p=e.t/e.life;
+    if(e.k==='flash'){ F.px(ex,ey,26); F.px(ex+1,ey,25); F.px(ex-1,ey,25); F.px(ex,ey+1,25); F.px(ex,ey-1,25); }
+    else if(e.k==='spark'){ F.px(ex,ey,p<0.5?26:25); F.px(ex+(p*6|0),ey-(p*4|0),24); F.px(ex-(p*5|0),ey-(p*3|0),24); }
+    else if(e.k==='smoke'){ F.rect(ex,ey,2,2,p<0.5?38:37); }
+    else if(e.k==='boom'){ var rr=Math.round(2+p*e.r), col=p<0.2?26:p<0.4?25:p<0.6?24:p<0.8?23:37;
+      for(var by=-rr;by<=rr;by++)for(var bx2=-rr;bx2<=rr;bx2++){ var q2=bx2*bx2+by*by; if(q2<=rr*rr&&(p<0.3||q2>=(rr-2)*(rr-2))&&A.bayer(ex+bx2,ey+by)<(1-p*0.7))F.px(ex+bx2,ey+by,col); } }
+  }
+}
+return { VERSION:VERSION, View:View, offsets:offsets, poseOf:poseOf, groundBelow:groundBelow, GHOST:GHOST, fxSprite:fxSprite, drawShots:drawShots };
+})();
+if(typeof module!=='undefined'&&module.exports)module.exports=GOVIEW;
+/* ==== SLICE src/go-view.js : END ==== */
+/* ==== SLICE src/controllab-main.js sha256:45328670eef207d5b2944a2f8bbcbafaf02afcb4f6bfafd4d0ad3fd9bcd1b87f : BEGIN ==== */
+/* =============================================================================
+   CONTROLLAB-MAIN v2.00 | GUNMETAL OVERTHRUST control lab | pitch section 10 step 1
+   -----------------------------------------------------------------------------
+   One two-legged mech (the STANDARD set, the art lab's own parts) on a scrolling
+   test strip: platforms at several heights, a pit, targets, a turret that shoots
+   back. Lock-on and cycling, three weapons, jump, flight, boost. Two schemes
+   (A: boost on a right-stick tap; B: boost on a left-stick flick), on phone,
+   gamepad and keyboard. The mover is go-mech.js; every pixel is go-art.js and
+   go-parts.js; the shell is go-shell.js (08 section 3: the real assets).
+   v2.00 (the Director's notes, 2026-09-28: the walk and the jump felt stiff):
+   the mech is drawn by go-view.js (poses from the mover's state, the gun's
+   flash, casings, smoke, dust, boost ghosts, recoil, shake), shots leave the
+   barrel on screen, and events are read by sequence number.
+   ============================================================================= */
+(function(){
+'use strict';
+var LAB='GO CONTROL LAB', LAB_VERSION='v2.00';
+var A=GOART, SH=GOSHELL, M=GOMECH, V=GOVIEW;
+var BUILD={legs:'LG-01',core:'CR-01',head:'HD-01',arms:'AR-01',shoulder:'SH-01',weapon:'WP-01'};
+var GRIDS={'480':[480,270],'640':[640,360]};
+var ST={ grid:'480', grade:'SUNSET', scheme:'A', cam:0, camTop:0, t:0, helpOpen:false, gate:null,
+         raw:{left:{active:false,x:0,y:0},right:{active:false,x:0,y:0},keys:{},pad:null}, lastSrc:'none', pads:0 };
+var VIEW=new V.View(BUILD,23), OFF=V.offsets(BUILD);
+function newWorld(){ var w=M.newWorld(); w.muzzleOff=OFF.muzzle; w.launchOff=OFF.launch; return w; }   // shots leave the barrel you see
+var W=newWorld(), IS=M.newInput();
+var BAKED=Object.create(null), LUTS=Object.create(null), FR=Object.create(null);
+function layers(){ var g=ST.grid; if(!BAKED[g]){ var d=GRIDS[g]; BAKED[g]=A.bakeLayers(d[0],d[1]); } return BAKED[g]; }
+function lut(){ return LUTS[ST.grade]||(LUTS[ST.grade]=A.makeLut('CITY',ST.grade)); }
+function frame(){ var d=GRIDS[ST.grid], k=d.join('x'); return FR[k]||(FR[k]=new A.Frame(d[0],d[1])); }
+
+/* ---- sprites for the strip's hardware, compiled once, with flash remaps ---- */
+var SPR=Object.create(null);
+function spr(id,face){ var k=id+(face<0?'L':'R'); if(SPR[k])return SPR[k]; var p=A.PARTS[id], s=A.compileMap(p.map,p.set); if(face>0&&id==='EN-TURRET')s=A.mirror(s); SPR[k]={w:s.w,h:s.h,px:s.px,a:p.anchors}; return SPR[k]; }
+var WHITE=(function(){ var t=new Uint8Array(256); for(var i=1;i<256;i++)t[i]=28; t[1]=1; return t; })();
+var HOT=(function(){ var t=new Uint8Array(256),i; for(i=0;i<256;i++)t[i]=i; [31,32,33,34,35].forEach(function(j,n){ t[j]=[22,23,24,25,26][n]; }); return t; })();
+
+/* ---- the step ---- */
+function update(dt){
+  ST.t++;
+  var pad=SH.readGamepads(); ST.raw.pad=pad; ST.pads=SH.DEV.pads;
+  var held=ST.raw.keys, kf={}, k;                  // a key tapped between two frames still counts for one frame
+  for(k in held)kf[k]=held[k]; for(k in LATCH){ kf[k]=true; } LATCH={};
+  var I=M.readIntents(IS,{left:ST.raw.left,right:ST.raw.right,keys:kf,pad:ST.raw.pad},dt,ST.scheme,M.targetDir(W),M.INP);
+  if(I.src)ST.lastSrc=I.src;
+  var seq=W.evN;
+  M.step(W,I,dt);
+  for(var i=0;i<W.events.length;i++)if(W.events[i].n>seq)react(W.events[i]);
+  VIEW.consume(W,seq); VIEW.step(W,dt);
+  // the camera leads the mech, then looks up when it flies
+  var d=GRIDS[ST.grid], G=A.geo(d[0],d[1]), top0=W.strip.ground-G.ground;
+  var tx=W.m.x-d[0]*0.42+W.m.face*26; tx=Math.max(0,Math.min(W.strip.w-d[0],tx));
+  ST.cam+=(tx-ST.cam)*Math.min(1,dt*6);
+  var ty=Math.min(top0,W.m.y-56-d[1]*0.28); ty=Math.max(top0-150,ty);
+  ST.camTop+=(ty-ST.camTop)*Math.min(1,dt*5);
+  if(ST.gatePending&&--ST.gatePending===0)runGate();
+}
+/* events become haptics and sound: the lock and a full charge buzz (pitch section 5) */
+function react(e){
+  if(e.type==='lock'){ SH.vibrate(18); SH.beep(1320,0.04,'square',0.03); ST.lockFlash=12; }
+  else if(e.type==='chargeFull'){ SH.vibrate([12,40,12]); SH.beep(990,0.09,'triangle',0.05); }
+  else if(e.type==='hurt'||e.type==='fall'){ SH.vibrate(45); SH.beep(110,0.15,'sawtooth',0.05); }
+  else if(e.type==='fire'){ if(e.data.w==='mg')SH.beep(220+(ST.t%3)*20,0.03,'square',0.02); else if(e.data.w==='cannon')SH.beep(90,0.25,'sawtooth',0.07); else if(e.data.w==='missile')SH.beep(440,0.12,'triangle',0.04); else SH.beep(160,0.06,'square',0.04); }
+  else if(e.type==='boost')SH.beep(300,0.08,'sawtooth',0.03);
+  else if(e.type==='jump')SH.beep(520,0.05,'square',0.02);
+  else if(e.type==='destroyed')SH.beep(70,0.3,'sawtooth',0.08);
+  else if(e.type==='cycle'||e.type==='release')SH.beep(e.type==='cycle'?1100:600,0.04,'square',0.03);
+}
+
+/* ---- the render: index pixels only ---- */
+function render(){
+  var F=frame(), L=layers(), d=GRIDS[ST.grid], G=A.geo(d[0],d[1]), top0=W.strip.ground-G.ground;
+  var sk=VIEW.shakeOffset(), cx=Math.round(ST.cam)+sk[0], ct=Math.min(Math.round(ST.camTop),top0)+Math.min(0,sk[1]), ly=ct-top0, i, n;   // never below the rest line; the kick shakes the view
+  F.clear(A.LI.sky0);
+  for(i=0;i<A.LAYER_ORDER.length;i++){ n=A.LAYER_ORDER[i]; if(n==='FOREGROUND')continue; F.layer(L[n],cx,ly); }
+  function sx(x){ return Math.round(x)-cx; } function sy(y){ return Math.round(y)-ct; }
+  var S=W.strip;
+  // the pit: the street gives way
+  var px0=sx(S.pit.x0), px1=sx(S.pit.x1), gy=sy(S.ground);
+  F.rect(px0,gy,px1-px0,F.H-gy,1);
+  for(i=px0;i<px1;i++){ if(((i*7)%5)<2)F.px(i,gy,13); F.px(i,gy+1+((i*3)%4===0?1:0),2); }
+  F.rect(px0,gy,2,F.H-gy,13); F.rect(px1-2,gy,2,F.H-gy,14);
+  // platforms: girders on cables
+  for(i=0;i<S.floors.length;i++){ var f=S.floors[i]; if(f.ground)continue; var x0=sx(f.x0), x1=sx(f.x1), y=sy(f.y);
+    F.rect(x0,y,x1-x0,1,17); F.rect(x0,y+1,x1-x0,2,15); F.rect(x0,y+3,x1-x0,2,13); F.rect(x0,y+5,x1-x0,1,1);
+    for(var q=x0+2;q<x1-2;q+=6){ F.px(q,y+2,1); F.px(q+1,y+3,1); }
+    F.line(x0+4,y-1,x0+4,y-40,14); F.line(x1-5,y-1,x1-5,y-40,14);
+    F.rect(x0,y+1,1,4,1); F.rect(x1-1,y+1,1,4,1); }
+  // targets
+  for(i=0;i<W.targets.length;i++){ var tg=W.targets[i]; if(!tg.alive){ continue; }
+    var id=tg.kind==='dummy'?'EN-DUMMY':tg.kind==='drone'?'EN-DRONE':'EN-TURRET', s=spr(id,tg.kind==='turret'?tg.face:-1);
+    var ox, oy; if(tg.kind==='drone'){ ox=sx(tg.x)-s.a.c[0]; oy=sy(tg.y)-s.a.c[1]; } else { ox=sx(tg.x)-s.a.base[0]; oy=sy(tg.y)-s.a.base[1]; }
+    var rm=tg.flash>0?WHITE:(tg.staggerT>0&&(ST.t>>2)&1?HOT:null);
+    if(tg.kind==='turret'&&tg.tele>0&&(ST.t>>1)&1)rm=HOT;
+    F.blit(s.px,s.w,s.h,ox,oy,rm);
+    if(tg.stagger>0||tg.staggerT>0){ var b=M.targetBox(tg), bw=16, fill=tg.staggerT>0?bw:Math.round(bw*tg.stagger/M.T.STAGGER_MAX);
+      F.rect(sx(b.cx)-8,sy(b.y0)-6,bw,2,2); F.rect(sx(b.cx)-8,sy(b.y0)-6,fill,2,tg.staggerT>0?25:24); }
+    var hpw=Math.round(16*tg.hp/tg.hpMax), bb=M.targetBox(tg); F.rect(sx(bb.cx)-8,sy(bb.y0)-9,16,1,2); F.rect(sx(bb.cx)-8,sy(bb.y0)-9,hpw,1,29);
+  }
+  // the mech through the shared view (pose, shadow, flames, flash, afterimages), then the ordnance
+  var m=W.m;
+  VIEW.draw(F,W,cx,ct,m.inv>0&&((ST.t>>2)&1));
+  if(m.charging&&m.charge>0){ var mz=M.muzzle(W), cr=Math.round(1+m.charge*3); for(var yy=-cr;yy<=cr;yy++)for(var xx=-cr;xx<=cr;xx++)if(xx*xx+yy*yy<=cr*cr)F.px(sx(mz.x)+xx,sy(mz.y)+yy,(m.charge>=1&&(ST.t>>1)&1)?26:(xx*xx+yy*yy<cr*cr/2?25:24));
+    if((ST.t&3)===0)VIEW.fx.spawn('spark',mz.x+(VIEW.fx.R()-0.5)*24,mz.y+(VIEW.fx.R()-0.5)*18,0,0,{life:0.15}); }
+  V.drawShots(F,W,cx,ct);
+  VIEW.drawFX(F,cx,ct);
+  // the lock: brackets on screen, an arrow when off it
+  if(W.lock){ var lb=M.targetBox(W.lock), lx0=sx(lb.x0)-3, lx1=sx(lb.x1)+3, ly0=sy(lb.y0)-3, ly1=sy(lb.y1)+3, lc=(m.charge>=1)?25:((ST.lockFlash>0&&(ST.t>>1)&1)?26:29);
+    if(ST.lockFlash>0)ST.lockFlash--;
+    if(lx1<0||lx0>=F.W||ly1<0||ly0>=F.H){ var ax=Math.max(4,Math.min(F.W-5,sx(lb.cx))), ay=Math.max(20,Math.min(F.H-12,sy(lb.cy))), dir=(sx(lb.cx)<0)?-1:1;
+      for(var ai=0;ai<4;ai++){ F.rect(ax-dir*ai,ay-ai,1,ai*2+1,lc); } }
+    else { [[lx0,ly0,1,1],[lx1,ly0,-1,1],[lx0,ly1,1,-1],[lx1,ly1,-1,-1]].forEach(function(c){ F.rect(Math.min(c[0],c[0]+c[2]*3),c[1],4,1,lc); F.rect(c[0],Math.min(c[1],c[1]+c[3]*3),1,4,lc); }); }
+  }
+  // foreground last, then the HUD
+  F.layer(L.FOREGROUND,cx,ly);
+  hud(F);
+  return {frame:F,lut:lut()};
+}
+function bar(F,x,y,w,v,max,col,label){ A.text(F,label,x,y,A.LI.sun,1); F.rect(x+10,y+1,w+2,5,1); F.rect(x+11,y+2,w,3,2); F.rect(x+11,y+2,Math.round(w*v/max),3,col); }
+function hud(F){
+  var m=W.m;
+  A.text(F,LAB+' '+LAB_VERSION,4,3,A.LI.sun,1);
+  bar(F,4,11,60,m.ap,M.T.AP_MAX,m.ap>50?29:m.ap>25?25:23,'AP');
+  bar(F,4,18,60,m.en,M.T.EN_MAX,m.en>=M.T.BOOST_COST?20:23,'EN');
+  var sch=ST.scheme==='A'?'SCHEME A: TAP RIGHT STICK = BOOST':'SCHEME B: FLICK LEFT STICK = BOOST';
+  A.text(F,sch,F.W-A.textWidth(sch)-4,3,A.LI.sky8,1);
+  var lk=W.lock?('LOCK '+(W.lock.kind==='dummy'?'PLATE':W.lock.kind==='drone'?'GNAT':'SENTRY')+' '+(W.lock.id+1)):'NO LOCK';
+  A.text(F,lk,F.W-A.textWidth(lk)-4,10,W.lock?29:A.LI.sky6,1);
+  var ch=m.charging?Math.round(m.charge*100)+'%':'--', ms=m.msCool>0?'COOL':'READY';
+  A.text(F,'MG '+W.rounds.mg+'  CHARGE '+ch+'  MISSILES '+ms,4,F.H-8,A.LI.sky8,1);
+}
+
+/* ---- the palette gate, shared with the art lab (go-shell) ---- */
+function runGate(){ ST.gate=SH.paletteGate(document.getElementById('cv'),lut()); var g=document.getElementById('gate'); if(g&&ST.gate){ g.className='gate '+(ST.gate.pass?'green':'red'); g.textContent=ST.gate.error?('PALETTE GATE could not read the canvas: '+ST.gate.error):((ST.gate.pass?'PALETTE GATE PASS: ':'PALETTE GATE RED: ')+ST.gate.colours+' colours on screen, all from the '+ST.gate.palette+'-colour palette of CITY '+ST.gate.grade+(ST.gate.stray?' | '+ST.gate.stray+' STRAY px':'')+' | '+(ST.gate.integer?'every '+ST.gate.k+'x'+ST.gate.k+' block one colour'+(ST.gate.blockBad?' EXCEPT '+ST.gate.blockBad:''):'scale not integer')); } return ST.gate; }
+
+/* ---- touch: two floating sticks. Left half moves, right half fights. The
+        whole play area below the bar takes touches; the overlay only draws. ---- */
+var TOUCH={l:null,r:null}, OV=null, OVC=null;
+function stickR(){ return Math.max(40,Math.min(70,Math.min(window.innerWidth,window.innerHeight)*0.13)); }
+function setStick(side,p){ var R=stickR(), dx=p.x-p.ox, dy=p.y-p.oy, d=Math.sqrt(dx*dx+dy*dy), k=d>R?R/d:1; ST.raw[side==='l'?'left':'right']={active:true,x:dx*k/R,y:dy*k/R}; }
+function pdown(e){
+  if(e.target&&e.target.closest&&e.target.closest('button,#help'))return;
+  SH.firstGesture();
+  var side=(e.clientX<window.innerWidth/2)?'l':'r';
+  if(TOUCH[side])return;
+  TOUCH[side]={id:e.pointerId,ox:e.clientX,oy:e.clientY,x:e.clientX,y:e.clientY};
+  setStick(side,TOUCH[side]);
+  try{ e.target.setPointerCapture&&e.target.setPointerCapture(e.pointerId); }catch(_){}
+  e.preventDefault();
+}
+function pmove(e){ ['l','r'].forEach(function(s){ var p=TOUCH[s]; if(p&&p.id===e.pointerId){ p.x=e.clientX; p.y=e.clientY; setStick(s,p); } }); }
+function pup(e){ ['l','r'].forEach(function(s){ var p=TOUCH[s]; if(p&&p.id===e.pointerId){ TOUCH[s]=null; ST.raw[s==='l'?'left':'right']={active:false,x:0,y:0}; } }); }
+function drawOverlay(){
+  if(!OV)return; var dpr=window.devicePixelRatio||1, w=OV.clientWidth, h=OV.clientHeight;
+  if(OV.width!==Math.round(w*dpr)||OV.height!==Math.round(h*dpr)){ OV.width=Math.round(w*dpr); OV.height=Math.round(h*dpr); }
+  var c=OVC; c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
+  var top=OV.getBoundingClientRect().top, R=stickR();
+  ['l','r'].forEach(function(s){ var p=TOUCH[s]; if(!p)return; var ox=p.ox, oy=p.oy-top, v=ST.raw[s==='l'?'left':'right'];
+    c.lineWidth=2; c.strokeStyle='rgba(255,255,255,0.28)'; c.beginPath(); c.arc(ox,oy,R,0,Math.PI*2); c.stroke();
+    c.fillStyle='rgba(255,183,102,0.45)'; c.beginPath(); c.arc(ox+v.x*R,oy+v.y*R,R*0.36,0,Math.PI*2); c.fill();
+    c.font='bold 10px monospace'; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='rgba(255,255,255,0.7)';
+    if(s==='r'){ var dir=M.targetDir(W), zones=[['FIRE',dir,0],['CYCLE (HOLD: DROP)',-dir,0],['CHARGE',0,-1],['MISSILES',0,1]];
+      zones.forEach(function(z){ c.fillText(z[0],ox+z[1]*R*1.35,oy+z[2]*R*1.25); }); }
+    else { c.fillText('JUMP / HOLD: FLY',ox,oy-R*1.25); if(ST.scheme==='B')c.fillText('FLICK: BOOST',ox,oy+R*1.25); }
+  });
+  if(!TOUCH.l&&!TOUCH.r&&ST.lastSrc!=='keys'&&ST.lastSrc!=='pad'){
+    c.font='bold 11px monospace'; c.textAlign='center'; c.fillStyle='rgba(255,255,255,0.55)';
+    c.fillText('LEFT THUMB: MOVE',w*0.25,h-16); c.fillText('RIGHT THUMB: FIGHT'+(ST.scheme==='A'?' (TAP: BOOST)':''),w*0.75,h-16);
+  }
+}
+
+/* ---- keyboard ---- */
+var KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'jump',KeyW:'jump',ArrowUp:'jump',KeyS:'down',ArrowDown:'down',
+  ShiftLeft:'boost',ShiftRight:'boost',KeyJ:'main',KeyK:'sec',KeyL:'third',Tab:'cycle'};
+var LATCH={};
+function key(e,on){ var k=KEYMAP[e.code]; if(!k)return; SH.firstGesture(); if(on&&!ST.raw.keys[k])LATCH[k]=true; ST.raw.keys[k]=on; ST.lastSrc='keys'; if(e.preventDefault)e.preventDefault(); }
+
+/* ---- the drawer: help and tuning; the bar: scheme, grid, devices ---- */
+function el(tag,cls,txt){ var e=document.createElement(tag); if(cls)e.className=cls; if(txt!==undefined)e.textContent=txt; return e; }
+function knob(parent,label,min,max,stepv,get,set,fmt){ var row=el('div','row'); row.appendChild(el('span','lbl',label)); var r=el('input'); r.type='range'; r.min=min; r.max=max; r.step=stepv; r.value=get();
+  var v=el('span','val',fmt?fmt(get()):String(get())); r.oninput=function(){ set(Number(r.value)); v.textContent=fmt?fmt(Number(r.value)):r.value; }; row.appendChild(r); row.appendChild(v); parent.appendChild(row); }
+function buildHelp(){
+  var H=document.getElementById('helpDyn'); H.innerHTML='';
+  var seg=el('div','row'); seg.appendChild(el('span','lbl','SCHEME'));
+  ['A','B'].forEach(function(s){ var b=el('button','seg'+(ST.scheme===s?' on':''),s==='A'?'A: TAP RIGHT = BOOST':'B: FLICK LEFT = BOOST'); b.onclick=function(){ setScheme(s); buildHelp(); }; seg.appendChild(b); }); H.appendChild(seg);
+  var fm=el('div','row'); fm.appendChild(el('span','lbl','FLICK'));
+  ['snap','out-back'].forEach(function(s){ var b=el('button','seg'+(M.INP.FLICK_MODE===s?' on':''),s==='snap'?'SNAP OUT':'OUT AND BACK'); b.onclick=function(){ M.INP.FLICK_MODE=s; buildHelp(); }; fm.appendChild(b); }); H.appendChild(fm);
+  knob(H,'FLICK MS',50,220,5,function(){return M.INP.FLICK_MS;},function(v){M.INP.FLICK_MS=v;});
+  knob(H,'FIRE ZONE',30,70,1,function(){return M.INP.ZONE_TOWARD;},function(v){M.INP.ZONE_TOWARD=v;},function(v){return '+/-'+v+' deg';});
+  knob(H,'UP CONE',15,45,1,function(){return M.INP.UP_CONE;},function(v){M.INP.UP_CONE=v;},function(v){return '+/-'+v+' deg';});
+  knob(H,'DEAD ZONE',0.05,0.4,0.01,function(){return M.INP.DZ;},function(v){M.INP.DZ=v;});
+  var gr=el('div','row'); gr.appendChild(el('span','lbl','LIGHT')); ['SUNSET','DUSK','NIGHT'].forEach(function(g){ var b=el('button','seg'+(ST.grade===g?' on':''),g); b.onclick=function(){ ST.grade=g; buildHelp(); ST.gatePending=10; }; gr.appendChild(b); }); H.appendChild(gr);
+  var rs=el('button','seg','RESET THE STRIP'); rs.onclick=function(){ W=newWorld(); IS=M.newInput(); window.__GO.world=W; }; H.appendChild(rs);
+  var g=el('div','gate','PALETTE GATE: tap to run'); g.id='gate'; g.onclick=runGate; H.appendChild(g);
+}
+function setGrid(g){ ST.grid=g; var d=GRIDS[g]; SH.setGrid(d[0],d[1]); var b=document.getElementById('bGrid'); if(b)b.textContent=d.join('x');
+  ST.camTop=W.strip.ground-A.geo(d[0],d[1]).ground; ST.cam=Math.max(0,Math.min(W.strip.w-d[0],ST.cam)); ST.gatePending=10; }   // snap the camera to the new grid's rest
+function setScheme(s){ ST.scheme=s; IS=M.newInput(); var b=document.getElementById('bScheme'); if(b)b.textContent='SCHEME '+s; }
+function showDev(){
+  var d=document.getElementById('dev'); if(!d)return;
+  d.textContent='VIBRATE: '+SH.DEV.vibrate+' | GAMEPAD: '+SH.DEV.gamepad+(SH.DEV.pads?' ('+SH.DEV.padId+')':'')+' | INPUT: '+ST.lastSrc+(SH.S.fsNote?' | '+SH.S.fsNote:'');
+}
+var BAR=34;
+function box(vv){ document.getElementById('help').className='drawer'+(ST.helpOpen?' open':''); return {w:vv.w,h:vv.h-BAR}; }
+
+function boot(){
+  var cv=document.getElementById('cv'); OV=document.getElementById('ov'); OVC=OV.getContext('2d');
+  var play=document.getElementById('play');
+  play.addEventListener('pointerdown',pdown,{passive:false});
+  window.addEventListener('pointermove',pmove,{passive:true});
+  window.addEventListener('pointerup',pup); window.addEventListener('pointercancel',pup);
+  window.addEventListener('keydown',function(e){ key(e,true); });
+  window.addEventListener('keyup',function(e){ key(e,false); });
+  window.addEventListener('gamepadconnected',function(){ SH.readGamepads(); ST.lastSrc='pad'; });
+  document.getElementById('bScheme').onclick=function(){ setScheme(ST.scheme==='A'?'B':'A'); buildHelp(); };
+  document.getElementById('bGrid').onclick=function(){ setGrid(ST.grid==='480'?'640':'480'); };
+  document.getElementById('bHelp').onclick=function(){ ST.helpOpen=!ST.helpOpen; SH.fit(); };
+  document.getElementById('bBuzz').onclick=function(){ SH.firstGesture(); SH.vibrate(90); showDev(); };
+  document.getElementById('bFs').onclick=function(){ SH.firstGesture(); SH.toggleFullscreen(); };
+  buildHelp();
+  var d0=GRIDS[ST.grid], G0=A.geo(d0[0],d0[1]); ST.camTop=W.strip.ground-G0.ground;
+  SH.start({canvas:cv,box:box,update:update,render:function(){ var o=render(); drawOverlay(); return o; },turnCard:document.getElementById('turn'),
+            onFit:function(){ ST.gatePending=10; },gridW:480,gridH:270});
+  SH.readGamepads(); setInterval(showDev,400); showDev();
+}
+/* the test hook: suites wait on these, never on timers (08 section 9) */
+if(typeof window!=='undefined'){
+  window.__GO={ lab:LAB, version:LAB_VERSION, st:ST, world:W, mech:M, shell:SH, art:A, view:VIEW, frames:function(){return SH.S.frames;},
+    lastError:function(){return SH.S.lastError;}, runGate:runGate, setScheme:setScheme, events:function(){return window.__GO.world.events;},
+    setGrid:setGrid, raw:ST.raw };
+}
+if(typeof document!=='undefined'&&document.getElementById&&document.getElementById('cv')){
+  try{ boot(); }catch(e){ SH.reportErr('boot',e); var b=document.getElementById('boot'); if(b){ b.style.display='block'; b.textContent='ERR: boot: '+(e&&e.message||e); } }
+}
+})();
+/* ==== SLICE src/controllab-main.js : END ==== */
+</script>
+</body>
+</html>
