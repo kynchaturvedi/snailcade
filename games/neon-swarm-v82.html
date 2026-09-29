@@ -595,8 +595,16 @@ v81 WHOLE LABELS. On a narrow screen (344 and 280 wide: fold cover
     middot lets a line break only after it, so a narrow screen wraps
     between labels. At 360 wide and up the hint reads as in v80. Layout
     only. hinttest.js v1.02 holds every label on one line.
+v82 CO-OP LOCK. In co-op, downing an interlude machine gave +1 life to
+    every player, even a partner already out of ships. That partner's
+    count then read one ship left, but no ship ever came back, so when
+    the other player went out the game played on with no one to fly
+    and never ended. A partner who is out now stays out; a player still
+    flying gains the life as before. SOLO is unchanged (a player out
+    there is GAME OVER). Found by the bot suite v1.01: the co-op novice
+    pair locked on 2 of 4 seeds; its "co-op never locks" band holds it.
 -->
-<title>NEON SWARM v81</title>
+<title>NEON SWARM v82</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -1353,7 +1361,7 @@ function S(name){
 }
 
 // ---------- state ----------
-var BUILD = 81;
+var BUILD = 82;
 var STATE = 'title';
 var score = 0, hiScore = 0, wave = 0;
 var chain = 0, mult = 1, chainTimer = 0;
@@ -4064,7 +4072,7 @@ function cbVictory(){
   popupLocal(W/2, H*0.42, 'TARGET DESTROYED +' + got, COL.yellow, true);
   if (hosting()) mp.evq.push(['pp', W/2, H*0.42, 'TARGET DESTROYED +' + got, CI(COL.yellow), 1]);
   for (var pi = 0; pi < players.length; pi++){
-    if (players[pi].lives < 4) players[pi].lives++;
+    if (players[pi].lives >= 0 && players[pi].lives < 4) players[pi].lives++;   // v82: a partner already out stays out
   }
   shake = 8; flash = 0.6;
   S('beammax');
