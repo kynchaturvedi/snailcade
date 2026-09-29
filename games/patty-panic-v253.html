@@ -3,9 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>PATTY PANIC - BUILD 250</title>
+<title>PATTY PANIC - BUILD 253</title>
 <!--
 PATTY PANIC build changelog
+v253: MR. SPUD BOWLS ONLY THE FOE HE HITS, AND ROLLS ON (the Director's device pass, 2026-09-29;
+    ENGINE_VER 1.12, resealed: spudCharge lives in ENGINE-CORE). A floor or ladder charge that ran
+    into a foe stunned EVERY foe on that floor (or every foe within a tile and a half on that ladder),
+    though Spud never touched them, and the strike ended his charge right beside the struck foe; he
+    vented, saw the chef again, wound up and struck the same foe once more the moment he set off, over
+    and over. Now the strike stuns only the foe he runs into, and the charge rolls on through it to the
+    floor's end, the ladder's end or the chef; a foe already down (his own strike, a pepper, a stomp)
+    is rolled past and never struck again. spudScatter and spudScatterLad give way to spudBowl. Gate,
+    red first against 252: spudbowltest (11 checks; 7 red there: he ended the charge at x 95.6 against
+    the foe at x 104, and a foe behind him was stunned). spudtest check 4 bumped for the ruling (the
+    strike no longer stops him).
+v252: TWO SIGHTINGS FROM THE DIRECTOR'S DEVICE PASS (2026-09-29; ENGINE_VER 1.11, CORE untouched).
+    MR. SPUD SHOWED ONLY HIS FEET in MUNCH MAZE (and in the character lab): drawFoeBody's SPUD
+    lean and pupils multiply by f.hdir, and MUNCH MAZE's ghosts carried none, so every body rect
+    went NaN and only his two feet painted. drawFoeBody now reads a missing hdir as facing right
+    (every PATTY foe already carries +1 or -1, so nothing of theirs changes), and MUNCH MAZE's
+    ghosts carry hdir from birth and face the way they travel. THE ATTRACT CHEF WAS SEE-THROUGH
+    ("something off with the CRT"; not the CRT): the attract pins graceT at 999 so the foes cannot
+    end the demo run, and drawChef's grace blink froze at one alpha, 0.806, for the whole attract.
+    The blink now skips the attract; in play it is untouched. Gates, red first against 251:
+    ghostbodytest (SPUD painted 2 of 42 rects finite; ghosts faced no way) and splashcheftest (the
+    attract chef at 0.806). The hook records each rect's globalAlpha and gains drawChefOf and
+    drawFoeBodyOf.
+v251: THE SHARP SCREEN, the doc 11 resolution migration (the Director's cartridge pipeline order,
+    step 3 of 3; plan DOC11-MIGRATION-PLAN-v1.01, option D, approved 2026-09-28; ENGINE_VER 1.11).
+    The canvas's pixel store is now exactly the screen's pixels at the shown size (1050 x 1444 on
+    the OnePlus Open's outer screen, 1680 x 2310 inner, 1400 x 1925 on a 3.5 phone; capped at 6 per
+    logical pixel), so nothing is stretched after drawing and every letter and the CRT are drawn at
+    the screen's resolution. The game still draws in logical 320 x 440: no level, cartridge rect,
+    touch zone or gate moved. FR(), the one block fill under R(), snaps every block edge to a whole
+    screen pixel through any translate, so sprites stay crisp chunky pixels with no seams (PATTY's
+    ramp and ice cube fills moved onto it). fit() also measures the safe-area padded box (the page
+    draws under the system bars), refits on a DPR change, and declares the logical size on the
+    canvas (data-logical-width/height) for the studio playtest driver. The CRT builds at 320 x 440.
+    Gates: backingtest (the store at six screens, a live unfold, the safe area, the snap in all four
+    styles) and backingpainttest (real Chromium: the store painted, text finer than a logical pixel);
+    the ECHO seat's echotaptest v1.08 and echopausetest v1.08 overlaid (gate only).
 v250: THE GATE-LAW PASS (the Director's cartridge pipeline order, step 2 of 3; no gameplay change,
     ENGINE_VER 1.10 unchanged, CORE untouched). STAMP-NEUTRAL (09 v1.02 law 9): the sixteen gates
     that pinned the BUILD integer (arcadetest, bosstest, droptest, foeramptest, foeslopeexittest,
@@ -2274,14 +2311,14 @@ canvas#cv{image-rendering:pixelated;image-rendering:crisp-edges;background:#0b0b
 (function(){
 'use strict';
 /*==== FENCE:BUILD-STAMP:BEGIN ====*/
-var BUILD=250;
+var BUILD=253;
 /*==== FENCE:BUILD-STAMP:END ====*/
 /*==== FENCE:ENGINE-CORE:BEGIN ====*/
 /* the CABINET: one shared machine. Constants, canvas, the audio engine and this
    game's sound book (styles may register their own books later), and helpers.
    The BUILD stamp lives in the BUILD-STAMP region just above, outside every hashed
    span (09 law 9, v248): a build bump alone never reds the seal. */
-var ENGINE_VER='1.10';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239)
+var ENGINE_VER='1.12';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239); v253: 1.12, MR. SPUD's charge strikes only the foe it hits
   try{ if(typeof document!=='undefined'&&document) document.title='PATTY PANIC - BUILD '+BUILD; }catch(e){}
 /* ============ error reporter (first, per studio doctrine) ============ */
 var ERRMSG='';
@@ -2303,10 +2340,10 @@ var CRT = {
   roll: function(cx,W,H,t){ if(!cx.createLinearGradient) return; var y=((t*40)%(H+40))-20; var grad=cx.createLinearGradient(0,y-18,0,y+18); grad.addColorStop(0,'rgba(180,220,255,0)'); grad.addColorStop(0.5,'rgba(180,220,255,0.05)'); grad.addColorStop(1,'rgba(180,220,255,0)'); cx.fillStyle=grad; cx.fillRect(0,y-18,W,36); }
 };
 var CRT_ROLL=true;   // v205: the moving refresh band, Director on
-CRT.build(cv.width,cv.height);
+CRT.build(W,H);   // v251 (doc 11): the scanlines keep their logical pitch whatever the store
 function crtCompose(){   // v205: after draw(), every frame, every screen (draw() early-returns on splash + level intro, so the raster must live out here)
-  CRT.draw(ctx,cv.width,cv.height);
-  if(CRT_ROLL)CRT.roll(ctx,cv.width,cv.height,performance.now()/1000);
+  CRT.draw(ctx,W,H);   // v251: logical, under the base transform
+  if(CRT_ROLL)CRT.roll(ctx,W,H,performance.now()/1000);
   if(ERRMSG){ R(0,H-14,W,14,'#400000'); T(ERRMSG.slice(0,52),3,H-4,8,'#ff8080'); }   // v205: the crash reporter redrawn bright ABOVE the raster (doctrine 07)
 }
 var fbCv=document.createElement('canvas'); fbCv.width=32; fbCv.height=30; var fbX=fbCv.getContext('2d'); fbX.imageSmoothingEnabled=false;   // v120: offscreen for the foe grill-burn (exact sprite charred to ash)
@@ -2314,13 +2351,28 @@ var fbCv2=document.createElement('canvas'); fbCv2.width=32; fbCv2.height=30; var
 function fit(){
   try{
     var aw=window.innerWidth||W, ah=window.innerHeight||H;
+    var wr=document.getElementById('wrap');   // v251 (doc 11 section 2): measure the safe-area padded box, not the whole window
+    if(wr&&wr.clientWidth&&typeof getComputedStyle==='function'){ var st=getComputedStyle(wr); aw=wr.clientWidth-(parseFloat(st.paddingLeft)||0)-(parseFloat(st.paddingRight)||0); ah=wr.clientHeight-(parseFloat(st.paddingTop)||0)-(parseFloat(st.paddingBottom)||0); }
     var s=Math.min(aw/W,ah/H);
     if(s>1.25)s=Math.floor(s*4)/4;
-    cv.style.width=Math.floor(W*s)+'px';
-    cv.style.height=Math.floor(H*s)+'px';
+    var cw=Math.floor(W*s), dpr=Math.max(1,window.devicePixelRatio||1);   // v251 (doc 11 section 3): the store IS the screen's pixels at the shown size
+    var bw=Math.round(cw*dpr), capped=bw>W*6; if(capped)bw=W*6;   // the cap: 6 store pixels per logical pixel (1920 x 2640), above every phone and fold screen
+    var K=bw/W, bh=Math.round(H*K);
+    if(cv.width!==bw||cv.height!==bh){ cv.width=bw; cv.height=bh; }
+    var css=capped?cw:bw/dpr;
+    cv.style.width=css+'px'; cv.style.height=(css*bh/bw)+'px';
+    ctx.setTransform(K,0,0,K,0,0); ctx.imageSmoothingEnabled=false;   // every draw stays in logical 320 x 440; FR() snaps block edges to screen pixels
+    if(cv.setAttribute){ cv.setAttribute('data-logical-width',W); cv.setAttribute('data-logical-height',H); }   // for the studio playtest driver (v1.03)
   }catch(e){fatal('fit',e)}
 }
 window.addEventListener('resize',fit);
+function watchDpr(){   // v251: a DPR change without a resize (a window moved to another screen) refits too
+  try{ if(!window.matchMedia)return; var q=window.matchMedia('(resolution: '+(window.devicePixelRatio||1)+'dppx)');
+    var f=function(){ fit(); watchDpr(); };
+    if(q.addEventListener)q.addEventListener('change',f,{once:true}); else if(q.addListener)q.addListener(f);
+  }catch(e){}
+}
+watchDpr();
 /* ============ input ============ */
 var keys={};
 var pepQ=[false,false];
@@ -4760,8 +4812,8 @@ function spudCharge(f){
     var lty=rowYr(f.chainTop), lby=rowYr(f.chainBot);
     f.ly+=f.vdir*cs;
     for(var i=0;i<foes.length;i++){ var o=foes[i];
-      if(o===f||o.dead||o.riding||o.rising)continue;
-      if(o.onLad&&o.lcol===f.lcol&&Math.abs(feetY(o)-f.ly)<9){ spudScatterLad(f); return; }   // bowl over a foe on the same ladder
+      if(o===f||o.dead||o.riding||o.rising||o.stun>0||o.stompT>0)continue;   // v253: a foe already down is rolled past, never struck again
+      if(o.onLad&&o.lcol===f.lcol&&Math.abs(feetY(o)-f.ly)<9) spudBowl(f,o);   // v253: bowl over the ONE foe he runs into on the ladder, and charge on
     }
     if(f.ly<=lty){ f.ly=lty; f.row=f.chainTop; f.onLad=false; f.spudMode=3; f.ventT=1.0; return; }   // hit the ladder top
     if(f.ly>=lby){ f.ly=lby; f.row=f.chainBot; f.onLad=false; f.spudMode=3; f.ventT=1.0; return; }   // hit the ladder bottom
@@ -4773,31 +4825,15 @@ function spudCharge(f){
   var mn=_sa*TW+4, mx=(_sb+1)*TW-4;
   f.x+=f.hdir*cs;
   for(var i=0;i<foes.length;i++){ var o=foes[i];
-    if(o===f||o.dead||o.riding||o.rising)continue;
-    if(o.row===f.row&&Math.abs(o.x-f.x)<9){ spudScatter(f,sp); return; }   // bowling ball into the pins
+    if(o===f||o.dead||o.riding||o.rising||o.stun>0||o.stompT>0)continue;   // v253: a foe already down (his strike, a pepper, a stomp) is rolled past, never struck again
+    if(o.row===f.row&&Math.abs(o.x-f.x)<9) spudBowl(f,o);   // bowling ball into the pins; v253: only the pin he hits falls, and he charges on
   }
   if(f.x<=mn){ f.x=mn; f.spudMode=3; f.ventT=1.0; return; }                // hit the end of the floor
   if(f.x>=mx){ f.x=mx; f.spudMode=3; f.ventT=1.0; return; }
 }
-function spudScatter(f,sp){
-  for(var i=0;i<foes.length;i++){ var o=foes[i];
-    if(o===f||o.dead||o.riding||o.rising)continue;
-    if(o.row!==f.row)continue;
-    var oc=colOf(o.x); if(oc<sp[0]||oc>sp[1])continue;                     // every foe on this floor falls down briefly
-    o.stun=1.5; if(o.type==='p'){ o.spudMode=0; o.windT=0; o.ventT=0; }
-  }
-  shake=4; if(sfx.thud)sfx.thud();
-  f.spudMode=3; f.ventT=1.0;
-}
-function spudScatterLad(f){                                                // vertical bowl: foes on the same ladder near him are knocked down
-  for(var i=0;i<foes.length;i++){ var o=foes[i];
-    if(o===f||o.dead||o.riding||o.rising)continue;
-    if(!(o.onLad&&o.lcol===f.lcol))continue;
-    if(Math.abs(feetY(o)-f.ly)>TW*1.5)continue;
-    o.stun=1.5; if(o.type==='p'){ o.spudMode=0; o.windT=0; o.ventT=0; }
-  }
-  shake=4; if(sfx.thud)sfx.thud();
-  f.spudMode=3; f.ventT=1.0;
+function spudBowl(f,o){                                                    // v253 (the Director's device pass): the ONE foe he runs into falls, and the charge rolls on.
+  o.stun=1.5; if(o.type==='p'){ o.spudMode=0; o.windT=0; o.ventT=0; }      // Was spudScatter and spudScatterLad: every foe on the floor (or within 1.5 tiles on the ladder) fell,
+  shake=4; if(sfx.thud)sfx.thud();                                         // and the charge ended beside the struck foe, so he struck it again each time he set off.
 }
 function foeUpdate(f){
   if(!(f.spawnHold>0))f.anim+=0.5;   // v152: freeze the walk cycle during the respawn settle
@@ -5442,7 +5478,10 @@ function drawChefJuiced(p,i){   // v194: the lab's squash & stretch, wrapped aro
 /*==== FENCE:STYLE-PATTY-LEGACY:END ====*/
 /*==== FENCE:ENGINE-CORE:BEGIN ====*/
 /* carve-out: R() is the CORE pixel primitive every draw call rides through. */
-function R(x,y,w,h,c){if(COLORMAP&&!(c==='#ffffff'&&w<=2&&h<=2)&&COLORMAP[c])c=COLORMAP[c];ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
+function FR(x,y,w,h){var X0=Math.round(x),Y0=Math.round(y),m=ctx.getTransform&&ctx.getTransform();   // v251 (doc 11): the one block fill; every edge lands on a whole screen pixel
+ if(m&&!m.b&&!m.c){var X1=X0+Math.round(w),Y1=Y0+Math.round(h);X0=(Math.round(m.a*X0+m.e)-m.e)/m.a;Y0=(Math.round(m.d*Y0+m.f)-m.f)/m.d;ctx.fillRect(X0,Y0,(Math.round(m.a*X1+m.e)-m.e)/m.a-X0,(Math.round(m.d*Y1+m.f)-m.f)/m.d-Y0);}
+ else ctx.fillRect(X0,Y0,Math.round(w),Math.round(h));}
+function R(x,y,w,h,c){if(COLORMAP&&!(c==='#ffffff'&&w<=2&&h<=2)&&COLORMAP[c])c=COLORMAP[c];ctx.fillStyle=c;FR(x,y,w,h)}
 /*==== FENCE:ENGINE-CORE:END ====*/
 /*==== FENCE:STYLE-PATTY-LEGACY:BEGIN ====*/
 function T(s,x,y,size,col,align,bold){
@@ -5772,7 +5811,7 @@ function drawChef(p,i){
   var apron=i===0?'#f7efef':'#eef1f8';
   var DK='#20203a', SKIN='#ffd9b0', HAIR='#6e4a2a', BEARD='#43290f', LAP='#eef0f6', BTN=p.girl?(i===0?'#d62d7e':'#6f33c8'):'#c83a3a';
   var GHAIR='#7c4a24', LIP='#c8606a', BLUSH='#ffb09c', KHI=p.girl?(i===0?'#ffd0e0':'#e6d6ff'):'#ffd0e0';
-  if(!p.dead&&(graceT>0||p.inv>0)&&STATE==='game'){var _bk=(graceT>0?graceT:p.inv);ctx.globalAlpha=0.55+0.45*Math.abs(Math.sin(_bk*14));}   // v155: blink on personal invuln too
+  if(!p.dead&&(graceT>0||p.inv>0)&&STATE==='game'&&!splashOn){var _bk=(graceT>0?graceT:p.inv);ctx.globalAlpha=0.55+0.45*Math.abs(Math.sin(_bk*14));}   // v155: blink on personal invuln too; v252: never on the attract (its pinned graceT froze the blink at 0.806, a see-through chef)
   var dead=p.dead, intro=(!dead&&introT>0&&STATE==='game'), dancing=(!dead&&STATE==='clear');
   if(p.teleStage>0){ drawChefTeleport(p,i,x,fy); return; }   // v103: transporter dematerialize / rematerialize
   if(dead&&p.deathKind==='fire'){ drawChefFire(p,i,x,fy); return; }   // v97: the char-to-ash takes over from the normal slam
@@ -6070,7 +6109,7 @@ function drawFoeBody(f,x,fy,fa){                                  // v120: just 
     R(ybx-3,fy-2,2,2,sty?'#d8d8d0':'#f0f0ea'); R(ybx+1,fy-2,2,2,sty?'#f0f0ea':'#d8d8d0');
   } else if(f.type==='p'){
     // MR. SPUD (B): tall potato; slow waddle, angry steam wind-up (Spud A puffs), and a forward lean into the charge
-    var md=f.spudMode||0, hd=f.hdir;
+    var md=f.spudMode||0, hd=(f.hdir<0)?-1:1;   // v252: a foe built without hdir (MUNCH MAZE's ghosts, a lab's foes) faces right; it read NaN and MR. SPUD painted only his feet
     var baseLean=(md===0)?((Math.floor(fa/8)%2)?1:-1):0;                 // gentle walk waddle
     var shk=(md===1)?((frame%2)?1:-1):0;                                 // wind-up jitter
     var tilt=(md===2&&!f.onLad)?3:0;                                     // lean forward into a FLOOR charge only: top tilts, feet stay planted
@@ -6741,14 +6780,14 @@ function drawVignette(){   // v200: gentle flat-frame vignette (title screen onl
   }
   ctx.globalAlpha=1;
 }
-function drawRamps(){ if(!LV.ramps)return; function IR(a,b,c,d,e){ctx.fillStyle=e;ctx.fillRect(Math.round(a),Math.round(b),Math.round(c),Math.round(d));}
+function drawRamps(){ if(!LV.ramps)return; function IR(a,b,c,d,e){ctx.fillStyle=e;FR(a,b,c,d);}
   for(var i=0;i<LV.ramps.length;i++){ var rp=LV.ramps[i], xmin=Math.min(rp.xHi,rp.xLo), xmax=Math.max(rp.xHi,rp.xLo);
     for(var x=xmin;x<=xmax;x++){ var y=rampY(rp,x); IR(x,y,1,4,'#2c3aa8'); IR(x,y,1,1,'#8ea0ff'); }   // v211: match the standard floor exactly: 4px body + 1px top highlight, same colors
     for(var rx=xmin+8;rx<xmax;rx+=16)IR(rx,rampY(rp,rx)+2,2,2,'#1a2470');   // v211: rivets like the floor's
   }
 }
 function drawMrIce(){ if(!mrIce)return;
-  function IR(a,b,c,d,e){ ctx.fillStyle=e; ctx.fillRect(Math.round(a),Math.round(b),Math.round(c),Math.round(d)); }
+  function IR(a,b,c,d,e){ ctx.fillStyle=e; FR(a,b,c,d); }
   var x=Math.round(mrIce.x), by=Math.round(rowYr(mrIce.r))-1, Wd=26, Hh=34, sy=1, xj=0;
   if(mrIce.phase===0)xj=Math.round(Math.sin(frame*0.5)*0.6);
   else if(mrIce.phase===1)sy=1+0.10*Math.min(1,mrIce.t/ICEB_WIND);
@@ -6769,7 +6808,7 @@ function drawMrIce(){ if(!mrIce)return;
   IR(x-4,my,2,2,'#dff2ff'); IR(x,my,2,2,'#dff2ff'); IR(x+3,my,2,2,'#dff2ff');
   if(mrIce.phase===2 && mrIce.t<6){ for(var sI=0;sI<6;sI++){ var a=(sI/6)*3.14159+0.15, d=4+mrIce.t*3; IR(Math.round(x+Math.cos(a)*d), Math.round(by-2-Math.abs(Math.sin(a))*d*0.5),2,2,'#dff2ff'); } }
 }
-function drawIceCubes(){ function IR(a,b,c,d,e){ ctx.fillStyle=e; ctx.fillRect(Math.round(a),Math.round(b),Math.round(c),Math.round(d)); }
+function drawIceCubes(){ function IR(a,b,c,d,e){ ctx.fillStyle=e; FR(a,b,c,d); }
   for(var i=0;i<iceCubes.length;i++){ var bb=iceCubes[i], x=Math.round(bb.x), y=Math.round(bb.y)-7, ph=Math.floor(bb.spin)%4;
     IR(x-6,y-4,12,12,'#8fd0ff'); IR(x-6,y-4,12,2,'#dff2ff'); IR(x-6,y+6,12,2,'#4f92c8'); IR(x-6,y-4,2,12,'#bfe9ff'); IR(x+4,y-4,2,12,'#4f92c8');
     var o=(ph<2?0:1), o2=(ph%2?1:0); IR(x-2+o,y-3,1,10,'rgba(255,255,255,0.5)'); IR(x+1-o2,y-3,1,10,'rgba(79,146,200,0.6)'); IR(x-4+o,y-2,3,3,'#eaf7ff');
@@ -7388,7 +7427,7 @@ function loadBoard(ix){
   var bot=spawnPick(ns), fl=mobileNodes(ns);
   S.p.c=bot[0]; S.p.r=bot[1]; S.p.d=null; S.p.prog=0; S.p.want=null;
   S.gs=[]; for(var g=0;g<4;g++){ var hn=fl[Math.floor(fl.length*(g+1)/6)]||ns[Math.floor(ns.length*(g+1)/6)];
-    S.gs.push({c:hn[0],r:hn[1],hc:hn[0],hr:hn[1],d:null,prog:0,type:GTYPE[g],pers:PERS[g],dead:0}); }
+    S.gs.push({c:hn[0],r:hn[1],hc:hn[0],hr:hn[1],d:null,prog:0,type:GTYPE[g],pers:PERS[g],dead:0,hdir:1}); }   // v252: hdir from birth
   S.power=0; S.ready=1.4;
 }
 function reg(){
@@ -7433,6 +7472,7 @@ function tickEnt(e,spd,isP){
     arrive(e,isP);
     if(isP){ e.d=(e.want&&canGo(e.c,e.r,e.want))?e.want:(canGo(e.c,e.r,e.d)?e.d:null); }
     else { e.d=pickGhost(e); } }
+  if(!isP&&(e.d==='L'||e.d==='R'))e.hdir=(e.d==='L')?-1:1;   // v252: a ghost faces its travel (MR. SPUD's lean and pupils read hdir)
 }
 registerStyle('pacman',{
   name:'MUNCH MAZE',
