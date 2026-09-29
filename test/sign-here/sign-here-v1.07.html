@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!-- ==================== PORTAL ADAPTER FENCE : BEGIN ====================
+     Per-title metadata and platform SDK hooks live inside this fence ONLY.
+     Portal SDK script tags (Poki, CrazyGames, Telegram, Discord) are added
+     here and wired through the PORTAL object in the script below. Nothing
+     outside the fences may depend on a portal being present.                -->
+<meta property="og:title" content="SIGN HERE : a SNAIL DAILY game">
+<meta property="og:description" content="One man. One Sharpie. One million $500 checks. October is coming.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SIGN HERE : a SNAIL DAILY game">
+<meta name="twitter:description" content="One man. One Sharpie. One million $500 checks. October is coming.">
+<!-- ==================== PORTAL ADAPTER FENCE : END   ==================== -->
+<title>SIGN HERE v1.07 : SNAIL DAILY</title>
+<style>
+html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden;}
+body{display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#04060c;touch-action:none;}
+#fs{position:fixed;top:calc(6px + env(safe-area-inset-top));right:calc(6px + env(safe-area-inset-right));
+    z-index:9;border:1px solid #2a4a6a;background:#0a1a2ccc;color:#9ecbff;
+    padding:7px 9px;font:bold 11px monospace;border-radius:4px;user-select:none;cursor:pointer;}
+/* results panel: DOM because share and clipboard want a real click and a name wants a real keyboard */
+#ui{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    z-index:8;display:none;width:min(92vw,360px);box-sizing:border-box;padding:10px;
+    background:#111a2aee;border:2px solid #3a5a8a;border-radius:8px;font:bold 12px monospace;color:#dfe8ff;
+    touch-action:pan-y;}
+#ui .row{display:flex;gap:6px;margin-top:6px;}
+#ui input{flex:1;min-width:0;box-sizing:border-box;padding:9px 8px;font:bold 13px monospace;color:#fff;
+    background:#0a1220;border:1px solid #3a5a8a;border-radius:4px;text-transform:uppercase;}
+#ui button{flex:1;padding:10px 4px;font:bold 12px monospace;border-radius:4px;border:1px solid #3a5a8a;
+    background:#1c2f4d;color:#dfe8ff;cursor:pointer;}
+#ui button.go{background:#2f7d3a;border-color:#57ff7a;color:#fff;}
+#ui .tiny{font-size:10px;color:#8fa3c4;margin-top:6px;text-align:center;}
+</style>
+</head>
+<body>
+<canvas id="cv" width="640" height="880"></canvas>
+<div id="fs">FULLSCREEN</div>
+<div id="ui">
+  <div class="row"><input id="nm" maxlength="12" placeholder="YOUR NAME" autocomplete="off"><button id="bSave">SAVE</button></div>
+  <div class="row"><button id="bShare">SHARE</button><button id="bAgain" class="go">AGAIN</button></div>
+  <div class="tiny">same run for everyone today. share the number.</div>
+</div>
+<script>
+/* =============================================================================
+   SIGN HERE v1.07 | SNAIL DAILY #1 | Snail Attack Studios | 2026-09-29 | var BUILD=8
+   -----------------------------------------------------------------------------
+   A daily news parody game. The White House announced $500 "Working Families
+   Obamacare Refunds" for nearly one million people, checks mailed from
+   October. Here, one man signs them by hand on a conveyor while everything he
+   is famous for getting distracted by gets in the way.
+   -----------------------------------------------------------------------------
+   CHANGELOG (embedded; append-only; one entry per build, written for a future
+   developer):
+   v1.00 (2026-09-15) FIRST LIGHT. Copied from studio-seed-v1.04 per doctrine
+        07 (error reporter first, 640x880 logical grid per doc 11, device-sized
+        backing store, closed-loop fit, fullscreen, audio behind a gesture,
+        catch-up ceiling, fold survival, portal fence, SNAILNET slot, HOOK).
+        Seed section 3 (stick and button) replaced by the two-verb pointer
+        model: TAP signs, SWIPE shakes off a distraction; setInput(l,r,u,d,a)
+        kept as the harness shim (rising edges become taps and swipes).
+        Seed section 5 (marker demo) replaced by the game: a right-to-left
+        conveyor of checks, a fixed SIGN ZONE with PERFECT/GOOD/SLOPPY timing
+        windows, decoy checks ($2,000 tariff, $5,000 dividend) that must not
+        be signed, five distractions (diet cola, cable news, phone post, golf
+        cart, dry Sharpie) each cleared by one swipe direction, five strikes
+        or the 60 second OCTOBER clock ends the run. Date-seeded RNG so every
+        player gets the same run on the same day. Local leaderboard and a
+        share card (Web Share, clipboard fallback). ONE PRIMARY ECONOMY: the
+        signed count; every other number is flavor. Gates: seed chain kept
+        verbatim where the contract is the seed's (frameStep, computeScale,
+        backing store, save expiry); the smoke sections of frametest and
+        resumetest adapted to this title's verbs; signtest added (spawn
+        determinism, timing windows, decoy strike, distraction block, swipe
+        direction, both end conditions, share text).
+   v1.01 (2026-09-15) TUTORIAL PAUSE AND TOGGLE (Director's device notes).
+        Tutorial messages now FREEZE the run: a card over the pad, the belt,
+        clock, spawns, distraction timers and floats all hold until a tap
+        dismisses it (a 0.3s guard so the tap that was in flight cannot). Four
+        beats, each once per run: ZONE (first check enters the zone), DECOY
+        (first yellow or pink check on screen), DISTRACTED (first card), FLOOR
+        (first check missed). The title screen carries a TUTORIAL MESSAGES
+        ON/OFF toggle (tap the pill, or T on desktop), remembered in
+        localStorage under signhere-tut, default ON. With it OFF the v1.00
+        3.2s decoy strip remains as the 07 first-appearance announcement.
+        Tap events now carry logical coordinates (ev.tx, ev.ty) so the title
+        can tell the pill from the start tap; the harness shim taps center.
+        tuttest added (9 checks); the chain is 9 gates.
+   v1.02 (2026-09-15) DISTRACTIONS IN THE SCENE, THE WORLD HOLDS (Director's
+        device notes: pop ups arrived while the belt kept moving, and swiping
+        against a moving belt under a full-scene card was awkward). The
+        overlay card is gone. A distraction is now the ITEM in the scene (the
+        can at his elbow, the lit TV, the raised phone, the cart in the
+        window, the grey Sharpie) with a small name tag and a pulsing arrow
+        beside it, and the instruction on the pad. While it is up the belt,
+        spawns and checks HOLD; the OCTOBER clock keeps running as the cost
+        (DIS_CLOCK_RUNS, one flag) and the wasted seconds float on the clear.
+        Clear by the swipe in the arrow's direction OR a tap on the item's
+        box. Taps elsewhere are silent while he is busy (they are usually
+        the start of a swipe). SWIPE_MIN 40 to 32. The DISTRACTED tutorial
+        beat no longer gates on a tap (the world already holds); the first
+        distraction carries an extra line on the pad instead. Gates: tuttest
+        section 4 and signtest section 6 rewritten to the hold contract.
+   v1.03 (2026-09-15) THE HOLD LAW AND BELT-BORNE DISTRACTIONS (Director's
+        review: a tutorial paused and then the run ended; the room made the
+        player look everywhere; the TV and the cart read as background).
+        ONE predicate, held(): STATE play and (a tutorial card or a grab). While
+        held, nothing in the sim moves and nothing ends: no clock, belt,
+        spawns, timers, strikes, RNG; endRun refuses with an ERR line if ever
+        called while held (a bug would now be photographable, not silent). The
+        v1.02 busy-clock is gone: no cost is ever charged DURING a hold.
+        Distractions now ride the conveyor like checks: DIET COLA, TRUTH SHOUT
+        (the phone), THE REMOTE, GOLF BALL, THE BURGER, drawn with a pulsing
+        outline and a badge so they read as things, not background. TAP the
+        item or SWIPE (any direction) to flick it off the belt before it reaches
+        his hand: no cost. If it reaches his hand he grabs it: the world holds,
+        the scene dims, he and the item are lit, a big arrow points up; SWIPE
+        or tap it to knock it away; the clear charges GRAB_PENALTY (3s of
+        October) in the open. The room is static now (TV off, lawn, portrait);
+        the desk phone, the dry Sharpie beat and the golf cart are retired.
+        Tutorial beats: ZONE, ITEM (first item on the belt), DECOY, FLOOR; the
+        first grab carries a help line on the pad. holdtest added: the hold
+        invariant (state hash constant over 120 frames of chaos) for both hold
+        kinds, endRun refused while held, the clock cannot end a held run.
+   v1.04 (2026-09-18) DRAMA (Director's notes). Distractions leave the belt
+        and come back as three THINGS AT HIS DESK, each with an onset that
+        cannot be missed (white flash, scene shake, a banner across the room,
+        a klaxon, his eyes snap to it) and its own counter: a DIET COLA
+        vending machine at his elbow drops a can into its tray (SWIPE THE CAN
+        AWAY: a swipe that starts on the can); his phone on the desk lights up
+        with a giant TRUTH SHOUT alert and a red DISMISS button above it
+        (SWIPE DOWN through the button from above); the TV on the wall blares
+        FAUX NEWS with a flashing screen that lights the room (TAP THE TV).
+        Each has a REACH window (1.7s to 1.1s on the ramp) during which the
+        pen still works and his other arm stretches toward the thing; if his
+        hand closes on it he SWIGS, TYPES, or WATCHES for a beat while the
+        belt keeps moving and checks pass him by unsigned (the Director's
+        design: the cost is a check). The counter also cuts a vice short. The
+        can is dropped to the floor and disappears afterwards.
+        The signature now reads DJT: three marker strokes and the spiky
+        underline, bigger and cleaner the better the timing.
+        Tutorial cards release into a RAMP: the belt eases in over 1s, no
+        distraction can start during it, and GO is called, so the check that
+        was sitting in the zone when the card opened is still signable after.
+        Hold law unchanged: held() is a tutorial card; a first DISTRACTION
+        beat explains the counters under the hold. HUD number pulses on a
+        sign, PERFECT flashes and nudges the room. Belt items, grabs, the
+        remote, the golf ball and the burger are retired.
+   v1.05 (2026-09-24) POLISH (fresh-eyes review, 450 simulated runs, a four
+        viewport screenshot sweep). GESTURE LAW: a pointerdown that lands on
+        an active distraction is aimed at it and never signs (v1.04 signed or
+        scribbled at the start of every swipe, which is where good players'
+        decoy strikes came from). ONE CHECK LAW: a lost distraction costs
+        exactly one check: the vice lasts until the check he was due to sign
+        has passed the zone (at least BUSY_MIN, at most BUSY_MAX), then he is
+        back for the next one; the lost check greys out with MISSED. DAILY
+        LAW: checks and distractions draw from separate seeded streams and
+        decoys are decided by check index, so the check sequence is the same
+        for everyone. The spawner is spatial (exact spacing whatever the belt
+        speed, no bunching after a ramp), jitter is the intended 22%, and the
+        first check is already on the belt at the start. System PAUSE cards
+        (not tutorial) on leaving the page or window and on a fold resume.
+        One tutorial beat per distraction type, each naming its own counter;
+        cosmetic flash, shake and banner fade under a hold so a card never
+        whites out the thing it explains. TYPE PASS: the whole HUD, pad,
+        cards, labels, title and results re-laid at phone-legible sizes
+        (nothing under 13 logical px on play surfaces). The onset banner moved
+        to the desk front, off every distraction; the phone alert, reach bar
+        and DISMISS button re-stacked so nothing overlaps; the typing phone
+        and the swig can draw in front of the desk. Decoys carry an IOU badge
+        and louder paper; the zone turns red with LET IT PASS when a decoy is
+        in it. FLASH LAW: nothing strobes faster than 2 flashes a second, the
+        TV's room light is halved, PERFECT glows the zone instead of flashing
+        the scene. Wrong gestures say what the right one is. Four line share
+        card. stamptest joins the chain (the pair's stamps must agree).
+   v1.06 (2026-09-28) OWN KEY. The fold snapshot moves from the seed's
+        shared 'seed-resume' key to 'sign-here-resume' (seed v1.06: every
+        title names its key from its slug). The snailcade site is one
+        origin, so another seed title's snapshot (also v:1, st:'play')
+        would have loaded here as this run; a snapshot under the old key
+        is now never read. Nothing else in the game changes. Gates
+        (tooling, 2026-09-28): six pass labels made true to their asserts
+        (doc 03 law 3); resumetest proves a snapshot under the shared key
+        is refused; redproof.js proves every gate red on its own assert.
+   v1.07 (2026-09-29) SIX STRIKES. The Director's ruling: STRIKES_MAX 5
+        to 6, chosen from the doc 14 bot suite (bots/BOTS-MEMO-v1.01
+        section 5): 6 is the highest limit at which the distractions still
+        matter (a perfect signer who never answers one reaches October 1%
+        of the time at 6, 14% at 7, always at 8). Same 200 seeds, v1.06
+        then v1.07: average bot reaches October 69% then 81%; novice signs
+        28 then 32 and lasts 38.2 then 42.4 s, still 0% to October; skilled
+        99% then 100%. The FLOOR card, the how-to line and the end reason
+        (SIX CHECKS ON THE FLOOR) follow; the HUD draws six strike boxes.
+        Nothing else changes. Gates (tooling): signtest section 4 reads the
+        limit from K.STRIKES_MAX in its label; redproof's anchor follows.
+   ============================================================================= */
+(function(){
+'use strict';
+var BUILD=8;                              // integer line for the hook; VER is the stamp of record
+var VER='1.07';                           // Director's law: v + x.yz in notes and filename
+
+/* ---- 1. ERROR REPORTER (always first; doctrine 07). Crashes become
+        photographable: the ERR line draws LAST, above everything. ---- */
+var lastError=null, ERRMSG='';
+function reportErr(site,e){ lastError=String(site)+': '+(e&&e.message?e.message:String(e)); ERRMSG='ERR: '+lastError; }
+
+/* ---- 2. SHELL: canvas, integer scaler, fullscreen (seed v1.04, verbatim) ---- */
+var W=640,H=880;                              // RESOLUTION LAW (doc 11 s3): 16/32-bit class grid
+var cv=(typeof document!=='undefined')?document.getElementById('cv'):null;
+var ctx=(cv&&cv.getContext)?cv.getContext('2d'):null;
+var DPR=1;
+function applyBacking(){
+  var d=(typeof window!=='undefined'&&window.devicePixelRatio)?window.devicePixelRatio:1;
+  DPR=Math.max(1,Math.min(3,d));
+  if(cv){ cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); }
+  if(ctx){ if(ctx.setTransform)ctx.setTransform(DPR,0,0,DPR,0,0);
+           ctx.imageSmoothingEnabled=false; }
+}
+applyBacking();
+function viewSize(){
+  var vw=window.innerWidth, vh=window.innerHeight;
+  try{ if(window.visualViewport){
+    vw=Math.min(vw,window.visualViewport.width);
+    vh=Math.min(vh,window.visualViewport.height); }
+  }catch(e){}
+  try{ if(document.body&&document.body.clientWidth){
+    vw=Math.min(vw,document.body.clientWidth);
+    if(document.body.clientHeight)vh=Math.min(vh,document.body.clientHeight); }
+  }catch(e){}
+  return {w:vw,h:vh};
+}
+function computeScale(vw,vh){
+  var s=Math.min(vw/W,vh/H);
+  if(s>=2)s=Math.floor(s); if(s<0.25)s=0.25;
+  return s;
+}
+function fitScale(){
+  if(!cv||!cv.style||typeof window==='undefined')return;
+  var v=viewSize(), s=computeScale(v.w,v.h);
+  for(var i=0;i<8;i++){
+    cv.style.width=Math.floor(W*s)+'px';
+    cv.style.height=Math.floor(H*s)+'px';
+    var r=cv.getBoundingClientRect?cv.getBoundingClientRect():null;
+    if(!r||!r.width||r.bottom===undefined)break;
+    var vw=window.innerWidth, vh=window.innerHeight;
+    try{ if(window.visualViewport){ vw=Math.min(vw,window.visualViewport.width);
+         vh=Math.min(vh,window.visualViewport.height); } }catch(e){}
+    if(r.bottom<=vh+0.5&&r.right<=vw+0.5)break;
+    if(s<=0.25)break;
+    s=(s>2)?(s-1):(s*0.9); if(s<0.25)s=0.25;
+  }
+  applyBacking();
+  placeUI();
+}
+function placeUI(){                            // the results panel hugs the canvas bottom, not the viewport's
+  try{ if(!UI||!UI.style||!cv||!cv.getBoundingClientRect)return; var r=cv.getBoundingClientRect();
+    var gap=window.innerHeight-r.bottom; UI.style.bottom=Math.max(10,Math.round(gap)+10)+'px'; }catch(e){}
+}
+function settleFit(){
+  fitScale();
+  setTimeout(fitScale,150); setTimeout(fitScale,450); setTimeout(fitScale,1000);
+}
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('resize',fitScale);
+  window.addEventListener('orientationchange',function(){ settleFit(); });
+  window.addEventListener('pageshow',function(){ settleFit(); });
+  try{ if(window.visualViewport&&window.visualViewport.addEventListener)
+    window.visualViewport.addEventListener('resize',fitScale); }catch(e){}
+}
+if(typeof document!=='undefined'&&document.addEventListener)
+  document.addEventListener('fullscreenchange',function(){ settleFit(); });
+settleFit();
+var fsBtn=(typeof document!=='undefined')?document.getElementById('fs'):null;
+if(fsBtn&&fsBtn.addEventListener)fsBtn.addEventListener('click',function(){
+  try{ var el=document.documentElement;
+    if(document.fullscreenElement){ if(document.exitFullscreen)document.exitFullscreen(); }
+    else if(el.requestFullscreen)el.requestFullscreen();
+  }catch(e){}
+  settleFit();
+});
+
+/* ---- 3. INPUT: two verbs. TAP (pointer down, Space, Z, Enter) signs.
+        SWIPE (drag past SWIPE_MIN, or an arrow key) shakes off a distraction.
+        setInput(l,r,u,d,a) is the harness shim: rising edges become the same
+        two events. touch-action none lives on the CANVAS only (07). ---- */
+var SWIPE_MIN=32;                                    // logical px of drag before a gesture is a swipe (v1.02: 40 to 32, easier on a thumb)
+var inp={l:false,r:false,u:false,d:false,a:false};   // held state (edge detection + gate compatibility)
+var ev={tap:false,swipe:null,tx:W/2,ty:H/2,sx:-1,sy:-1};   // one-frame events consumed by update(); tx,ty = the tap; sx,sy = where a swipe STARTED (-1: keyboard)
+function setInput(l,r,u,d,a){
+  if(a&&!inp.a){ ev.tap=true; ev.tx=W/2; ev.ty=H/2; }   // shim taps land center (never on the title pill)
+  if(l&&!inp.l)ev.swipe='l'; else if(r&&!inp.r)ev.swipe='r';
+  else if(u&&!inp.u)ev.swipe='u'; else if(d&&!inp.d)ev.swipe='d';
+  if(ev.swipe&&(l&&!inp.l||r&&!inp.r||u&&!inp.u||d&&!inp.d)){ ev.sx=-1; ev.sy=-1; }   // keyboard: no start point
+  inp.l=!!l; inp.r=!!r; inp.u=!!u; inp.d=!!d; inp.a=!!a;
+}
+function keyIn(e,on){
+  try{ if(e.target&&e.target.tagName==='INPUT')return; }catch(x){}   // the name box owns its keys
+  var k=e.key, n={l:inp.l,r:inp.r,u:inp.u,d:inp.d,a:inp.a};
+  if(k==='ArrowLeft')n.l=on; else if(k==='ArrowRight')n.r=on;
+  else if(k==='ArrowUp')n.u=on; else if(k==='ArrowDown')n.d=on;
+  else if(k===' '||k==='z'||k==='Z'||k==='Enter'){n.a=on; if(on)firstGesture();}
+  else if(k==='t'||k==='T'){ if(on&&STATE==='title'){ tutSet(!tutOn()); SFX.clear(); } if(e.preventDefault)e.preventDefault(); return; }   // v1.01 desktop toggle
+  else return;
+  setInput(n.l,n.r,n.u,n.d,n.a);
+  if(e.preventDefault)e.preventDefault();
+}
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('keydown',function(e){ keyIn(e,true); });
+  window.addEventListener('keyup',function(e){ keyIn(e,false); });
+}
+var ptr={on:false,x:0,y:0,swiped:false};
+function ptrXY(cx,cy){ var r=cv.getBoundingClientRect(), sx=W/r.width, sy=H/r.height;
+  return {x:(cx-r.left)*sx, y:(cy-r.top)*sy}; }
+function ptrDown(cx,cy){ firstGesture(); var p=ptrXY(cx,cy); ptr.on=true; ptr.x=p.x; ptr.y=p.y; ptr.swiped=false; ev.tap=true; ev.tx=p.x; ev.ty=p.y; }
+function ptrMove(cx,cy){
+  if(!ptr.on||ptr.swiped)return;
+  var p=ptrXY(cx,cy), dx=p.x-ptr.x, dy=p.y-ptr.y;
+  if(Math.abs(dx)<SWIPE_MIN&&Math.abs(dy)<SWIPE_MIN)return;
+  ptr.swiped=true;
+  ev.swipe=(Math.abs(dx)>Math.abs(dy))?(dx<0?'l':'r'):(dy<0?'u':'d'); ev.sx=ptr.x; ev.sy=ptr.y;
+}
+function ptrUp(){ ptr.on=false; }
+if(cv&&cv.addEventListener){
+  if(typeof window!=='undefined'&&'onpointerdown' in window){
+    cv.addEventListener('pointerdown',function(e){ ptrDown(e.clientX,e.clientY); if(e.preventDefault)e.preventDefault(); });
+    cv.addEventListener('pointermove',function(e){ ptrMove(e.clientX,e.clientY); });
+    cv.addEventListener('pointerup',ptrUp); cv.addEventListener('pointercancel',ptrUp);
+  }else{
+    cv.addEventListener('touchstart',function(e){ var t=e.touches[0]; if(t)ptrDown(t.clientX,t.clientY); if(e.preventDefault)e.preventDefault(); },{passive:false});
+    cv.addEventListener('touchmove',function(e){ var t=e.touches[0]; if(t)ptrMove(t.clientX,t.clientY); if(e.preventDefault)e.preventDefault(); },{passive:false});
+    cv.addEventListener('touchend',ptrUp,{passive:false});
+    cv.addEventListener('mousedown',function(e){ ptrDown(e.clientX,e.clientY); });
+    cv.addEventListener('mousemove',function(e){ ptrMove(e.clientX,e.clientY); });
+    cv.addEventListener('mouseup',ptrUp);
+  }
+}
+
+/* ---- 4. AUDIO behind a first gesture; degrades silently (07) ---- */
+var AC=null;
+function firstGesture(){
+  try{
+    if(!AC){ var C=(typeof AudioContext!=='undefined')?AudioContext:
+                   (typeof webkitAudioContext!=='undefined'?webkitAudioContext:null);
+             if(C)AC=new C(); }
+    if(AC&&AC.state==='suspended'&&AC.resume)AC.resume();
+  }catch(e){}
+}
+function tone(f1,f2,dur,type,vol){          // a short glide; every cue in the game is one of these
+  if(!AC)return;
+  try{ var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;
+    o.type=type||'square'; o.frequency.setValueAtTime(f1||440,t);
+    if(f2&&o.frequency.linearRampToValueAtTime)o.frequency.linearRampToValueAtTime(f2,t+(dur||0.08));
+    g.gain.setValueAtTime(vol||0.07,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+(dur||0.08));
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+(dur||0.08)+0.02);
+  }catch(e){}
+}
+var SFX={
+  start:function(){ tone(440,880,0.12); },
+  sign:function(){ tone(700,1000,0.07,'square'); },
+  perfect:function(){ tone(880,1320,0.09,'square'); tone(1320,1760,0.12,'triangle',0.05); },
+  sloppy:function(){ tone(520,380,0.1,'square'); },
+  miss:function(){ tone(220,110,0.18,'sawtooth',0.06); },
+  decoy:function(){ tone(160,90,0.25,'sawtooth',0.07); },
+  buzz:function(){ tone(300,300,0.06,'square',0.05); },
+  alarm:function(){ tone(980,320,0.32,'sawtooth',0.07); tone(620,620,0.12,'square',0.05); },
+  clear:function(){ tone(520,900,0.1,'triangle'); },
+  over:function(){ tone(660,330,0.35,'square',0.06); }
+};
+
+/* ---- 5. GAME STATE ---- */
+/* Difficulty topology (07: every constant named and intent-commented so a
+   single knob tunes a feel). The run is one minute; every curve is linear
+   in p = elapsed / RUN_SECONDS.                                              */
+var RUN_SECONDS=60;                 // the OCTOBER clock; a daily game is one minute long
+var STRIKES_MAX=6;                  // unsigned real checks allowed on the floor (or decoys signed); 5 until v1.07
+var BELT_V0=150, BELT_V1=420;       // belt px/s at p=0 and p=1
+var SPACING=236;                    // px between check spawns (constant rhythm as the belt speeds up)
+var SPACING_JIT=0.22;               // fractional jitter on spacing (0.22 = 0.78x to 1.22x; v1.05: was 0.45, which let checks touch)
+var FIRST_X=380;                    // v1.05: the first check starts ON the belt (arrives in ~1.5s, no dead air)
+var DIS_GAP0=7.0, DIS_GAP1=3.6;     // seconds between distractions at p=0 and p=1 (v1.04: a failed one costs a check, so a little wider)
+var DIS_FIRST=7.5;                  // seconds before the first distraction (the first check lands at ~4.3s; sign two first)
+var DECOY_P0=0.12, DECOY_P1=0.30;   // probability a spawned check is a decoy, ramping by CHECK INDEX (v1.05, the daily law)
+var DECOY_FROM=6, DECOY_RAMP_N=70;  // no decoy among the first 6 checks; full rate by check 70 (about the end of the minute)
+var ZONE_X=214, ZONE_HALF=64;       // SIGN ZONE center and half width (belt x)
+var PERFECT=16, GOOD=38;            // |dx| from center: PERFECT, GOOD, else SLOPPY
+var CHECK_W=128, CHECK_H=60;        // paper size
+var BELT_Y=470, BELT_H=62;          // conveyor strip on the desk
+var HAND_BASE_Y=386, HAND_DROP=34;  // hand rest height and the tap drop
+var REACH0=2.0, REACH1=1.3;         // seconds from a distraction's onset to his hand closing on it, p=0 to p=1 (v1.05: was 1.7 to 1.1; the bots lost 1.6 a run at average skill, now 0.6)
+var BUSY_MIN=0.9, BUSY_MAX=2.6;     // v1.05 ONE CHECK LAW: the vice lasts until the check he was due to sign has passed (at least BUSY_MIN so the gag reads, never past BUSY_MAX)
+var RAMP_T=1.0;                     // seconds of belt ease-in after a tutorial card releases (the thumb needs to come back)
+var FLASH_T=0.18, SHAKE_T=0.35;     // onset drama: white flash and scene shake
+var FLASH_MAX=0.5;                  // v1.05 FLASH LAW: peak alpha of the onset flash (was 0.75)
+function blinkOn(t){ return (Math.floor(t*4)%2)===0; }   // v1.05 FLASH LAW: 4 toggles a second = 2 flashes a second, under the 3 a second guideline
+var BANNER_T=1.5;                   // seconds the onset banner crosses the room
+
+var DAY_ONE=Date.UTC(2026,8,15);    // SNAIL DAILY #1 is 2026-09-15 (month index 8)
+function todayUTC(){ var d=new Date(); return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()); }
+function dayNumber(){ return Math.max(1,Math.floor((todayUTC()-DAY_ONE)/86400000)+1); }
+function dayLabel(){ var d=new Date(todayUTC()); var M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  return M[d.getUTCMonth()]+' '+d.getUTCDate(); }
+function rngMake(seed){ return {a:(seed>>>0), next:function(){ this.a=(this.a+0x6D2B79F5)>>>0; var t=this.a;
+  t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }}; }
+function daySeed(n){ return (Math.imul(n,2654435761)^0x5EED)>>>0; }
+
+var DIS={                            // v1.04: three THINGS AT HIS DESK; v1.05: generous hit boxes and a RESERVE region a pointerdown there never signs
+ cola: {name:'DIET COLA',  banner:'DIET COLA!',     label:'SWIPE THE CAN AWAY',    busyName:'SWIGGING',  busyLine:'He is taking a swig.',          tag:'C',
+        obj:{x:466,y:322,w:96,h:120}, can:{x:486,y:386,w:48,h:60}, hit:{x:430,y:300,w:176,h:170}, busyHit:{x:296,y:300,w:132,h:136}, eye:'lookR', snap:'Swipe the can at his mouth to snap him out.'},
+ phone:{name:'TRUTH SHOUT',banner:'TRUTH SHOUT!',   label:'SWIPE DOWN ON DISMISS', busyName:'TYPING',    busyLine:'He is typing in all caps.',     tag:'P',
+        obj:{x:50,y:392,w:64,h:48},   btn:{x:16,y:318,w:132,h:56}, hit:{x:0,y:220,w:190,h:230},   eye:'look', snap:'Swipe down on DISMISS to snap him out.'},
+ tv:   {name:'FAUX NEWS',  banner:'BREAKING NEWS!', label:'TAP THE TV',            busyName:'WATCHING',  busyLine:'He cannot look away.',          tag:'T',
+        obj:{x:40,y:150,w:150,h:110}, hit:{x:20,y:130,w:190,h:180}, eye:'look', snap:'Tap the TV to snap him out.'}
+};
+var DIS_ORDER=['cola','phone','tv'];
+
+var STATE='title';
+var player={x:ZONE_X-36,y:HAND_BASE_Y,pulse:0,vx:0,vy:0};   // the HAND (the hook's player accessor)
+var G=null;                                                  // the run
+function newRun(){
+  var n=dayNumber();
+  return {day:n,seed:daySeed(n),rng:rngMake(daySeed(n)),rngD:rngMake(daySeed(n)^0xD15C0),elapsed:0,tleft:RUN_SECONDS,   // v1.05: two streams, checks and distractions
+    signed:0,perfects:0,missed:0,decoys:0,strikes:0,combo:0,bestCombo:0,
+    checks:[],nextGap:0,belt:0,beltOff:0,spawned:0,zoneFlash:0,
+    dis:null,disTimer:DIS_FIRST,disTime:0,lastDis:-1,saved:0,lost:0,debris:[],ramp:0,flash:0,banner:'',bannerT:0,hudPulse:0,shake:0,log:[],
+    face:'idle',faceT:0,call:'',callT:0,callCol:'#fff',reason:'',seenDecoy:false,hintT:0,
+    floats:[],fx:rngMake(99),overT:0,toast:'',toastT:0,tut:null,tutSeen:{}};
+}
+function resetGame(){ STATE='title'; G=newRun(); player.x=ZONE_X-36; player.y=HAND_BASE_Y; player.pulse=0;
+  ev.tap=false; ev.swipe=null; ERRMSG=''; lastError=null; uiShow(false); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function prog(){ return Math.max(0,Math.min(1,G.elapsed/RUN_SECONDS)); }
+function beltSpeed(){ return lerp(BELT_V0,BELT_V1,prog()); }
+function addFloat(t,x,y,col,size){ G.floats.push({t:t,x:x,y:y,col:col||'#fff',size:size||18,life:1}); if(G.floats.length>12)G.floats.shift(); }
+function callout(t,col){ G.call=t; G.callT=0.9; G.callCol=col||'#fff'; }
+function setFace(f,t){ G.face=f; G.faceT=t||0.5; }
+function logEv(c){ G.log.push(c); if(G.log.length>200)G.log.shift(); }
+function fmt(n){ var s=String(Math.floor(n)); var o=''; while(s.length>3){ o=','+s.slice(-3)+o; s=s.slice(0,-3); } return s+o; }
+/* v1.01 TUTORIAL: four beats, once per run, each a card that FREEZES the sim until a tap.
+   Toggle lives on the title (TOG pill) and in localStorage; default ON. */
+var TUT_KEY='signhere-tut';
+var TOG={x:140,y:642,w:360,h:44};                    // the title pill (logical rect)
+var TUT_GUARD=0.3;                                    // seconds before a tap may dismiss (the tap in flight cannot)
+function tutOn(){ var v=lsGet(TUT_KEY); return (v===null)?true:(v==='1'); }
+function tutSet(on){ lsSet(TUT_KEY,on?'1':'0'); }
+var TUT={                            // v1.05: one beat per distraction type, each names its own counter; PAUSED and RESUME are system cards
+  zone:{title:'A CHECK IS IN THE ZONE',lines:['TAP anywhere to sign it while it is green.','Dead center = a big beautiful signature.']},
+  dis_cola:{title:'DIET COLA INCOMING',lines:['The machine dropped a can. He is reaching.','SWIPE THE CAN AWAY before he gets there.','Miss it and one check slides past him.']},
+  dis_phone:{title:'TRUTH SHOUT ALERT',lines:['His phone lit up. He is reaching for it.','SWIPE DOWN through the red DISMISS button.','Miss it and one check slides past him.']},
+  dis_tv:{title:'BREAKING NEWS',lines:['The TV came on. He cannot look away.','TAP THE TV to switch it off.','Miss it and one check slides past him.']},
+  decoy:{title:'THAT IS NOT TODAY\'S CHECK',lines:['Yellow $2,000 and pink $5,000 are IOUs.','Let them ride past. Signing one is a strike.']},
+  floor:{title:'ONE ON THE FLOOR',lines:['An unsigned $500 check fell off the desk.','That is a strike. Six strikes ends the run.']},
+  paused:{title:'PAUSED',lines:['The checks will wait. October will too.']},
+  resume:{title:'WELCOME BACK',lines:['Your run was saved where you left it.']}
+};
+function sysPause(id){ if(STATE==='play'&&G&&!G.tut){ G.tut={id:id||'paused',t:0,sys:true}; return true; } return false; }   // v1.05: not a tutorial; shows with tutorials off
+function tutShow(id){ if(G.tutSeen[id])return false; G.tutSeen[id]=1; if(!tutOn())return false; G.tut={id:id,t:0}; tone(520,780,0.12,'triangle',0.05); return true; }
+function inRect(x,y,r){ return x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h; }
+
+function spawnCheck(x){                               // v1.05: placed at x; kind and the gap AFTER it come from the check stream, by index
+  var idx=G.spawned, r=G.rng.next(), kind='real', pr=Math.min(1,idx/DECOY_RAMP_N);
+  if(idx>=DECOY_FROM&&r<lerp(DECOY_P0,DECOY_P1,pr)) kind=(G.rng.next()<0.5)?'tariff':'dividend';
+  var c={x:x,kind:kind,signed:false,q:null,sig:null,id:G.spawned++,lostTo:null}; G.checks.push(c);
+  if(kind!=='real'&&!G.seenDecoy){ G.seenDecoy=true; if(!tutOn())G.hintT=3.2; }   // 07: new content classes announce themselves once
+  G.nextGap=SPACING*(1+(G.rng.next()*2-1)*SPACING_JIT);
+  return c;
+}
+function fillBelt(){                                  // v1.05: SPATIAL spawner: exact spacing whatever the belt speed, ramp or hold
+  var last=null, i; for(i=0;i<G.checks.length;i++)if(!last||G.checks[i].x>last.x)last=G.checks[i];
+  for(i=0;i<6;i++){ var x=last?last.x+G.nextGap:FIRST_X; if(last&&x>W+CHECK_W)break; last=spawnCheck(x); }
+}
+function spawnDis(){
+  var n=DIS_ORDER.length, i=Math.floor(G.rngD.next()*(G.lastDis>=0?n-1:n)); if(G.lastDis>=0&&i>=G.lastDis)i++;   // v1.05: its own stream, one draw, never the same twice in a row (no retry loop)
+  G.lastDis=i; var id=DIS_ORDER[i], d=DIS[id];
+  G.dis={id:id,d:d,t:0,phase:'reach',reach:lerp(REACH0,REACH1,prog()),busyT:0,target:null,gone:false};
+  G.disTimer=lerp(DIS_GAP0,DIS_GAP1,prog());
+  drama(d.banner); setFace(d.eye,99); SFX.alarm(); logEv(d.tag);
+  tutShow('dis_'+id);                                      // v1.05: the first of EACH type explains its own counter, under the hold law
+}
+function drama(text){ G.flash=FLASH_T; G.shake=SHAKE_T; G.banner=text; G.bannerT=BANNER_T; }
+function counterMatches(d,tap,tx,ty,sw,sx,sy){            // did the gesture answer THIS distraction
+  var kb=!!(sw&&sx<0);                                     // a keyboard arrow answers any of them (desktop fallback)
+  if(d.id==='cola') return kb||!!(sw&&(inRect(sx,sy,d.d.hit)||(d.phase==='busy'&&inRect(sx,sy,d.d.busyHit))));   // v1.05: during the swig the can is at his mouth
+  if(d.id==='phone'){ var b=d.d.btn; return kb||!!(sw==='d'&&sx>=b.x-40&&sx<=b.x+b.w+40&&sy>=100&&sy<=450); }   // v1.05: a down swipe anywhere in the phone column, button or phone
+  if(d.id==='tv') return kb||!!(tap&&inRect(tx,ty,d.d.hit));
+  return false;
+}
+function reserveHit(d,x,y){ return inRect(x,y,d.d.hit)||(d.phase==='busy'&&!!d.d.busyHit&&inRect(x,y,d.d.busyHit)); }   // v1.05 GESTURE LAW: a pointerdown here is aimed at the distraction, never a sign
+function counterDis(){                                    // the player did the thing: saved during the reach, or cut the vice short
+  var d=G.dis, early=(d.phase==='reach');
+  if(d.id==='cola')G.debris.push({x:d.d.can.x,y:d.d.can.y,vx:-300,vy:-260,t:0});
+  if(d.target&&!d.target.signed&&d.target.x+CHECK_W/2>=ZONE_X-ZONE_HALF)d.target.lostTo=null;   // snapped out in time: that check is his again
+  G.dis=null; G.face='grump'; G.faceT=0.5; SFX.clear(); logEv(early?'K':'k'); if(G.bannerT>0.18)G.bannerT=0.18;   // v1.05: an answered alarm slides its banner out
+  if(early){ G.saved++; callout('SAVED: '+d.d.name,'#57ff7a'); addFloat('NOT TODAY',d.d.obj.x+d.d.obj.w/2,d.d.obj.y-18,'#57ff7a',22); }
+  else { callout('SNAPPED OUT OF IT','#9ecbff'); }
+}
+function failDis(){                                       // his hand closed on it: the check he was due to sign is lost (ONE CHECK LAW)
+  var d=G.dis, best=null; d.phase='busy'; d.busyT=0; G.lost++; SFX.decoy(); drama(d.d.busyName+'!');
+  for(var i=0;i<G.checks.length;i++){ var c=G.checks[i]; if(c.signed||c.kind!=='real')continue;
+    if(c.x+CHECK_W/2>=ZONE_X-ZONE_HALF&&(!best||c.x<best.x))best=c; }
+  d.target=best; if(best)best.lostTo=d.id;
+  setFace(d.id==='cola'?'swig':(d.id==='tv'?'look':'type'),99);
+}
+function busyStep(dt){
+  var d=G.dis, t=d.target; d.busyT+=dt; G.disTime+=dt; player.y=HAND_BASE_Y-70+Math.sin(d.busyT*9)*4;
+  var gone=!t||t.signed||G.checks.indexOf(t)<0||(t.x+CHECK_W/2<ZONE_X-ZONE_HALF);
+  if(gone&&!d.gone){ d.gone=true; if(t&&!t.signed)addFloat('HE MISSED IT',ZONE_X-40,BELT_Y-16,'#ff7b7b',18); }
+  var nextIn=false; for(var i=0;i<G.checks.length;i++){ var c=G.checks[i];
+    if(c!==t&&!c.signed&&c.kind==='real'&&Math.abs(c.x+CHECK_W/2-ZONE_X)<=ZONE_HALF+10){ nextIn=true; break; } }
+  if((gone&&(d.busyT>=BUSY_MIN||nextIn))||d.busyT>=BUSY_MAX)endBusy();
+}
+function endBusy(){
+  var d=G.dis; if(d.id==='cola')G.debris.push({x:d.d.obj.x-30,y:392,vx:-80,vy:-80,t:0});   // he drops the can beside the desk
+  G.dis=null; G.face='idle'; G.faceT=0; callout('BACK TO WORK','#8fa3c4');
+}
+function fadeCosmetics(dt){                               // v1.05: cosmetic timers run even under a hold (a card never whites out what it explains)
+  if(G.flash>0)G.flash-=dt; if(G.shake>0)G.shake-=dt; if(G.bannerT>0)G.bannerT-=dt; if(G.hudPulse>0)G.hudPulse-=dt; if(G.zoneFlash>0)G.zoneFlash-=dt; if(G.callT>0)G.callT-=dt;
+}
+function held(){ return STATE==='play'&&!!(G&&G.tut); }   // THE HOLD LAW: one predicate; while true nothing in the sim moves and nothing ends
+function makeSig(q){                                  // the signature reads DJT: three marker strokes and the spiky underline, sized by quality
+  var h=(q==='PERFECT')?30:(q==='GOOD'?22:15), j=(q==='PERFECT')?1.5:(q==='GOOD'?3:6), w=h*0.72, x=28, y=CHECK_H*0.26, k, i;
+  function J(){ return (G.fx.next()-0.5)*j; }
+  var D=[[0,0],[0,h],[0,0],[w*0.7,h*0.12],[w*0.95,h*0.5],[w*0.7,h*0.88],[0,h]];
+  var jx=w*1.2, JJ=[[jx,0],[jx+w*0.8,0],[jx+w*0.45,0],[jx+w*0.45,h*0.75],[jx+w*0.25,h],[jx,h*0.8]];
+  var tx=w*2.25, T=[[tx,0],[tx+w*0.9,0],[tx+w*0.45,0],[tx+w*0.45,h]];
+  var n=(q==='SLOPPY')?4:7, U=[]; for(k=0;k<=n;k++)U.push([w*3.25*k/n, h+5+((k%2)?-h*0.4:h*0.15)]);
+  var strokes=[D,JJ,T,U], out=[];
+  for(k=0;k<strokes.length;k++){ var st=[]; for(i=0;i<strokes[k].length;i++)st.push({x:x+strokes[k][i][0]+J(),y:y+strokes[k][i][1]+J()}); out.push(st); }
+  return out;
+}
+function strike(why){
+  G.strikes++; SFX.miss();
+  if(G.strikes>=STRIKES_MAX) endRun(why||'SIX CHECKS ON THE FLOOR');
+}
+function trySign(){
+  var best=null,bd=1e9;
+  for(var i=0;i<G.checks.length;i++){ var c=G.checks[i]; if(c.signed)continue;
+    var d=Math.abs((c.x+CHECK_W/2)-ZONE_X); if(d<=ZONE_HALF&&d<bd){bd=d;best=c;} }
+  player.pulse=0.22; player.y=HAND_BASE_Y+HAND_DROP;
+  if(!best){ callout('SCRIBBLE','#c8c8c8'); G.combo=0; SFX.sloppy(); addFloat('~',ZONE_X,BELT_Y-10,'#aaa',22); return; }
+  best.signed=true;
+  if(best.kind!=='real'){ best.q='VOID'; G.decoys++; G.combo=0; logEv('X'); setFace('grump',0.8);
+    callout('NOT THAT ONE','#ff5a5a'); addFloat(best.kind==='tariff'?'THAT IS THE $2,000 ONE':'THAT IS THE $5,000 ONE',W/2,BELT_Y-24,'#ff7b7b',16);
+    SFX.decoy(); strike('SIGNED THE WRONG CHECKS'); return; }
+  var q=(bd<=PERFECT)?'PERFECT':(bd<=GOOD?'GOOD':'SLOPPY');
+  best.q=q; best.sig=makeSig(q); G.signed++; G.combo++; if(G.combo>G.bestCombo)G.bestCombo=G.combo; G.hudPulse=0.3;
+  if(q==='PERFECT'){ G.zoneFlash=0.16; G.shake=0.12; }   // v1.05 FLASH LAW: a zone glow, not a scene flash
+  logEv(q==='PERFECT'?'P':'V');
+  if(q==='PERFECT'){ G.perfects++; setFace('happy',0.6); callout('BIG BEAUTIFUL SIGNATURE','#ffd23f'); SFX.perfect(); addFloat('+1 PERFECT',ZONE_X,BELT_Y-14,'#ffd23f',20); }
+  else if(q==='GOOD'){ setFace('sign',0.3); callout('SIGNED','#57ff7a'); SFX.sign(); addFloat('+1',ZONE_X,BELT_Y-14,'#57ff7a',20); }
+  else { setFace('sign',0.3); callout('SLOPPY, STILL COUNTS','#bfe8c9'); SFX.sloppy(); addFloat('+1',ZONE_X,BELT_Y-14,'#bfe8c9',18); }
+}
+function endRun(reason){
+  if(STATE!=='play')return;
+  if(G.tut){ reportErr('endRun','called while held ('+reason+')'); return; }   // THE HOLD LAW: a held run cannot end; if this ever prints, it is a bug
+  STATE='over'; G.reason=reason; G.overT=0; G.dis=null; SFX.over(); setFace('grump',99);
+  PORTAL.gameplayStop(); clearSave(); boardRecord(); uiShow(true);
+}
+function startRun(){
+  G=newRun(); STATE='play'; fillBelt(); SFX.start(); PORTAL.gameplayStart(); uiShow(false);   // v1.05: the belt is loaded on the first frame
+}
+function update(dt){
+  var tap=ev.tap, sw=ev.swipe, tx=ev.tx, ty=ev.ty, sx=ev.sx, sy=ev.sy; ev.tap=false; ev.swipe=null;
+  if(player.pulse>0){ player.pulse-=dt; if(player.pulse<0)player.pulse=0; }
+  player.y+=(HAND_BASE_Y-player.y)*Math.min(1,dt*14);          // hand springs back to rest
+  if(STATE==='title'){ if(tap){ if(inRect(tx,ty,TOG)){ tutSet(!tutOn()); SFX.clear(); } else startRun(); } return; }
+  if(STATE==='over'){ G.overT+=dt; if(G.toastT>0)G.toastT-=dt; if(tap&&G.overT>1.5)resetGame(); return; }
+  /* play: THE HOLD FIRST (held()). Only the card's own clock and cosmetic fades move. */
+  if(G.tut){ G.tut.t+=dt; fadeCosmetics(dt); if(tap&&G.tut.t>=TUT_GUARD){ G.tut=null; G.ramp=RAMP_T; SFX.sign(); } return; }
+  /* the open world */
+  G.elapsed+=dt; G.tleft=RUN_SECONDS-G.elapsed;
+  if(G.tleft<=0){ G.tleft=0; endRun('OCTOBER ARRIVED'); return; }
+  var vf=1; if(G.ramp>0){ G.ramp-=dt; if(G.ramp<0)G.ramp=0; vf=1-G.ramp/RAMP_T; }   // the belt eases in after a card
+  var v=beltSpeed()*vf; G.belt+=v*dt; G.beltOff=(G.beltOff+v*dt)%40;
+  if(G.faceT>0&&!G.dis){ G.faceT-=dt; if(G.faceT<=0)G.face='idle'; }
+  fadeCosmetics(dt); if(G.hintT>0)G.hintT-=dt;
+  for(var i=G.checks.length-1;i>=0;i--){ var c=G.checks[i]; c.x-=v*dt;
+    if(c.x+CHECK_W<-10){ G.checks.splice(i,1);
+      if(!c.signed&&c.kind==='real'){ G.missed++; G.combo=0; logEv('M'); var bz=!!c.lostTo;
+        callout(bz?'PASSED HIM BY':'MISSED ONE','#ff7b7b'); addFloat(bz?'HE WAS BUSY':'UNSIGNED',70,BELT_Y-14,'#ff7b7b',18); strike(); if(STATE!=='play')return; tutShow('floor'); }
+      else if(!c.signed) { addFloat('good, not that one',80,BELT_Y-14,'#8fa3c4',15); } } }
+  fillBelt();
+  for(i=G.debris.length-1;i>=0;i--){ var db=G.debris[i]; db.t+=dt; db.x+=db.vx*dt; db.y+=db.vy*dt; db.vy+=900*dt; if(db.y>H+40||db.t>2.5)G.debris.splice(i,1); }
+  for(i=G.floats.length-1;i>=0;i--){ var f=G.floats[i]; f.y-=40*dt; f.life-=dt*0.9; if(f.life<=0)G.floats.splice(i,1); }
+  if(!G.tutSeen.zone||!G.tutSeen.decoy){ for(i=0;i<G.checks.length;i++){ var tc=G.checks[i];
+    if(!G.tutSeen.decoy&&tc.kind!=='real'&&!tc.signed&&tc.x+CHECK_W<=W-6){ tutShow('decoy'); break; }
+    if(!G.tutSeen.zone&&!G.dis&&tc.kind==='real'&&!tc.signed&&Math.abs(tc.x+CHECK_W/2-ZONE_X)<=ZONE_HALF){ tutShow('zone'); break; } } }
+  if(G.tut)return;                                                   // a beat just opened: hold this frame too
+  if(!G.dis&&G.ramp<=0){ G.disTimer-=dt; if(G.disTimer<=0){ spawnDis(); if(G.tut)return; } }   // no onset during a ramp
+  /* the distraction clock */
+  if(G.dis){ var d=G.dis; d.t+=dt;
+    if(counterMatches(d,tap,tx,ty,sw,sx,sy)){ counterDis(); tap=false; }
+    else {
+      if(tap&&reserveHit(d,tx,ty)){ tap=false; if(d.phase==='reach'&&d.id!=='tv')callout(d.d.label,'#ffd23f'); }   // GESTURE LAW
+      if(sw){ G.shake=Math.max(G.shake,0.12); callout('WRONG MOVE: '+d.d.label,'#ffd23f'); }
+      if(d.phase==='reach'){ if(d.t>=d.reach)failDis(); } else busyStep(dt);
+    } }
+  /* the pen */
+  if(tap){ if(G.dis&&G.dis.phase==='busy'){ callout('HE IS BUSY','#ffb0b0'); } else trySign(); }
+}
+
+/* ---- 5b. FOLD SURVIVAL (seed v1.02 shape: localStorage, play-state only,
+        15 minute expiry, clearSave for return-to-title). The belt itself is
+        not saved; the run's numbers and the RNG cursor are, so a resumed run
+        keeps its day, score, clock, strikes, and the same future sequence. ---- */
+var SAVE_KEY='sign-here-resume';   // v1.06: the title's own key (seed v1.06: <slug>-resume); 'seed-resume' was shared by every seed title on one origin
+var SAVE_FRESH_MS=15*60*1000;
+function saveState(){
+  if(STATE!=='play')return false;
+  if(typeof localStorage==='undefined')return false;
+  try{ localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,t:Date.now(),st:STATE,x:player.x,y:player.y,
+        day:G.day,rng:G.rng.a,el:G.elapsed,sg:G.signed,pf:G.perfects,ms:G.missed,dc:G.decoys,sk:G.strikes,
+        cb:G.combo,bc:G.bestCombo,dt:G.disTime,ld:G.lastDis,tm:G.disTimer,lg:G.log.join(''),sd:G.seenDecoy,
+        rd:G.rngD.a,sp:G.spawned,ng:G.nextGap,sv:G.saved,ls:G.lost,ts:Object.keys(G.tutSeen).join(',')}));   // v1.05: both streams, beats, tallies
+       return true; }catch(e){ return false; }
+}
+function loadState(){
+  if(typeof localStorage==='undefined')return false;
+  try{
+    var raw=localStorage.getItem(SAVE_KEY); if(!raw)return false;
+    var s=JSON.parse(raw); if(!s||s.v!==1||s.st!=='play')return false;
+    if(Date.now()-s.t>SAVE_FRESH_MS)return false;
+    G=newRun(); STATE='play'; player.x=s.x; player.y=s.y; player.pulse=0;
+    if(typeof s.day==='number')G.day=s.day; if(typeof s.rng==='number')G.rng.a=s.rng>>>0;
+    G.elapsed=s.el||0; G.tleft=RUN_SECONDS-G.elapsed; G.signed=s.sg||0; G.perfects=s.pf||0; G.missed=s.ms||0;
+    G.decoys=s.dc||0; G.strikes=s.sk||0; G.combo=s.cb||0; G.bestCombo=s.bc||0; G.disTime=s.dt||0;
+    G.lastDis=(typeof s.ld==='number')?s.ld:-1; G.disTimer=(typeof s.tm==='number')?s.tm:DIS_FIRST;
+    G.log=(s.lg||'').split('').filter(function(c){return c;}); G.seenDecoy=!!s.sd;
+    if(typeof s.rd==='number')G.rngD.a=s.rd>>>0; G.spawned=s.sp||0; G.nextGap=s.ng||SPACING; G.saved=s.sv||0; G.lost=s.ls||0;
+    (s.ts||'').split(',').forEach(function(k){ if(k)G.tutSeen[k]=1; });
+    fillBelt(); G.tut={id:'resume',t:0,sys:true}; uiShow(false);   // v1.05: a resume is a PAUSE card over a loaded belt, never a live one
+    return true;
+  }catch(e){ return false; }
+}
+function clearSave(){
+  if(typeof localStorage==='undefined')return false;
+  try{ localStorage.removeItem(SAVE_KEY); return true; }catch(e){ return false; }
+}
+
+/* ---- 5c. LEADERBOARD (local) and the SHARE CARD ---- */
+var BOARD_KEY='signhere-board', NAME_KEY='signhere-name';
+function lsGet(k){ try{ if(typeof localStorage==='undefined')return null; return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ if(typeof localStorage==='undefined')return false; localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function boardLoad(){ try{ var b=JSON.parse(lsGet(BOARD_KEY)||'[]'); return Array.isArray(b)?b:[]; }catch(e){ return []; } }
+function boardSave(b){ b.sort(function(p,q){ return q.s-p.s||q.p-p.p; }); if(b.length>50)b.length=50; lsSet(BOARD_KEY,JSON.stringify(b)); }
+function playerName(){ var n=lsGet(NAME_KEY); return (n&&String(n).trim())?String(n).trim().toUpperCase().slice(0,12):'YOU'; }
+var lastEntry=null;
+function boardRecord(){ var b=boardLoad(); lastEntry={n:playerName(),s:G.signed,p:G.perfects,d:G.day,t:Date.now()}; b.push(lastEntry); boardSave(b); }
+function boardRename(name){ if(!lastEntry)return; var b=boardLoad(); for(var i=0;i<b.length;i++){ if(b[i].t===lastEntry.t){ b[i].n=name; break; } } lastEntry.n=name; boardSave(b); }
+function boardTop(n,day){ var b=boardLoad().filter(function(e){ return day?e.d===day:true; }); return b.slice(0,n); }
+function bestToday(){ var t=boardTop(1,dayNumber()); return t.length?t[0].s:0; }
+function shareText(){
+  var strip='', seen={}; for(var i=0;i<G.log.length&&strip.length<12;i++){ var c=G.log[i]; if('CTP'.indexOf(c)>=0&&!seen[c]){ seen[c]=1;
+    strip+=({C:'🥤',T:'📺',P:'📱'})[c]; } }
+  return 'SIGN HERE #'+G.day+' ('+dayLabel()+')\n'+
+    '✍️ '+G.signed+' signed · '+G.missed+' missed\n'+
+    (strip||'😇')+' saved him '+G.saved+' of '+(G.saved+G.lost)+'\n'+
+    'Only '+fmt(1000000-G.signed)+' to go.';
+}
+function toast(t){ G.toast=t; G.toastT=1.6; }
+function doShare(){
+  var t=shareText();
+  try{ if(typeof navigator!=='undefined'&&navigator.share){ navigator.share({title:'SIGN HERE',text:t}).then(function(){toast('SHARED');},function(){ copyText(t); }); return; } }catch(e){}
+  copyText(t);
+}
+function copyText(t){
+  try{ if(typeof navigator!=='undefined'&&navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){toast('COPIED');},function(){toast('COPY FAILED');}); return; } }catch(e){}
+  toast('COPY FAILED');
+}
+var UI=(typeof document!=='undefined')?document.getElementById('ui'):null;
+var NM=(typeof document!=='undefined')?document.getElementById('nm'):null;
+function uiShow(on){ if(UI&&UI.style)UI.style.display=on?'block':'none'; if(on){ placeUI(); if(NM){ try{ NM.value=(lsGet(NAME_KEY)||''); }catch(e){} } } }
+function uiBtn(id,fn){ var b=(typeof document!=='undefined')?document.getElementById(id):null; if(b&&b.addEventListener)b.addEventListener('click',function(e){ firstGesture(); try{fn();}catch(x){reportErr(id,x);} if(e&&e.preventDefault)e.preventDefault(); }); }
+uiBtn('bSave',function(){ var n=String(NM&&NM.value||'').trim().toUpperCase().slice(0,12); if(!n){toast('TYPE A NAME');return;} lsSet(NAME_KEY,n); boardRename(n); toast('SAVED AS '+n); });
+uiBtn('bShare',doShare);
+uiBtn('bAgain',function(){ resetGame(); startRun(); });
+
+/* ---- 6. RENDER (null-guarded so a headless stub is a no-op; ERR line LAST) ---- */
+var PAL={K:'#15121a',O:'#f0a05a',o:'#d4813e',Y:'#f6dd5c',y:'#d6b636',B:'#233058',b:'#161f3c',W:'#f4f1ea',R:'#d92b2b',
+  S:'#c9ccd2',s:'#8e939b',T:'#2a2a2e',t:'#0f0f12',E:'#ffffff',L:'#3d7dd6',N:'#2ecc71',n:'#1d8f4c',X:'#ffd23f',
+  M:'#8a6a4a',m:'#5d4630',Q:'#dddddd',A:'#7fb8ff',x:'#c99f16'};
+function spr(rows,x,y,sc){ if(!ctx)return; x=Math.round(x); y=Math.round(y);
+  for(var r=0;r<rows.length;r++){ var row=rows[r]; for(var c=0;c<row.length;c++){ var ch=row.charAt(c); if(ch==='.')continue;
+    var col=PAL[ch]; if(!col)continue; ctx.fillStyle=col; ctx.fillRect(x+c*sc,y+r*sc,sc,sc); } } }
+var HEAD_TOP=['.......YYYYYYYY.......','.....YYYYYYYYYYYY.....','....YYYYYYYYYYYYYY....','...YYYYYYYYYYYYYYYy...',
+  '...YYyOOOOOOOOOOYYy...','...YyOOOOOOOOOOOOyy...','....OOOOOOOOOOOOOO....'];
+var EYES={idle:'....OOEKOOOOOOEKOO....',look:'....OOKEOOOOOOKEOO....',lookR:'....OOOEKOOOOOOEKO....',happy:'....OOEKOOOOOOEKOO....',grump:'....OKEKOOOOOOEKKO....',sign:'....OOKKOOOOOOKKOO....',swig:'....OOKKOOOOOOKKOO....',type:'....OKEKOOOOOOEKKO....'};
+var MID=['....OOOOOOOOOOOOOO....','....OOOOOOooOOOOOO....'];
+var MOUTH={idle:['....OoOOOOOOOOOOoO....','....OOOOKKKKKKKOOO....','.....OOOOOOOOOOOO.....'],
+  sign:['....OoOOOOOOOOOOoO....','....OOOOOKKKKKOOOO....','.....OOOOOOOOOOOO.....'],
+  happy:['....OoOOKKKKKKOOoO....','....OOOKKWWWWWKKOO....','.....OOOKKKKKKOOO.....'],
+  grump:['....OoOOOKKKKKOOoO....','....OOOOKOOOOOKOOO....','.....OOOOOOOOOOOO.....'],
+  look:['....OoOOOOOOOOOOoO....','....OOOOOKKKKKKOOO....','.....OOOOOOOOOOOO.....'],
+  lookR:['....OoOOOOOOOOOOoO....','....OOOKKKKKKOOOOO....','.....OOOOOOOOOOOO.....'],
+  swig:['....OoOOKKKKKKOOoO....','....OOOKKWWWWWKKOO....','.....OOOKKKKKKOOO.....'],
+  type:['....OoOOOKKKKKOOoO....','....OOOOKOOOOOKOOO....','.....OOOOOOOOOOOO.....']};
+var BODY=['......OOOOOOOOOO......','.....BBBWWWOOWWWBBB...','...BBBBBBWWRRWWBBBBBB.','..BBBBBBBWWRRWWBBBBBBB','..BBBBBBBWWRRWWBBBBBBB',
+  '.BBBBBBBBWWRRWWBBBBBBB','.BBBBBBBBWWRRWWBBBBBBB','BBBBBBBBBWWRRWWBBBBBBB','BBBBBBBBBWWRRWWBBBBBBB','BBBBBBBBBWWRRWWBBBBBBB'];
+var HAND=['..BBBBBBBB..','..WWWWWWWW..','..OOOOOOOO..','.OOOOOOOOOO.','.OOOOTTOOOO.','.OOOOTTOOOO.','..OOOTTOOO..','..ooOTToOo..',
+  '.....TT.....','.....TT.....','.....tt.....','.....KK.....'];
+var CAN=['.SSSSSS.','SsSSSSsS','SSSSSSSS','RRRRRRRR','RRWWWWRR','RRRWWRRR','RRRRRRRR','SSSSSSSS','SSSSSSSS','SSSSSSSS','sSSSSSSs','.ssssss.'];
+var PHONE=['TTTTTTTT','TAAAAAAT','TAAAAAAT','TAWWWAAT','TAAAAAAT','TAWWWWAT','TAAAAAAT','TAWWAAAT','TAAAAAAT','TAAAAAAT','TTTTTTTT','TTTQQTTT'];
+function txt(t,x,y,s,col,al,font){ if(!ctx)return; ctx.font=((font===undefined)?'bold ':font)+s+'px monospace';
+  ctx.textAlign=al||'center'; ctx.textBaseline='middle';
+  ctx.fillStyle='#000'; ctx.fillText(t,x+1,y+1); ctx.fillStyle=col; ctx.fillText(t,x,y); }
+function rect(x,y,w,h,col){ if(!ctx)return; ctx.fillStyle=col; ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h)); }
+function drawRoom(){
+  var d=G.dis, tvOn=d&&d.id==='tv', ph=d&&d.id==='phone', bl=blinkOn(d?d.t:G.elapsed);
+  rect(0,100,W,340,'#e8dcc3'); rect(0,100,W,12,'#c9b48a');            // cream wall, crown molding
+  for(var sx=0;sx<W;sx+=32)rect(sx,112,2,328,'#ddd0b4');               // wallpaper stripe
+  rect(0,400,W,40,'#b6935e'); rect(0,398,W,4,'#8f6f3f');               // wainscot
+  rect(432,128,180,190,'#7a5a2a'); rect(440,136,164,174,'#8ecfff'); rect(440,236,164,74,'#4caf50'); rect(440,230,164,8,'#3c8f40');   // window, lawn
+  rect(518,136,8,174,'#7a5a2a'); rect(440,220,164,6,'#7a5a2a'); rect(590,250,3,40,'#fff'); rect(593,250,10,7,'#d92b2b');
+  rect(420,120,16,206,'#d4a531'); rect(608,120,16,206,'#d4a531'); rect(416,116,212,10,'#b8891f');   // gold curtains
+  if(tvOn&&ctx){ ctx.globalAlpha=bl?0.13:0.06; rect(0,100,W,340,'#ff5a5a'); ctx.globalAlpha=1; }   // the screen lights the room (FLASH LAW: soft)
+  rect(250,130,140,120,'#8a6a2a'); rect(258,138,124,104,'#2b3a5a'); spr(HEAD_TOP,281,150,3); spr([EYES.idle],281,171,3); spr(MID,281,174,3); spr(MOUTH.idle,281,180,3);   // portrait of himself
+  rect(258,214,124,28,'#233058'); txt('BEST PRESIDENT',320,229,12,'#ffd23f');
+  /* the TV on its cart */
+  var o=DIS.tv.obj, jx=(tvOn&&G.shake>0)?Math.round(Math.sin(G.shake*90)*4):0;
+  if(tvOn)glow(o.x-8,o.y-8,o.w+16,o.h+16,bl?'#ff4040':'#ffffff');
+  rect(o.x+jx,o.y,o.w,o.h,'#2a2a2e');
+  if(tvOn){ rect(o.x+8+jx,o.y+8,o.w-16,o.h-24,bl?'#e02828':'#f4f4f4'); rect(o.x+52+jx,o.y+26,46,44,'#f0a05a'); rect(o.x+52+jx,o.y+20,46,10,'#8e939b'); rect(o.x+40+jx,o.y+68,70,14,'#233058');
+    rect(o.x+8+jx,o.y+o.h-28,o.w-16,20,bl?'#ffffff':'#d92b2b'); txt('BREAKING',o.x+o.w/2+jx,o.y+o.h-18,14,bl?'#d92b2b':'#fff');
+    txt('FAUX NEWS',o.x+o.w/2+jx,o.y+17,13,bl?'#fff':'#d92b2b'); }
+  else rect(o.x+8,o.y+8,o.w-16,o.h-24,'#0f0f12');
+  rect(60,260,110,8,'#3a3a40'); rect(80,268,70,24,'#3a3a40'); rect(76,292,78,6,'#222');
+  if(tvOn&&d.phase==='reach'){ label(o.x+o.w/2,318,DIS.tv.label,true); reachBar(o.x,338,o.w,d); }
+  /* the phone alert: bubble, reach bar, DISMISS button, stacked so nothing overlaps (v1.05) */
+  if(ph){ var b=DIS.phone.btn;
+    if(d.phase==='reach'){ rect(8,226,160,66,bl?'#ffffff':'#ffd23f'); rect(8,226,160,4,'#d92b2b'); rect(60,292,14,8,bl?'#ffffff':'#ffd23f');
+    txt('TRUTH SHOUT!!!',88,244,14,'#d92b2b'); txt('1,000 NEW REPLIES',88,263,12,'#111'); txt('SOMEONE IS WRONG',88,280,12,'#111');
+    reachBar(b.x,300,b.w,d); }
+    glow(b.x-4,b.y-4,b.w+8,b.h+8,'#ff4040');
+    rect(b.x,b.y,b.w,b.h,bl?'#ff3b3b':'#d92b2b'); rect(b.x,b.y,b.w,4,'#ffb0b0');
+    txt('DISMISS',b.x+b.w/2,b.y+20,18,'#fff'); txt('\u25BC swipe down \u25BC',b.x+b.w/2,b.y+42,12,'#ffe3e3'); }
+}
+function glow(x,y,w,h,col){ if(!ctx)return; for(var k=3;k>=1;k--){ ctx.globalAlpha=0.12*k; rect(x-k*8,y-k*8,w+k*16,h+k*16,col); } ctx.globalAlpha=1; }
+function label(cx,cy,t,hot){ var w=t.length*9.2+28; rect(cx-w/2,cy-14,w,28,'#111a2a'); rect(cx-w/2,cy-14,w,3,hot?'#ffd23f':'#8fa3c4'); txt(t,cx,cy+1,15,hot?'#ffd23f':'#8fa3c4'); }
+function reachBar(x,y,w,d){ if(d.phase!=='reach')return; var f=Math.max(0,1-d.t/d.reach); rect(x-2,y-2,w+4,20,'#111'); rect(x,y,w,16,'#3a0a0a'); rect(x,y,Math.round(w*f),16,'#ff3b3b'); txt('REACHING',x+w/2,y+8,12,'#fff'); }
+function drawMan(){
+  var x=254,y=298,sc=6, f=G.face, d=G.dis, bob=0;
+  if(d&&d.phase==='busy'){ bob=Math.round(Math.sin(d.busyT*10)*3); if(d.id==='cola')y-=6; }
+  spr(HEAD_TOP,x,y+bob,sc); spr([EYES[f]||EYES.idle],x,y+bob+7*sc,sc); spr(MID,x,y+bob+8*sc,sc); spr(MOUTH[f]||MOUTH.idle,x,y+bob+10*sc,sc); spr(BODY,x,y+13*sc,sc);
+  if(!d||d.phase!=='reach')return;
+  var o=d.d.obj, tgt=(d.id==='cola')?{x:d.d.can.x+24,y:d.d.can.y+30}:(d.id==='phone'?{x:o.x+32,y:o.y+20}:{x:o.x+o.w/2,y:o.y+o.h/2});
+  var fr=Math.min(1,d.t/d.reach), sxa=(d.id==='cola')?x+126:x+6, sya=y+112, ex=sxa+(tgt.x-sxa)*fr, ey=sya+(tgt.y-sya)*fr;   // his other arm stretches toward it as the window closes
+  if(ctx){ ctx.strokeStyle=PAL.B; ctx.lineWidth=28; ctx.lineCap='butt'; ctx.beginPath(); ctx.moveTo(sxa,sya); ctx.lineTo(ex,ey); ctx.stroke(); }
+  rect(ex-14,ey-14,28,28,PAL.O); rect(ex-14,ey-14,28,6,PAL.W);
+}
+function drawVice(){                                      // v1.05: the vice props draw IN FRONT of the desk (the typing phone was hidden behind it)
+  var d=G.dis; if(!d||d.phase!=='busy')return; var x=254,y=298, bob=Math.round(Math.sin(d.busyT*10)*3);
+  if(d.id==='cola'){ if(ctx){ ctx.strokeStyle=blinkOn(d.busyT)?'#ffd23f':'#ffb000'; ctx.lineWidth=3; ctx.strokeRect(x+54,y-6+bob+28,60,84); } spr(CAN,x+60,y-6+bob+34,6); if(blinkOn(d.busyT))txt('GULP',x+178,y+34,22,'#ffffff'); }
+  else if(d.id==='phone'){ spr(PHONE,x+42,y+66,6); rect(x+20,y+98,24,24,PAL.O); rect(x+96,y+98,24,24,PAL.O);
+    var lines=['TOTAL DISASTER!!!','FAKE!!! SAD!!!','VERY UNFAIR!!!','WRONG!!!!!'], li=Math.floor(d.busyT*2)%lines.length, tl=lines[li];
+    rect(x+136,y-46,244,44,'#ffffff'); rect(x+150,y-2,16,12,'#ffffff');
+    txt(tl.slice(0,Math.max(1,Math.floor((d.busyT*2%1)*tl.length)+1)),x+258,y-24,16,'#111'); }
+  else { txt('...',x+66,y-16,32,'#ffffff'); }
+}
+function drawDesk(){
+  rect(0,440,W,30,'#7a4a23'); rect(0,438,W,4,'#a5723a');                 // desk surface
+  rect(0,BELT_Y+BELT_H,W,10,'#7a4a23'); rect(0,BELT_Y+BELT_H+10,W,98,'#5a3416');   // front panel
+  rect(0,BELT_Y+BELT_H+10,W,4,'#3d2210');
+  rect(270,566,100,60,'#3d2210'); txt('THE',320,584,10,'#d4a531'); txt('DESK',320,606,16,'#d4a531');
+  rect(596,404,30,50,'#2b3a5a'); for(var i=0;i<4;i++)rect(600+i*6,392,4,16,'#15121a');   // sharpie cup
+  drawMachine(); drawPhone();
+  /* the belt */
+  rect(0,BELT_Y,W,BELT_H,'#1c1c22');
+  if(ctx){ ctx.fillStyle='#2e2e38'; for(var bx=-40+G.beltOff;bx<W+40;bx+=40){ ctx.fillRect(Math.round(bx),BELT_Y+4,4,BELT_H-8); } }
+  rect(0,BELT_Y,W,3,'#4a4a58'); rect(0,BELT_Y+BELT_H-3,W,3,'#4a4a58');
+  /* the SIGN ZONE */
+  var zs=zoneState(), inZone=zs.real, decoyIn=zs.decoy, zc=decoyIn?'#ff5a5a':'#57ff7a';   // v1.05: a decoy in the zone turns it red
+  if(ctx){ ctx.globalAlpha=(inZone||decoyIn)?0.32:0.16; rect(ZONE_X-ZONE_HALF,BELT_Y-6,ZONE_HALF*2,BELT_H+12,zc); ctx.globalAlpha=1; }
+  rect(ZONE_X-ZONE_HALF,BELT_Y-6,3,BELT_H+12,zc); rect(ZONE_X+ZONE_HALF-3,BELT_Y-6,3,BELT_H+12,zc);
+  rect(ZONE_X-1,BELT_Y-10,2,6,zc); rect(ZONE_X-1,BELT_Y+BELT_H+4,2,6,zc);
+  if(G.zoneFlash>0&&ctx){ ctx.globalAlpha=Math.min(0.55,G.zoneFlash/0.16*0.55); rect(ZONE_X-ZONE_HALF-8,BELT_Y-14,ZONE_HALF*2+16,BELT_H+28,'#ffd23f'); ctx.globalAlpha=1; }   // PERFECT glow
+  txt(decoyIn?'LET IT PASS':'SIGN ZONE',ZONE_X,BELT_Y+BELT_H+19,14,decoyIn?'#ff7b7b':(inZone?'#57ff7a':'#3f7a4f'));
+}
+function zoneState(){ var r={real:false,decoy:false}; for(var j=0;j<G.checks.length;j++){ var c=G.checks[j];
+  if(!c.signed&&Math.abs(c.x+CHECK_W/2-ZONE_X)<=ZONE_HALF){ if(c.kind==='real')r.real=true; else r.decoy=true; } } return r; }
+function drawCheck(c){
+  var x=Math.round(c.x), y=BELT_Y+1, real=c.kind==='real', paper=real?'#dfeed6':(c.kind==='tariff'?'#ffd84a':'#ff9ec0'), edge=real?'#9a9a8a':(c.kind==='tariff'?'#8a6200':'#a0144a');
+  rect(x,y,CHECK_W,CHECK_H,edge); rect(x+(real?1:3),y+(real?1:3),CHECK_W-(real?2:6),CHECK_H-(real?2:6),paper);
+  if(real){ rect(x+6,y+6,54,3,'#555'); rect(x+6,y+12,38,3,'#777'); txt('$500',x+96,y+16,17,'#173d1c'); txt('PAY TO: YOU',x+8,y+30,9,'#333','left'); }
+  else { rect(x+6,y+6,38,18,'#d92b2b'); txt('IOU',x+25,y+15,13,'#ffffff'); txt(c.kind==='tariff'?'$2,000':'$5,000',x+90,y+16,17,c.kind==='tariff'?'#4a3400':'#5a0a24');
+    txt(c.kind==='tariff'?'TARIFF (TBD)':'DIVIDEND (SOMEDAY)',x+8,y+33,9,c.kind==='tariff'?'#4a3400':'#5a0a24','left'); }
+  rect(x+8,y+48,CHECK_W-16,2,'#555'); txt('X',x+10,y+42,9,'#555','left');
+  if(c.lostTo&&!c.signed&&c.x+CHECK_W/2<ZONE_X-ZONE_HALF){ if(ctx){ ctx.globalAlpha=0.5; rect(x,y,CHECK_W,CHECK_H,'#3a3a44'); ctx.globalAlpha=1; } txt('MISSED',x+CHECK_W/2,y+CHECK_H/2,20,'#ff5a5a'); }
+  if(c.signed&&c.sig&&ctx){ ctx.strokeStyle='#111'; ctx.lineWidth=(c.q==='PERFECT')?3.5:(c.q==='GOOD'?2.8:2); ctx.lineCap='round'; ctx.lineJoin='round';
+    for(var k=0;k<c.sig.length;k++){ var st=c.sig[k]; ctx.beginPath(); for(var i=0;i<st.length;i++){ var p=st[i]; if(i===0)ctx.moveTo(x+p.x,y+p.y); else ctx.lineTo(x+p.x,y+p.y); } ctx.stroke(); } }
+  if(c.signed&&c.q==='VOID'){ if(ctx){ ctx.strokeStyle='#d92b2b'; ctx.lineWidth=4; ctx.strokeRect(x+10,y+8,CHECK_W-20,CHECK_H-16); } txt('VOID',x+CHECK_W/2,y+CHECK_H/2,24,'#d92b2b'); }
+}
+function drawMachine(){                                   // the DIET COLA vending machine at his elbow
+  var o=DIS.cola.obj, d=G.dis, on=d&&d.id==='cola', blink=on?blinkOn(d.t):false, jx=(on&&d.phase==='reach'&&d.t<0.5)?Math.round(Math.sin(d.t*60)*3):0;
+  if(on&&d.phase==='reach')glow(o.x,o.y,o.w,o.h,blink?'#ff4040':'#ffd23f');
+  rect(o.x+jx,o.y,o.w,o.h,'#8a1020'); rect(o.x+4+jx,o.y+4,o.w-8,o.h-8,'#b01630');
+  rect(o.x+10+jx,o.y+8,o.w-20,22,(on&&blink)?'#fff':'#ffd23f'); txt('DIET',o.x+o.w/2+jx,o.y+19,15,(on&&blink)?'#d92b2b':'#7a1020');
+  rect(o.x+10+jx,o.y+34,o.w-20,44,'#1a2a3a'); for(var k=0;k<3;k++)spr(CAN,o.x+14+k*24+jx,o.y+36,3);     // the glass, three cans
+  rect(o.x+10+jx,o.y+82,o.w-20,4,'#5a0a14'); rect(o.x+8+jx,o.y+86,o.w-16,30,'#3a0a10');                   // the tray
+  if(on&&d.phase==='reach'){ var c=DIS.cola.can, drop=Math.min(1,d.t/0.25), cy=c.y-40+40*drop;            // the can drops into the tray, then sits there lit
+    glow(c.x-4,cy-4,c.w+8,c.h+8,'#ffd23f'); spr(CAN,c.x+4,cy+4,5); drawArrow(c.x-26,cy+30,'l',12,'#57ff7a');
+    label(o.x+o.w/2-14,o.y-48,DIS.cola.label,true); reachBar(o.x,o.y-26,o.w,d); }
+}
+function drawPhone(){                                     // his phone, face up on the desk
+  var o=DIS.phone.obj, d=G.dis, on=d&&d.id==='phone'&&d.phase==='reach', blink=on?blinkOn(d.t):false;
+  if(on&&d.phase==='reach')glow(o.x-4,o.y-4,o.w+8,o.h+8,blink?'#7fb8ff':'#ffffff');
+  rect(o.x,o.y,o.w,o.h,'#15121a'); rect(o.x+6,o.y+6,o.w-12,o.h-12,on?(blink?'#ffffff':'#7fb8ff'):'#2a2a2e');
+  if(on){ rect(o.x+12,o.y+14,o.w-24,4,'#d92b2b'); rect(o.x+12,o.y+22,o.w-30,4,'#d92b2b'); rect(o.x+12,o.y+30,o.w-36,4,'#d92b2b'); }   // v1.05: the in-scene label lives on the DISMISS button
+}
+function drawDebris(){ for(var i=0;i<G.debris.length;i++){ var db=G.debris[i]; spr(CAN,db.x,db.y,4); } }
+function drawArmHand(){
+  var hx=player.x, hy=player.y;
+  if(ctx){ ctx.strokeStyle=PAL.B; ctx.lineWidth=34; ctx.lineCap='butt'; ctx.beginPath(); ctx.moveTo(268,410); ctx.lineTo(hx+44,hy+16); ctx.stroke(); }
+  spr(HAND,hx,hy,6);
+  if(G.dis&&G.dis.phase==='busy')txt('...',hx+36,hy-24,24,'#dfe8ff');
+}
+function drawArrow(ax,ay,dir,s,col){                     // pixel arrow, pulsing along its direction
+  if(!ctx)return; var k=Math.sin(((G&&G.dis)?G.dis.t:0)*7)*6;   // pulse along the direction
+  if(dir==='l')ax-=k; else if(dir==='r')ax+=k; else if(dir==='u')ay-=k; else ay+=k;
+  ctx.fillStyle='#000'; ctx.beginPath(); arrowPath(ax+2,ay+2,dir,s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=col; ctx.beginPath(); arrowPath(ax,ay,dir,s); ctx.closePath(); ctx.fill();
+}
+function arrowPath(ax,ay,dir,s){
+  if(dir==='l'){ ctx.moveTo(ax-s,ay); ctx.lineTo(ax,ay-s*0.8); ctx.lineTo(ax,ay-s*0.3); ctx.lineTo(ax+s,ay-s*0.3); ctx.lineTo(ax+s,ay+s*0.3); ctx.lineTo(ax,ay+s*0.3); ctx.lineTo(ax,ay+s*0.8); }
+  else if(dir==='r'){ ctx.moveTo(ax+s,ay); ctx.lineTo(ax,ay-s*0.8); ctx.lineTo(ax,ay-s*0.3); ctx.lineTo(ax-s,ay-s*0.3); ctx.lineTo(ax-s,ay+s*0.3); ctx.lineTo(ax,ay+s*0.3); ctx.lineTo(ax,ay+s*0.8); }
+  else if(dir==='u'){ ctx.moveTo(ax,ay-s); ctx.lineTo(ax+s*0.8,ay); ctx.lineTo(ax+s*0.3,ay); ctx.lineTo(ax+s*0.3,ay+s); ctx.lineTo(ax-s*0.3,ay+s); ctx.lineTo(ax-s*0.3,ay); ctx.lineTo(ax-s*0.8,ay); }
+  else { ctx.moveTo(ax,ay+s); ctx.lineTo(ax+s*0.8,ay); ctx.lineTo(ax+s*0.3,ay); ctx.lineTo(ax+s*0.3,ay-s); ctx.lineTo(ax-s*0.3,ay-s); ctx.lineTo(ax-s*0.3,ay); ctx.lineTo(ax-s*0.8,ay); }
+}
+function drawBanner(){                                    // v1.05: the banner crosses the DESK FRONT, off every distraction and its reach bar
+  if(G.bannerT<=0)return; var t=1-G.bannerT/BANNER_T, slide=(t<0.12)?(1-t/0.12):((t>0.85)?((t-0.85)/0.15):0), ox=Math.round(slide*W), y=566;
+  rect(ox,y,W,62,'#d92b2b'); for(var k=0;k<W;k+=40){ rect(ox+k,y,20,6,'#ffd23f'); rect(ox+k+20,y+56,20,6,'#ffd23f'); }
+  txt(G.banner,ox+W/2,y+31,34,'#fff');
+}
+function drawHUD(){                                        // v1.05 TYPE PASS; top right (x>500, y<46) stays clear for the FULLSCREEN button
+  rect(0,0,W,100,'#0a1220'); rect(0,98,W,2,'#3a5a8a');
+  txt('SIGNED',20,26,15,'#8fa3c4','left'); txt(String(G.signed),104,27,36+Math.round(G.hudPulse/0.3*14),G.hudPulse>0?'#aaffc3':'#57ff7a','left');
+  txt('TO GO '+fmt(1000000-G.signed),250,27,15,'#dfe8ff','left');
+  var frac=Math.max(0,G.tleft/RUN_SECONDS), warn=G.tleft<=10&&blinkOn(G.elapsed), hold=held();
+  rect(20,56,340,16,'#1c2f4d'); rect(20,56,Math.round(340*frac),16,warn?'#ff5a5a':'#ffd23f');
+  txt(hold?'PAUSED':'OCTOBER '+Math.ceil(G.tleft)+'s',372,64,16,hold?'#9ecbff':(warn?'#ff7b7b':'#ffd23f'),'left');
+  txt('STRIKES',20,88,14,'#8fa3c4','left');
+  for(var i=0;i<STRIKES_MAX;i++){ var sx=96+i*32; rect(sx,80,26,16,i<G.strikes?'#5a1a1a':'#1c2f4d'); txt(i<G.strikes?'X':'\u00B7',sx+13,88,14,i<G.strikes?'#ff5a5a':'#3f7a4f'); }
+  if(G.combo>1)txt('x'+G.combo+' COMBO',620,88,16,'#ffd23f','right');
+}
+function drawPad(){
+  rect(0,640,W,240,'#0a1220'); rect(0,640,W,2,'#3a5a8a');
+  if(STATE==='play'&&G.tut){ drawTut(); return; }
+  if(STATE==='play'){ var zs=zoneState();
+    if(G.dis&&G.dis.phase==='reach'){ var dd=G.dis.d;
+      txt(dd.label,W/2,676,26,'#ffd23f'); txt('before his hand gets there. Keep signing.',W/2,710,16,'#dfe8ff','center',''); }
+    else if(G.dis){ var db2=G.dis.d;
+      txt(db2.busyName+'! '+db2.busyLine,W/2,676,22,'#ff7b7b'); txt(db2.snap,W/2,710,16,'#dfe8ff','center',''); }
+    else if(zs.decoy){ txt('LET IT PASS',W/2,680,30,'#ff7b7b'); txt('that one is an IOU, not a refund',W/2,712,16,'#ffb0b0','center',''); }   // v1.05: the warning outranks GO
+    else if(G.ramp>0){ txt('GO',W/2,684,34,'#57ff7a'); }
+    else if(zs.real){ txt('TAP NOW',W/2,684,34,'#57ff7a'); }
+    else { txt('TAP WHEN A CHECK IS IN THE ZONE',W/2,684,20,'#8fa3c4'); }
+    if(G.hintT>0){ rect(40,732,560,60,'#2a1a1a'); rect(40,732,560,3,'#ff5a5a'); txt('NEW: YELLOW AND PINK CHECKS ARE IOUs.',W/2,752,16,'#ffb0b0'); txt('Let them pass. Signing one is a strike.',W/2,776,15,'#ffb0b0','center',''); }
+    else if(G.callT>0)txt(G.call,W/2,758,24,G.callCol);
+  }
+  /* the run strip: the last 22 events */
+  var n=Math.min(22,G.log.length), x0=W/2-n*13;
+  for(var i=0;i<n;i++){ var e=G.log[G.log.length-n+i], col=e==='P'?'#ffd23f':e==='V'?'#57ff7a':e==='M'?'#ff5a5a':e==='X'?'#d92b2b':e==='K'?'#57ff7a':e==='k'?'#9ecbff':'#ffd23f';
+    rect(x0+i*26,812,22,22,'#1c2f4d'); txt(e==='V'?'\u2713':e==='P'?'\u2605':e==='M'?'\u2717':e==='X'?'!':e==='K'?'\u21C4':e==='k'?'~':e,x0+i*26+11,823,14,col); }
+  txt('SNAIL DAILY #'+G.day+' \u00B7 '+dayLabel()+' \u00B7 v'+VER,W/2,862,13,'#3f5a7f');
+}
+function drawTut(){
+  var t=TUT[G.tut.id]||{title:'',lines:[]}, sys=!!G.tut.sys, x=24, y=652, w=592, h=218;
+  rect(x-4,y-4,w+8,h+8,sys?'#9ecbff':'#ffd23f'); rect(x,y,w,h,'#111a2a');
+  txt(sys?'PAUSED':'TUTORIAL \u00B7 PAUSED',x+w/2,y+20,13,'#8fa3c4'); txt(t.title,x+w/2,y+50,24,sys?'#9ecbff':'#ffd23f');
+  for(var i=0;i<t.lines.length;i++)txt(t.lines[i],x+w/2,y+86+i*26,16,'#dfe8ff','center','');
+  var ready=G.tut.t>=TUT_GUARD;
+  txt(ready?((Math.floor(G.tut.t*2)%2)?'TAP TO CONTINUE':''):'',x+w/2,y+174,20,'#57ff7a');
+  if(!sys)txt('turn these off on the title screen',x+w/2,y+202,13,'#5f7398');
+}
+function drawTitle(){
+  if(ctx){ ctx.globalAlpha=0.8; rect(0,0,W,H,'#04060c'); ctx.globalAlpha=1; }
+  rect(30,112,580,308,'#0a1220'); rect(30,112,580,4,'#ffd23f'); rect(30,416,580,4,'#ffd23f');
+  txt('SNAIL DAILY #'+G.day+' \u00B7 '+dayLabel(),W/2,140,15,'#8fa3c4');
+  txt('SIGN',W/2,202,76,'#57ff7a'); txt('HERE',W/2,276,76,'#57ff7a');
+  txt('One man. One Sharpie. One million $500 checks.',W/2,338,16,'#dfe8ff','center','');
+  txt('October is coming.',W/2,364,17,'#ffd23f','center','');
+  txt('a news parody game \u00B7 v'+VER,W/2,396,13,'#5f7398');
+  rect(30,432,580,200,'#0a1220');
+  var L=['TAP when a $500 check is in the green zone.','When the room goes loud, do what the yellow','label says before his hand gets there.','Never sign the $2,000 or $5,000 IOUs.','6 strikes or October, and the run is over.'];
+  for(var i=0;i<L.length;i++)txt(L[i],52,458+i*26,16,'#dfe8ff','left','');
+  txt('Same run for everyone today. Share the number.',52,600,16,'#ffd23f','left','');
+  var on=tutOn();
+  rect(TOG.x-2,TOG.y-2,TOG.w+4,TOG.h+4,on?'#57ff7a':'#3a5a8a'); rect(TOG.x,TOG.y,TOG.w,TOG.h,'#111a2a');
+  txt('TUTORIAL MESSAGES: '+(on?'ON':'OFF'),TOG.x+TOG.w/2,TOG.y+17,18,on?'#57ff7a':'#8fa3c4');
+  txt('tap to change',TOG.x+TOG.w/2,TOG.y+35,12,'#5f7398');
+  txt((Math.floor(Date.now()/500)%2)?'TAP TO START':'',W/2,728,30,'#fff');
+  var b=bestToday(); if(b>0)txt('YOUR BEST TODAY: '+b,W/2,768,18,'#57ff7a');
+  txt('desktop: SPACE signs \u00B7 ARROWS answer \u00B7 T tutorial',W/2,798,13,'#5f7398');
+  txt('Snail Attack Studios',W/2,826,13,'#3f5a7f');
+}
+function drawOver(){
+  if(ctx){ ctx.globalAlpha=0.85; rect(0,100,W,540,'#04060c'); ctx.globalAlpha=1; }
+  rect(30,112,580,516,'#0a1220'); rect(30,112,580,4,'#ff5a5a');
+  txt(G.reason,W/2,146,22,'#ff7b7b');
+  txt('SIGNED',W/2,186,16,'#8fa3c4'); txt(String(G.signed),W/2,240,80,'#57ff7a');
+  txt('ONLY '+fmt(1000000-G.signed)+' TO GO',W/2,298,22,'#ffd23f');
+  txt('perfect '+G.perfects+' \u00B7 best combo '+G.bestCombo+' \u00B7 missed '+G.missed,W/2,334,16,'#dfe8ff','center','');
+  txt('saved him '+G.saved+' of '+(G.saved+G.lost)+' \u00B7 IOUs signed '+G.decoys,W/2,360,16,'#dfe8ff','center','');
+  txt('TODAY ON THIS DEVICE',W/2,398,15,'#8fa3c4');
+  var top=boardTop(5,G.day);
+  for(var i=0;i<top.length;i++){ var e=top[i], y=428+i*28, me=(lastEntry&&e.t===lastEntry.t);
+    txt(String(i+1)+'.',110,y,18,me?'#ffd23f':'#8fa3c4','left'); txt(e.n,148,y,18,me?'#ffd23f':'#dfe8ff','left'); txt(String(e.s),530,y,18,me?'#ffd23f':'#57ff7a','right'); }
+  if(G.toastT>0)txt(G.toast,W/2,576,20,'#ffd23f');
+  txt('tap here for the title screen',W/2,608,13,'#5f7398');
+}
+function render(){
+  if(!ctx||!G)return;
+  ctx.fillStyle='#04060c'; ctx.fillRect(0,0,W,H);
+  var shx=0,shy=0; if(G.shake>0){ var kk=G.shake/SHAKE_T; shx=Math.round(Math.sin(G.shake*80)*7*kk); shy=Math.round(Math.cos(G.shake*70)*5*kk); }
+  if(ctx.save)ctx.save(); if(ctx.translate)ctx.translate(shx,shy);
+  drawRoom(); drawMan(); drawDesk(); drawVice();
+  for(var i=0;i<G.checks.length;i++)drawCheck(G.checks[i]);
+  drawArmHand(); drawDebris();
+  for(i=0;i<G.floats.length;i++){ var f=G.floats[i]; ctx.globalAlpha=Math.max(0,Math.min(1,f.life)); txt(f.t,f.x,f.y,f.size,f.col); ctx.globalAlpha=1; }
+  if(G.flash>0){ ctx.globalAlpha=Math.min(FLASH_MAX,G.flash/FLASH_T*FLASH_MAX); rect(0,100,W,540,'#fff'); ctx.globalAlpha=1; }
+  if(STATE==='play')drawBanner();
+  if(ctx.restore)ctx.restore();
+  drawHUD(); drawPad();
+  if(STATE==='title')drawTitle(); else if(STATE==='over')drawOver();
+  /* cosmetic layers (e.g. CRT RASTER PACK) draw here, under the ERR line */
+  if(ERRMSG)txt(ERRMSG,W/2,H-8,9,'#ff4646');
+}
+
+/* ---- 7. FRAME PACING: the catch-up defenses (seed, verbatim) ---- */
+var STEP_CAP=5;
+var STEP_MS=16.6667;
+function frameStep(prevLast,now){
+  var acc=now-prevLast;
+  if(acc>200)return {steps:1,last:now,resync:true};
+  var steps=Math.floor(acc/STEP_MS);
+  if(steps>STEP_CAP)steps=STEP_CAP;
+  return {steps:steps,last:prevLast+steps*STEP_MS,resync:false};
+}
+var tick={last:0}; var lastSaveAt=0;
+function frameTick(){
+  try{
+    var now=performance.now();
+    if(!tick.last)tick.last=now;
+    var fs=frameStep(tick.last,now);
+    tick.last=fs.last;
+    for(var i=0;i<fs.steps;i++)update(1/60);
+    render();
+    if(now-lastSaveAt>5000){ saveState(); lastSaveAt=now; }
+  }catch(e){ reportErr('frameTick',e); }
+  if(typeof requestAnimationFrame==='function')requestAnimationFrame(frameTick);
+}
+
+/* ---- 8. PAGE VISIBILITY: pause hidden; resync on a long return (seed) ---- */
+var hiddenAt=0;
+if(typeof document!=='undefined'&&document.addEventListener){
+  document.addEventListener('visibilitychange',function(){
+    var now=(typeof performance!=='undefined')?performance.now():Date.now();
+    if(document.hidden){ hiddenAt=now; saveState(); sysPause('paused'); }   // v1.05: coming back never drops you onto a moving belt
+    else { if(hiddenAt&&now-hiddenAt>1000){ tick.last=now; } hiddenAt=0; }
+  });
+}
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('pagehide',function(){
+    saveState();
+    try{ if(AC&&AC.close)AC.close(); }catch(e){}
+  });
+}
+
+/* ==================== PORTAL ADAPTER FENCE : BEGIN ====================
+   Platform SDK wiring lives here ONLY. Every hook is feature-detected and a
+   silent no-op without a portal. gameplayStart fires at title->play,
+   gameplayStop at the end of a run; adBreak is unused in a 60 second game. */
+var PORTAL={
+  init:function(){},
+  gameplayStart:function(){},
+  gameplayStop:function(){},
+  adBreak:function(resume){ if(resume)resume(); }
+};
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('blur',function(){ hiddenAt=(typeof performance!=='undefined')?performance.now():Date.now(); sysPause('paused'); });   // pause-on-blur (portal QA)
+}
+PORTAL.init();
+/* ==================== PORTAL ADAPTER FENCE : END   ==================== */
+
+/* ==================== SNAILNET SLOT : BEGIN ====================
+   Solo title; the slot stays empty. A versus mode (two desks, same seed)
+   would paste snail-netcode-vX.YZ.js here per SNAIL-NETCODE-PACK.
+   ==================== SNAILNET SLOT : END   ==================== */
+
+/* ---- 9. BOOT ---- */
+resetGame();
+loadState();
+if(typeof requestAnimationFrame==='function')requestAnimationFrame(frameTick);
+
+/*HOOK*/
+})();
+</script>
+</body>
+</html>
