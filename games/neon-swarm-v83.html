@@ -603,8 +603,20 @@ v82 CO-OP LOCK. In co-op, downing an interlude machine gave +1 life to
     flying gains the life as before. SOLO is unchanged (a player out
     there is GAME OVER). Found by the bot suite v1.01: the co-op novice
     pair locked on 2 of 4 seeds; its "co-op never locks" band holds it.
+v83 REVIVE. In co-op, downing an interlude machine now brings a
+    partner who is out of ships back into the fight with one ship and
+    the usual 2.6s of invulnerability, with a "P2 REVIVED" call on
+    both screens (the guest's screen sees it as a respawn). A partner
+    still flying gains the life as before (cap 4), and the run still
+    ends when both players are out. SOLO is unchanged.
+    The Director's call on the v82 lock. Held by a new gate, cooptest:
+    a host and a guest over the loopback, the guest knocked out, the
+    host downs the wave 3 machine. The bot suite, same seeds, v82 to
+    v83: the co-op novice pair reaches median wave 6 (was 5.5), score
+    12,823 (was 9,373), and still never finishes; every other row of
+    the report (50 of 51) is identical.
 -->
-<title>NEON SWARM v82</title>
+<title>NEON SWARM v83</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -1361,7 +1373,7 @@ function S(name){
 }
 
 // ---------- state ----------
-var BUILD = 82;
+var BUILD = 83;
 var STATE = 'title';
 var score = 0, hiScore = 0, wave = 0;
 var chain = 0, mult = 1, chainTimer = 0;
@@ -4072,7 +4084,15 @@ function cbVictory(){
   popupLocal(W/2, H*0.42, 'TARGET DESTROYED +' + got, COL.yellow, true);
   if (hosting()) mp.evq.push(['pp', W/2, H*0.42, 'TARGET DESTROYED +' + got, CI(COL.yellow), 1]);
   for (var pi = 0; pi < players.length; pi++){
-    if (players[pi].lives >= 0 && players[pi].lives < 4) players[pi].lives++;   // v82: a partner already out stays out
+    var pv = players[pi];
+    if (pv.lives < 0){
+      // v83: the machine's fall brings a partner who is out back with one ship
+      pv.lives = 0; pv.alive = true; pv.inv = 2.6;
+      pv.x = W/2 + (pv.idx ? 36 : -36); pv.y = H - 70; pv.kvx = 0; pv.kvy = 0;
+      rings.push({ x:pv.x, y:pv.y, r:4, vr:120, life:0.5, color:COL.green });
+      popupLocal(pv.x, pv.y - 22, 'P' + (pv.idx + 1) + ' REVIVED', COL.green, true);
+      if (hosting()){ mp.evq.push(['pp', pv.x, pv.y - 22, 'P' + (pv.idx + 1) + ' REVIVED', CI(COL.green), 1]); mp.evq.push(['rs', pv.idx]); }
+    } else if (pv.lives < 4) pv.lives++;
   }
   shake = 8; flash = 0.6;
   S('beammax');
