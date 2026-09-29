@@ -1,0 +1,42 @@
+# shelf-page.yml v1.00 | THE SHELF BOT (the Director's yes, 2026-09-29; doc 13 section 11): after every merge to main that
+# touches test/ or the generator, rebuild test/index.html (the device-test shelf page) with .github/shelf/shelf-page.js and
+# commit that one file to main. The only writer of test/index.html: seats commit builds only, so two shelf pull requests
+# can no longer leave the page stale or conflict over it. Fails closed: if the rebuild changed any other file, it commits
+# nothing. Its own push uses GITHUB_TOKEN, which never starts another workflow run, so it cannot loop. If another merge
+# lands while it runs, it rebuilds on the new main and retries (3 tries). Modelled on the studio repo's checklist bot.
+name: shelf page
+on:
+  push:
+    branches: [main]
+    paths: ['test/**', '.github/shelf/**', '.github/workflows/shelf-page.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: shelf-page
+  cancel-in-progress: false
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rebuild and commit the shelf page (that file only)
+        run: |
+          git config user.name "shelf-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for try in 1 2 3; do
+            git fetch -q origin '+refs/heads/*:refs/remotes/origin/*'
+            git reset -q --hard origin/main
+            node .github/shelf/shelf-page.js
+            other=$(git status --porcelain -- . ':(exclude)test/index.html')
+            if [ -n "$other" ]; then echo "SHELF BOT RED: the rebuild changed other files:"; echo "$other"; exit 1; fi
+            if git diff --quiet -- test/index.html; then echo "SHELF BOT: already current"; exit 0; fi
+            git add test/index.html
+            git commit -q -m "Shelf page rebuilt after $(git log -1 --format=%h origin/main) (shelf bot)"
+            if git push -q origin HEAD:main; then echo "SHELF BOT: rebuilt and committed"; exit 0; fi
+            echo "SHELF BOT: main moved while rebuilding; try $try failed, retrying"
+          done
+          echo "SHELF BOT RED: could not push after 3 tries"; exit 1
