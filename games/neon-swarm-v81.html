@@ -569,8 +569,34 @@ v78 PLANES SHELVED. The PHASE PLANES experiment (v75-v77) is reverted
     kept: selling a shift of the play-plane needs a stronger spatial
     cue than dimming, scaling or tint gave at this canvas size.
     Front-plane play is byte-identical to v74.
+v79 HINTS APART. At phone portrait (390x844; found by the shelf render
+    and by the SNAILCADE seat) the right-side control hint printed over
+    TOUCH LEFT SIDE TO MOVE: both hints sat at bottom 46px, and below
+    about 577px wide the action hint's long lines reached the left edge.
+    TOUCH LEFT SIDE TO MOVE now sits beneath the action hint (bottom
+    46px -> 18px), apart at every width. Layout only: the game script
+    changes nothing but its BUILD stamp. New gate: hinttest.js opens the
+    game in real Chromium at six viewports and holds both hints shown,
+    on screen, apart, clear of the menu panel and of the BUILD stamp.
+v80 SHORT SCREENS. On a short screen (SNAILCADE renders 360x640 and
+    280x653) the SELECT MODE panel fills the screen and the hints peeked
+    out around it, and in play the action hint printed over the BUILD
+    stamp at the canvas foot. placeHints(): in play the canvas rises into
+    its own top letterbox just far enough for both hints to sit beneath
+    it (never above the screen top; taller screens do not move), and on
+    the menu a hint that a panel would cover is hidden (visibility only;
+    the first-touch dismissal is untouched). Run from fit(), showPanel()
+    and hideMenu(). hinttest.js v1.01 adds both short sizes and checks
+    every size on the menu and in play.
+v81 WHOLE LABELS. On a narrow screen (344 and 280 wide: fold cover
+    screens) the action hint's long line wrapped mid-label, leaving
+    orphans like "= SHIELD" and "NOVA". Each control label is now kept
+    whole (white-space:nowrap), and a non-breaking space before each
+    middot lets a line break only after it, so a narrow screen wraps
+    between labels. At 360 wide and up the hint reads as in v80. Layout
+    only. hinttest.js v1.02 holds every label on one line.
 -->
-<title>NEON SWARM v78</title>
+<title>NEON SWARM v81</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -653,7 +679,7 @@ v78 PLANES SHELVED. The PHASE PLANES experiment (v75-v77) is reverted
   #actNub.gold { background:rgba(255,227,77,0.55); box-shadow:0 0 16px rgba(255,227,77,0.9); }
   #actNub.oh { background:rgba(255,77,94,0.55); box-shadow:0 0 16px rgba(255,77,94,0.9); }
   #stickHint {
-    position:fixed; left:24px; bottom:46px; z-index:9;
+    position:fixed; left:24px; bottom:18px; z-index:9; /* v79: beneath #actHint (was 46px, shared) */
     color:rgba(70,243,255,0.4); font-size:11px; letter-spacing:2px;
     pointer-events:none; font-family:monospace;
   }
@@ -662,6 +688,7 @@ v78 PLANES SHELVED. The PHASE PLANES experiment (v75-v77) is reverted
     color:rgba(255,61,240,0.4); font-size:11px; letter-spacing:2px;
     pointer-events:none; font-family:monospace; line-height:1.7;
   }
+  #actHint span { white-space:nowrap; } /* v81: a label never breaks; narrow screens wrap between labels */
   /* action buttons replaced by floating action stick in v11 */
 
   /* ---------- multiplayer menu overlay ---------- */
@@ -752,7 +779,7 @@ v78 PLANES SHELVED. The PHASE PLANES experiment (v75-v77) is reverted
 <div id="actZone"></div>
 <div id="actBase"><span class="au">BEAM</span><span class="ad">SHIELD</span><span class="ar">DEFLECT</span><span class="ac">FIRE</span></div>
 <div id="actNub"></div>
-<div id="actHint">RIGHT SIDE<br>HOLD = FIRE &middot; UP = BEAM &middot; DOWN = SHIELD<br>RIGHT = DEFLECT &middot; DOUBLE TAP = NOVA</div>
+<div id="actHint"><span>RIGHT SIDE</span><br><span>HOLD = FIRE</span>&nbsp;&middot; <span>UP = BEAM</span>&nbsp;&middot; <span>DOWN = SHIELD</span><br><span>RIGHT = DEFLECT</span>&nbsp;&middot; <span>DOUBLE TAP = NOVA</span></div>
 
 <div id="menu">
   <div class="panel" id="panelMain">
@@ -836,6 +863,32 @@ function fit(){
   screen.height = H * scale;
   screen.style.width = (W * cssScale) + 'px';
   screen.style.height = (H * cssScale) + 'px';
+  placeHints();
+}
+// v80: the control hints on a short screen. The canvas rises into its top letterbox until both hints fit beneath it,
+// clear of the field and the BUILD stamp (never above the screen top), so play starts with no jump; on the menu a hint
+// that a panel would cover is hidden (visibility only, so the first-touch dismissal by display is untouched). Once
+// both hints are dismissed, the next call (a resize, or the menu's return) centres the canvas again.
+function placeHints(){
+  var wrap = document.getElementById('wrap'), hs = [document.getElementById('stickHint'), document.getElementById('actHint')];
+  wrap.style.transform = '';
+  var sr = screen.getBoundingClientRect(), top = Infinity;
+  hs.forEach(function(el){
+    var r = el.getBoundingClientRect();
+    if (r.height > 0 && r.left < sr.right && sr.left < r.right) top = Math.min(top, r.top);
+  });
+  var lift = Math.min(sr.top, sr.bottom + 2 - top);
+  if (lift > 0) wrap.style.transform = 'translateY(' + (-lift) + 'px)';
+  var menuEl = document.getElementById('menu'), boxes = [];
+  if (!menuEl.classList.contains('hidden')) Array.prototype.forEach.call(menuEl.querySelectorAll('.panel'), function(p){
+    var q = p.getBoundingClientRect(); if (q.height > 0) boxes.push(q);
+  });
+  hs.forEach(function(el){
+    var r = el.getBoundingClientRect();
+    el.style.visibility = boxes.some(function(q){
+      return r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom;
+    }) ? 'hidden' : '';
+  });
 }
 window.addEventListener('resize', fit);
 window.addEventListener('orientationchange', function(){ setTimeout(fit, 250); });
@@ -1300,7 +1353,7 @@ function S(name){
 }
 
 // ---------- state ----------
-var BUILD = 78;
+var BUILD = 81;
 var STATE = 'title';
 var score = 0, hiScore = 0, wave = 0;
 var chain = 0, mult = 1, chainTimer = 0;
@@ -5453,8 +5506,9 @@ var panels = {
 function showPanel(name){
   menu.classList.remove('hidden');
   for (var k in panels) panels[k].hidden = (k !== name);
+  placeHints();
 }
-function hideMenu(){ menu.classList.add('hidden'); }
+function hideMenu(){ menu.classList.add('hidden'); placeHints(); }
 
 // ---- fighter select ----
 var myShip = 0, pendingMode = null, pendingCode = '';
