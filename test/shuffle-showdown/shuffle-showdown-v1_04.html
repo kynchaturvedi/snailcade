@@ -1,0 +1,3596 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>SHUFFLE SHOWDOWN v1.04</title>
+<!-- ==========================================================================
+SHUFFLE SHOWDOWN | Snail Attack Studios | single-file HTML5 card cabinet
+CHANGELOG (append only, newest first)
+v1.04 THE LOBBY (published 2026-09-28): the in-work entry below is this
+  build, whole, plus one readability fix found in real Chromium at
+  390px: the CLASH table printed your deck name over your seat plate (so
+  did v1.03); it now sits on your SP line. The Director's v1.03 device
+  verdicts carry to v1.05.
+v1.04 (in work, unpublished; 2026-09-28)
+  . Net hardening, the reseal ritual (ENGINE_VER 1.02): the host answers a
+    refused want with a snapshot, so a guest left stale by a lost echo of
+    its own move heals instead of stalling the table. Found by the loopback
+    gate nettest v1.00; proven by nettest v1.01 (scenario STALL). Every
+    other gate passes unchanged over the new core.
+  . The online lobby, a second reseal (ENGINE_VER 1.03): a game may add a
+    lobby row (lobbyRow, lobbyLabel, lobbyOpts sockets; an 'opt' message
+    carries each seat's pick). CLASH OF CARDS uses it: host and guest each
+    pick a starter, a mirror match allowed; unpicked seats keep v1.03's
+    online decks. And a table the game cannot seat never starts (a third
+    player at a CLASH table could start one). nettest v1.02: DECKS, SEATS.
+    The lobby's game chips wrap two to a row: since v1.02 the third chip,
+    CLASH OF CARDS, hung off the panel (off screen on a folded phone).
+v1.03 THE READ (2026-07-17)
+  . Director device verdict drives a readability build. Card faces get a
+    harmonious type scale (word-wrapped names, actions that fit their frame,
+    BP and SP no longer colliding). LONG-PRESS any card, in hand or on either
+    ring, for a full-detail inspect panel; any tap closes it. The ring grows
+    to fill the table and the info strips move opposite their piles.
+  . Four small engine services land with the reseal ritual (ENGINE_VER 1.01):
+    a longPress socket on the pointer path, a subHeader socket (no more
+    'TO 100' at a single-match table), a noSort flag (the button was
+    meaningless at the clash table), and a turnY socket for the banner.
+    Classic behavior unchanged: the v1.00 gate suite passes untouched.
+v1.02 THE RING (2026-07-17)
+  . CLASH OF CARDS lands: the studio all-stars battle cartridge in the Card
+    Fighters Clash shape. 2000 HP, a three-slot ring, one fighter fielded per
+    turn (RUSH skips the warm-up), simultaneous BP combat with persistent
+    damage, a defender block window, backups (+200 BP, listed pairs only),
+    an SP economy (fielding pays, KOs console, going second starts +100)
+    funding six action cards and united attacks (2 for 100 SP, 3 for 300).
+  . The roster is REAL: THE ROYAL, SKIRM, VANGUARD, ROCK, EMBER SQUARE and
+    TIDE ORB carry verbatim MONARCH MAYHEM art; the ANGLER KING is the
+    verbatim REEF RIOT painter. Per-slice byte receipts print at assembly.
+  . Two starter decks (ROYAL GUARD, GOBLIN TIDE), a deck pick on the setup
+    screen, bots at all three tables, hotseat with the veil, and online on
+    the unchanged turn protocol. The core seal proves the TABLE CORE
+    byte-identical to v1.01: this build is cartridge and gates only.
+v1.01 THE CATALOG (2026-07-17)
+  . The TABLE CORE grows its cartridge sockets and takes the seal. Painter
+    socket (a cartridge may own its card faces), homes socket (a cartridge
+    may add zones: rings, decks, KO piles), single-match mode for games
+    where one round decides, plate-score and pile-label overrides, a
+    generic fx choreography event, per-game setup options row, and combat
+    voice primitives (thud, ko). RUMMY and CRAZY EIGHTS behavior untouched:
+    the whole v1.00 chain passes unchanged.
+  . ENGINE_VER 1.00 lands beside the build stamp with the coreseal gate:
+    a SHA-256 of the ENGINE-CORE span against a signed manifest, red-proven
+    by a one-byte tamper. From here, cartridge builds prove the core intact.
+v1.00 FIRST LIGHT (2026-07-17)
+  . The CARD CABINET is born: a sealed TABLE CORE (deck engine, seat layout,
+    tween choreography, pixel card painter, AKIT audio, bot socket, PeerJS
+    turn-protocol socket) plus a GAMES registry the menu reads.
+  . Two cartridges prove the socket: RUMMY (straight rummy, 2 to 4 seats,
+    melds, lay offs, discard out, match to 100) and CRAZY EIGHTS (shed to
+    empty, eights wild with suit call, draw cap 3, match to 100).
+  . Bots at three tables: PATSY, HUSTLER, SHARK. Online host-authoritative
+    PeerJS rooms with 4-letter codes, seat cap MAX_SEATS=4 (named constant).
+  . Hotseat pass-and-play with a handoff veil. Round and match ceremonies.
+  . Presentation: 64x88 texel card faces and backs painted procedurally at
+    integer texel scale (doc 11 resolution law), riffle shuffle, arced deals,
+    scale-x flips, four selectable backs (SNAIL CREST default), three felts.
+  . Clock law in: 250ms catch-up drop plus 5-tick frame cap plus
+    visibilitychange resync (net asks for a fresh snapshot after a long gap).
+  . AKIT core v1.02 sliced VERBATIM from snail-audio-lab-v1.06 (provenance
+    banner inline); card sounds and the PARLOR STRUT loop composed from kit
+    primitives, title-local.
+=========================================================================== -->
+<style>
+  html,body{margin:0;padding:0;background:#07100f;height:100%;overflow:hidden;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+  #cv{display:block;touch-action:none;}
+  #fsb{position:fixed;top:calc(6px + env(safe-area-inset-top));right:calc(6px + env(safe-area-inset-right));
+    z-index:9;width:34px;height:34px;line-height:32px;text-align:center;font:16px monospace;
+    color:#e8d9a8;background:rgba(10,24,22,.55);border:1px solid #7a6335;border-radius:6px;cursor:pointer;}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="fsb" title="fullscreen">&#x26F6;</div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(function(){
+'use strict';
+/* Version stamps live ABOVE the sealed core: they change every build, while
+   the ENGINE-CORE span below must hash identically across cartridge builds.
+   (Ratified v1.02: the seal proves engine logic, not the build number.)    */
+var VER = '1.04';                    // the build stamp, shown on menu + table
+var ENGINE_VER = '1.03';             // TABLE CORE seal line (doc 09); reseal only with a recorded reason
+/*==== ENGINE-CORE BEGIN ====*/
+/* ---------------------------------------------------------------------------
+   TABLE CORE: everything below this banner is game-agnostic. Cartridges live
+   in their own fenced regions and reach the core only through registerGame
+   and the state they are handed. Doc 09 pattern. The formal seal (ENGINE_VER
+   + coreseal) landed at v1.01; the build-number stamps sit above this fence
+   so the sealed span is pure engine logic and holds byte-identical across
+   cartridge builds.
+--------------------------------------------------------------------------- */
+var MAX_SEATS = 4;                   // online + local seat cap; lift here when expanding
+var TARGET_SCORE = 100;              // match ends when a seat reaches this
+var STEP = 1000/60;                  // fixed sim step ms
+var CATCHUP_DROP = 250;              // clock law: gap beyond this is dropped, never replayed
+var TICK_CAP = 5;                    // clock law: hard per-frame tick ceiling
+var TURN_GUARD = 600;                // defensive stalemate cap on actions per round
+var DRAW_CAP_EIGHTS = 3;             // crazy eights: draws allowed before PASS unlocks
+var BOT_MIN_MS = 520, BOT_STEP_MS = 460; // bot pacing so turns read like a player
+
+var doc = (typeof document !== 'undefined') ? document : null;
+var win = (typeof window !== 'undefined') ? window : {};
+var cv = (doc && doc.getElementById) ? doc.getElementById('cv') : null;
+var ctx = cv ? cv.getContext('2d') : null;
+var HEADLESS = !ctx;
+
+/* ---- error reporter FIRST (07 build 1 law): every crash photographable --- */
+var lastError = null;
+function reportErr(site, e){
+  lastError = site + ': ' + (e && e.message ? e.message : String(e));
+  try{ if(typeof console !== 'undefined') console.error('ERR', lastError, e); }catch(_){}
+}
+if(win.addEventListener){
+  win.addEventListener('error', function(ev){ if(!lastError) lastError = 'window: ' + ev.message; });
+}
+
+/* ---- deterministic RNG (mulberry32 core, state carried IN game state) ---- */
+function rnd(g){ /* g.rngS is a 32-bit int inside serialized state: net-safe */
+  g.rngS = (g.rngS + 0x6D2B79F5) | 0;
+  var t = Math.imul(g.rngS ^ (g.rngS >>> 15), 1 | g.rngS);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+function rndInt(g, n){ return Math.floor(rnd(g) * n); }
+function shuffleArr(g, arr){          // Fisher-Yates on the state rng
+  for(var i = arr.length - 1; i > 0; i--){
+    var j = rndInt(g, i + 1); var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+function uiRnd(){ return Math.random(); } // cosmetic only, never inside apply()
+
+/* ---- cards: id 0..51, suit = id/13 (S H D C), rank = id%13 (A..K, A low) - */
+var SUITS = ['S','H','D','C'];
+var RANKN = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+function suitOf(id){ return Math.floor(id / 13); }
+function rankOf(id){ return id % 13; }
+function isRed(id){ var s = suitOf(id); return s === 1 || s === 2; }
+function pipValue(id){ var r = rankOf(id); return r === 0 ? 1 : (r >= 9 ? 10 : r + 1); }
+function makeDeck(){ var d = []; for(var i = 0; i < 52; i++) d.push(i); return d; }
+function cardName(id){ return RANKN[rankOf(id)] + '' + SUITS[suitOf(id)]; }
+
+/* ---- 5x7 bitmap font: the parlor letterface (caps, digits, marks) -------- */
+var FONT5 = {
+'A':['01110','10001','10001','11111','10001','10001','10001'],
+'B':['11110','10001','10001','11110','10001','10001','11110'],
+'C':['01111','10000','10000','10000','10000','10000','01111'],
+'D':['11110','10001','10001','10001','10001','10001','11110'],
+'E':['11111','10000','10000','11110','10000','10000','11111'],
+'F':['11111','10000','10000','11110','10000','10000','10000'],
+'G':['01111','10000','10000','10111','10001','10001','01110'],
+'H':['10001','10001','10001','11111','10001','10001','10001'],
+'I':['11111','00100','00100','00100','00100','00100','11111'],
+'J':['00111','00010','00010','00010','00010','10010','01100'],
+'K':['10001','10010','10100','11000','10100','10010','10001'],
+'L':['10000','10000','10000','10000','10000','10000','11111'],
+'M':['10001','11011','10101','10101','10001','10001','10001'],
+'N':['10001','11001','10101','10011','10001','10001','10001'],
+'O':['01110','10001','10001','10001','10001','10001','01110'],
+'P':['11110','10001','10001','11110','10000','10000','10000'],
+'Q':['01110','10001','10001','10001','10101','10010','01101'],
+'R':['11110','10001','10001','11110','10100','10010','10001'],
+'S':['01111','10000','10000','01110','00001','00001','11110'],
+'T':['11111','00100','00100','00100','00100','00100','00100'],
+'U':['10001','10001','10001','10001','10001','10001','01110'],
+'V':['10001','10001','10001','10001','10001','01010','00100'],
+'W':['10001','10001','10001','10101','10101','11011','10001'],
+'X':['10001','10001','01010','00100','01010','10001','10001'],
+'Y':['10001','10001','01010','00100','00100','00100','00100'],
+'Z':['11111','00001','00010','00100','01000','10000','11111'],
+'0':['01110','10011','10101','10101','10101','11001','01110'],
+'1':['00100','01100','00100','00100','00100','00100','01110'],
+'2':['01110','10001','00001','00110','01000','10000','11111'],
+'3':['11110','00001','00001','01110','00001','00001','11110'],
+'4':['00010','00110','01010','10010','11111','00010','00010'],
+'5':['11111','10000','10000','11110','00001','00001','11110'],
+'6':['01110','10000','10000','11110','10001','10001','01110'],
+'7':['11111','00001','00010','00100','01000','01000','01000'],
+'8':['01110','10001','10001','01110','10001','10001','01110'],
+'9':['01110','10001','10001','01111','00001','00001','01110'],
+' ':['00000','00000','00000','00000','00000','00000','00000'],
+'.':['00000','00000','00000','00000','00000','01100','01100'],
+',':['00000','00000','00000','00000','00110','00110','01100'],
+':':['00000','01100','01100','00000','01100','01100','00000'],
+'!':['00100','00100','00100','00100','00100','00000','00100'],
+'?':['01110','10001','00001','00110','00100','00000','00100'],
+"'":['00110','00110','01100','00000','00000','00000','00000'],
+'-':['00000','00000','00000','01110','00000','00000','00000'],
+'+':['00000','00100','00100','11111','00100','00100','00000'],
+'/':['00001','00010','00010','00100','01000','01000','10000'],
+'<':['00010','00100','01000','10000','01000','00100','00010'],
+'>':['01000','00100','00010','00001','00010','00100','01000'],
+'x':['00000','00000','10001','01010','00100','01010','10001'],
+'*':['00100','10101','01110','00100','01110','10101','00100'],
+'(':['00010','00100','01000','01000','01000','00100','00010'],
+')':['01000','00100','00010','00010','00010','00100','01000']
+};
+function textW(str, s){ return str.length * 6 * s - s; }
+function drawText(g, str, x, y, s, col, align){
+  if(!g) return;
+  str = String(str).toUpperCase();
+  if(align === 'c') x -= Math.floor(textW(str, s) / 2);
+  else if(align === 'r') x -= textW(str, s);
+  g.fillStyle = col;
+  for(var i = 0; i < str.length; i++){
+    var gl = FONT5[str[i]] || FONT5['?'];
+    for(var r = 0; r < 7; r++){
+      var row = gl[r];
+      for(var c = 0; c < 5; c++){
+        if(row.charAt(c) === '1') g.fillRect(x + (i*6 + c) * s, y + r * s, s, s);
+      }
+    }
+  }
+}
+
+/* ---- pip + emblem bitmaps (7-wide masters, integer-scaled everywhere) ---- */
+var PIPS = {
+  H:['0110110','1111111','1111111','1111111','0111110','0011100','0001000'],
+  D:['0001000','0011100','0111110','1111111','0111110','0011100','0001000'],
+  S:['0001000','0011100','0111110','1111111','1111111','0101010','0011100'],
+  C:['0011100','0111110','0011100','1101011','1111111','1101011','0011100']
+};
+var CROWN = ['1010101','1010101','1111111','1111111','0111110'];
+var TABARD= ['0111110','0101010','0111110','0011100','0011100'];
+var ROSE  = ['0011100','0111110','0110110','0111110','0011100'];
+function drawBits(g, bits, x, y, s, col){
+  g.fillStyle = col;
+  for(var r = 0; r < bits.length; r++){
+    var row = bits[r];
+    for(var c = 0; c < row.length; c++){
+      if(row.charAt(c) === '1') g.fillRect(x + c * s, y + r * s, s, s);
+    }
+  }
+}
+function drawPip(g, suit, cx, cy, s, col){
+  drawBits(g, PIPS[SUITS[suit]], cx - Math.floor(3.5 * s), cy - Math.floor(3.5 * s), s, col);
+}
+
+/* ---- palette (the parlor contract: signals never reused decoratively) ---- */
+var PAL = {
+  paper:'#f3ecd8', paperLo:'#ded4b8', ink:'#262a33', red:'#cf4638',
+  brass:'#d8a94f', brassHi:'#f4dd96', brassLo:'#8a6a2c',
+  cream:'#f4eeda', dim:'#a99f86',
+  railHi:'#6b4527', railLo:'#3c2513',
+  good:'#5fd08a', warn:'#e8b74a', bad:'#e0604f', sel:'#63d6c3'
+};
+var FELTS = [
+  {name:'TEAL FELT',    base:'#0d3a38', lo:'#082523', glow:'#155a55'},
+  {name:'EMERALD FELT', base:'#12472e', lo:'#0a2c1c', glow:'#1c6a45'},
+  {name:'BURGUNDY FELT',base:'#431720', lo:'#2a0d13', glow:'#63222f'}
+];
+var SEATCOL = ['#63d6c3','#e8b74a','#d783d0','#8fb8ff']; // seat accents, HUD only
+
+/* ---- card painter: 64x88 texel faces + backs, cached per texel scale ---- */
+var TEXW = 64, TEXH = 88;
+var spriteCache = {};        // key: kind|id|backId|T
+function makeCanvas(w, h){
+  if(doc && doc.createElement){
+    var c = doc.createElement('canvas');
+    if(c){ c.width = w; c.height = h; return c; }
+  }
+  return null;
+}
+function px(g, x, y, w, h, col){ g.fillStyle = col; g.fillRect(x, y, w, h); }
+function roundedCardBase(g, T, fill, edge){
+  /* pixel-rounded rect: corner steps 3,2,1 texels */
+  var ins = [3,2,1];
+  px(g, 0, 3*T, TEXW*T, (TEXH-6)*T, fill);
+  for(var i = 0; i < 3; i++){
+    px(g, ins[i]*T, i*T, (TEXW - 2*ins[i])*T, T, fill);
+    px(g, ins[i]*T, (TEXH-1-i)*T, (TEXW - 2*ins[i])*T, T, fill);
+  }
+  /* edge line */
+  for(i = 0; i < 3; i++){
+    px(g, ins[i]*T, i*T, (TEXW - 2*ins[i])*T, T, i===0?edge:fill);
+    px(g, ins[i]*T, (TEXH-1-i)*T, (TEXW - 2*ins[i])*T, T, i===0?edge:fill);
+  }
+  px(g, 0, 3*T, T, (TEXH-6)*T, edge); px(g, (TEXW-1)*T, 3*T, T, (TEXH-6)*T, edge);
+  px(g, T, 1*T, 2*T, 2*T, edge); px(g, (TEXW-3)*T, 1*T, 2*T, 2*T, edge);
+  px(g, T, (TEXH-3)*T, 2*T, 2*T, edge); px(g, (TEXW-3)*T, (TEXH-3)*T, 2*T, 2*T, edge);
+  px(g, 3*T, 0, (TEXW-6)*T, T, edge); px(g, 3*T, (TEXH-1)*T, (TEXW-6)*T, T, edge);
+}
+/* classic pip grids: columns 16/32/48, rows on an 8-row lattice */
+var PIPCOL = [16, 32, 48];
+var PIPROW = [18, 28, 38, 44, 50, 60, 70];
+var PIPLAY = { /* rank(2..10) -> [col,row] pairs on the lattice, house layouts */
+  1:[[1,0],[1,6]],
+  2:[[1,0],[1,3],[1,6]],
+  3:[[0,0],[2,0],[0,6],[2,6]],
+  4:[[0,0],[2,0],[1,3],[0,6],[2,6]],
+  5:[[0,0],[2,0],[0,3],[2,3],[0,6],[2,6]],
+  6:[[0,0],[2,0],[1,1],[0,3],[2,3],[0,6],[2,6]],
+  7:[[0,0],[2,0],[1,1],[0,3],[2,3],[1,5],[0,6],[2,6]],
+  8:[[0,0],[2,0],[0,2],[2,2],[0,4],[2,4],[0,6],[2,6]],
+  9:[[0,0],[2,0],[0,2],[2,2],[1,3],[0,4],[2,4],[0,6],[2,6]]
+};
+function paintFace(g, T, id){
+  roundedCardBase(g, T, PAL.paper, PAL.ink);
+  px(g, 2*T, 2*T, (TEXW-4)*T, T, PAL.paperLo);           // top sheen line
+  var s = suitOf(id), r = rankOf(id);
+  var col = isRed(id) ? PAL.red : PAL.ink;
+  /* corner indices, top-left and bottom-right mirrored */
+  var rn = RANKN[r];
+  drawText(g, rn, 5*T, 5*T, T, col);
+  drawPip(g, s, (rn.length===2?11:8)*T, 17*T, T, col);
+  /* mirrored index bottom-right, rotated 180 by symmetric plotting */
+  g.save(); g.translate(TEXW*T, TEXH*T); g.rotate(Math.PI);
+  drawText(g, rn, 5*T, 5*T, T, col);
+  drawPip(g, s, (rn.length===2?11:8)*T, 17*T, T, col);
+  g.restore();
+  if(r === 0){                                            // ACE: grand pip + flourish
+    drawPip(g, s, 32*T, 44*T, 3*T, col);
+    drawBits(g, ROSE, 25*T, 66*T, T, PAL.brass);
+    drawBits(g, ROSE, 34*T, 66*T, T, PAL.brass);
+    drawBits(g, ROSE, 29.5*T|0, 18*T, T, PAL.brass);
+  } else if(r >= 10){                                     // COURT: framed emblem
+    px(g, 12*T, 20*T, 40*T, 48*T, isRed(id)?'#f0d9c4':'#dfe3ea');
+    px(g, 12*T, 20*T, 40*T, T, PAL.brassLo); px(g, 12*T, 67*T, 40*T, T, PAL.brassLo);
+    px(g, 12*T, 20*T, T, 48*T, PAL.brassLo); px(g, 51*T, 20*T, T, 48*T, PAL.brassLo);
+    for(var dgi = 0; dgi < 40; dgi++)                     // diagonal drape
+      px(g, (12+dgi)*T, (20 + Math.floor(dgi*48/40))*T, T, T, PAL.brass);
+    drawText(g, rn, 32*T - 7*T, 30*T, 3*T, col, undefined);
+    var emb = r === 12 ? CROWN : (r === 11 ? ROSE : TABARD);
+    drawBits(g, emb, 25*T, 52*T, 2*T, PAL.brass);
+    drawPip(g, s, 32*T, 63*T, T, col);
+  } else {                                                // pip lattice
+    var lay = PIPLAY[r];
+    for(var i = 0; i < lay.length; i++){
+      drawPip(g, s, PIPCOL[lay[i][0]]*T, PIPROW[lay[i][1]]*T, T + (r<4?1:0)*0, col);
+    }
+  }
+}
+/* the four backs: SNAIL CREST is the studio signature */
+var BACKS = [
+  {id:'crest',  name:'SNAIL CREST'},
+  {id:'lattice',name:'FILIGREE'},
+  {id:'night',  name:'MIDNIGHT'},
+  {id:'ember',  name:'EMBER'}
+];
+function paintCrest(g, T, cx, cy, R, colA, colB){
+  /* the crest spiral: r grows with theta, plotted chunky; head + stalks */
+  for(var t = 0; t < 13.2; t += 0.045){
+    var rr = 1.4 + t * (R / 13.2);
+    var x = cx + Math.cos(t) * rr * 0.92, y = cy + Math.sin(t) * rr;
+    px(g, Math.round(x - 1)*T, Math.round(y - 1)*T, 2*T, 2*T, (t % 6.28 < 3.14) ? colA : colB);
+  }
+  var hx = cx - R - 4, hy = cy + 3;
+  px(g, Math.round(hx)*T, Math.round(hy)*T, 5*T, 3*T, colA);         // head
+  px(g, Math.round(hx)*T, Math.round(hy-2)*T, T, 2*T, colA);         // stalk 1
+  px(g, Math.round(hx+2)*T, Math.round(hy-3)*T, T, 3*T, colA);       // stalk 2
+  px(g, Math.round(hx)*T, Math.round(hy-3)*T, T, T, colB);
+  px(g, Math.round(hx+2)*T, Math.round(hy-4)*T, T, T, colB);
+}
+function paintBack(g, T, backId){
+  roundedCardBase(g, T, '#12403d', PAL.ink);
+  px(g, 3*T, 3*T, (TEXW-6)*T, (TEXH-6)*T, '#0e3431');
+  px(g, 4*T, 4*T, (TEXW-8)*T, (TEXH-8)*T, '#12403d');
+  /* brass inner frame */
+  px(g, 6*T, 6*T, (TEXW-12)*T, T, PAL.brass); px(g, 6*T, (TEXH-7)*T, (TEXW-12)*T, T, PAL.brass);
+  px(g, 6*T, 6*T, T, (TEXH-12)*T, PAL.brass); px(g, (TEXW-7)*T, 6*T, T, (TEXH-12)*T, PAL.brass);
+  var i, x, y;
+  if(backId === 'crest'){
+    paintCrest(g, T, 32, 44, 18, PAL.brass, PAL.brassHi);
+    for(i = 0; i < 4; i++){
+      px(g, (10 + (i%2)*42)*T, (10 + Math.floor(i/2)*64)*T, 2*T, 2*T, PAL.brassHi);
+    }
+  } else if(backId === 'lattice'){
+    for(y = 8; y < TEXH-8; y++) for(x = 8; x < TEXW-8; x++){
+      var m = (x + y) % 8, n = (x - y % 256 + 256) % 8;
+      if(m === 0 || n === 0) px(g, x*T, y*T, T, T, m===0? PAL.brassLo : '#1c5a54');
+    }
+    drawPip(g, 3, 32*T, 44*T, 2*T, PAL.brass);
+  } else if(backId === 'night'){
+    px(g, 7*T, 7*T, (TEXW-14)*T, (TEXH-14)*T, '#101a33');
+    var sr = {rngS: 77};
+    for(i = 0; i < 46; i++){
+      x = 8 + rndInt(sr, TEXW-16); y = 8 + rndInt(sr, TEXH-16);
+      px(g, x*T, y*T, T, T, i % 5 ? '#c9d4ef' : PAL.brassHi);
+    }
+    for(i = 0; i < 8; i++) px(g, (40+i)*T, (16 + (i%3))*T, T, T, '#e9eefb');
+    px(g, 18*T, 20*T, 6*T, 6*T, '#e9eefb'); px(g, 20*T, 20*T, 6*T, 6*T, '#101a33');
+  } else if(backId === 'ember'){
+    for(y = 7; y < TEXH-7; y++){
+      var f = (y - 7) / (TEXH - 14);
+      px(g, 7*T, y*T, (TEXW-14)*T, T, f < .34 ? '#5a1c17' : f < .67 ? '#8a3a1c' : '#b06a24');
+    }
+    drawPip(g, 2, 32*T, 44*T, 3*T, PAL.brassHi);
+    for(i = 0; i < 6; i++) px(g, (14 + i*7)*T, (76 - (i%2)*2)*T, 2*T, 2*T, '#e8b74a');
+  }
+}
+function getSprite(kind, id, backId, T){
+  /* painter socket: a cartridge may own its faces via G.paintFace(g2d, T, id) */
+  var G = STATE.match ? GAMES[STATE.match.gameId] : null;
+  var gid = (kind === 'f' && G && G.paintFace) ? G.id : 'std';
+  var key = gid + '|' + kind + '|' + id + '|' + backId + '|' + T;
+  var c = spriteCache[key];
+  if(c) return c;
+  c = makeCanvas(TEXW*T, TEXH*T);
+  if(!c) return null;
+  var g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  if(kind === 'f'){ if(gid !== 'std') G.paintFace(g, T, id); else paintFace(g, T, id); }
+  else paintBack(g, T, backId);
+  spriteCache[key] = c;
+  return c;
+}
+
+/* SLICED VERBATIM from snail-audio-lab-v1.06.html: AKIT core (kit v1.02), 6584 bytes, sha 7a04192f3aa6. */
+/* ============================================================================
+   SNAIL AUDIO KIT v1.00 (core module) | Snail Attack Studios | 2026-07-06
+   ----------------------------------------------------------------------------
+   The studio's sound as a drop-in. NOT invented: two production synth
+   primitives carried VERBATIM plus a recipe book of shipped, Director-heard
+   sounds, each with provenance.
+   - tone(f,dur,type,vol,slide): PATTY PANIC v217's engine. LINEAR pitch slide,
+     exponential volume decay. Percussive, chunky, arcade-floor.
+   - sweep(f,end,dur,type,vol): NEON SWARM v78's beep engine. EXPONENTIAL pitch
+     ramp to a target. Lasers, charges, whooshes, anything that travels.
+   - arp(notes,step,dur,type,vol): PATTY's arpeggiator for jingles and rewards.
+   Boot is gesture-safe per the STUDIO SEED lesson: mobile contexts can be
+   CREATED SUSPENDED, so boot() both creates AND resumes inside the gesture.
+   Master gain ships at NEON SWARM's 0.16. Headless-inert: without an
+   AudioContext every call is a silent no-op and cannot move a gate.
+   ----------------------------------------------------------------------------
+   WIRING: call AKIT.boot() inside EVERY input gesture handler (touchstart,
+   keydown); it is idempotent. Then fire recipes: AKIT.sfx.hit(); or compose
+   your own from the primitives and register them on AKIT.sfx.
+   ============================================================================ */
+var AKIT = (function(){
+'use strict';
+var VERSION = '1.02';   /* kit v1.02: ctx/bus accessors + the five-title merge */
+var AC = null, master = null, VOL = 0.16;          // NEON SWARM shipped master
+
+function boot(){                                    // call inside every gesture
+  try{
+    if(!AC){
+      var C = (typeof AudioContext !== 'undefined') ? AudioContext :
+              (typeof webkitAudioContext !== 'undefined' ? webkitAudioContext : null);
+      if(!C) return false;
+      AC = new C();
+      master = AC.createGain(); master.gain.value = VOL;
+      master.connect(AC.destination);
+    }
+    if(AC.state === 'suspended' && AC.resume) AC.resume();   // the seed lesson
+    return true;
+  }catch(e){ AC = null; return false; }
+}
+function setVolume(v){ VOL = Math.max(0, Math.min(1, v)); if(master) master.gain.value = VOL; }
+function ready(){ return !!AC; }
+
+/* PATTY PANIC v217 tone(), verbatim shape: linear slide, exp decay */
+function tone(f, dur, type, vol, slide){
+  if(!AC) return;
+  try{
+    var o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime;
+    o.type = type || 'square'; o.frequency.setValueAtTime(f, t);
+    if(slide) o.frequency.linearRampToValueAtTime(Math.max(30, f + slide), t + dur);
+    g.gain.setValueAtTime(vol || 0.5, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
+  }catch(e){}
+}
+/* NEON SWARM v78 beep(), verbatim shape: exponential ramp to a target pitch */
+function sweep(freq, end, dur, type, vol){
+  if(!AC) return;
+  try{
+    var o = AC.createOscillator(), gn = AC.createGain(), t = AC.currentTime;
+    o.type = type || 'square';
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20, end), t + dur);
+    gn.gain.setValueAtTime(vol || 0.5, t);
+    gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(gn); gn.connect(master); o.start(t); o.stop(t + dur + 0.02);
+  }catch(e){}
+}
+/* PATTY PANIC arp(), verbatim shape */
+function arp(notes, step, dur, type, vol){
+  if(!AC) return;
+  for(var i = 0; i < notes.length; i++)
+    (function(nt, j){ setTimeout(function(){ tone(nt, dur, type, vol); }, j * step); })(notes[i], i);
+}
+
+/* THE RECIPE BOOK: shipped sounds, per-recipe provenance. Grade your game's
+   events (UI < action < impact < big < fail) and pick within the grade. */
+var sfx = {
+  /* UI */
+  press:      function(){ tone(660, 0.05, 'square', 0.3); },                    // PATTY press
+  tick:       function(){ tone(880, 0.03, 'square', 0.2); },                    // PATTY idiom, lighter
+  /* ACTION */
+  jump:       function(){ tone(340, 0.11, 'square', 0.3, 620); },               // PATTY v195 CAP CHEF chirp
+  spring:     function(){ tone(300, 0.13, 'triangle', 0.4, 520); },             // PATTY v75 boing
+  web:        function(){ tone(520, 0.06, 'square', 0.28, -160); },             // PATTY v202 thwip
+  shoot:      function(){ sweep(880, 220, 0.07, 'square', 0.22); },             // NEON SWARM shoot
+  dive:       function(){ sweep(1200, 500, 0.25, 'square', 0.18); },            // NEON SWARM dive
+  /* IMPACT */
+  land:       function(){ tone(110, 0.09, 'square', 0.45); },                   // PATTY land
+  hit:        function(){ sweep(300, 60, 0.18, 'sawtooth', 0.6); },             // NEON SWARM hit
+  stun:       function(){ tone(1250, 0.08, 'square', 0.3, -300); },             // PATTY pepper
+  crush:      function(){ tone(150, 0.16, 'sawtooth', 0.5, -90); },             // PATTY crush
+  reflect:    function(){ sweep(1000, 1800, 0.1, 'square', 0.4); },             // NEON SWARM deflect ping
+  /* BIG */
+  big:        function(){ sweep(160, 30, 0.45, 'sawtooth', 0.9);
+                          sweep(90, 25, 0.5, 'triangle', 0.7); },               // NEON SWARM layered boom
+  nova:       function(){ sweep(70, 20, 1.0, 'sawtooth', 1.0);
+                          sweep(900, 80, 0.7, 'triangle', 0.8); },              // NEON SWARM nova
+  /* REWARD */
+  pickup:     function(){ sweep(600, 1400, 0.12, 'sine', 0.5); },               // NEON SWARM absorb
+  charge:     function(){ sweep(600, 1200, 0.25, 'sine', 0.6); },               // NEON SWARM nova-ready
+  jingle:     function(){ arp([523, 659, 784, 1047], 70, 0.09, 'square', 0.35); }, // PATTY arp idiom, C major run
+  waveclear:  function(){ sweep(440, 880, 0.3, 'triangle', 0.5); },             // NEON SWARM wave
+  /* FAIL */
+  death:      function(){ sweep(500, 40, 0.8, 'sawtooth', 1.0); },              // NEON SWARM death
+  breakdown:  function(){ tone(220, 0.2, 'sawtooth', 0.45, 60); },              // PATTY v81 spring-break crunch
+  overheat:   function(){ sweep(400, 70, 0.5, 'square', 0.6); }                 // NEON SWARM overheat
+};
+
+return { VERSION:VERSION, boot:boot, ready:ready, setVolume:setVolume,
+         tone:tone, sweep:sweep, arp:arp, sfx:sfx,
+         ctx:function(){return AC;}, bus:function(){return master;} };   /* kit v1.02: the shared context and master, exposed so contributions bind to THE kit instead of guessing internals (FRENZY FLEET's noiseFlat asked for exactly this) */
+})();
+/* ---- card table voice: composed from AKIT primitives (title-local) ------- */
+/* Provenance: composition per the kit's own WIRING note; primitives verbatim
+   above. Grades: UI ticks < card action < table moment < ceremony. */
+AKIT.sfx.swish   = function(){ AKIT.sweep(900, 320, 0.09, 'triangle', 0.20); };            // card flight
+AKIT.sfx.snap    = function(){ AKIT.tone(200, 0.045, 'square', 0.34, -70); AKIT.tone(1500, 0.03, 'square', 0.12); }; // card lands
+AKIT.sfx.flip    = function(){ AKIT.sweep(520, 1240, 0.07, 'triangle', 0.22); };           // face reveal
+AKIT.sfx.riff    = function(){ AKIT.tone(1700 + Math.random()*500, 0.018, 'square', 0.10); }; // one riffle tick
+AKIT.sfx.chip    = function(){ AKIT.tone(1180, 0.05, 'triangle', 0.25); AKIT.tone(1560, 0.04, 'triangle', 0.16); };  // score chip
+AKIT.sfx.meld    = function(){ AKIT.arp([523, 659, 784], 55, 0.08, 'triangle', 0.3); };    // meld laid
+AKIT.sfx.denied  = function(){ AKIT.tone(180, 0.09, 'square', 0.3, -40); };                // illegal tap
+AKIT.sfx.yourturn= function(){ AKIT.tone(660, 0.06, 'triangle', 0.24, 120); };             // turn passes to you
+AKIT.sfx.roundwin= function(){ AKIT.arp([523, 659, 784, 1047, 1319], 70, 0.1, 'square', 0.32); };
+AKIT.sfx.matchwin= function(){ AKIT.arp([392, 523, 659, 784, 1047, 1319, 1568], 80, 0.12, 'square', 0.34); };
+AKIT.sfx.lose    = function(){ AKIT.sweep(420, 90, 0.5, 'triangle', 0.4); };
+AKIT.sfx.suit    = function(){ AKIT.arp([880, 1108], 60, 0.07, 'triangle', 0.26); };       // eight calls a suit
+AKIT.sfx.thud    = function(){ AKIT.tone(120, 0.09, 'square', 0.4, -60); AKIT.tone(72, 0.12, 'triangle', 0.3); };  // combat impact
+AKIT.sfx.ko      = function(){ AKIT.sweep(500, 120, 0.28, 'square', 0.3); };               // a fighter falls
+
+/* ---- PARLOR STRUT: the table loop, title-local, kit primitives ----------- */
+var MUSIC = (function(){
+  var timer = null, step = 0, on = true, playing = false;
+  var BASS = [98, 0, 123, 0, 131, 0, 123, 0, 98, 0, 123, 0, 131, 0, 147, 123]; // walking line
+  var CHRD = [[262,330,392],0,0,[262,330,392],0,0,[247,311,392],0,
+              [262,330,392],0,0,[294,370,440],0,0,[262,330,392],0];             // soft comp
+  var SPARK= [0,0,784,0, 0,659,0,0, 0,0,880,0, 0,0,1047,0];                     // brush spark
+  function beat(){
+    if(!on || !AKIT.ready()){ return; }
+    var b = BASS[step]; if(b) AKIT.tone(b, 0.16, 'triangle', 0.30);
+    var ch = CHRD[step];
+    if(ch) for(var i = 0; i < ch.length; i++) AKIT.tone(ch[i], 0.10, 'sine', 0.10);
+    var sp = SPARK[step]; if(sp && step % 2 === 0) AKIT.tone(sp, 0.05, 'triangle', 0.07);
+    step = (step + 1) % 16;
+  }
+  return {
+    start:function(){ if(playing || HEADLESS) return; playing = true; step = 0;
+      timer = setInterval(beat, 168); },                       // 168ms step: an easy strut
+    stop:function(){ if(timer){ clearInterval(timer); timer = null; } playing = false; },
+    setOn:function(v){ on = v; if(!v && timer){ /* keep timer, silent */ } },
+    isOn:function(){ return on; }
+  };
+})();
+
+/* ---- settings (persisted; headless-safe) --------------------------------- */
+var SET = {backId:'crest', felt:0, music:true, sfx:true, haptics:true, name:'YOU'};
+function loadSet(){
+  try{
+    var raw = win.localStorage ? win.localStorage.getItem('shufshow') : null;
+    if(raw){ var o = JSON.parse(raw); for(var k in SET) if(o[k] !== undefined) SET[k] = o[k]; }
+  }catch(e){}
+}
+function saveSet(){
+  try{ if(win.localStorage) win.localStorage.setItem('shufshow', JSON.stringify(SET)); }catch(e){}
+}
+function buzz(ms){ try{ if(SET.haptics && typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+function sfx(name){ try{ if(SET.sfx && AKIT.sfx[name]) AKIT.sfx[name](); }catch(e){} }
+
+/* ---- display law: canvas sizes FROM the device, relayout live ------------ */
+var W = 390, H = 720, BS = 1;        // logical CSS px + integer backing scale
+function fitCanvas(){
+  if(!cv) return;
+  W = win.innerWidth || 390; H = win.innerHeight || 720;
+  BS = Math.min(3, Math.max(1, Math.floor(win.devicePixelRatio || 1))); // integer: crisp texels
+  cv.width = W * BS; cv.height = H * BS;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(BS, 0, 0, BS, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  layoutDirty = true;
+}
+if(win.addEventListener){
+  win.addEventListener('resize', function(){ fitCanvas(); });
+  win.addEventListener('orientationchange', function(){ setTimeout(fitCanvas, 60); });
+}
+
+/* ---- layout: every rect derived from W,H each relayout (fold-safe) ------- */
+var L = {};                          // the live layout
+var layoutDirty = true;
+function computeLayout(){
+  layoutDirty = false;
+  var pad = 10, topH = 44;
+  var landscape = W > H * 1.15;
+  var cardH = Math.max(66, Math.min(Math.floor(H * (landscape ? 0.30 : 0.165)), Math.floor(W / 3.4)));
+  var T = Math.max(1, Math.round(cardH / TEXH));
+  L.T = T; L.cw = TEXW * T; L.ch = TEXH * T;
+  L.top = {x:0, y:0, w:W, h:topH};
+  var handH = L.ch + 26;
+  var actH = 46;
+  L.hand = {x:pad, y:H - handH - 8, w:W - pad*2, h:handH};
+  L.act  = {x:pad, y:L.hand.y - actH - 4, w:W - pad*2, h:actH};
+  var midTop = topH + 6, midBot = L.act.y - 6;
+  var cy = Math.floor((midTop + midBot) / 2);
+  L.stock   = {x:Math.floor(W/2 - L.cw - 8), y:cy - Math.floor(L.ch/2), w:L.cw, h:L.ch};
+  L.discard = {x:Math.floor(W/2 + 8),        y:cy - Math.floor(L.ch/2), w:L.cw, h:L.ch};
+  L.meld = {x:pad, y:L.act.y - Math.floor(L.ch*0.72) - 12, w:W - pad*2, h:Math.floor(L.ch*0.72) + 6};
+  L.seatArea = {top:topH + 4, bottom:L.stock.y - 6};
+  L.cy = cy;
+}
+function seatAnchor(vi, n){          // vi: view index 0=me(bottom); others around top
+  if(vi === 0) return {x:W/2, y:L.hand.y + L.ch*0.5, ang:0};
+  var slots;
+  if(n === 2) slots = [[0.5, 1]];
+  else if(n === 3) slots = [[0.16, 0.9],[0.84, 0.9]];
+  else slots = [[0.12, 0.86],[0.5, 1],[0.88, 0.86]];
+  var s = slots[vi - 1] || slots[0];
+  return {x: Math.floor(W * s[0]), y: L.seatArea.top + 30 + (1 - s[1]) * 40, ang:0};
+}
+
+/* ---- tween engine: the table's only motion vocabulary -------------------- */
+var tweens = [];
+function ease(k, t){
+  if(k === 'out') return 1 - Math.pow(1 - t, 3);
+  if(k === 'in') return t * t * t;
+  if(k === 'inout') return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+  if(k === 'back'){ var c = 1.70158; return 1 + (c+1)*Math.pow(t-1,3) + c*Math.pow(t-1,2); }
+  return t;
+}
+function tween(obj, to, dur, k, delay, done){
+  var tw = {o:obj, from:{}, to:to, t:-(delay||0), d:dur, k:k||'out', done:done||null, live:true};
+  for(var p in to) tw.from[p] = obj[p];
+  tweens.push(tw); return tw;
+}
+function tickTweens(dt){
+  var w = 0;
+  for(var i = 0; i < tweens.length; i++){
+    var tw = tweens[i];
+    if(!tw.live) continue;
+    tw.t += dt;
+    if(tw.t < 0){ tweens[w++] = tw; continue; }
+    var f = tw.d <= 0 ? 1 : Math.min(1, tw.t / tw.d);
+    if(f === 0){ for(var p0 in tw.to) tw.from[p0] = tw.o[p0]; }
+    var e = ease(tw.k, f);
+    for(var p in tw.to) tw.o[p] = tw.from[p] + (tw.to[p] - tw.from[p]) * e;
+    if(f >= 1){ tw.live = false; if(tw.done){ try{ tw.done(); }catch(e2){ reportErr('tween', e2); } } }
+    else tweens[w++] = tw;
+  }
+  tweens.length = w;
+}
+function killTweensOf(obj){ for(var i = 0; i < tweens.length; i++) if(tweens[i].o === obj) tweens[i].live = false; }
+function flushChoreo(){              // gates + skip: land everything instantly
+  for(var i = 0; i < tweens.length; i++){
+    var tw = tweens[i];
+    if(!tw.live) continue;
+    for(var p in tw.to) tw.o[p] = tw.to[p];
+    tw.live = false; if(tw.done){ try{ tw.done(); }catch(e){ reportErr('flush', e); } }
+  }
+  tweens.length = 0; choreoUntil = 0; shufflePhase = null;
+}
+
+/* ---- input: canvas taps into an immediate-mode hit list ------------------ */
+var hits = [];                       // rebuilt every render: {x,y,w,h,id}
+function hit(x, y, w, h, id){ hits.push({x:x, y:y, w:w, h:h, id:id}); }
+var tapFx = [];                      // cosmetic ripples
+function tapAt(x, y){
+  try{
+    AKIT.boot();                     // gesture-safe boot, per the kit wiring law
+    if(SET.music && !HEADLESS) MUSIC.start();
+    for(var i = hits.length - 1; i >= 0; i--){
+      var h = hits[i];
+      if(x >= h.x && y >= h.y && x <= h.x + h.w && y <= h.y + h.h){
+        onTap(h.id); tapFx.push({x:x, y:y, t:0});
+        return h.id;
+      }
+    }
+    onTap(null); tapFx.push({x:x, y:y, t:0});
+    return null;
+  }catch(e){ reportErr('tap', e); return null; }
+}
+if(cv){
+  var lpTimer = null, lpMoved = false, lpX = 0, lpY = 0;
+  cv.addEventListener('pointerdown', function(ev){
+    ev.preventDefault();
+    var r = cv.getBoundingClientRect();
+    var px2 = ev.clientX - r.left, py2 = ev.clientY - r.top;
+    var lpId = tapAt(px2, py2);
+    lpX = px2; lpY = py2; lpMoved = false;
+    if(lpTimer) clearTimeout(lpTimer);
+    lpTimer = setTimeout(function(){
+      lpTimer = null;
+      var Glp = STATE.match ? GAMES[STATE.match.gameId] : null;
+      if(!lpMoved && Glp && Glp.longPress){
+        try{ Glp.longPress(lpId); }catch(e){ reportErr('longpress', e); }
+      }
+    }, 380);
+  });
+  cv.addEventListener('pointermove', function(ev){
+    var r2 = cv.getBoundingClientRect();
+    if(Math.abs(ev.clientX - r2.left - lpX) + Math.abs(ev.clientY - r2.top - lpY) > 14) lpMoved = true;
+  });
+  var lpEnd = function(){ if(lpTimer){ clearTimeout(lpTimer); lpTimer = null; } };
+  cv.addEventListener('pointerup', lpEnd);
+  cv.addEventListener('pointercancel', lpEnd);
+}
+var fsb = doc && doc.getElementById ? doc.getElementById('fsb') : null;
+if(fsb){
+  fsb.addEventListener('click', function(){
+    try{
+      AKIT.boot();
+      var de = doc.documentElement;
+      if(!doc.fullscreenElement && de.requestFullscreen) de.requestFullscreen();
+      else if(doc.exitFullscreen) doc.exitFullscreen();
+    }catch(e){}
+  });
+}
+
+/* ---- the GAMES registry: the cabinet socket ------------------------------- */
+var GAMES = {}, GAMEORDER = [];
+function registerGame(def){ GAMES[def.id] = def; GAMEORDER.push(def.id); }
+function curGame(){ return STATE.match ? GAMES[STATE.match.gameId] : null; }
+
+/* ---- state ---------------------------------------------------------------- */
+var STATE = {
+  screen:'menu', overlay:null,
+  setupGame:'rummy', setup:{mode:'bots', seats:2, diff:1},
+  match:null, g:null,
+  pov:0, sel:[], sortMode:0, layMode:false,
+  handoffTo:0, reveal:false,
+  lastResult:null, msg:null,
+  nameBuf:'', codeBuf:''
+};
+var simNow = 0, uiTime = 0;
+var choreoUntil = 0, shufflePhase = null;
+var sndq = [];                      // scheduled sounds: {at, name}
+var botPending = null;
+var botFallbacks = 0, applyCount = 0;
+var lastTurnSfx = -1;
+function choreoBusy(){ return simNow < choreoUntil; }
+function showMsg(txt, ms){ STATE.msg = {txt:txt, until:simNow + (ms||1400)}; }
+function qSnd(name, delay){ sndq.push({at:simNow + (delay||0), name:name}); }
+
+/* ---- card sprites + the home system: state moves, cards glide ------------- */
+var CS = {};
+function sp(id){
+  var s = CS[id];
+  if(!s) s = CS[id] = {x:W/2, y:-120, rot:0, scl:1, fl:0, z:0, key:'', dealDelay:0, easeOnce:null};
+  return s;
+}
+function resetSprites(){ CS = {}; }
+function handFanPos(j, n, sel){
+  var spread = Math.min(L.hand.w - L.cw, Math.max(1, n - 1) * L.cw * 0.62);
+  var x = W/2 - spread/2 + (n > 1 ? j * (spread / (n - 1)) : 0);
+  var mid = (n - 1) / 2, off = mid ? (j - mid) / mid : 0;
+  var y = L.hand.y + L.ch/2 + 10 + off*off*10 - (sel ? 18 : 0);
+  return {x:x, y:y, rot:off * 0.10};
+}
+function meldLayout(){
+  var g = STATE.g, out = [];
+  if(!g || !g.melds) return out;
+  var scl = 0.62, cw = L.cw*scl, step = cw*0.38, gap = 10, x = L.meld.x + cw/2;
+  var widths = [], total = 0;
+  for(var m = 0; m < g.melds.length; m++){
+    var wm = cw + (g.melds[m].cards.length - 1) * step;
+    widths.push(wm); total += wm + gap;
+  }
+  var squeeze = total > L.meld.w ? L.meld.w / total : 1;
+  for(m = 0; m < g.melds.length; m++){
+    out.push({x:x, w:widths[m]*squeeze, step:step*squeeze, scl:scl, y:L.meld.y + L.ch*scl/2});
+    x += widths[m]*squeeze + gap*squeeze;
+  }
+  return out;
+}
+function sortedHand(seat){
+  var g = STATE.g, h = g.hands[seat].slice();
+  if(seat === STATE.pov && STATE.sortMode){
+    h.sort(function(a, b){
+      return STATE.sortMode === 1 ? (rankOf(a) - rankOf(b)) || (suitOf(a) - suitOf(b))
+                                  : (suitOf(a) - suitOf(b)) || (rankOf(a) - rankOf(b));
+    });
+  }
+  return h;
+}
+function computeHomes(){
+  var g = STATE.g, out = {};
+  if(!g) return out;
+  var n = STATE.match.seats.length, i, j, c;
+  var GH = curGame();
+  if(g.stock) for(i = 0; i < g.stock.length; i++){
+    c = g.stock[i];
+    var o = Math.min(i, 8) * 0.7;
+    out[c] = {x:L.stock.x + L.cw/2 - o, y:L.stock.y + L.ch/2 - o, rot:0, scl:1, fl:0, z:10 + i,
+              key:'st' + Math.min(i,8)};
+  }
+  if(g.discard) for(i = 0; i < g.discard.length; i++){
+    c = g.discard[i];
+    var vis = i >= g.discard.length - 3;
+    out[c] = {x:L.discard.x + L.cw/2 + (vis ? (c % 5) - 2 : 0), y:L.discard.y + L.ch/2,
+              rot:vis ? ((c % 9) - 4) * 0.02 : 0, scl:1, fl:1, z:100 + i, key:'dc' + i + (vis?'v':'')};
+  }
+  var ml = meldLayout();
+  if(g.melds) for(var m = 0; m < g.melds.length; m++){
+    var mm = g.melds[m];
+    for(j = 0; j < mm.cards.length; j++){
+      c = mm.cards[j];
+      out[c] = {x:ml[m].x + j*ml[m].step, y:ml[m].y, rot:0, scl:ml[m].scl, fl:1,
+                z:200 + m*20 + j, key:'m' + m + '.' + j};
+    }
+  }
+  if(g.hands) for(i = 0; i < n; i++){
+    var vi = (i - STATE.pov + n) % n;
+    var hd = sortedHand(i), hn = hd.length;
+    for(j = 0; j < hn; j++){
+      c = hd[j];
+      if(STATE.reveal){
+        var a = seatAnchor(vi, n), sc = vi === 0 ? 0.7 : 0.5;
+        out[c] = {x:a.x + (j - (hn-1)/2) * L.cw*sc*0.42, y:a.y + (vi===0? -L.ch*0.2 : 34) + L.ch*sc*0.5,
+                  rot:0, scl:sc, fl:1, z:300 + vi*60 + j, key:'rv' + vi + '.' + j};
+      } else if(vi === 0){
+        var hidden = STATE.screen === 'handoff';
+        var p = handFanPos(j, hn, !hidden && STATE.sel.indexOf(c) >= 0);
+        out[c] = {x:p.x, y:p.y, rot:p.rot, scl:1, fl:hidden ? 0 : 1, z:400 + j,
+                  key:'h' + j + '.' + hn + (hidden?'x':'') + (STATE.sel.indexOf(c)>=0?'s':'') + STATE.sortMode};
+      } else {
+        var an = seatAnchor(vi, n);
+        out[c] = {x:an.x + (j - (hn-1)/2) * 7, y:an.y + 40, rot:(j - (hn-1)/2) * 0.02,
+                  scl:0.5, fl:0, z:150 + vi*60 + j, key:'o' + vi + '.' + j + '.' + hn};
+      }
+    }
+  }
+  if(GH && GH.homes) GH.homes(g, out, {L:L, W:W, H:H, pov:STATE.pov, reveal:STATE.reveal, screen:STATE.screen});
+  return out;
+}
+function syncHomes(){
+  if(!STATE.match || !STATE.g) return;
+  if(layoutDirty) computeLayout();
+  var homes = computeHomes();
+  for(var id in homes){
+    var t = homes[id], s = sp(+id);
+    var key = t.key + '|' + (W|0) + 'x' + (H|0);
+    if(s.key !== key){
+      s.key = key;
+      var d = s.dealDelay || 0; s.dealDelay = 0;
+      var ek = s.easeOnce || 'out'; s.easeOnce = null;
+      killTweensOf(s);
+      s.z = t.z;
+      tween(s, {x:t.x, y:t.y, rot:t.rot, scl:t.scl}, 270, ek, d);
+      if(s.fl !== t.fl) tween(s, {fl:t.fl}, 200, 'inout', d + 90);
+    } else s.z = t.z;
+  }
+}
+function dealChoreo(){
+  resetSprites(); STATE.sel = []; STATE.layMode = false;
+  if(layoutDirty) computeLayout();
+  var g = STATE.g, i;
+  for(i = 0; i < 52; i++){ var s = sp(i); s.x = L.stock.x + L.cw/2; s.y = L.stock.y + L.ch/2; s.fl = 0; s.key=''; }
+  var RIFF = HEADLESS ? 0 : 1050;
+  shufflePhase = HEADLESS ? null : {t:0, dur:RIFF};
+  if(!HEADLESS) for(i = 0; i < 14; i++) qSnd('riff', 180 + i*52);
+  var seq = g.dealSeq || [];
+  for(i = 0; i < seq.length; i++){
+    sp(seq[i].c).dealDelay = RIFF + i*70;
+    if(!HEADLESS) qSnd('swish', RIFF + i*70);
+  }
+  choreoUntil = simNow + RIFF + seq.length*70 + 420;
+  if(!HEADLESS) qSnd('snap', RIFF + seq.length*70 + 120);
+  buzz(12);
+}
+function processEvents(evq){
+  for(var i = 0; i < evq.length; i++){
+    var ev = evq[i];
+    if(ev.e === 'draw'){ qSnd('swish', 40); if(ev.seat === STATE.pov) qSnd('flip', 220); choreoUntil = Math.max(choreoUntil, simNow + 300); }
+    else if(ev.e === 'discard' || ev.e === 'play'){ sp(ev.card).easeOnce = 'back'; qSnd('snap', 200); choreoUntil = Math.max(choreoUntil, simNow + 300); buzz(8); }
+    else if(ev.e === 'meld'){ qSnd('meld', 60); choreoUntil = Math.max(choreoUntil, simNow + 380); }
+    else if(ev.e === 'lay'){ qSnd('chip', 60); choreoUntil = Math.max(choreoUntil, simNow + 300); }
+    else if(ev.e === 'reshuffle'){ shufflePhase = HEADLESS ? null : {t:0, dur:800}; if(!HEADLESS) for(var k = 0; k < 10; k++) qSnd('riff', k*60); choreoUntil = Math.max(choreoUntil, simNow + (HEADLESS?0:900)); showMsg('STOCK RESHUFFLED'); }
+    else if(ev.e === 'suit'){ qSnd('suit', 60); showMsg('SUIT CALLED: ' + SUITS[ev.suit]); }
+    else if(ev.e === 'msg'){ showMsg(ev.txt); }
+    else if(ev.e === 'fx'){ if(ev.snd) qSnd(ev.snd, ev.d || 40); if(ev.msg) showMsg(ev.msg); if(ev.buzz) buzz(ev.buzz); choreoUntil = Math.max(choreoUntil, simNow + (ev.hold != null ? ev.hold : 260)); }
+  }
+}
+
+/* ---- authority path: every state move goes through here ------------------- */
+function isLocalHuman(i){
+  var st = STATE.match.seats[i];
+  if(st.kind !== 'human') return false;
+  return NET.on() ? i === NET.mySeat() : true;
+}
+function isLocalTurn(){
+  var g = STATE.g;
+  return !!(STATE.match && g && !g.over && isLocalHuman(g.turn) && STATE.pov === g.turn);
+}
+function isAuthority(){ return !NET.on() || NET.isHost(); }
+function tryLocalAction(action){
+  var g = STATE.g;
+  if(!STATE.match || !g || g.over) return false;
+  if(choreoBusy()){ return false; }
+  if(!isLocalTurn()){ sfx('denied'); return false; }
+  var G = curGame();
+  if(!G.legal(g, g.turn, action)){ sfx('denied'); return false; }
+  if(NET.on() && !NET.isHost()){ NET.send({t:'want', action:action}); return true; }
+  applyAuthAction(g.turn, action);
+  return true;
+}
+function applyAuthAction(seat, action){
+  var G = curGame(), g = STATE.g, evq = [];
+  G.apply(g, seat, action, function(ev){ evq.push(ev); });
+  applyCount++;
+  if(NET.on() && NET.isHost()) NET.bcast({t:'act', seq:NET.nextSeq(), seat:seat, action:action});
+  processEvents(evq);
+  afterApply();
+}
+function afterApply(){
+  var g = STATE.g;
+  STATE.sel = []; STATE.layMode = false;
+  if(g.over){ endRound(); return; }
+  maybeHandoff();
+  scheduleBot();
+}
+function endRound(){
+  var G = curGame(), m = STATE.match;
+  var res = G.roundResult(STATE.g);
+  STATE.lastResult = res;
+  if(G.single){                     /* one round IS the match (TCG mode) */
+    for(var s1 = 0; s1 < m.seats.length; s1++) m.scores[s1] = res.deltas[s1];
+    m.over = true; m.winner = res.winner >= 0 ? res.winner : 0;
+    STATE.reveal = false; STATE.overlay = 'matchend';
+    botPending = null; flushLite();
+    sfx(isLocalHuman(m.winner) ? 'matchwin' : 'lose');
+    if(NET.on() && NET.isHost()) NET.bcast({t:'mend'});
+    return;
+  }
+  for(var i = 0; i < m.seats.length; i++) m.scores[i] += res.deltas[i];
+  var top = 0;
+  for(i = 1; i < m.seats.length; i++) if(m.scores[i] > m.scores[top]) top = i;
+  if(m.scores[top] >= m.target){ m.over = true; m.winner = top; }
+  STATE.reveal = true; STATE.overlay = 'roundend';
+  botPending = null;
+  flushLite();
+  if(res.winner >= 0) sfx(isLocalHuman(res.winner) ? 'roundwin' : 'chip');
+  buzz(30);
+}
+function flushLite(){ choreoUntil = 0; shufflePhase = null; }
+function continueFromRound(){
+  var m = STATE.match;
+  if(NET.on() && !NET.isHost()) return;                    // host advances the table
+  if(m.over){
+    STATE.overlay = 'matchend';
+    sfx(isLocalHuman(m.winner) ? 'matchwin' : 'lose');
+    if(NET.on()) NET.bcast({t:'mend'});
+    return;
+  }
+  m.round++; m.dealer = (m.dealer + 1) % m.seats.length;
+  newRoundState();
+  if(NET.on()) NET.bcast({t:'round', snap:snapshot()});
+}
+function newRoundState(){
+  var m = STATE.match, G = GAMES[m.gameId];
+  var seed = (Math.floor(uiRnd() * 0x7fffffff)) | 0;
+  STATE.g = G.setup(m.seats.length, seed, m.dealer, STATE.setup.gopts);
+  STATE.overlay = null; STATE.reveal = false; STATE.lastResult = null;
+  lastTurnSfx = -1;
+  dealChoreo();
+  maybeHandoff();
+  scheduleBot();
+}
+function startMatch(gameId, seats, target, seed){
+  STATE.match = {gameId:gameId, seats:seats, target:target||TARGET_SCORE,
+                 scores:seats.map(function(){ return 0; }), dealer:0, round:1, over:false, winner:-1};
+  var G = GAMES[gameId];
+  spriteCache = {};                 /* catalog games repaint per match */
+  STATE.g = G.setup(seats.length, seed, 0, STATE.setup.gopts);
+  STATE.pov = 0;
+  if(NET.on()) STATE.pov = NET.mySeat();
+  else for(var i = 0; i < seats.length; i++) if(seats[i].kind === 'human'){ STATE.pov = i; break; }
+  STATE.screen = 'table'; STATE.overlay = null; STATE.reveal = false;
+  STATE.sel = []; STATE.sortMode = 0; STATE.lastResult = null; lastTurnSfx = -1;
+  dealChoreo();
+  maybeHandoff();
+  scheduleBot();
+}
+function leaveMatch(){
+  STATE.match = null; STATE.g = null; STATE.overlay = null; STATE.reveal = false;
+  botPending = null; resetSprites(); flushChoreo();
+  NET.leave();
+  STATE.screen = 'menu';
+}
+function maybeHandoff(){
+  if(NET.on()) return;
+  var m = STATE.match, g = STATE.g;
+  if(!m || !g || g.over) return;
+  var humans = 0;
+  for(var i = 0; i < m.seats.length; i++) if(m.seats[i].kind === 'human') humans++;
+  if(humans < 2) return;
+  if(m.seats[g.turn].kind === 'human' && g.turn !== STATE.pov){
+    STATE.handoffTo = g.turn; STATE.screen = 'handoff'; STATE.sel = [];
+  }
+}
+function scheduleBot(){
+  botPending = null;
+  var m = STATE.match, g = STATE.g;
+  if(!m || !g || g.over || !isAuthority()) return;
+  if(m.seats[g.turn].kind === 'bot')
+    botPending = {at:Math.max(simNow, choreoUntil) + BOT_MIN_MS, seat:g.turn};
+}
+function botPump(){
+  if(!botPending || choreoBusy()) return;
+  if(simNow < botPending.at) return;
+  var m = STATE.match, g = STATE.g;
+  if(!m || !g || g.over){ botPending = null; return; }
+  var seat = botPending.seat;
+  if(g.turn !== seat || m.seats[seat].kind !== 'bot'){ scheduleBot(); return; }
+  var G = curGame(), a = null;
+  try{ a = G.bot(g, seat, m.seats[seat].diff); }catch(e){ reportErr('bot', e); }
+  if(!a || !G.legal(g, seat, a)){ botFallbacks++; a = G.fallback(g, seat); }
+  applyAuthAction(seat, a);
+  g = STATE.g;
+  if(g && !g.over && g.turn === seat && m.seats[seat].kind === 'bot')
+    botPending = {at:simNow + BOT_STEP_MS, seat:seat};
+}
+
+/* ---- snapshots (net + gates): full-state serialize, deterministic --------- */
+function snapshot(){
+  var m = STATE.match;
+  return {v:VER, seq:NET.on() ? NET.seq() : 0,
+          match:{gameId:m.gameId, target:m.target, scores:m.scores.slice(), dealer:m.dealer,
+                 round:m.round, over:m.over, winner:m.winner},
+          seats:m.seats.map(function(s){ return {kind:s.kind, name:s.name, diff:s.diff}; }),
+          g:JSON.parse(JSON.stringify(STATE.g)),
+          ov:STATE.overlay, rev:STATE.reveal};
+}
+function restoreSnap(sn, mySeat){
+  STATE.match = {gameId:sn.match.gameId, seats:sn.seats, target:sn.match.target,
+                 scores:sn.match.scores.slice(), dealer:sn.match.dealer, round:sn.match.round,
+                 over:sn.match.over, winner:sn.match.winner};
+  STATE.g = sn.g;
+  STATE.overlay = sn.ov || null; STATE.reveal = !!sn.rev;
+  if(STATE.overlay === 'roundend') STATE.lastResult = curGame().roundResult(STATE.g);
+  STATE.pov = (mySeat != null) ? mySeat : 0;
+  STATE.sel = []; STATE.layMode = false; lastTurnSfx = -1;
+  resetSprites(); flushChoreo();
+  STATE.screen = 'table';
+  scheduleBot();
+}
+
+/* ---- NET: PeerJS host-authoritative turn protocol (title-local) ----------- */
+/* Provenance: topology per the studio netcode doctrine (host owns truth,
+   guests send intents, snapshots heal gaps). Turn-based shape is this
+   title's own; SNAIL-NETCODE's realtime core deliberately not consumed,
+   reconciliation memo owed (see codex NETCODE notes).                       */
+var CODE_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+var NET = (function(){
+  var st = null;   // {host, peer, conns:[{c, seat, name}], code, mySeat, seq, hostConn, phase}
+  function avail(){ return (typeof Peer !== 'undefined'); }
+  function on(){ return !!(st && st.phase === 'play'); }
+  function reset(){ st = null; }
+  function mkCode(){
+    var c = '';
+    for(var i = 0; i < 4; i++) c += CODE_ABC.charAt(Math.floor(uiRnd() * CODE_ABC.length));
+    return c;
+  }
+  function host(){
+    if(!avail()){ showMsg('ONLINE NEEDS A CONNECTION'); return; }
+    var code = mkCode();
+    st = {host:true, code:code, conns:[], mySeat:0, seq:0, phase:'lobby', names:[SET.name || 'HOST'], gameId:STATE.setupGame, err:null, opts:[]};
+    try{
+      st.peer = new Peer('shufshow-' + code);
+      st.peer.on('error', function(e){
+        if(st && st.phase === 'lobby' && !st.retried && String(e && e.type) === 'unavailable-id'){
+          st.retried = true;
+          try{ st.peer.destroy(); }catch(_){ }
+          st = null; host();
+        } else netErr(e);
+      });
+      st.peer.on('connection', function(c){
+        c.on('open', function(){
+          if(!st || st.names.length >= MAX_SEATS){ try{ c.send({t:'full'}); c.close(); }catch(_){ } return; }
+          var seat = st.names.length;
+          st.conns.push({c:c, seat:seat, name:'GUEST'});
+          st.names.push('GUEST');
+          c.send({t:'seat', i:seat});
+          c.on('data', function(d){ handleHostMsg(c, d); });
+          c.on('close', function(){ dropGuest(c); });
+          pushLobby();
+        });
+      });
+    }catch(e){ netErr(e); }
+  }
+  function join(code){
+    if(!avail()){ showMsg('ONLINE NEEDS A CONNECTION'); return; }
+    st = {host:false, code:code, mySeat:-1, seq:0, phase:'joining', names:[], gameId:'rummy', err:null};
+    try{
+      st.peer = new Peer();
+      st.peer.on('error', function(e){ netErr(e); });
+      st.peer.on('open', function(){
+        var c = st.peer.connect('shufshow-' + code, {reliable:true});
+        st.hostConn = c;
+        c.on('open', function(){ st.phase = 'lobby'; c.send({t:'hi', name:SET.name || 'GUEST'}); });
+        c.on('data', function(d){ handleGuestMsg(d); });
+        c.on('close', function(){ hostLost(); });
+      });
+    }catch(e){ netErr(e); }
+  }
+  function netErr(e){
+    if(!st) return;
+    st.err = (e && (e.type || e.message)) ? String(e.type || e.message) : 'CONNECTION ERROR';
+    if(st.phase !== 'play') showMsg('NET: ' + st.err, 2200);
+  }
+  function hostLost(){
+    if(!st) return;
+    if(st.phase === 'play'){ showMsg('HOST LOST: BACK TO MENU', 2600); leaveMatch(); }
+    else { showMsg('COULD NOT REACH TABLE ' + st.code, 2200); st.phase = 'joinfail'; }
+  }
+  function dropGuest(c){
+    if(!st) return;
+    for(var i = 0; i < st.conns.length; i++) if(st.conns[i].c === c){
+      var seat = st.conns[i].seat;
+      st.conns.splice(i, 1);
+      if(st.phase === 'play' && STATE.match){
+        STATE.match.seats[seat] = {kind:'bot', name:STATE.match.seats[seat].name + '*', diff:1};
+        bcast({t:'takeover', seat:seat});
+        showMsg('SEAT ' + (seat+1) + ' IS NOW A BOT');
+        scheduleBot();
+      } else if(st.phase === 'lobby'){
+        st.names.splice(seat, 1);
+        if(st.opts) st.opts.splice(seat, 1);
+        for(var k = 0; k < st.conns.length; k++) if(st.conns[k].seat > seat) st.conns[k].seat--;
+        for(k = 0; k < st.conns.length; k++) try{ st.conns[k].c.send({t:'seat', i:st.conns[k].seat}); }catch(_){ }
+        pushLobby();
+      }
+      return;
+    }
+  }
+  function pushLobby(){
+    bcast({t:'lobby', names:st.names.slice(), gameId:st.gameId, opts:(st.opts || []).slice()});
+  }
+  function handleHostMsg(c, d){
+    try{
+      if(!d || !st) return;
+      if(d.t === 'hi'){
+        for(var i = 0; i < st.conns.length; i++) if(st.conns[i].c === c){
+          st.conns[i].name = String(d.name || 'GUEST').slice(0, 8).toUpperCase() || 'GUEST';
+          st.names[st.conns[i].seat] = st.conns[i].name;
+        }
+        pushLobby();
+      } else if(d.t === 'opt' && st.phase === 'lobby'){          /* v1.04: a guest's lobby option (a CLASH deck) */
+        for(var j = 0; j < st.conns.length; j++) if(st.conns[j].c === c) st.opts[st.conns[j].seat] = String(d.v || '').slice(0, 16);
+        pushLobby();
+      } else if(d.t === 'want' && st.phase === 'play'){
+        var seat = -1;
+        for(i = 0; i < st.conns.length; i++) if(st.conns[i].c === c) seat = st.conns[i].seat;
+        var g = STATE.g, G = curGame();
+        if(seat >= 0 && g && !g.over && g.turn === seat && !STATE.overlay && G.legal(g, seat, d.action))
+          applyAuthAction(seat, d.action);
+        else if(seat >= 0){ try{ c.send({t:'snap', snap:snapshot()}); }catch(_){ } }   /* refused: the guest may be stale (a lost echo of its own move); heal it, never stall (v1.04) */
+      } else if(d.t === 'snap?' && st.phase === 'play'){
+        try{ c.send({t:'snap', snap:snapshot()}); }catch(_){ }
+      }
+    }catch(e){ reportErr('netHost', e); }
+  }
+  function handleGuestMsg(d){
+    try{
+      if(!d || !st) return;
+      if(d.t === 'seat'){ st.mySeat = d.i; }
+      else if(d.t === 'lobby'){ st.names = d.names; st.gameId = d.gameId; st.opts = d.opts || []; }
+      else if(d.t === 'full'){ showMsg('TABLE FULL', 2000); st.phase = 'joinfail'; }
+      else if(d.t === 'start'){
+        st.phase = 'play'; st.seq = d.snap.seq || 0;
+        restoreSnap(d.snap, st.mySeat);
+        showMsg('DEALT IN: SEAT ' + (st.mySeat + 1));
+      } else if(d.t === 'act' && st.phase === 'play'){
+        if(d.seq !== st.seq + 1){ askSnap(); return; }
+        st.seq = d.seq;
+        var g = STATE.g, G = curGame(), evq = [];
+        if(g && G.legal(g, d.seat, d.action)){
+          G.apply(g, d.seat, d.action, function(ev){ evq.push(ev); });
+          processEvents(evq); afterApply();
+        } else askSnap();
+      } else if(d.t === 'snap'){ st.seq = d.snap.seq || st.seq; restoreSnap(d.snap, st.mySeat); }
+      else if(d.t === 'round'){ st.seq = d.snap.seq || st.seq; restoreSnap(d.snap, st.mySeat); dealChoreo(); }
+      else if(d.t === 'mend'){ STATE.overlay = 'matchend'; sfx(isLocalHuman(STATE.match.winner) ? 'matchwin' : 'lose'); }
+      else if(d.t === 'takeover'){ if(STATE.match) STATE.match.seats[d.seat] = {kind:'bot', name:STATE.match.seats[d.seat].name + '*', diff:1}; }
+    }catch(e){ reportErr('netGuest', e); }
+  }
+  function askSnap(){ try{ if(st && st.hostConn) st.hostConn.send({t:'snap?'}); }catch(_){ } }
+  function bcast(m){
+    if(!st || !st.host) return;
+    for(var i = 0; i < st.conns.length; i++) try{ st.conns[i].c.send(m); }catch(_){ }
+  }
+  function hostStart(){
+    if(!st || !st.host || st.names.length < 2) return;
+    var LG = GAMES[st.gameId];
+    if(LG && st.names.length > LG.max){ showMsg(LG.name + ' SEATS ' + LG.max, 2200); return; }   /* v1.04: never start a table the game cannot seat */
+    if(LG && LG.lobbyOpts) STATE.setup.gopts = LG.lobbyOpts((st.opts || []).slice());   /* v1.04: each seat's lobby pick reaches setup */
+    var seats = [];
+    for(var i = 0; i < st.names.length; i++) seats.push({kind:'human', name:st.names[i], diff:1});
+    for(i = 0; i < st.bots; i++) if(seats.length < MAX_SEATS) seats.push({kind:'bot', name:'HUSTLER', diff:1});
+    st.phase = 'play'; st.seq = 0;
+    startMatch(st.gameId, seats, TARGET_SCORE, (Math.floor(uiRnd()*0x7fffffff))|0);
+    bcast({t:'start', snap:snapshot()});
+  }
+  function leave(){
+    if(!st) return;
+    try{ if(st.peer) st.peer.destroy(); }catch(_){ }
+    st = null;
+  }
+  return {
+    avail:avail, on:on, state:function(){ return st; }, host:host, join:join,
+    hostStart:hostStart, leave:leave, reset:reset, bcast:bcast, send:function(m){ askSend(m); },
+    isHost:function(){ return !!(st && st.host); },
+    mySeat:function(){ return st ? st.mySeat : 0; },
+    seq:function(){ return st ? st.seq : 0; },
+    nextSeq:function(){ return st ? ++st.seq : 0; },
+    askSnap:askSnap,
+    forceState:function(s){ st = s; },
+    setGame:function(gid){ if(st && st.host){ if(st.gameId !== gid) st.opts = []; st.gameId = gid; pushLobby(); } },
+    setOpt:function(v){                                   /* v1.04: my own lobby option */
+      if(!st || st.phase !== 'lobby') return;
+      v = String(v).slice(0, 16); if(!st.opts) st.opts = [];
+      st.opts[st.host ? 0 : st.mySeat] = v;
+      if(st.host) pushLobby(); else askSend({t:'opt', v:v});
+    }
+  };
+  function askSend(m){ try{ if(st && st.hostConn) st.hostConn.send(m); }catch(_){ } }
+})();
+
+/* ---- render: the parlor --------------------------------------------------- */
+var feltTiles = {};
+function feltTile(fi){
+  var t = feltTiles[fi];
+  if(t) return t;
+  t = makeCanvas(64, 64);
+  if(!t) return null;
+  var g = t.getContext('2d');
+  g.fillStyle = FELTS[fi].base; g.fillRect(0, 0, 64, 64);
+  var sr = {rngS:1234 + fi};
+  g.fillStyle = FELTS[fi].glow;
+  for(var i = 0; i < 42; i++){ g.globalAlpha = 0.06 + rnd(sr)*0.05; g.fillRect(rndInt(sr,64), rndInt(sr,64), 1, 1); }
+  g.globalAlpha = 1;
+  feltTiles[fi] = t;
+  return t;
+}
+var crestBig = null;
+function getCrestBig(){
+  if(crestBig) return crestBig;
+  crestBig = makeCanvas(128, 128);
+  if(!crestBig) return null;
+  var g = crestBig.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  paintCrest(g, 2, 34, 32, 22, PAL.brass, PAL.brassHi);
+  return crestBig;
+}
+function bgFelt(){
+  var f = FELTS[SET.felt];
+  var tile = feltTile(SET.felt);
+  if(tile){ var pat = ctx.createPattern(tile, 'repeat'); ctx.fillStyle = pat; ctx.fillRect(0, 0, W, H); }
+  else { ctx.fillStyle = f.base; ctx.fillRect(0, 0, W, H); }
+  var rg = ctx.createRadialGradient(W/2, H/2, Math.min(W,H)*0.2, W/2, H/2, Math.max(W,H)*0.75);
+  rg.addColorStop(0, 'rgba(0,0,0,0)'); rg.addColorStop(1, 'rgba(0,0,0,0.5)');
+  ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = PAL.railLo; ctx.lineWidth = 8; ctx.strokeRect(3, 3, W-6, H-6);
+  ctx.strokeStyle = PAL.railHi; ctx.lineWidth = 3; ctx.strokeRect(8, 8, W-16, H-16);
+  ctx.strokeStyle = 'rgba(216,169,79,0.35)'; ctx.lineWidth = 1; ctx.strokeRect(12.5, 12.5, W-25, H-25);
+}
+function panel(x, y, w, h, glow){
+  ctx.fillStyle = 'rgba(6,16,15,0.82)'; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = glow ? PAL.brass : PAL.brassLo; ctx.lineWidth = 2; ctx.strokeRect(x+1, y+1, w-2, h-2);
+}
+function btn(x, y, w, h, label, id, en, accent){
+  var s = h >= 42 ? 2 : 1;
+  ctx.fillStyle = en ? (accent ? '#274b46' : '#20312f') : '#17211f';
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = en ? (accent ? PAL.brass : PAL.brassLo) : '#2a352f';
+  ctx.lineWidth = 2; ctx.strokeRect(x+1, y+1, w-2, h-2);
+  drawText(ctx, label, x + w/2, y + h/2 - 3.5*s, s, en ? PAL.cream : '#5c6a60', 'c');
+  if(en && id) hit(x, y, w, h, id);
+}
+function chip(x, y, w, label, id, onSel){
+  var h = 26;
+  ctx.fillStyle = onSel ? '#2b514b' : '#182523'; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = onSel ? PAL.sel : PAL.brassLo; ctx.lineWidth = onSel ? 2 : 1;
+  ctx.strokeRect(x+0.5, y+0.5, w-1, h-1);
+  drawText(ctx, label, x + w/2, y + 10, 1, onSel ? PAL.cream : PAL.dim, 'c');
+  if(id) hit(x, y, w, h, id);
+}
+function drawCardSprite(s, id){
+  var fl = Math.min(1, Math.max(0, s.fl));
+  var img = getSprite(fl >= 0.5 ? 'f' : 'b', id, SET.backId, L.T);
+  if(!img) return;
+  var wf = Math.max(0.06, Math.abs(1 - 2*fl));
+  var w = L.cw * s.scl * wf, h = L.ch * s.scl;
+  ctx.save();
+  ctx.translate(Math.round(s.x), Math.round(s.y));
+  if(s.rot) ctx.rotate(s.rot);
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.fillRect(-w/2 + 2, -h/2 + 3, w, h);
+  ctx.drawImage(img, 0, 0, img.width, img.height, Math.round(-w/2), Math.round(-h/2), Math.round(w), Math.round(h));
+  ctx.restore();
+}
+function drawPileBase(r, label){
+  ctx.strokeStyle = 'rgba(216,169,79,0.4)'; ctx.lineWidth = 2;
+  ctx.strokeRect(r.x, r.y, r.w, r.h);
+  drawText(ctx, label, r.x + r.w/2, r.y + r.h/2 - 3, 1, 'rgba(216,169,79,0.5)', 'c');
+}
+function pulse(a, b, hz){ return a + (b - a) * (0.5 + 0.5 * Math.sin(uiTime * 0.00628 * (hz||1))); }
+function seatPlate(i, n){
+  var m = STATE.match, g = STATE.g;
+  var vi = (i - STATE.pov + n) % n;
+  var a = seatAnchor(vi, n);
+  var w = 118, h = 30;
+  var x = vi === 0 ? 14 : Math.max(8, Math.min(W - w - 8, a.x - w/2));
+  var y = vi === 0 ? L.act.y - 36 : a.y - 6;
+  if(vi === 0 && STATE.match.gameId === 'rummy') y = L.meld.y - 38;
+  var myTurn = g && !g.over && g.turn === i;
+  ctx.fillStyle = 'rgba(6,16,15,0.75)'; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = myTurn ? PAL.brass : 'rgba(216,169,79,0.3)';
+  ctx.lineWidth = myTurn ? 2 : 1;
+  if(myTurn) ctx.globalAlpha = pulse(0.55, 1, 2.2);
+  ctx.strokeRect(x+0.5, y+0.5, w-1, h-1);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = SEATCOL[i]; ctx.fillRect(x, y + h - 3, w, 3);
+  drawText(ctx, m.seats[i].name, x + 6, y + 5, 1, PAL.cream);
+  var GP = curGame();
+  drawText(ctx, (GP && GP.plateScore ? GP.plateScore(g, i) : m.scores[i]) + '', x + w - 6, y + 5, 1, PAL.brassHi, 'r');
+  if(g) drawText(ctx, 'X' + g.hands[i].length, x + w - 6, y + 16, 1, PAL.dim, 'r');
+  if(m.seats[i].kind === 'bot') drawText(ctx, DIFFS[m.seats[i].diff].tag, x + 6, y + 16, 1, PAL.dim);
+}
+function drawTable(){
+  var m = STATE.match, g = STATE.g, G = curGame(), n = m.seats.length;
+  if(layoutDirty) computeLayout();
+  /* top bar: back at left, name + round center-left, top-right stays clear (fsb) */
+  btn(10, 8, 34, 30, '<', 'back', true, false);
+  drawText(ctx, G.name, 52, 13, 1, PAL.brassHi);
+  var GH2 = curGame();
+  drawText(ctx, GH2.subHeader ? GH2.subHeader(m) : ('ROUND ' + m.round + '  TO ' + m.target), 52, 25, 1, PAL.dim);
+  /* piles (classic zones only; a cartridge owning its zones skips these) */
+  var LB = G.labels || {stock:'STOCK', discard:'DISCARD'};
+  if(g && g.stock) drawPileBase(L.stock, LB.stock);
+  if(g && g.discard) drawPileBase(L.discard, LB.discard);
+  if(g && g.stock){
+    drawText(ctx, 'X' + g.stock.length, L.stock.x + L.cw/2, L.stock.y + L.ch + 5, 1, PAL.dim, 'c');
+    var hint = isLocalTurn() && !choreoBusy() && G.drawHint && G.drawHint(g);
+    if(hint){
+      ctx.strokeStyle = PAL.sel; ctx.globalAlpha = pulse(0.25, 0.9, 2);
+      ctx.lineWidth = 2; ctx.strokeRect(L.stock.x-3, L.stock.y-3, L.cw+6, L.ch+6);
+      if(g.discard.length) ctx.strokeRect(L.discard.x-3, L.discard.y-3, L.cw+6, L.ch+6);
+      ctx.globalAlpha = 1;
+    }
+    hit(L.stock.x-4, L.stock.y-4, L.cw+8, L.ch+8, 'pile:stock');
+    hit(L.discard.x-4, L.discard.y-4, L.cw+8, L.ch+8, 'pile:discard');
+  }
+  /* meld hit zones + lay-mode pulse */
+  if(g && g.melds){
+    var ml = meldLayout();
+    for(var mi = 0; mi < ml.length; mi++){
+      var mr = {x:ml[mi].x - L.cw*ml[mi].scl/2, y:ml[mi].y - L.ch*ml[mi].scl/2, w:ml[mi].w, h:L.ch*ml[mi].scl};
+      if(STATE.layMode){
+        ctx.strokeStyle = PAL.sel; ctx.globalAlpha = pulse(0.3, 0.95, 2.6);
+        ctx.lineWidth = 2; ctx.strokeRect(mr.x-3, mr.y-3, mr.w+6, mr.h+6); ctx.globalAlpha = 1;
+      }
+      hit(mr.x-2, mr.y-4, mr.w+4, mr.h+8, 'meld:' + mi);
+    }
+    if(!g.melds.length && G.id === 'rummy')
+      drawText(ctx, 'MELDS LAND HERE', W/2, L.meld.y + 10, 1, 'rgba(216,169,79,0.35)', 'c');
+  }
+  /* shuffle riffle spectacle over the stock */
+  if(shufflePhase) drawRiffle();
+  /* sprites by z */
+  var order = [];
+  for(var id in CS) order.push(+id);
+  order.sort(function(a, b){ return CS[a].z - CS[b].z; });
+  for(var k = 0; k < order.length; k++) drawCardSprite(CS[order[k]], order[k]);
+  /* my hand hit rects (left to right; topmost wins by registration order) */
+  if(g && !STATE.reveal && STATE.screen === 'table'){
+    var hd = sortedHand(STATE.pov);
+    for(k = 0; k < hd.length; k++){
+      var p = handFanPos(k, hd.length, STATE.sel.indexOf(hd[k]) >= 0);
+      hit(p.x - L.cw/2, p.y - L.ch/2 - 20, L.cw, L.ch + 20, 'card:' + hd[k]);
+    }
+  }
+  /* seats */
+  for(k = 0; k < n; k++) seatPlate(k, n);
+  if(g && G.drawHud) G.drawHud(g);
+  /* action bar */
+  var bs = G.ctrl.buttons();
+  var bw = Math.min(112, Math.floor((L.act.w - 44 - (bs.length - 1) * 6) / Math.max(1, bs.length)));
+  var bx = L.act.x;
+  for(k = 0; k < bs.length; k++){
+    btn(bx, L.act.y, bw, L.act.h, bs[k].label, 'gbtn:' + k, !!bs[k].en && isLocalTurn() && !choreoBusy(), true);
+    bx += bw + 6;
+  }
+  if(!G.noSort) btn(L.act.x + L.act.w - 40, L.act.y, 40, L.act.h, STATE.sortMode === 2 ? 'S<>' : 'SORT', 'sort', true, false);
+  /* your-turn ribbon */
+  if(isLocalTurn() && !choreoBusy() && !STATE.overlay){
+    ctx.globalAlpha = pulse(0.5, 1, 1.6);
+    drawText(ctx, 'YOUR TURN', W/2, G.turnY ? G.turnY(L) : (L.meld.y - 24), 2, PAL.brassHi, 'c');
+    ctx.globalAlpha = 1;
+    if(lastTurnSfx !== m.round * 100 + g.turnCount){ lastTurnSfx = m.round * 100 + g.turnCount; sfx('yourturn'); }
+  } else if(g && !g.over && !STATE.overlay && m.seats[g.turn].kind !== 'human'){
+    drawText(ctx, m.seats[g.turn].name + ' IS THINKING', W/2, L.meld.y - 20, 1, PAL.dim, 'c');
+  }
+}
+function drawRiffle(){
+  var ph = shufflePhase;
+  var f = Math.min(1, ph.t / ph.dur);
+  var cx = L.stock.x + L.cw/2, cy = L.stock.y + L.ch/2;
+  var split = f < 0.35 ? ease('out', f/0.35) : f < 0.8 ? 1 - ease('in', (f-0.35)/0.45) : 0;
+  var back = getSprite('b', 0, SET.backId, L.T);
+  if(!back) return;
+  for(var i = 0; i < 7; i++){
+    var lift = (f > 0.35 && f < 0.85) ? Math.max(0, Math.sin((f*10 + i) * 3.5)) * 5 : 0;
+    ctx.drawImage(back, cx - L.cw/2 - split*(L.cw*0.62) - i*0.7, cy - L.ch/2 - i*1.2 - lift, L.cw, L.ch);
+    ctx.drawImage(back, cx - L.cw/2 + split*(L.cw*0.62) + i*0.7, cy - L.ch/2 - i*1.2 - lift*0.8, L.cw, L.ch);
+  }
+}
+function drawHandoff(){
+  ctx.fillStyle = 'rgba(4,12,11,0.92)'; ctx.fillRect(0, 0, W, H);
+  var name = STATE.match.seats[STATE.handoffTo].name;
+  var cb = getCrestBig(); if(cb) ctx.drawImage(cb, W/2 - 48, H*0.22, 96, 96);
+  drawText(ctx, 'PASS THE TABLE TO', W/2, H*0.45, 1, PAL.dim, 'c');
+  drawText(ctx, name, W/2, H*0.45 + 18, 3, PAL.brassHi, 'c');
+  btn(W/2 - 90, H*0.62, 180, 48, 'PICK UP HAND', 'reveal', true, true);
+}
+function drawOverlay(){
+  var ov = STATE.overlay; if(!ov) return;
+  ctx.fillStyle = 'rgba(3,10,9,0.6)'; ctx.fillRect(0, 0, W, H);
+  var m = STATE.match;
+  if(ov === 'roundend' || ov === 'matchend'){
+    var pw = Math.min(320, W - 40), pxx = W/2 - pw/2, py = H*0.16;
+    var ph = 96 + m.seats.length * 20 + 66;
+    panel(pxx, py, pw, ph, true);
+    var res = STATE.lastResult;
+    if(ov === 'matchend'){
+      var cb = getCrestBig(); if(cb) ctx.drawImage(cb, W/2 - 24, py + 8, 48, 48);
+      drawText(ctx, m.seats[m.winner].name + ' WINS', W/2, py + 60, 2, PAL.brassHi, 'c');
+      drawText(ctx, 'THE MATCH', W/2, py + 78, 1, PAL.dim, 'c');
+    } else {
+      drawText(ctx, 'ROUND ' + m.round, W/2, py + 14, 1, PAL.dim, 'c');
+      drawText(ctx, res && res.winner >= 0 ? m.seats[res.winner].name + ' GOES OUT' : 'STALEMATE',
+               W/2, py + 30, 2, PAL.brassHi, 'c');
+    }
+    var ry = py + 96;
+    for(var i = 0; i < m.seats.length; i++){
+      drawText(ctx, m.seats[i].name, pxx + 14, ry, 1, PAL.cream);
+      if(ov === 'roundend' && res)
+        drawText(ctx, (res.deltas[i] >= 0 ? '+' : '') + res.deltas[i], pxx + pw - 74, ry, 1,
+                 res.deltas[i] > 0 ? PAL.good : PAL.dim, 'r');
+      drawText(ctx, m.scores[i] + '', pxx + pw - 14, ry, 1, PAL.brassHi, 'r');
+      ry += 20;
+    }
+    ry += 8;
+    if(ov === 'roundend'){
+      var canGo = !NET.on() || NET.isHost();
+      btn(pxx + 20, ry, pw - 40, 42, canGo ? 'NEXT ROUND' : 'WAITING FOR HOST', 'cont', canGo, true);
+    } else {
+      var canGo2 = !NET.on() || NET.isHost();
+      btn(pxx + 14, ry, (pw - 34)/2, 42, canGo2 ? 'PLAY AGAIN' : 'WAITING', 'again', canGo2, true);
+      btn(pxx + 20 + (pw - 34)/2, ry, (pw - 34)/2, 42, 'MENU', 'tomenu', true, false);
+    }
+  } else if(ov === 'suitpick'){
+    var pw2 = Math.min(300, W - 50), px2 = W/2 - pw2/2, py2 = H*0.3;
+    panel(px2, py2, pw2, 130, true);
+    drawText(ctx, 'CALL A SUIT', W/2, py2 + 12, 1, PAL.brassHi, 'c');
+    var bw2 = (pw2 - 50) / 4;
+    for(var s2 = 0; s2 < 4; s2++){
+      var bx2 = px2 + 10 + s2 * (bw2 + 10);
+      ctx.fillStyle = '#20312f'; ctx.fillRect(bx2, py2 + 38, bw2, 66);
+      ctx.strokeStyle = PAL.brassLo; ctx.strokeRect(bx2+0.5, py2+38.5, bw2-1, 65);
+      drawPip(ctx, s2, bx2 + bw2/2, py2 + 71, 4, s2 === 1 || s2 === 2 ? PAL.red : PAL.cream);
+      hit(bx2, py2 + 38, bw2, 66, 'suit:' + s2);
+    }
+  } else if(ov === 'confirm'){
+    panel(W/2 - 130, H*0.35, 260, 110, true);
+    drawText(ctx, 'LEAVE THE MATCH?', W/2, H*0.35 + 18, 1, PAL.cream, 'c');
+    btn(W/2 - 112, H*0.35 + 48, 104, 42, 'LEAVE', 'leaveyes', true, false);
+    btn(W/2 + 8, H*0.35 + 48, 104, 42, 'STAY', 'leaveno', true, true);
+  } else if(ov === 'help'){
+    var G = GAMES[STATE.setupGame];
+    var pw3 = Math.min(330, W - 30), px3 = W/2 - pw3/2, py3 = 60;
+    var lines = G.help;
+    panel(px3, py3, pw3, 60 + lines.length * 14, true);
+    drawText(ctx, 'HOW TO PLAY ' + G.name, W/2, py3 + 12, 1, PAL.brassHi, 'c');
+    for(var li = 0; li < lines.length; li++)
+      drawText(ctx, lines[li], px3 + 12, py3 + 34 + li * 14, 1, PAL.cream);
+    btn(W/2 - 60, py3 + 40 + lines.length * 14, 120, 36, 'GOT IT', 'helpok', true, true);
+  } else if(ov === 'name'){
+    drawKeyGrid('NAME', STATE.nameBuf, 8);
+  }
+}
+function drawKeyGrid(title, buf, maxLen){
+  var pw = Math.min(330, W - 24), pxx = W/2 - pw/2, py = Math.max(54, H*0.12);
+  panel(pxx, py, pw, 250, true);
+  drawText(ctx, title, W/2, py + 10, 1, PAL.dim, 'c');
+  drawText(ctx, buf + (buf.length < maxLen ? '_' : ''), W/2, py + 26, 2, PAL.brassHi, 'c');
+  var cols = 7, bw = Math.floor((pw - 20) / cols) - 4;
+  for(var i = 0; i < 26; i++){
+    var ch = String.fromCharCode(65 + i);
+    var r = Math.floor(i / cols), c = i % cols;
+    btn(pxx + 12 + c * (bw + 4), py + 48 + r * 36, bw, 32, ch, 'key:' + ch, buf.length < maxLen, false);
+  }
+  btn(pxx + 12, py + 48 + 4 * 36, bw * 2 + 4, 32, 'DEL', 'key:DEL', buf.length > 0, false);
+  btn(pxx + pw - 12 - (bw * 3 + 8), py + 48 + 4 * 36, bw * 3 + 8, 32, 'OK', 'key:OK', true, true);
+}
+function drawMenu(){
+  var cb = getCrestBig();
+  var bob = Math.sin(uiTime * 0.0016) * 3;
+  var demo = [0, 24, 36], rots = [-0.22, 0, 0.22];
+  var ty = Math.max(64, H * 0.10);
+  for(var i = 0; i < 3; i++){
+    var img = getSprite(i === 1 ? 'b' : 'f', demo[i], SET.backId, L.T || 1);
+    if(!img) continue;
+    ctx.save(); ctx.translate(W/2 + (i-1)*44, ty + 46 + bob * (i-1?1:-1));
+    ctx.rotate(rots[i]);
+    ctx.globalAlpha = 0.9;
+    ctx.drawImage(img, -L.cw*0.45, -L.ch*0.45, L.cw*0.9, L.ch*0.9);
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+  if(cb) ctx.drawImage(cb, W/2 - 28, ty - 44, 56, 56);
+  var ts = Math.max(3, Math.min(6, Math.floor((W - 30) / textW('SHOWDOWN', 1))));
+  drawText(ctx, 'SHUFFLE', W/2, ty + 96, ts, PAL.cream, 'c');
+  drawText(ctx, 'SHOWDOWN', W/2, ty + 96 + ts*8 + 4, ts, PAL.brassHi, 'c');
+  drawText(ctx, 'A SNAIL ATTACK STUDIOS PARLOR', W/2, ty + 96 + ts*16 + 12, 1, PAL.dim, 'c');
+  var py = ty + 96 + ts*16 + 34;
+  var pw = Math.min(330, W - 28), pxx = W/2 - pw/2;
+  for(i = 0; i < GAMEORDER.length; i++){
+    var G = GAMES[GAMEORDER[i]];
+    panel(pxx, py, pw, 78, false);
+    for(var k = 0; k < 3; k++){
+      var fid = G.demoCards[k];
+      var im2 = getSprite('f', fid, SET.backId, 1);
+      if(im2){ ctx.save(); ctx.translate(pxx + 40 + k*14, py + 39); ctx.rotate(-0.14 + k*0.14);
+        ctx.drawImage(im2, -TEXW*0.42, -TEXH*0.42, TEXW*0.84, TEXH*0.84); ctx.restore(); }
+    }
+    drawText(ctx, G.name, pxx + 96, py + 16, 2, PAL.cream);
+    drawText(ctx, G.tag, pxx + 96, py + 38, 1, PAL.dim);
+    drawText(ctx, 'FOR ' + G.min + ' TO ' + G.max + ' SEATS', pxx + 96, py + 52, 1, PAL.brassLo);
+    hit(pxx, py, pw, 78, 'game:' + G.id);
+    py += 86;
+  }
+  btn(pxx, py, pw, 44, 'ONLINE TABLE', 'online', NET.avail(), true);
+  if(!NET.avail()) drawText(ctx, 'ONLINE NEEDS A CONNECTION', W/2, py + 50, 1, PAL.dim, 'c');
+  py += 54;
+  btn(pxx, py, pw, 40, 'SETTINGS', 'settings', true, false);
+}
+function drawSetup(){
+  var G = GAMES[STATE.setupGame], su = STATE.setup;
+  btn(10, 8, 34, 30, '<', 'back', true, false);
+  drawText(ctx, G.name, W/2, 14, 2, PAL.brassHi, 'c');
+  drawText(ctx, G.tag, W/2, 34, 1, PAL.dim, 'c');
+  var pw = Math.min(330, W - 28), pxx = W/2 - pw/2, y = 62;
+  panel(pxx, y, pw, 262, false);
+  drawText(ctx, 'TABLE', pxx + 12, y + 10, 1, PAL.brassLo);
+  chip(pxx + 12, y + 24, (pw-34)/2, 'VS BOTS', 'mode:bots', su.mode === 'bots');
+  chip(pxx + 22 + (pw-34)/2, y + 24, (pw-34)/2, 'PASS AND PLAY', 'mode:hot', su.mode === 'hot');
+  drawText(ctx, 'SEATS', pxx + 12, y + 62, 1, PAL.brassLo);
+  for(var s = G.min; s <= G.max; s++)
+    chip(pxx + 12 + (s - G.min) * 58, y + 76, 50, s + '', 'seats:' + s, su.seats === s);
+  drawText(ctx, su.mode === 'bots' ? 'OPPONENT' : 'EVERY HUMAN PLAYS THEIR OWN HAND', pxx + 12, y + 114, 1, PAL.brassLo);
+  if(su.mode === 'bots'){
+    for(var d = 0; d < 3; d++)
+      chip(pxx + 12 + d * ((pw - 24) / 3 + 0), y + 128, (pw - 34) / 3, DIFFS[d].name, 'diff:' + d, su.diff === d);
+    drawText(ctx, DIFFS[su.diff].blurb, pxx + 12, y + 162, 1, PAL.dim);
+  } else {
+    drawText(ctx, 'THE TABLE VEILS EACH HAND', pxx + 12, y + 132, 1, PAL.dim);
+    drawText(ctx, 'BETWEEN TURNS', pxx + 12, y + 146, 1, PAL.dim);
+  }
+  if(G.setupRow) G.setupRow(pxx, y + 176, pw);
+  else drawText(ctx, 'FIRST TO ' + TARGET_SCORE + ' TAKES THE MATCH', pxx + 12, y + 186, 1, PAL.dim);
+  btn(pxx + 12, y + 206, pw - 24, 44, 'DEAL IN', 'start', true, true);
+  btn(pxx, y + 274, pw, 38, 'HOW TO PLAY', 'help', true, false);
+}
+function drawSettings(){
+  btn(10, 8, 34, 30, '<', 'back', true, false);
+  drawText(ctx, 'SETTINGS', W/2, 16, 2, PAL.brassHi, 'c');
+  var pw = Math.min(330, W - 28), pxx = W/2 - pw/2, y = 52;
+  panel(pxx, y, pw, 150, false);
+  drawText(ctx, 'CARD BACK', pxx + 12, y + 10, 1, PAL.brassLo);
+  var bw = (pw - 24 - 30) / 4;
+  for(var i = 0; i < BACKS.length; i++){
+    var img = getSprite('b', 0, BACKS[i].id, 1);
+    var bx = pxx + 12 + i * (bw + 10);
+    if(img) ctx.drawImage(img, bx + bw/2 - TEXW*0.45, y + 26, TEXW*0.9, TEXH*0.9);
+    if(SET.backId === BACKS[i].id){
+      ctx.strokeStyle = PAL.sel; ctx.lineWidth = 2;
+      ctx.strokeRect(bx + bw/2 - TEXW*0.45 - 3, y + 23, TEXW*0.9 + 6, TEXH*0.9 + 6);
+    }
+    hit(bx, y + 20, bw, TEXH + 4, 'back:' + BACKS[i].id);
+    drawText(ctx, BACKS[i].name, bx + bw/2, y + 112, 1, SET.backId === BACKS[i].id ? PAL.cream : PAL.dim, 'c');
+  }
+  y += 158;
+  panel(pxx, y, pw, 64, false);
+  drawText(ctx, 'FELT', pxx + 12, y + 10, 1, PAL.brassLo);
+  for(i = 0; i < FELTS.length; i++){
+    var fx = pxx + 12 + i * 96;
+    ctx.fillStyle = FELTS[i].base; ctx.fillRect(fx, y + 24, 86, 26);
+    ctx.strokeStyle = SET.felt === i ? PAL.sel : PAL.brassLo; ctx.lineWidth = SET.felt === i ? 2 : 1;
+    ctx.strokeRect(fx+0.5, y+24.5, 85, 25);
+    hit(fx, y + 24, 86, 26, 'felt:' + i);
+  }
+  y += 72;
+  panel(pxx, y, pw, 96, false);
+  chip(pxx + 12, y + 10, (pw-34)/2, 'MUSIC ' + (SET.music ? 'ON' : 'OFF'), 'tog:music', SET.music);
+  chip(pxx + 22 + (pw-34)/2, y + 10, (pw-34)/2, 'SOUND ' + (SET.sfx ? 'ON' : 'OFF'), 'tog:sfx', SET.sfx);
+  chip(pxx + 12, y + 44, (pw-34)/2, 'HAPTICS ' + (SET.haptics ? 'ON' : 'OFF'), 'tog:haptics', SET.haptics);
+  chip(pxx + 22 + (pw-34)/2, y + 44, (pw-34)/2, 'NAME: ' + SET.name, 'nameedit', false);
+  drawText(ctx, 'V' + VER + '  SNAIL ATTACK STUDIOS', W/2, y + 112, 1, PAL.dim, 'c');
+}
+function drawOnline(){
+  btn(10, 8, 34, 30, '<', 'back', true, false);
+  drawText(ctx, 'ONLINE TABLE', W/2, 16, 2, PAL.brassHi, 'c');
+  var st = NET.state();
+  var pw = Math.min(330, W - 28), pxx = W/2 - pw/2, y = 60;
+  if(!st){
+    panel(pxx, y, pw, 150, false);
+    drawText(ctx, 'FOUR SEATS, ONE ROOM CODE', pxx + 12, y + 12, 1, PAL.dim);
+    btn(pxx + 12, y + 34, pw - 24, 46, 'HOST A TABLE', 'nethost', NET.avail(), true);
+    btn(pxx + 12, y + 92, pw - 24, 46, 'JOIN WITH CODE', 'netjoin', NET.avail(), true);
+    return;
+  }
+  if(st.host && st.phase === 'lobby'){
+    var LG = GAMES[st.gameId], ex = (LG && LG.lobbyRow) ? 56 : 0, lo = st.opts || [];   /* v1.04: a game may add a lobby row */
+    var tooMany = !!(LG && st.names.length > LG.max);
+    ex += 36 * (Math.ceil(GAMEORDER.length / 2) - 1);   /* v1.04: game chips wrap two to a row (v1.02 to v1.03 pushed the third off the panel) */
+    var gx = 36 * (Math.ceil(GAMEORDER.length / 2) - 1), rowY = y + 124 + gx;
+    panel(pxx, y, pw, 300 + ex, true);
+    drawText(ctx, 'TABLE CODE', W/2, y + 10, 1, PAL.dim, 'c');
+    drawText(ctx, st.code, W/2, y + 26, 4, PAL.brassHi, 'c');
+    drawText(ctx, 'GAME', pxx + 12, y + 72, 1, PAL.brassLo);
+    for(var i = 0; i < GAMEORDER.length; i++)
+      chip(pxx + 12 + (i % 2) * ((pw - 24) / 2), y + 86 + Math.floor(i / 2) * 36, (pw - 34) / 2, GAMES[GAMEORDER[i]].name, 'netgame:' + GAMEORDER[i], st.gameId === GAMEORDER[i]);
+    if(LG && LG.lobbyRow) LG.lobbyRow(pxx, rowY, pw, lo, 0);
+    drawText(ctx, 'SEATS', pxx + 12, y + 124 + ex, 1, PAL.brassLo);
+    for(i = 0; i < MAX_SEATS; i++)
+      drawText(ctx, (i + 1) + '. ' + (st.names[i] || 'OPEN') + (st.names[i] && LG && LG.lobbyLabel ? '  ' + LG.lobbyLabel(lo, i) : ''),
+               pxx + 12, y + 140 + ex + i * 14, 1, st.names[i] ? PAL.cream : 'rgba(216,169,79,0.35)');
+    btn(pxx + 12, y + 246 + ex, pw - 24, 46, tooMany ? LG.name + ' SEATS ' + LG.max : (st.names.length >= 2 ? 'START THE DEAL' : 'WAITING FOR PLAYERS'),
+        'netstart', st.names.length >= 2 && !tooMany, true);
+  } else if(!st.host && (st.phase === 'joining' || st.phase === 'lobby')){
+    var GG2 = GAMES[st.gameId], ex2 = (st.phase === 'lobby' && GG2 && GG2.lobbyRow && st.mySeat >= 0 && st.mySeat < GG2.max) ? 56 : 0;
+    panel(pxx, y, pw, 160 + ex2, true);
+    drawText(ctx, 'TABLE ' + st.code, W/2, y + 12, 2, PAL.brassHi, 'c');
+    if(st.phase === 'joining') drawText(ctx, 'REACHING THE TABLE...', W/2, y + 44, 1, PAL.dim, 'c');
+    else {
+      drawText(ctx, 'SEATED. WAITING ON THE HOST.', W/2, y + 40, 1, PAL.dim, 'c');
+      drawText(ctx, 'GAME: ' + (GG2 ? GG2.name : ''), W/2, y + 58, 1, PAL.cream, 'c');
+      for(var k = 0; k < st.names.length; k++)
+        drawText(ctx, (k + 1) + '. ' + st.names[k] + (GG2 && GG2.lobbyLabel ? '  ' + GG2.lobbyLabel(st.opts || [], k) : ''), W/2, y + 80 + k * 14, 1, PAL.cream, 'c');
+      if(ex2) GG2.lobbyRow(pxx, y + 146, pw, st.opts || [], st.mySeat);   /* v1.04: the guest picks too */
+    }
+  } else if(st.phase === 'joinfail'){
+    panel(pxx, y, pw, 90, false);
+    drawText(ctx, st.err ? 'NET: ' + st.err : 'COULD NOT JOIN ' + st.code, W/2, y + 20, 1, PAL.bad, 'c');
+    btn(pxx + 12, y + 40, pw - 24, 38, 'TRY AGAIN', 'netretry', true, true);
+  } else if(st.phase === 'code'){
+    drawKeyGrid('ENTER TABLE CODE', STATE.codeBuf, 4);
+  }
+}
+function drawMsgBanner(){
+  if(!STATE.msg || simNow > STATE.msg.until){ STATE.msg = null; return; }
+  var t = STATE.msg.txt;
+  var w = textW(t, 1) + 24;
+  ctx.fillStyle = 'rgba(6,16,15,0.85)';
+  ctx.fillRect(W/2 - w/2, 52, w, 22);
+  ctx.strokeStyle = PAL.brassLo; ctx.strokeRect(W/2 - w/2 + 0.5, 52.5, w - 1, 21);
+  drawText(ctx, t, W/2, 60, 1, PAL.brassHi, 'c');
+}
+function render(){
+  if(HEADLESS) return;
+  hits.length = 0;
+  bgFelt();
+  if(STATE.screen === 'menu') drawMenu();
+  else if(STATE.screen === 'setup') drawSetup();
+  else if(STATE.screen === 'settings') drawSettings();
+  else if(STATE.screen === 'online') drawOnline();
+  else if(STATE.screen === 'table') drawTable();
+  else if(STATE.screen === 'handoff'){ drawTable(); drawHandoff(); }
+  drawOverlay();
+  drawMsgBanner();
+  for(var i = tapFx.length - 1; i >= 0; i--){
+    var f = tapFx[i]; f.t += 1;
+    if(f.t > 14){ tapFx.splice(i, 1); continue; }
+    ctx.strokeStyle = 'rgba(216,169,79,' + (1 - f.t/14) * 0.5 + ')';
+    ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(f.x, f.y, 4 + f.t * 1.6, 0, 6.3); ctx.stroke();
+  }
+  drawText(ctx, 'V' + VER, W - 8, H - 12, 1, 'rgba(216,169,79,0.4)', 'r');
+  if(lastError){
+    ctx.fillStyle = 'rgba(60,8,8,0.92)'; ctx.fillRect(0, H - 34, W, 34);
+    drawText(ctx, ('ERR ' + lastError).slice(0, Math.floor((W - 10) / 6)), 6, H - 24, 1, '#ffd7d0');
+  }
+}
+
+/* ---- tap dispatch ---------------------------------------------------------- */
+function onTap(id){
+  var G;
+  if(STATE.overlay){
+    if(STATE.overlay === 'confirm'){
+      if(id === 'leaveyes') leaveMatch();
+      else if(id === 'leaveno') STATE.overlay = null;
+      return;
+    }
+    if(STATE.overlay === 'help'){ if(id === 'helpok') STATE.overlay = null; return; }
+    if(STATE.overlay === 'name'){
+      if(id && id.slice(0,4) === 'key:'){
+        var k = id.slice(4);
+        if(k === 'DEL') STATE.nameBuf = STATE.nameBuf.slice(0, -1);
+        else if(k === 'OK'){ if(STATE.nameBuf) SET.name = STATE.nameBuf; saveSet(); STATE.overlay = null; }
+        else if(STATE.nameBuf.length < 8) STATE.nameBuf += k;
+        sfx('tick');
+      }
+      return;
+    }
+    if(STATE.overlay === 'suitpick'){
+      if(id && id.slice(0,5) === 'suit:'){ G = curGame(); if(G.ctrl.pickSuit) G.ctrl.pickSuit(+id.slice(5)); }
+      return;
+    }
+    if(STATE.overlay === 'roundend'){ if(id === 'cont') continueFromRound(); return; }
+    if(STATE.overlay === 'matchend'){
+      if(id === 'again'){
+        var m = STATE.match;
+        if(NET.on() && NET.isHost()){
+          startMatch(m.gameId, m.seats, m.target, (Math.floor(uiRnd()*0x7fffffff))|0);
+          NET.bcast({t:'start', snap:snapshot()});
+        } else if(!NET.on()) startMatch(m.gameId, m.seats, m.target, (Math.floor(uiRnd()*0x7fffffff))|0);
+      } else if(id === 'tomenu') leaveMatch();
+      return;
+    }
+    return;
+  }
+  if(STATE.screen === 'menu'){
+    if(id && id.slice(0,5) === 'game:'){ STATE.setupGame = id.slice(5); STATE.screen = 'setup'; sfx('press'); }
+    else if(id === 'online'){ STATE.screen = 'online'; NET.reset(); sfx('press'); }
+    else if(id === 'settings'){ STATE.screen = 'settings'; sfx('press'); }
+    return;
+  }
+  if(STATE.screen === 'setup'){
+    var su = STATE.setup, GG = GAMES[STATE.setupGame];
+    if(id === 'back'){ STATE.screen = 'menu'; sfx('press'); }
+    else if(id === 'mode:bots'){ su.mode = 'bots'; sfx('tick'); }
+    else if(id === 'mode:hot'){ su.mode = 'hot'; sfx('tick'); }
+    else if(id && id.slice(0,6) === 'seats:'){ su.seats = +id.slice(6); sfx('tick'); }
+    else if(id && id.slice(0,5) === 'diff:'){ su.diff = +id.slice(5); sfx('tick'); }
+    else if(id && id.slice(0,5) === 'gopt:'){ if(GG.onSetupTap) GG.onSetupTap(id.slice(5)); sfx('tick'); }
+    else if(id === 'help'){ STATE.overlay = 'help'; sfx('press'); }
+    else if(id === 'start'){
+      var seats = [], names = BOTNAMES[su.diff].slice();
+      if(su.mode === 'bots'){
+        seats.push({kind:'human', name:SET.name || 'YOU', diff:0});
+        for(var b = 1; b < su.seats; b++) seats.push({kind:'bot', name:names[(b-1) % names.length], diff:su.diff});
+      } else {
+        for(b = 0; b < su.seats; b++) seats.push({kind:'human', name:b === 0 ? (SET.name || 'P1') : 'PLAYER ' + (b+1), diff:0});
+      }
+      sfx('press');
+      startMatch(STATE.setupGame, seats, TARGET_SCORE, (Math.floor(uiRnd()*0x7fffffff))|0);
+    }
+    return;
+  }
+  if(STATE.screen === 'settings'){
+    if(id === 'back'){ STATE.screen = 'menu'; saveSet(); sfx('press'); }
+    else if(id && id.slice(0,5) === 'back:'){ SET.backId = id.slice(5); spriteCache = {}; saveSet(); sfx('flip'); }
+    else if(id && id.slice(0,5) === 'felt:'){ SET.felt = +id.slice(5); saveSet(); sfx('tick'); }
+    else if(id === 'tog:music'){ SET.music = !SET.music; saveSet(); if(SET.music) MUSIC.start(); else MUSIC.stop(); sfx('tick'); }
+    else if(id === 'tog:sfx'){ SET.sfx = !SET.sfx; saveSet(); sfx('tick'); }
+    else if(id === 'tog:haptics'){ SET.haptics = !SET.haptics; saveSet(); buzz(16); sfx('tick'); }
+    else if(id === 'nameedit'){ STATE.nameBuf = SET.name; STATE.overlay = 'name'; sfx('press'); }
+    return;
+  }
+  if(STATE.screen === 'online'){
+    var st = NET.state();
+    if(id === 'back'){ NET.leave(); STATE.screen = 'menu'; sfx('press'); return; }
+    if(!st){
+      if(id === 'nethost'){ NET.host(); sfx('press'); }
+      else if(id === 'netjoin'){ startCodeEntry(); sfx('press'); }
+      return;
+    }
+    if(st.phase === 'code'){
+      if(id && id.slice(0,4) === 'key:'){
+        var kk = id.slice(4);
+        if(kk === 'DEL') STATE.codeBuf = STATE.codeBuf.slice(0, -1);
+        else if(kk === 'OK'){ if(STATE.codeBuf.length === 4){ var cd = STATE.codeBuf; NET.leave(); NET.join(cd); } }
+        else if(STATE.codeBuf.length < 4 && CODE_ABC.indexOf(kk) >= 0) STATE.codeBuf += kk;
+        sfx('tick');
+      }
+      return;
+    }
+    if(st.host && st.phase === 'lobby'){
+      if(id && id.slice(0,8) === 'netgame:'){ NET.setGame(id.slice(8)); sfx('tick'); }
+      else if(id === 'netstart'){ NET.hostStart(); sfx('press'); }
+      else if(id && id.slice(0,5) === 'lopt:'){ NET.setOpt(id.slice(5)); sfx('tick'); }
+      return;
+    }
+    if(!st.host && st.phase === 'lobby'){
+      if(id && id.slice(0,5) === 'lopt:'){ NET.setOpt(id.slice(5)); sfx('tick'); }   /* v1.04 */
+      return;
+    }
+    if(st.phase === 'joinfail' && id === 'netretry'){ NET.leave(); startCodeEntry(); }
+    return;
+  }
+  if(STATE.screen === 'handoff'){
+    if(id === 'reveal'){ STATE.pov = STATE.handoffTo; STATE.screen = 'table'; sfx('yourturn'); buzz(14); }
+    return;
+  }
+  if(STATE.screen === 'table'){
+    G = curGame();
+    if(id === 'back'){ STATE.overlay = 'confirm'; sfx('press'); return; }
+    if(id === 'sort'){ STATE.sortMode = (STATE.sortMode + 1) % 3; sfx('tick'); return; }
+    if(!G) return;
+    if(id && id.slice(0,5) === 'card:'){ G.ctrl.tapCard(+id.slice(5)); return; }
+    if(id && id.slice(0,5) === 'pile:'){ G.ctrl.tapPile(id.slice(5)); return; }
+    if(id && id.slice(0,5) === 'meld:'){ G.ctrl.tapMeld(+id.slice(5)); return; }
+    if(id && id.slice(0,5) === 'gbtn:'){
+      var bs = G.ctrl.buttons(), bi = +id.slice(5);
+      if(bs[bi] && bs[bi].en && isLocalTurn() && !choreoBusy()) bs[bi].fire();
+      return;
+    }
+  }
+}
+function startCodeEntry(){
+  STATE.codeBuf = '';
+  NET.forceState({host:false, phase:'code', code:'', names:[], mySeat:-1, seq:0, gameId:'rummy', err:null});
+}
+
+/* ---- the loop: fixed step, clock law, hook-drivable ------------------------ */
+var last = 0, acc = 0;
+function stepSim(dt){
+  simNow += dt; uiTime += dt;
+  tickTweens(dt);
+  if(shufflePhase){ shufflePhase.t += dt; if(shufflePhase.t >= shufflePhase.dur) shufflePhase = null; }
+  for(var i = 0; i < sndq.length; i++){
+    if(sndq[i].at <= simNow){ sfx(sndq[i].name); sndq.splice(i, 1); i--; }
+  }
+  botPump();
+}
+function pump(now){
+  try{
+    if(!last) last = now;
+    acc += now - last; last = now;
+    if(acc > CATCHUP_DROP){ last = now - STEP; acc = STEP; }   /* drop the lost time, never sprint (doc 11) */
+    var t = 0;
+    while(acc >= STEP && t < TICK_CAP){ stepSim(STEP); acc -= STEP; t++; }
+    if(t >= TICK_CAP) acc = 0;                                  /* cap reached: shed the backlog */
+    syncHomes();
+    render();
+  }catch(e){ reportErr('pump', e); }
+  if(!HEADLESS) win.requestAnimationFrame(pump);
+}
+if(doc && doc.addEventListener){
+  doc.addEventListener('visibilitychange', function(){
+    if(!doc.hidden){
+      last = 0; acc = 0;                                        /* resync the local clock, every mode */
+      if(NET.on() && !NET.isHost()) NET.askSnap();              /* long gap: mini re-join via snapshot */
+    }
+  });
+}
+/*==== ENGINE-CORE END ====*/
+
+/*==== CONTENT-DATA BEGIN ====*/
+var DIFFS = [
+  {name:'PATSY',   tag:'PATSY',   blurb:'PLAYS LOOSE AND FORGETS THE TABLE'},
+  {name:'HUSTLER', tag:'HUSTLER', blurb:'COUNTS MELDS AND SHEDS SMART'},
+  {name:'SHARK',   tag:'SHARK',   blurb:'REMEMBERS EVERY CARD YOU TAKE'}
+];
+var BOTNAMES = [
+  ['PATSY', 'MOE', 'DAISY'],
+  ['HUSTLER', 'VELVET', 'JACKS'],
+  ['SHARK', 'RIVERA', 'MINNOW']
+];
+/*==== CONTENT-DATA END ====*/
+
+/*==== GAME:RUMMY BEGIN ====*/
+(function(){
+  function sortByRank(ids){ return ids.slice().sort(function(a,b){ return rankOf(a) - rankOf(b); }); }
+  function meldKind(ids){
+    if(ids.length < 3 || ids.length > 13) return null;
+    var i, sameRank = true;
+    for(i = 1; i < ids.length; i++) if(rankOf(ids[i]) !== rankOf(ids[0])) sameRank = false;
+    if(sameRank && ids.length <= 4) return 'set';
+    var s = suitOf(ids[0]);
+    for(i = 1; i < ids.length; i++) if(suitOf(ids[i]) !== s) return null;
+    var srt = sortByRank(ids);
+    for(i = 1; i < srt.length; i++) if(rankOf(srt[i]) !== rankOf(srt[i-1]) + 1) return null;
+    return 'run';                                   /* ace low only: A-2-3 yes, Q-K-A no */
+  }
+  function layFit(meld, card){
+    if(meld.kind === 'set')
+      return meld.cards.length < 4 && rankOf(card) === rankOf(meld.cards[0]);
+    if(suitOf(card) !== suitOf(meld.cards[0])) return false;
+    var lo = rankOf(meld.cards[0]), hi = rankOf(meld.cards[meld.cards.length - 1]);
+    return rankOf(card) === lo - 1 || rankOf(card) === hi + 1;
+  }
+  function removeCards(hand, ids){
+    for(var i = 0; i < ids.length; i++){
+      var k = hand.indexOf(ids[i]);
+      if(k < 0) return false;
+      hand.splice(k, 1);
+    }
+    return true;
+  }
+  function reshuffleStock(g, emit){
+    if(g.stock.length) return;
+    if(g.discard.length <= 1) return;
+    var top = g.discard.pop();
+    g.stock = g.discard; g.discard = [top];
+    shuffleArr(g, g.stock);
+    emit({e:'reshuffle'});
+  }
+  function advance(g){
+    g.turn = (g.turn + 1) % g.n; g.phase = 'draw'; g.drewDisc = -1; g.turnCount++;
+    if(g.turnCount > TURN_GUARD){ g.over = true; g.winner = -1; }
+  }
+  function goOutCheck(g, seat){
+    if(g.hands[seat].length === 0){ g.over = true; g.winner = seat; }
+  }
+  /* best meld cover: exact search, hands are small (max 11 cards) */
+  function candidateMelds(hand){
+    var out = [], byRank = {}, bySuit = {}, i, k;
+    for(i = 0; i < hand.length; i++){
+      var c = hand[i];
+      (byRank[rankOf(c)] = byRank[rankOf(c)] || []).push(c);
+      (bySuit[suitOf(c)] = bySuit[suitOf(c)] || []).push(c);
+    }
+    for(k in byRank){
+      var grp = byRank[k];
+      if(grp.length >= 3){
+        if(grp.length === 3) out.push(grp.slice());
+        else {
+          out.push(grp.slice());
+          for(i = 0; i < 4; i++){ var t3 = grp.slice(); t3.splice(i, 1); out.push(t3); }
+        }
+      }
+    }
+    for(k in bySuit){
+      var run = sortByRank(bySuit[k]);
+      for(i = 0; i < run.length; i++){
+        var seq = [run[i]];
+        for(var j = i + 1; j < run.length; j++){
+          if(rankOf(run[j]) === rankOf(seq[seq.length-1]) + 1) seq.push(run[j]);
+          else if(rankOf(run[j]) === rankOf(seq[seq.length-1])) continue;
+          else break;
+        }
+        for(var len = 3; len <= seq.length; len++) out.push(seq.slice(0, len));
+      }
+    }
+    return out;
+  }
+  function bestCover(hand){
+    var cands = candidateMelds(hand);
+    var best = {value:0, melds:[]};
+    function val(ids){ var v = 0; for(var i = 0; i < ids.length; i++) v += pipValue(ids[i]); return v; }
+    function used(sel, ids){
+      for(var i = 0; i < ids.length; i++) if(sel.indexOf(ids[i]) >= 0) return true;
+      return false;
+    }
+    function rec(idx, sel, melds, value){
+      if(value > best.value) best = {value:value, melds:melds.slice()};
+      if(idx >= cands.length) return;
+      for(var i = idx; i < cands.length; i++){
+        if(used(sel, cands[i])) continue;
+        rec(i + 1, sel.concat(cands[i]), melds.concat([cands[i]]), value + val(cands[i]));
+      }
+    }
+    rec(0, [], [], 0);
+    return best;
+  }
+  function helpsHand(g, hand, c){
+    for(var m = 0; m < g.melds.length; m++) if(layFit(g.melds[m], c)) return true;
+    for(var i = 0; i < hand.length; i++) for(var j = i + 1; j < hand.length; j++)
+      if(meldKind([hand[i], hand[j], c])) return true;
+    return false;
+  }
+  function keepScore(hand, c){                       /* pair or run-neighbor potential */
+    var k = 0;
+    for(var i = 0; i < hand.length; i++){
+      var o = hand[i]; if(o === c) continue;
+      if(rankOf(o) === rankOf(c)) k += 4;
+      if(suitOf(o) === suitOf(c) && Math.abs(rankOf(o) - rankOf(c)) <= 2) k += 3;
+    }
+    return k;
+  }
+  registerGame({
+    id:'rummy', name:'RUMMY', tag:'MELD SETS AND RUNS, SHED THE DEADWOOD',
+    min:2, max:4, demoCards:[19, 20, 21],
+    help:[
+      'DRAW FROM THE STOCK OR THE DISCARD.',
+      'MELD 3+ OF A KIND, OR 3+ IN A ROW',
+      'OF ONE SUIT. ACES PLAY LOW.',
+      'LAY OFF SINGLES ON TABLE MELDS.',
+      'END YOUR TURN WITH A DISCARD.',
+      'EMPTY YOUR HAND TO GO OUT: YOU',
+      'SCORE EVERY CARD LEFT IN THEIR',
+      'HANDS. FIRST TO 100 WINS.'
+    ],
+    setup:function(n, seed, dealer){
+      var g = {rngS:seed|0, n:n, dealer:dealer, turn:(dealer + 1) % n, phase:'draw',
+               hands:[], stock:makeDeck(), discard:[], melds:[], over:false, winner:-1,
+               dealSeq:[], turnCount:0, drewDisc:-1, picked:[]};
+      for(var i = 0; i < n; i++) g.hands.push([]);
+      shuffleArr(g, g.stock);
+      var hs = n === 2 ? 10 : 7;
+      for(var r = 0; r < hs; r++) for(var s = 0; s < n; s++){
+        var seat = (dealer + 1 + s) % n, c = g.stock.pop();
+        g.hands[seat].push(c); g.dealSeq.push({c:c, seat:seat});
+      }
+      var up = g.stock.pop(); g.discard.push(up); g.dealSeq.push({c:up, seat:-1});
+      return g;
+    },
+    legal:function(g, seat, a){
+      if(g.over || seat !== g.turn || !a) return false;
+      var hand = g.hands[seat];
+      if(a.a === 'draw'){
+        if(g.phase !== 'draw') return false;
+        if(a.src === 'stock') return g.stock.length > 0 || g.discard.length > 1;
+        if(a.src === 'discard') return g.discard.length > 0;
+        return false;
+      }
+      if(g.phase !== 'act') return false;
+      if(a.a === 'meld'){
+        if(!a.ids || a.ids.length < 3) return false;
+        var seen = {};
+        for(var i = 0; i < a.ids.length; i++){
+          if(seen[a.ids[i]] || hand.indexOf(a.ids[i]) < 0) return false;
+          seen[a.ids[i]] = 1;
+        }
+        return !!meldKind(a.ids);
+      }
+      if(a.a === 'lay')
+        return hand.indexOf(a.card) >= 0 && g.melds[a.meld] && layFit(g.melds[a.meld], a.card);
+      if(a.a === 'disc')
+        return hand.indexOf(a.card) >= 0 && a.card !== g.drewDisc;
+      return false;
+    },
+    apply:function(g, seat, a, emit){
+      var hand = g.hands[seat];
+      if(a.a === 'draw'){
+        if(a.src === 'stock'){
+          reshuffleStock(g, emit);
+          var c = g.stock.pop();
+          hand.push(c); g.drewDisc = -1;
+          emit({e:'draw', seat:seat, card:c, src:'stock'});
+        } else {
+          var d = g.discard.pop();
+          hand.push(d); g.drewDisc = d;
+          g.picked.push({seat:seat, card:d});
+          emit({e:'draw', seat:seat, card:d, src:'discard'});
+        }
+        g.phase = 'act';
+        return;
+      }
+      if(a.a === 'meld'){
+        var ids = a.ids.slice();
+        var kind = meldKind(ids);
+        removeCards(hand, ids);
+        if(kind === 'run') ids = sortByRank(ids); else ids.sort(function(x,y){ return suitOf(x) - suitOf(y); });
+        g.melds.push({cards:ids, kind:kind, by:seat});
+        emit({e:'meld', seat:seat, cards:ids});
+        goOutCheck(g, seat);
+        return;
+      }
+      if(a.a === 'lay'){
+        removeCards(hand, [a.card]);
+        var m = g.melds[a.meld];
+        if(m.kind === 'set') m.cards.push(a.card);
+        else if(rankOf(a.card) < rankOf(m.cards[0])) m.cards.unshift(a.card);
+        else m.cards.push(a.card);
+        emit({e:'lay', seat:seat, card:a.card, meld:a.meld});
+        goOutCheck(g, seat);
+        return;
+      }
+      if(a.a === 'disc'){
+        removeCards(hand, [a.card]);
+        g.discard.push(a.card);
+        emit({e:'discard', seat:seat, card:a.card});
+        goOutCheck(g, seat);
+        if(!g.over) advance(g);
+      }
+    },
+    roundResult:function(g){
+      var deltas = [], i;
+      for(i = 0; i < g.n; i++) deltas.push(0);
+      if(g.winner >= 0){
+        var sum = 0;
+        for(i = 0; i < g.n; i++) if(i !== g.winner)
+          for(var j = 0; j < g.hands[i].length; j++) sum += pipValue(g.hands[i][j]);
+        deltas[g.winner] = sum;
+      }
+      return {winner:g.winner, deltas:deltas};
+    },
+    drawHint:function(g){ return g.phase === 'draw'; },
+    drawHud:function(g){
+      if(STATE.reveal) return;
+      var dw = 0, h = g.hands[STATE.pov];
+      for(var i = 0; i < h.length; i++) dw += pipValue(h[i]);
+      drawText(ctx, 'DEADWOOD ' + dw, 14, L.meld.y - 52, 1, PAL.dim);
+    },
+    bot:function(g, seat, diff){
+      var hand = g.hands[seat], i;
+      if(g.phase === 'draw'){
+        var top = g.discard.length ? g.discard[g.discard.length - 1] : null;
+        var canStock = g.stock.length > 0 || g.discard.length > 1;
+        var take = false;
+        if(top != null){
+          var useful = helpsHand(g, hand, top);
+          if(diff === 0) take = uiRnd() < (useful ? 0.6 : 0.22);
+          else take = useful;
+        }
+        if(!canStock && top != null) take = true;
+        return {a:'draw', src:take ? 'discard' : 'stock'};
+      }
+      /* act: meld, then lay, then discard */
+      var cover = bestCover(hand);
+      if(cover.melds.length && hand.length > cover.melds[0].length &&
+         !(diff === 0 && uiRnd() < 0.4)){
+        return {a:'meld', ids:cover.melds[0]};
+      }
+      if(!(diff === 0 && uiRnd() < 0.5)){
+        for(var m = 0; m < g.melds.length; m++)
+          for(i = 0; i < hand.length; i++)
+            if(hand.length > 1 && layFit(g.melds[m], hand[i]))
+              return {a:'lay', card:hand[i], meld:m};
+      }
+      /* discard: shed high deadwood, keep meld seeds, sharks avoid feeding */
+      var keepIds = {};
+      for(i = 0; i < cover.melds.length; i++)
+        for(var j = 0; j < cover.melds[i].length; j++) keepIds[cover.melds[i][j]] = 1;
+      var bestC = -1, bestS = -1e9;
+      for(i = 0; i < hand.length; i++){
+        var c = hand[i];
+        if(c === g.drewDisc && hand.length > 1) continue;
+        var s = pipValue(c) - keepScore(hand, c) - (keepIds[c] ? 30 : 0);
+        if(diff === 0) s = uiRnd() * 10;
+        if(diff === 2){
+          for(var p = 0; p < g.picked.length; p++){
+            var pk = g.picked[p];
+            if(pk.seat === seat) continue;
+            if(rankOf(pk.card) === rankOf(c)) s -= 9;
+            if(suitOf(pk.card) === suitOf(c) && Math.abs(rankOf(pk.card) - rankOf(c)) <= 2) s -= 7;
+          }
+        }
+        if(s > bestS){ bestS = s; bestC = c; }
+      }
+      if(bestC < 0) bestC = hand[0] === g.drewDisc && hand.length > 1 ? hand[1] : hand[0];
+      return {a:'disc', card:bestC};
+    },
+    fallback:function(g, seat){
+      var hand = g.hands[seat];
+      if(g.phase === 'draw')
+        return {a:'draw', src:(g.stock.length > 0 || g.discard.length > 1) ? 'stock' : 'discard'};
+      for(var i = 0; i < hand.length; i++)
+        if(hand[i] !== g.drewDisc || hand.length === 1) return {a:'disc', card:hand[i]};
+      return {a:'disc', card:hand[0]};
+    },
+    ctrl:{
+      tapCard:function(id){
+        var g = STATE.g;
+        if(g.hands[STATE.pov].indexOf(id) < 0) return;
+        STATE.layMode = false;
+        var k = STATE.sel.indexOf(id);
+        if(k >= 0) STATE.sel.splice(k, 1); else STATE.sel.push(id);
+        sfx('tick');
+      },
+      tapPile:function(which){
+        var g = STATE.g;
+        if(g.phase === 'draw'){ tryLocalAction({a:'draw', src:which}); return; }
+        if(which === 'discard' && STATE.sel.length === 1)
+          tryLocalAction({a:'disc', card:STATE.sel[0]});
+      },
+      tapMeld:function(mi){
+        if(STATE.sel.length === 1) tryLocalAction({a:'lay', card:STATE.sel[0], meld:mi});
+      },
+      buttons:function(){
+        var g = STATE.g, sel = STATE.sel, G = GAMES.rummy;
+        var canMeld = g.phase === 'act' && sel.length >= 3 && !!meldKind(sel);
+        var canLay = false;
+        if(g.phase === 'act' && sel.length === 1)
+          for(var m = 0; m < g.melds.length; m++) if(layFit(g.melds[m], sel[0])) canLay = true;
+        var canDisc = g.phase === 'act' && sel.length === 1 && sel[0] !== g.drewDisc;
+        return [
+          {label:'MELD', en:canMeld, fire:function(){ tryLocalAction({a:'meld', ids:sel.slice()}); }},
+          {label:'LAY OFF', en:canLay, fire:function(){
+            var ts = [];
+            for(var m = 0; m < g.melds.length; m++) if(layFit(g.melds[m], sel[0])) ts.push(m);
+            if(ts.length === 1) tryLocalAction({a:'lay', card:sel[0], meld:ts[0]});
+            else { STATE.layMode = true; showMsg('TAP A MELD'); }
+          }},
+          {label:'DISCARD', en:canDisc, fire:function(){ tryLocalAction({a:'disc', card:sel[0]}); }}
+        ];
+      }
+    }
+  });
+})();
+/*==== GAME:RUMMY END ====*/
+
+/*==== GAME:EIGHTS BEGIN ====*/
+(function(){
+  var pendingEight = -1;
+  function eightVal(c){
+    var r = rankOf(c);
+    if(r === 7) return 50;
+    if(r >= 10) return 10;
+    if(r === 0) return 1;
+    return r + 1;
+  }
+  function playFits(g, c, suit){
+    if(rankOf(c) === 7) return suit != null && suit >= 0 && suit <= 3;
+    return suitOf(c) === g.curSuit || rankOf(c) === g.curRank;
+  }
+  function legalPlays(g, hand){
+    var out = [];
+    for(var i = 0; i < hand.length; i++)
+      if(rankOf(hand[i]) === 7 || suitOf(hand[i]) === g.curSuit || rankOf(hand[i]) === g.curRank)
+        out.push(hand[i]);
+    return out;
+  }
+  function canDrawE(g){ return g.draws < DRAW_CAP_EIGHTS && (g.stock.length > 0 || g.discard.length > 1); }
+  function reshuffleE(g, emit){
+    if(g.stock.length || g.discard.length <= 1) return;
+    var top = g.discard.pop();
+    g.stock = g.discard; g.discard = [top];
+    shuffleArr(g, g.stock);
+    emit({e:'reshuffle'});
+  }
+  function advanceE(g){
+    g.turn = (g.turn + 1) % g.n; g.draws = 0; g.turnCount++;
+    if(g.turnCount > TURN_GUARD){ g.over = true; g.winner = -1; }
+  }
+  function majSuit(hand, skip){
+    var cnt = [0,0,0,0];
+    for(var i = 0; i < hand.length; i++) if(hand[i] !== skip && rankOf(hand[i]) !== 7) cnt[suitOf(hand[i])]++;
+    var best = 0;
+    for(i = 1; i < 4; i++) if(cnt[i] > cnt[best]) best = i;
+    return best;
+  }
+  registerGame({
+    id:'eights', name:'CRAZY EIGHTS', tag:'MATCH SUIT OR RANK, EIGHTS RUN WILD',
+    min:2, max:4, demoCards:[7, 20, 33],
+    help:[
+      'PLAY A CARD MATCHING THE TOP',
+      'DISCARD BY SUIT OR BY RANK.',
+      'EIGHTS PLAY ON ANYTHING AND',
+      'CALL THE NEXT SUIT.',
+      'NO PLAY? DRAW UP TO 3, THEN PASS.',
+      'EMPTY YOUR HAND TO WIN THE ROUND:',
+      'EIGHTS 50, COURTS 10, PIPS FACE.',
+      'FIRST TO 100 WINS THE MATCH.'
+    ],
+    setup:function(n, seed, dealer){
+      var g = {rngS:seed|0, n:n, dealer:dealer, turn:(dealer + 1) % n, draws:0,
+               hands:[], stock:makeDeck(), discard:[], over:false, winner:-1,
+               dealSeq:[], turnCount:0, curSuit:0, curRank:0};
+      for(var i = 0; i < n; i++) g.hands.push([]);
+      shuffleArr(g, g.stock);
+      var hs = n === 2 ? 7 : 5;
+      for(var r = 0; r < hs; r++) for(var s = 0; s < n; s++){
+        var seat = (dealer + 1 + s) % n, c = g.stock.pop();
+        g.hands[seat].push(c); g.dealSeq.push({c:c, seat:seat});
+      }
+      var guard = 0;
+      while(rankOf(g.stock[g.stock.length - 1]) === 7 && guard++ < 60)
+        g.stock.unshift(g.stock.pop());               /* an eight never opens the pile */
+      var up = g.stock.pop();
+      g.discard.push(up); g.dealSeq.push({c:up, seat:-1});
+      g.curSuit = suitOf(up); g.curRank = rankOf(up);
+      return g;
+    },
+    legal:function(g, seat, a){
+      if(g.over || seat !== g.turn || !a) return false;
+      var hand = g.hands[seat];
+      if(a.a === 'play') return hand.indexOf(a.card) >= 0 && playFits(g, a.card, a.suit);
+      if(a.a === 'drawE') return canDrawE(g);
+      if(a.a === 'pass') return legalPlays(g, hand).length === 0 && !canDrawE(g);
+      return false;
+    },
+    apply:function(g, seat, a, emit){
+      var hand = g.hands[seat];
+      if(a.a === 'play'){
+        hand.splice(hand.indexOf(a.card), 1);
+        g.discard.push(a.card);
+        g.curRank = rankOf(a.card);
+        g.curSuit = rankOf(a.card) === 7 ? a.suit : suitOf(a.card);
+        emit({e:'play', seat:seat, card:a.card});
+        if(rankOf(a.card) === 7) emit({e:'suit', suit:g.curSuit});
+        if(hand.length === 0){ g.over = true; g.winner = seat; }
+        else if(hand.length === 1) emit({e:'msg', txt:STATE.match.seats[seat].name + ': ONE CARD!'});
+        if(!g.over) advanceE(g);
+        return;
+      }
+      if(a.a === 'drawE'){
+        reshuffleE(g, emit);
+        var c = g.stock.pop();
+        hand.push(c); g.draws++;
+        emit({e:'draw', seat:seat, card:c, src:'stock'});
+        return;
+      }
+      if(a.a === 'pass'){
+        emit({e:'msg', txt:STATE.match.seats[seat].name + ' PASSES'});
+        advanceE(g);
+      }
+    },
+    roundResult:function(g){
+      var deltas = [], i;
+      for(i = 0; i < g.n; i++) deltas.push(0);
+      if(g.winner >= 0){
+        var sum = 0;
+        for(i = 0; i < g.n; i++) if(i !== g.winner)
+          for(var j = 0; j < g.hands[i].length; j++) sum += eightVal(g.hands[i][j]);
+        deltas[g.winner] = sum;
+      }
+      return {winner:g.winner, deltas:deltas};
+    },
+    drawHint:function(g){
+      return legalPlays(g, g.hands[g.turn]).length === 0 && canDrawE(g);
+    },
+    drawHud:function(g){
+      var top = g.discard[g.discard.length - 1];
+      if(top != null && (g.curSuit !== suitOf(top) || rankOf(top) === 7)){
+        drawPip(ctx, g.curSuit, L.discard.x + L.cw + 16, L.discard.y + 14, 2,
+                g.curSuit === 1 || g.curSuit === 2 ? PAL.red : PAL.cream);
+        drawText(ctx, 'CALLED', L.discard.x + L.cw + 6, L.discard.y + 26, 1, PAL.dim);
+      }
+    },
+    bot:function(g, seat, diff){
+      var hand = g.hands[seat];
+      var plays = legalPlays(g, hand);
+      if(plays.length){
+        var nonEights = [], i;
+        for(i = 0; i < plays.length; i++) if(rankOf(plays[i]) !== 7) nonEights.push(plays[i]);
+        var pick;
+        if(diff === 0){
+          pick = plays[Math.floor(uiRnd() * plays.length)];
+        } else {
+          var pool = nonEights.length ? nonEights : plays;
+          if(diff === 2 && nonEights.length){
+            var rival = false;
+            for(i = 0; i < g.n; i++) if(i !== seat && g.hands[i].length <= 2) rival = true;
+            if(rival && nonEights.length !== plays.length && hand.length > 2) pool = plays;  /* shark spends the eight to steer */
+          }
+          pick = pool[0];
+          var bestS = -1e9;
+          for(i = 0; i < pool.length; i++){
+            var c = pool[i], s = eightVal(c);
+            if(rankOf(c) !== 7){
+              var after = 0;
+              for(var j = 0; j < hand.length; j++)
+                if(hand[j] !== c && suitOf(hand[j]) === suitOf(c)) after++;
+              s += (diff === 2 ? 3 : 1) * after;
+              if(rankOf(c) === 7) s -= 20;
+            }
+            if(s > bestS){ bestS = s; pick = c; }
+          }
+        }
+        if(rankOf(pick) === 7) return {a:'play', card:pick, suit:majSuit(hand, pick)};
+        return {a:'play', card:pick};
+      }
+      if(canDrawE(g)) return {a:'drawE'};
+      return {a:'pass'};
+    },
+    fallback:function(g, seat){
+      var plays = legalPlays(g, g.hands[seat]);
+      if(plays.length){
+        if(rankOf(plays[0]) === 7) return {a:'play', card:plays[0], suit:majSuit(g.hands[seat], plays[0])};
+        return {a:'play', card:plays[0]};
+      }
+      if(canDrawE(g)) return {a:'drawE'};
+      return {a:'pass'};
+    },
+    ctrl:{
+      tapCard:function(id){
+        if(STATE.g.hands[STATE.pov].indexOf(id) < 0) return;
+        STATE.sel = STATE.sel[0] === id ? [] : [id];
+        sfx('tick');
+      },
+      tapPile:function(which){
+        if(which === 'stock'){ tryLocalAction({a:'drawE'}); return; }
+        if(STATE.sel.length === 1) this.firePlay();
+      },
+      tapMeld:function(){},
+      firePlay:function(){
+        var c = STATE.sel[0], g = STATE.g;
+        if(c == null) return;
+        if(rankOf(c) === 7){
+          if(g.hands[STATE.pov].indexOf(c) >= 0 && isLocalTurn() && !choreoBusy()){
+            pendingEight = c; STATE.overlay = 'suitpick'; sfx('press');
+          }
+          return;
+        }
+        tryLocalAction({a:'play', card:c});
+      },
+      pickSuit:function(s){
+        STATE.overlay = null;
+        if(pendingEight >= 0) tryLocalAction({a:'play', card:pendingEight, suit:s});
+        pendingEight = -1;
+      },
+      buttons:function(){
+        var g = STATE.g, sel = STATE.sel, self = this;
+        var canPlay = sel.length === 1 &&
+          (rankOf(sel[0]) === 7 || suitOf(sel[0]) === g.curSuit || rankOf(sel[0]) === g.curRank);
+        return [
+          {label:'PLAY', en:canPlay, fire:function(){ self.firePlay(); }},
+          {label:'DRAW', en:canDrawE(g), fire:function(){ tryLocalAction({a:'drawE'}); }},
+          {label:'PASS', en:legalPlays(g, g.hands[g.turn]).length === 0 && !canDrawE(g),
+           fire:function(){ tryLocalAction({a:'pass'}); }}
+        ];
+      }
+    }
+  });
+})();
+/*==== GAME:EIGHTS END ====*/
+
+
+/*==== GAME:CLASH BEGIN ====*/
+(function(){
+/* ---------------------------------------------------------------------------
+   CLASH OF CARDS: the studio all-stars battle cartridge. A Card Fighters
+   Clash (NGPC) SHAPE homage on an ORIGINAL roster: every fighter's portrait
+   is a real shipped Snail Attack Studios asset, sliced verbatim at assembly
+   (receipts printed by assemble.py). Ratified ruleset lives in the codex.
+   Provenance below: MONARCH MAYHEM v1.14 (palette + sprite row data) and
+   REEF RIOT veil lab v1.00 (drawAngler). Slices are byte-pure; everything
+   that touches them from here is this cartridge's own.
+--------------------------------------------------------------------------- */
+/* SLICED VERBATIM from monarch-mayhem-v1.14.html: palette block CMN..RCKP incl pal(), 847 bytes, sha 83c91890dfca. */
+var CMN={o:'#201418',s:'#F0C296',S:'#C98D5E',e:'#26161A',w:'#FFFFFF'};
+function pal(x){var p={};for(var k in CMN)p[k]=CMN[k];for(var k2 in x)p[k2]=x[k2];return p;}
+var EMBP={a:'#CC4023',A:'#E8734A',k:'#8C2314',d:'#6B4226',D:'#4A2C18',m:'#A6ADB8',M:'#D4DAE3',n:'#6E7681',g:'#E8C558',G:'#FFF0A8',h:'#6B4226',H:'#8C5E38',x:'#E8C558'};
+var TIDP={a:'#3A6FD1',A:'#6F9CE8',k:'#22407F',c:'#8FC4F0',g:'#55E0C8',G:'#C8FFF2',h:'#6B4226',H:'#8C5E38',d:'#6B4226',D:'#4A2C18',x:'#E8C558',m:'#A6ADB8'};
+var PRIP={a:'#E05A78',A:'#F08CA3',k:'#99304A',g:'#E8C558',G:'#FFF0A8',x:'#45E0CC',X:'#B4FFF0',h:'#B5542A',H:'#D97B47',J:'#E8944E',r:'#8C3E1E',y:'#F09A9A',m:'#C74A66',E:'#1E1418'};
+var SKMP={s:'#A8C46A',S:'#7A9448',a:'#705A42',A:'#8C7458',k:'#4A3A2A',h:'#3A2E20',g:'#D4DAE3',x:'#8C2314',d:'#6B4226',D:'#4A2C18'};
+var RCKP={m:'#8C8178',M:'#A69C90',n:'#6B6258'};
+/* SLICED VERBATIM from monarch-mayhem-v1.14.html: LINES + GLYPH blocks, 557 bytes, sha a416241e81c3. */
+var LINES={
+ EMBER:{base:'#C93B26',dark:'#7A2114',light:'#E8703F',glyph:'square'},
+ TIDE:{base:'#3468C9',dark:'#1E3F80',light:'#7FA8E8',glyph:'circle'}
+};
+var PIECELINES=['EMBER','TIDE'];
+var GLYPH5={
+ square:["11111","11111","11111","11111","11111"],
+ circle:[".111.","11111","11111","11111",".111."]
+};
+var GLYPH9={
+ square:[".1111111.","111111111","111111111","111111111","111111111","111111111","111111111","111111111",".1111111."],
+ circle:["...111...","..11111..",".1111111.","111111111","111111111","111111111",".1111111.","..11111..","...111..."]
+};
+/* SLICED VERBATIM from monarch-mayhem-v1.14.html: SPRITES row maps (ROYAL SKIRM SKIRMW ROCK), 5507 bytes, sha 5e19fddbde98. */
+var SPRITES={
+ EMBER1:{pal:pal(EMBP),rows:[
+ "....................",
+ "......ooooooo",
+ ".....oMMMMmmmo",
+ "....oMMMMmmmmmo",
+ "...oMMmmmmmmmmmno",
+ "....oseesseesso...w",
+ "....ossessessSo...M",
+ "....ossessessSo..M",
+ "....osssSssssSo.M",
+ ".....osssssssSoG",
+ "....oAAaaaaakkod",
+ "...oAAaaaaaaakkko",
+ "...osaagaagaasko",
+ "....odDdgGdDddo",
+ "....okAaaaaakao",
+ ".....okaaaakko",
+ "....oko......oko",
+ "...oDDo.....oDDo",
+ "....oo.......oo",
+ "...................."]},
+ EMBER2:{pal:pal(EMBP),rows:[
+ ".......xGx..........",
+ "......oxGxo",
+ "......ooooooo",
+ ".....oMMMMMmmo",
+ "....oMMmmmmmmmo",
+ "....ommmmmmmmno",
+ "....omxeeeexmno",
+ "....ommmmmmmmno",
+ "....onmmmmmmnno...w",
+ ".....onnnnnnnno..M",
+ "...oMmmAaaaammnoM",
+ ".onnnoaaGgGaamno.G",
+ "onmMmnoaGgGaamnod",
+ "onmmmnoaaagaaamno",
+ ".onnnonmMmmMmnno",
+ "......onmmmmno",
+ ".....ono......ono",
+ "....onno.....onno",
+ ".....oo.......oo",
+ "...................."]},
+ TIDE1:{pal:pal(TIDP),rows:[
+ "....................",
+ "......aaaa",
+ ".....oaAaao",
+ "....oaAaaaao",
+ "....oaaaaaaao",
+ "...oaksssssskao",
+ "...oassessessao",
+ "...oassessessao",
+ "...oassSssssao",
+ "....oaaaaaaao",
+ "....okaaaaaaako",
+ "...osaaaaaaaasko",
+ "...osagggggaasko",
+ "...osaaaaxwwxsko",
+ "....okaaaaaaako",
+ "....okaaakaaako",
+ "....oaaaaaaaao",
+ "....ooooooooo",
+ "....................",
+ "...................."]},
+ TIDE2:{pal:pal(TIDP),rows:[
+ "......aa.........GG.",
+ "......aaa.......GggG",
+ ".....oaAaao......dGG",
+ ".....oaaaao......d",
+ "..oaaaxxaaaaao...d",
+ "....oseesseesso..d",
+ "....ossessessSo..d",
+ "....ossessessSo..d",
+ "....osssSssssSo..d",
+ ".....osssssssSo..d",
+ "....okaaaaaaako..d",
+ "...osaaaaaaaasko.d",
+ "...osaccaccaasko.d",
+ "...osaakkaaaasko.d",
+ "....okaaaaaaako..d",
+ "....okaaaaaaako..d",
+ "....oaaaaaaaao",
+ "....ooooooooo",
+ "....................",
+ "...................."]},
+ ROYAL:{pal:pal(PRIP),rows:[
+ "......gGg...........",
+ ".....ohgxgho",
+ "....ohHhhhHho",
+ "...ohHHhhhhHHho",
+ "..ohhsssssssshho",
+ "..ohssssssssssho",
+ "..ohswwEsswwEsho",
+ "..ohsEEEssEEEsho",
+ "..ohsysssSssysho",
+ "..ohhssssssssho",
+ "...ohhhsssshhho",
+ "....ohaAAaho",
+ "...ohaaaaaaho",
+ "...oaAAggAAaao",
+ "..owaaaaaaaaawo",
+ "..oaAaaaaaaAao",
+ ".okaaaaaaaaaako",
+ ".okgkkgkkgkkgko",
+ "..oooooooooooo",
+ "...................."]},
+ SKIRM:{pal:pal(SKMP),rows:[
+ "....................",
+ "....................",
+ "....................",
+ ".....ooooooo",
+ "....oakAAaako",
+ "....oakssssaao",
+ "...oaasessesao",
+ "...oaasessesao",
+ "....oassSsssao",
+ "....oaaaaaaao..gw",
+ "...oAaaaaaaaako.g",
+ "..osaaaaaaaaskog",
+ "..osaakxkadasko",
+ "...okaaaaaaako",
+ "...oko.....oko",
+ "..oDDo....oDDo",
+ "...oo......oo",
+ "....................",
+ "....................",
+ "...................."]},
+ SKIRMW:{pal:pal(SKMP),rows:[
+ "....................",
+ "....................",
+ "....................",
+ ".....ooooooo",
+ "....oakAAaako",
+ "....oakssssaao",
+ "...oaasessesao",
+ "...oaasessesao",
+ "....oassSsssao",
+ "....oaaaaaaao",
+ "...oAaaaaaaaako.gw",
+ "..osaaaaaaaasko.g",
+ "..osaakxkadasko",
+ "...okaaaaaaako",
+ "..oko.......oko",
+ ".oDDo......oDDo",
+ "..oo........oo",
+ "....................",
+ "....................",
+ "...................."]},
+ EMBER1A:{pal:pal(EMBP),rows:[
+ "....................",
+ "......ooooooo",
+ ".....oMMMmmmno",
+ "....oMMMmmmmmno",
+ "...oMMmmmmmmmmnno",
+ "....oseesseesso",
+ "....ossessessSo",
+ "....ossessessSo",
+ "....osssSssssSo",
+ ".....osssssssSo",
+ "....oAAaaaaakkoGMMw",
+ "...oAAaaaaaaakkko",
+ "...osaagaagaasso",
+ "....odDdgGdDddo",
+ "....okAaaaaakao",
+ ".....okaaaakko",
+ "....oko......oko",
+ "...oDDo.....oDDo",
+ "....oo.......oo",
+ "...................."]},
+ EMBER2A:{pal:pal(EMBP),rows:[
+ ".......xGx..........",
+ "......oxGxo",
+ "......ooooooo",
+ ".....oMMMMMmmo",
+ "....oMMmmmmmmmo",
+ "....ommmmmmmmno",
+ "....omxeeeexmno",
+ "....ommmmmmmmno",
+ "....onmmmmmmnno",
+ ".....onnnnnnnno",
+ "...oMmmAaaaammnod",
+ ".onnnoaaGgGaamnodMM",
+ "onmMmnoaGgGaamnoMMw",
+ "onmmmnoaaagaaamno",
+ ".onnnonmMmmMmnno",
+ ".......onmmmmno",
+ ".....ono......ono",
+ "....onno.....onno",
+ ".....oo.......oo",
+ "...................."]},
+ TIDE1A:{pal:pal(TIDP),rows:[
+ "....................",
+ "......aaaa",
+ ".....oaAaao",
+ "....oaAaaaao",
+ "....oaaaaaaao",
+ "...oaksssssskao",
+ "...oassessessao",
+ "...oassessessao",
+ "...oassSssssao",
+ "....oaaaaaaao..G",
+ "....okaaaaaaakosg",
+ "...osaaaaaaaasko.G",
+ "...osagggggaasko",
+ "...osaaaaxwwxsko",
+ "....okaaaaaaako",
+ "....okaaakaaako",
+ "....oaaaaaaaao",
+ "....ooooooooo",
+ "....................",
+ "...................."]},
+ TIDE2A:{pal:pal(TIDP),rows:[
+ ".................GGG",
+ "......aaa.......GwgG",
+ ".....oaAaao.....dGGG",
+ ".....oaaaao......d",
+ "..oaaaxxaaaaao...d",
+ "....oseesseesso..d",
+ "....ossessessSo..d",
+ "....ossessessSo..d",
+ "....osssSssssSo..d",
+ ".....osssssssSo..d",
+ "....okaaaaaaako..d",
+ "...osaaaaaaaassod",
+ "...osaccaccaasko.d",
+ "...osaakkaaaasko.d",
+ "....okaaaaaaako..d",
+ "....okaaaaaaako..d",
+ "....oaaaaaaaao",
+ "....ooooooooo",
+ "....................",
+ "...................."]},
+ ROCK:{pal:pal(RCKP),rows:[
+ "....................",
+ "....................",
+ "....................",
+ "....................",
+ "....................",
+ "......oooooo",
+ "....ooMMMmmmoo",
+ "...oMMMmmmmmmmo",
+ "..oMMmmmmmmnmmmo",
+ "..ommmmnmmmmmmno",
+ "..ommnmmmmmnmmno",
+ "..onmmmmmnmmmnno",
+ "...onnmmmmmnnno",
+ "....ooonnnnoo",
+ "....................",
+ "....................",
+ "....................",
+ "....................",
+ "....................",
+ "...................."]}
+};
+/* SLICED VERBATIM from monarch-mayhem-v1.14.html: ROYAL40 upgraded princess rows, 1815 bytes, sha 711f8af89bbf. */
+var ROYAL40=[
+ "............g.GG.g......................",
+ "............gGGGGg......................",
+ "..........oohhggXxgghhoo................",
+ "..........oohhggxxgghhoo................",
+ "........oohhJHhhhhhhHJhhoo..............",
+ "........oohhHHhhhhhhHHhhoo..............",
+ "......oohhJJHHhhhhhhhhHHJJhhoo..........",
+ "......oohhHHHHhhhhhhhhHHHHhhoo..........",
+ "....oohHhhsssssssssssssssshHhhoo........",
+ "....oohHhhsssssssssssssssshhhhoo........",
+ "....oohhhsssssssssssssssssshhhoo........",
+ "....oohhhsssssssssssssssssshhhoo........",
+ "....oohhhEEEEEEEEssEEEEEEEEhhhoo........",
+ "....oohhhEwwEEEEEssEwwEEEEEhhhoo........",
+ "....oohhhEwEEEEEEssEwEEEEEEhhhoo........",
+ "....oohhhsEEEEEEssssEEEEEEshhhoo........",
+ "....oorhhsyyssssssSSssssyyshhroo........",
+ "....oorhhsyyssssssSSssssyyshhroo........",
+ "....oorhhhsssssssssssssssshhoo..........",
+ "....oorhShssssssssssssssssSSoo..........",
+ "......oohhhhhhsssssssshhhhhhoo..........",
+ "......oorrrrrrssssssssrrrrrroo..........",
+ "........oohhaaAAAAaahhoo................",
+ "........oohhaaAAAAaahhoo................",
+ "......oohhaaaaaaaaaaaahhoo..............",
+ "......oohhaaaaaaaaaaaahhoo..............",
+ "......ooaaAAAAgGGgAAAAaaaaoo............",
+ "......ooaaAAAAggggAAAAaaaaoo............",
+ "....oowwaaaaaaaaammmaaammawwoo..........",
+ "....oowwaAaaaakaaaaaaakmmawwoo..........",
+ "....ooaaAAaamakaaaaaaaAAmaoo............",
+ "....ooaaAAaamakaaaaaaaAAmaoo............",
+ "..ookkaaaAaamakaaaaaaakmmakkoo..........",
+ "..ookkaaaAaamakaaaaaaakmmakkoo..........",
+ "..ookkggkkkkggkkkkggkkkkggkkoo..........",
+ "..ookkgkkgkkgkkgkkgkkgkkgkkgoo..........",
+ "....oooooooooooooooooooooooo............",
+ "....oooooooooooooooooooooooo............",
+ "........................................",
+ "........................................"
+];
+var S = {t:2.6};                    /* the angler slice reads S.t (its lab clock) */
+/* SLICED VERBATIM from reef-riot-veil-lab-v1.00.html: drawAngler (the ANGLER KING), 2051 bytes, sha e86d7b61d635. */
+function drawAngler(b){
+ ctx.save();ctx.translate(b.x,b.y);
+ var dr=b.dash?(b.dx>0?1:-1):(Math.cos(b.h*0.6)>=0?-1:1);
+ ctx.scale(dr,1);
+ if(b.dash){
+  ctx.strokeStyle='rgba(140,180,255,0.4)';ctx.lineWidth=2;
+  for(var st2=0;st2<3;st2++){
+   ctx.beginPath();ctx.moveTo(-44-st2*8,-10+st2*10);ctx.lineTo(-24-st2*8,-10+st2*10);ctx.stroke();
+  }
+ }
+ ctx.fillStyle='#26315c';
+ ctx.beginPath();ctx.ellipse(0,0,40,24,0,0,6.29);ctx.fill();
+ ctx.fillStyle='#39466e';
+ ctx.beginPath();ctx.ellipse(-4,-8,30,12,0,0,6.29);ctx.fill();
+ ctx.fillStyle='#26315c';
+ ctx.beginPath();ctx.moveTo(-36,0);ctx.lineTo(-56,-14);ctx.lineTo(-56,14);ctx.closePath();ctx.fill();
+ for(var sp=0;sp<4;sp++){
+  ctx.beginPath();ctx.moveTo(-22+sp*10,-22);ctx.lineTo(-18+sp*10,-32);ctx.lineTo(-14+sp*10,-22);
+  ctx.closePath();ctx.fill();
+ }
+ var jaw=3+2*Math.sin(S.t*3);
+ ctx.fillStyle='#101a38';
+ ctx.beginPath();ctx.moveTo(38,-4);ctx.lineTo(10,10+jaw);ctx.lineTo(38,12+jaw);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#ffffff';
+ for(var th=0;th<4;th++){
+  ctx.beginPath();
+  ctx.moveTo(14+th*6,10+jaw);ctx.lineTo(16+th*6,3+jaw);ctx.lineTo(18+th*6,10+jaw);
+  ctx.closePath();ctx.fill();
+ }
+ var vg=b.vt>0;
+ ctx.fillStyle=vg?'#ff5c5c':'#9fd8ff';
+ ctx.beginPath();ctx.arc(16,-8,4.5,0,6.29);ctx.fill();
+ ctx.fillStyle='#101a38';
+ ctx.beginPath();ctx.arc(17,-8,2,0,6.29);ctx.fill();
+ if(vg){
+  ctx.strokeStyle='rgba(255,92,92,'+(0.35+0.25*Math.sin(S.t*8))+')';
+  ctx.lineWidth=3;
+  ctx.beginPath();ctx.ellipse(0,0,45,29,0,0,6.29);ctx.stroke();
+ }
+ ctx.restore();
+ if(b.lal){
+  var lx=b.x+(b.dash?0:26),ly=b.y-30;
+  ctx.strokeStyle='#39466e';ctx.lineWidth=2.4;
+  ctx.beginPath();ctx.moveTo(b.x+dr*10,b.y-18);
+  ctx.quadraticCurveTo(b.x+dr*4,b.y-40,lx,ly+6);ctx.stroke();
+  var pu=0.5+0.5*Math.sin(S.t*5);
+  ctx.fillStyle='rgba(255,228,92,'+(0.16+0.14*pu)+')';
+  ctx.beginPath();ctx.arc(lx,ly,17+3*pu,0,6.29);ctx.fill();
+  ctx.fillStyle='#ffe45c';
+  ctx.beginPath();ctx.arc(lx,ly,7,0,6.29);ctx.fill();
+  ctx.fillStyle='#fff8d0';
+  ctx.beginPath();ctx.arc(lx-2,ly-2,2.6,0,6.29);ctx.fill();
+ }
+}
+
+/* ---- ruleset constants (ratified v1.02; codex SYSTEMS carries intent) ---- */
+var HP0 = 2000, HAND = 5, RINGN = 3, BK_MAX = 2, BK_BP = 200, KO_SP = 50, P2_SP = 100;
+var UNITED = [0, 0, 100, 300];      /* SP cost by attacker count */
+
+/* ---- portrait registry: verbatim data in, this cartridge's painter out ---- */
+function drawRows(g2, rows, palette, dx, dy, s){
+  for(var y = 0; y < rows.length; y++){
+    var row = rows[y]; if(!row) continue;
+    for(var x = 0; x < row.length; x++){
+      var ch = row.charAt(x);
+      if(ch === '.' || ch === ' ') continue;
+      var col = palette[ch];
+      if(col){ g2.fillStyle = col; g2.fillRect(dx + x*s, dy + y*s, s, s); }
+    }
+  }
+}
+var ART = {
+  skirm: {kind:'rows', grid:20, rows:function(){ return SPRITES.SKIRM.rows; },  pal:function(){ return SPRITES.SKIRM.pal; }},
+  vang:  {kind:'rows', grid:20, rows:function(){ return SPRITES.SKIRMW.rows; }, pal:function(){ return SPRITES.SKIRMW.pal; }},
+  rock:  {kind:'rows', grid:20, rows:function(){ return SPRITES.ROCK.rows; },   pal:function(){ return SPRITES.ROCK.pal; }},
+  royal: {kind:'rows', grid:40, rows:function(){ return ROYAL40; },             pal:function(){ return SPRITES.ROYAL.pal; }},
+  ember: {kind:'glyph', line:'EMBER'},
+  tide:  {kind:'glyph', line:'TIDE'},
+  angler:{kind:'angler'}
+};
+
+/* ---- the catalog: 7 fighters + 6 actions (v1.02 starter set) ------------- */
+var CAT = [
+  {id:0,  kind:'char', name:'SKIRM',        bp:300, sp:100, kw:'',      spark:0,   art:'skirm',  backs:[0,1], from:'MONARCH MAYHEM'},
+  {id:1,  kind:'char', name:'VANGUARD',     bp:250, sp:100, kw:'RUSH',  spark:0,   art:'vang',   backs:[0],   from:'MONARCH MAYHEM'},
+  {id:2,  kind:'char', name:'EMBER SQUARE', bp:400, sp:150, kw:'',      spark:0,   art:'ember',  backs:[2],   from:'MONARCH MAYHEM'},
+  {id:3,  kind:'char', name:'TIDE ORB',     bp:350, sp:150, kw:'GUARD', spark:0,   art:'tide',   backs:[3],   from:'MONARCH MAYHEM'},
+  {id:4,  kind:'char', name:'ROCK',         bp:600, sp:50,  kw:'GUARD', spark:0,   art:'rock',   backs:[],    from:'MONARCH MAYHEM'},
+  {id:5,  kind:'char', name:'THE ROYAL',    bp:700, sp:200, kw:'',      spark:200, art:'royal',  backs:[2,3], from:'MONARCH MAYHEM'},
+  {id:6,  kind:'char', name:'ANGLER KING',  bp:900, sp:250, kw:'',      spark:300, art:'angler', backs:[3],   from:'REEF RIOT'},
+  {id:7,  kind:'act',  name:'FIREBALL', cost:200, fx:'fire',  txt:'400 DMG TO THE BIGGEST FOE'},
+  {id:8,  kind:'act',  name:'MEND',     cost:150, fx:'mend',  txt:'HEAL 400 ON A HURT ALLY'},
+  {id:9,  kind:'act',  name:'RALLY',    cost:200, fx:'rally', txt:'+100 BP TO ALL ALLIES'},
+  {id:10, kind:'act',  name:'RESTOCK',  cost:150, fx:'draw2', txt:'DRAW 2 CARDS'},
+  {id:11, kind:'act',  name:'SABOTAGE', cost:200, fx:'sabo',  txt:'FOE -200 SP, YOU +100'},
+  {id:12, kind:'act',  name:'CRUSH',    cost:400, fx:'crush', txt:'KO THE SMALLEST FOE'}
+];
+var DECKS = {
+  royal:  {name:'ROYAL GUARD', list:[5,5, 2,2,2, 3,3,3, 4,4, 6,6, 8,8, 9,9, 7,7, 10,10]},
+  goblin: {name:'GOBLIN TIDE', list:[0,0,0,0, 1,1,1,1, 2,2, 6,6, 7,7, 12,12, 11,11, 10,10]}
+};
+function cardOf(g, inst){ return CAT[g.cardCat[inst]]; }
+function clashLobbyDecks(opts){
+  var d0 = DECKS[opts[0]] ? opts[0] : 'royal';
+  var d1 = DECKS[opts[1]] ? opts[1] : (d0 === 'royal' ? 'goblin' : 'royal');
+  return [d0, d1];
+}
+function foeOf(seat){ return (seat + 1) % 2; }
+
+/* ---- state helpers -------------------------------------------------------- */
+function drawOne(g, seat, emit){
+  if(!g.decks[seat].length) return false;
+  var c = g.decks[seat].pop();
+  g.hands[seat].push(c);
+  emit({e:'draw', seat:seat, card:c, src:'stock'});
+  return true;
+}
+function refillTo(g, seat, emit){ while(g.hands[seat].length < HAND && drawOne(g, seat, emit)){} }
+function ringSum(g, seat){
+  var s = 0;
+  for(var i = 0; i < RINGN; i++) if(g.ring[seat][i]) s += g.ring[seat][i].cur;
+  return s;
+}
+function koSlot(g, seat, idx, emit){
+  var sl = g.ring[seat][idx];
+  if(!sl) return;
+  g.ring[seat][idx] = null;
+  g.kos[seat].push(sl.c);
+  for(var k = 0; k < sl.backs.length; k++) g.kos[seat].push(sl.backs[k]);
+  g.sp[seat] += KO_SP;
+  emit({e:'fx', snd:'ko', msg:cardOf(g, sl.c).name + ' IS DOWN', buzz:14, hold:420});
+}
+function dmgChar(g, seat, idx, amt, emit){
+  var sl = g.ring[seat][idx];
+  if(!sl || amt <= 0) return;
+  sl.cur -= amt;
+  if(sl.cur <= 0) koSlot(g, seat, idx, emit);
+}
+function hitHP(g, seat, amt, emit){
+  g.hp[seat] -= amt;
+  emit({e:'fx', snd:'thud', msg:'-' + amt + ' HP', buzz:20, hold:420});
+  if(g.hp[seat] <= 0){ g.hp[seat] = 0; g.over = true; g.winner = foeOf(seat); }
+}
+function biggestFoe(g, me){
+  var f = foeOf(me), best = -1;
+  for(var i = 0; i < RINGN; i++){
+    var sl = g.ring[f][i];
+    if(sl && (best < 0 || sl.cur > g.ring[f][best].cur)) best = i;
+  }
+  return best;
+}
+function smallestFoe(g, me){
+  var f = foeOf(me), best = -1;
+  for(var i = 0; i < RINGN; i++){
+    var sl = g.ring[f][i];
+    if(sl && (best < 0 || sl.cur < g.ring[f][best].cur)) best = i;
+  }
+  return best;
+}
+function hurtAlly(g, me){
+  var best = -1, most = 0;
+  for(var i = 0; i < RINGN; i++){
+    var sl = g.ring[me][i];
+    if(sl && sl.max - sl.cur > most){ most = sl.max - sl.cur; best = i; }
+  }
+  return best;
+}
+function readySlots(g, seat){
+  var out = [];
+  for(var i = 0; i < RINGN; i++){
+    var sl = g.ring[seat][i];
+    if(sl && !sl.warm && !sl.used) out.push(i);
+  }
+  return out;
+}
+function startTurn(g, seat, emit){
+  g.turn = seat; g.phase = 'main'; g.played = false; g.atk = null;
+  for(var i = 0; i < RINGN; i++){
+    var sl = g.ring[seat][i];
+    if(sl){ sl.warm = false; sl.used = false; }
+  }
+  refillTo(g, seat, emit);
+  g.turnCount++;
+  if(g.turnCount > TURN_GUARD){
+    g.over = true;
+    g.winner = g.hp[0] > g.hp[1] ? 0 : g.hp[1] > g.hp[0] ? 1
+             : ringSum(g, 0) >= ringSum(g, 1) ? 0 : 1;   /* stall: HP then ring */
+  }
+}
+function resolveAttackEnd(g){
+  var by = g.atk.by;
+  g.atk = null; g.phase = 'main'; g.turn = by;
+}
+
+/* ---- ui state (visual only, never serialized) ----------------------------- */
+var mySel = [], blockSel = -1, selStamp = '', inspect = null;
+function syncSel(){
+  var g = STATE.g;
+  if(!g) return;
+  var st = g.turn + ':' + g.phase + ':' + g.turnCount + ':' + (g.atk ? 1 : 0);
+  if(st !== selStamp){ selStamp = st; mySel = []; blockSel = -1; inspect = null; }
+}
+
+registerGame({
+  id:'clash', name:'CLASH OF CARDS', tag:'STUDIO ALL-STARS BATTLE, KO THEIR HP',
+  min:2, max:2, single:true, demoCards:[5, 18, 31], noSort:true,
+  subHeader:function(){ return 'FIRST BLOOD  KO AT 0 HP'; },
+  turnY:function(L2){ return L2.cy + 2; },
+  longPress:function(id){
+    if(!id) return;
+    var g = STATE.g;
+    if(!g) return;
+    var inst = null;
+    if(id.slice(0, 5) === 'card:'){
+      inst = +id.slice(5);
+      if(g.hands[STATE.pov].indexOf(inst) < 0) return;
+    } else if(id.slice(0, 5) === 'meld:'){
+      var k = +id.slice(5), s = Math.floor(k / 3), i = k % 3;
+      if(s > 1 || k < 0) return;
+      var sl = g.ring[s][i];
+      if(!sl) return;
+      inst = sl.c;
+      /* the tap that preceded this hold may have toggled a selection; undo it
+         by re-toggling under exactly the tap's own guards */
+      if(isLocalTurn() && !choreoBusy() && s === STATE.pov){
+        if(g.phase === 'block'){ blockSel = blockSel === i ? -1 : i; }
+        else if(g.phase === 'main' && !sl.warm && !sl.used){
+          var k3 = mySel.indexOf(i);
+          if(k3 >= 0) mySel.splice(k3, 1); else mySel.push(i);
+        }
+      }
+    }
+    if(inst == null) return;
+    inspect = inst;
+    sfx('flip');
+  },
+  help:[
+    'FIELD FIGHTERS INTO 3 RING SLOTS,',
+    'ONE NEW FIGHTER PER TURN. NEW',
+    'ARRIVALS WAIT A TURN (RUSH SKIPS).',
+    'TAP READY FIGHTERS THEN ATTACK.',
+    'THE DEFENDER PICKS ONE BLOCKER OR',
+    'TAKES IT ON THE CHIN. BP DAMAGE',
+    'STICKS. BACKUPS STACK +200 BP.',
+    'SP PAYS FOR ACTIONS AND UNITED',
+    'ATTACKS (2 FOR 100, 3 FOR 300).',
+    'DROP THEIR 2000 HP TO ZERO.'
+  ],
+  setup:function(n, seed, dealer, opts){
+    var pick = (opts && opts.deck === 'goblin') ? 'goblin' : 'royal';
+    var other = pick === 'royal' ? 'goblin' : 'royal';
+    var seatDeck = [pick, other];                    /* v1.04: each seat's own lobby pick, when given */
+    if(opts && opts.decks) for(var sd = 0; sd < 2; sd++) if(DECKS[opts.decks[sd]]) seatDeck[sd] = opts.decks[sd];
+    var g = {rngS:seed|0, n:2, dealer:dealer, turn:(dealer + 1) % 2, phase:'main',
+             hp:[HP0, HP0], sp:[0, 0], decks:[[], []], kos:[[], []], hands:[[], []],
+             ring:[[null, null, null], [null, null, null]], cardCat:{},
+             deckNames:[DECKS[seatDeck[0]].name, DECKS[seatDeck[1]].name],
+             played:false, atk:null, over:false, winner:-1, turnCount:0, dealSeq:[]};
+    g.sp[foeOf(g.turn)] = P2_SP;                 /* going second pays better */
+    for(var s = 0; s < 2; s++){
+      var list = DECKS[seatDeck[s]].list;
+      for(var i = 0; i < list.length; i++){
+        var inst = s * 100 + i;
+        g.cardCat[inst] = list[i];
+        g.decks[s].push(inst);
+      }
+      shuffleArr(g, g.decks[s]);
+    }
+    for(var r = 0; r < HAND; r++) for(s = 0; s < 2; s++){
+      var seat = (dealer + 1 + s) % 2, c = g.decks[seat].pop();
+      g.hands[seat].push(c); g.dealSeq.push({c:c, seat:seat});
+    }
+    return g;
+  },
+  legal:function(g, seat, a){
+    if(g.over || !a || seat !== g.turn) return false;
+    var hand = g.hands[seat];
+    if(g.phase === 'block'){
+      if(a.a === 'noblock') return true;
+      if(a.a === 'block') return a.slot >= 0 && a.slot < RINGN && !!g.ring[seat][a.slot];
+      return false;
+    }
+    if(a.a === 'end') return true;
+    if(a.a === 'playchar'){
+      if(g.played || hand.indexOf(a.card) < 0) return false;
+      if(!(a.slot >= 0 && a.slot < RINGN) || g.ring[seat][a.slot]) return false;
+      return cardOf(g, a.card).kind === 'char';
+    }
+    if(a.a === 'backup'){
+      if(hand.indexOf(a.card) < 0) return false;
+      var tgt = g.ring[seat][a.slot];
+      if(!tgt || tgt.backs.length >= BK_MAX) return false;
+      var hc = cardOf(g, a.card);
+      return hc.kind === 'char' && cardOf(g, tgt.c).backs.indexOf(hc.id) >= 0;
+    }
+    if(a.a === 'action'){
+      if(hand.indexOf(a.card) < 0) return false;
+      var e = cardOf(g, a.card);
+      if(e.kind !== 'act' || g.sp[seat] < e.cost) return false;
+      if(e.fx === 'mend') return hurtAlly(g, seat) >= 0;
+      if(e.fx === 'rally') return ringSum(g, seat) > 0;
+      if(e.fx === 'draw2') return g.decks[seat].length > 0;
+      if(e.fx === 'crush') return smallestFoe(g, seat) >= 0;
+      return true;                                /* fire + sabo always land somewhere */
+    }
+    if(a.a === 'attack'){
+      if(!a.slots || !a.slots.length || a.slots.length > RINGN) return false;
+      var seen = {};
+      for(var i = 0; i < a.slots.length; i++){
+        var ix = a.slots[i], sl = g.ring[seat][ix];
+        if(seen[ix] || !sl || sl.warm || sl.used) return false;
+        seen[ix] = 1;
+      }
+      return g.sp[seat] >= UNITED[a.slots.length];
+    }
+    return false;
+  },
+  apply:function(g, seat, a, emit){
+    var hand = g.hands[seat];
+    if(a.a === 'playchar'){
+      hand.splice(hand.indexOf(a.card), 1);
+      var e = cardOf(g, a.card);
+      g.ring[seat][a.slot] = {c:a.card, cur:e.bp, max:e.bp, backs:[], warm:e.kw !== 'RUSH', used:false};
+      g.played = true;
+      g.sp[seat] += e.sp;
+      emit({e:'play', seat:seat, card:a.card});
+      emit({e:'fx', snd:'chip', msg:e.name + ' ENTERS' + (e.kw === 'RUSH' ? ' WITH RUSH' : ''), hold:340});
+      if(e.spark){
+        var f = biggestFoe(g, seat);
+        emit({e:'fx', snd:'thud', msg:'SPARK ' + e.spark, buzz:12, hold:380});
+        if(f >= 0) dmgChar(g, foeOf(seat), f, e.spark, emit);
+        else hitHP(g, foeOf(seat), e.spark, emit);
+      }
+      return;
+    }
+    if(a.a === 'backup'){
+      hand.splice(hand.indexOf(a.card), 1);
+      var sl = g.ring[seat][a.slot];
+      sl.backs.push(a.card); sl.max += BK_BP; sl.cur += BK_BP;
+      emit({e:'lay', seat:seat, card:a.card, meld:a.slot});
+      emit({e:'fx', msg:'+' + BK_BP + ' BP BACKUP', hold:280});
+      return;
+    }
+    if(a.a === 'action'){
+      hand.splice(hand.indexOf(a.card), 1);
+      g.kos[seat].push(a.card);                   /* spent actions rest in the KO pile */
+      var act = cardOf(g, a.card);
+      g.sp[seat] -= act.cost;
+      emit({e:'fx', snd:'meld', msg:act.name + '!', hold:420});
+      var f2;
+      if(act.fx === 'fire'){
+        f2 = biggestFoe(g, seat);
+        if(f2 >= 0) dmgChar(g, foeOf(seat), f2, 400, emit);
+        else hitHP(g, foeOf(seat), 200, emit);
+      } else if(act.fx === 'mend'){
+        f2 = hurtAlly(g, seat);
+        var m = g.ring[seat][f2];
+        m.cur = Math.min(m.max, m.cur + 400);
+      } else if(act.fx === 'rally'){
+        for(var i = 0; i < RINGN; i++) if(g.ring[seat][i]){ g.ring[seat][i].cur += 100; g.ring[seat][i].max += 100; }
+      } else if(act.fx === 'draw2'){
+        drawOne(g, seat, emit); drawOne(g, seat, emit);
+      } else if(act.fx === 'sabo'){
+        g.sp[foeOf(seat)] = Math.max(0, g.sp[foeOf(seat)] - 200);
+        g.sp[seat] += 100;
+      } else if(act.fx === 'crush'){
+        f2 = smallestFoe(g, seat);
+        koSlot(g, foeOf(seat), f2, emit);
+      }
+      return;
+    }
+    if(a.a === 'attack'){
+      var bp = 0;
+      for(var k = 0; k < a.slots.length; k++){
+        var asl = g.ring[seat][a.slots[k]];
+        asl.used = true; bp += asl.cur;
+      }
+      g.sp[seat] -= UNITED[a.slots.length];
+      g.atk = {by:seat, slots:a.slots.slice(), bp:bp};
+      g.phase = 'block'; g.turn = foeOf(seat);
+      emit({e:'fx', snd:'swish', msg:'INCOMING ' + bp + ' BP', buzz:10, hold:420});
+      return;
+    }
+    if(a.a === 'block'){
+      var atk = g.atk, def = seat;
+      var bl = g.ring[def][a.slot];
+      var ret = bl.cur;
+      var take = atk.bp - (cardOf(g, bl.c).kw === 'GUARD' ? 200 : 0);
+      if(take < 0) take = 0;
+      emit({e:'fx', snd:'thud', msg:cardOf(g, bl.c).name + ' BLOCKS', buzz:24, hold:520});
+      dmgChar(g, def, a.slot, take, emit);
+      var lead = g.ring[atk.by][atk.slots[0]];
+      if(lead) dmgChar(g, atk.by, atk.slots[0], ret, emit);
+      resolveAttackEnd(g);
+      return;
+    }
+    if(a.a === 'noblock'){
+      var amt = g.atk.bp;
+      resolveAttackEnd(g);
+      hitHP(g, seat, amt, emit);
+      return;
+    }
+    if(a.a === 'end'){
+      startTurn(g, foeOf(seat), emit);
+    }
+  },
+  roundResult:function(g){
+    return {winner:g.winner, deltas:[g.hp[0], g.hp[1]]};
+  },
+  drawHint:function(){ return false; },
+  plateScore:function(g, i){ return g.hp[i]; },
+  homes:function(g, out, h){
+    var cw = h.L.cw, ch = h.L.ch, DSC = 0.55;
+    var RSC = Math.max(0.8, Math.min(1.12, (h.W - 48) / (3 * (cw + 14))));
+    var rowOff = ch*RSC/2 + 38;
+    var id;
+    for(id = 0; id < 52; id++)                    /* park the core deal-choreo ghosts */
+      if(!(id in g.cardCat))
+        out[id] = {x:-300, y:-300, rot:0, scl:0.01, fl:0, z:0, key:'ghost'};
+    for(var s = 0; s < 2; s++){
+      var vi = (s - h.pov + 2) % 2, my = vi === 0;
+      var ringY = my ? h.L.cy + rowOff : h.L.cy - rowOff;
+      for(var i = 0; i < RINGN; i++){
+        var sl = g.ring[s][i];
+        if(!sl) continue;
+        var x = h.W/2 + (i - 1) * (cw*RSC + 12);
+        out[sl.c] = {x:x, y:ringY, rot:0, scl:RSC, fl:1, z:220 + vi*40 + i*4 + 3,
+                     key:'r' + s + i + '.' + sl.backs.length + '.' + (sl.warm?1:0)};
+        for(var k = 0; k < sl.backs.length; k++)
+          out[sl.backs[k]] = {x:x + (k+1)*5, y:ringY + (my ? (k+1)*12 : -(k+1)*12), rot:0,
+                              scl:RSC, fl:1, z:220 + vi*40 + i*4 - k - 1, key:'rb' + s + i + k};
+      }
+      var dx = my ? h.W - 14 - cw*DSC/2 : 14 + cw*DSC/2;
+      var dy = my ? h.L.act.y - ch*DSC/2 - 46 : h.L.top.h + 40 + ch*DSC/2;
+      for(i = 0; i < g.decks[s].length; i++){
+        var o = Math.min(i, 6) * 0.7;
+        out[g.decks[s][i]] = {x:dx - o, y:dy - o, rot:0, scl:DSC, fl:0, z:20 + i, key:'dk' + s + Math.min(i, 6)};
+      }
+      var kx = my ? dx - cw*DSC - 12 : dx + cw*DSC + 12;
+      for(i = 0; i < g.kos[s].length; i++){
+        var top = i === g.kos[s].length - 1;
+        out[g.kos[s][i]] = {x:kx + (top ? 0 : (g.kos[s][i] % 3) - 1), y:dy, rot:top ? 0.06 : 0,
+                            scl:DSC, fl:top ? 1 : 0, z:60 + i, key:'ko' + s + i + (top?'t':'')};
+      }
+    }
+  },
+  drawHud:function(g){
+    syncSel();
+    var cw = L.cw, ch = L.ch, DSC = 0.55;
+    var RSC = Math.max(0.8, Math.min(1.12, (W - 48) / (3 * (cw + 14))));
+    var rowOff = ch*RSC/2 + 38;
+    for(var s = 0; s < 2; s++){
+      var vi = (s - STATE.pov + 2) % 2, my = vi === 0;
+      var ringY = my ? L.cy + rowOff : L.cy - rowOff;
+      for(var i = 0; i < RINGN; i++){
+        var x = W/2 + (i - 1) * (cw*RSC + 12);
+        var rx = x - cw*RSC/2, ry = ringY - ch*RSC/2;
+        var sl = g.ring[s][i];
+        ctx.strokeStyle = 'rgba(216,169,79,0.35)'; ctx.lineWidth = 1;
+        ctx.strokeRect(rx - 3, ry - 3, cw*RSC + 6, ch*RSC + 6);
+        if(my && isLocalTurn() && !choreoBusy()){
+          if(g.phase === 'main' && !sl && !g.played && STATE.sel.length === 1 &&
+             cardOf(g, STATE.sel[0]) && cardOf(g, STATE.sel[0]).kind === 'char'){
+            ctx.strokeStyle = PAL.sel; ctx.globalAlpha = pulse(0.3, 0.9, 2.4);
+            ctx.lineWidth = 2; ctx.strokeRect(rx - 3, ry - 3, cw*RSC + 6, ch*RSC + 6);
+            ctx.globalAlpha = 1;
+          }
+        }
+        hit(rx - 4, ry - 4, cw*RSC + 8, ch*RSC + 8, 'meld:' + (s*3 + i));
+        if(!sl) continue;
+        if(sl.used){ ctx.fillStyle = 'rgba(6,16,15,0.45)'; ctx.fillRect(rx, ry, cw*RSC, ch*RSC); }
+        if(sl.warm){
+          ctx.fillStyle = 'rgba(6,16,15,0.35)'; ctx.fillRect(rx, ry, cw*RSC, ch*RSC);
+          drawText(ctx, 'ZZZ', x, ringY - 4, 1, PAL.brassHi, 'c');
+        }
+        var bcol = sl.cur > cardOf(g, sl.c).bp ? PAL.good : sl.cur < sl.max ? PAL.warn : PAL.cream;
+        var by = my ? ringY + ch*RSC/2 + 6 : ringY - ch*RSC/2 - 18;
+        drawText(ctx, sl.cur + '', x, by, 2, bcol, 'c');
+        if(my && mySel.indexOf(i) >= 0){
+          ctx.strokeStyle = PAL.sel; ctx.lineWidth = 3;
+          ctx.strokeRect(rx - 2, ry - 2, cw*RSC + 4, ch*RSC + 4);
+          drawText(ctx, (mySel.indexOf(i) + 1) + '', rx + 4, ry + 4, 1, PAL.sel);
+        }
+        if(my && g.phase === 'block' && blockSel === i){
+          ctx.strokeStyle = PAL.brassHi; ctx.lineWidth = 3;
+          ctx.strokeRect(rx - 2, ry - 2, cw*RSC + 4, ch*RSC + 4);
+        }
+        if(g.atk && g.atk.by === s && g.atk.slots.indexOf(i) >= 0){
+          ctx.strokeStyle = PAL.bad; ctx.globalAlpha = pulse(0.5, 1, 3);
+          ctx.lineWidth = 2; ctx.strokeRect(rx - 5, ry - 5, cw*RSC + 10, ch*RSC + 10);
+          ctx.globalAlpha = 1;
+        }
+      }
+      /* info column OPPOSITE the side's piles: opp piles left -> text right; mine right -> text left */
+      var deckX = my ? W - 14 - cw*DSC/2 : 14 + cw*DSC/2;
+      var deckY = my ? L.act.y - ch*DSC/2 - 46 : L.top.h + 40 + ch*DSC/2;
+      if(my){
+        drawText(ctx, 'HP ' + g.hp[s], 16, L.act.y - 64, 2, PAL.good);
+        drawText(ctx, 'SP ' + g.sp[s], 16, L.act.y - 44, 1, PAL.brassHi);
+        drawText(ctx, g.deckNames[s], 16 + textW('SP ' + g.sp[s], 1) + 14, L.act.y - 44, 1, PAL.dim);   /* v1.04: on the SP line; at L.act.y - 30 it printed over my seat plate */
+      } else {
+        drawText(ctx, 'HP ' + g.hp[s], W - 16, L.top.h + 22, 2, PAL.bad, 'r');
+        drawText(ctx, 'SP ' + g.sp[s], W - 16, L.top.h + 42, 1, PAL.brassHi, 'r');
+        drawText(ctx, g.deckNames[s], W - 16, L.top.h + 56, 1, PAL.dim, 'r');
+      }
+      drawText(ctx, 'X' + g.decks[s].length, deckX, deckY + ch*DSC/2 + 4, 1, PAL.dim, 'c');
+    }
+    if(g.phase === 'block' && g.atk){
+      ctx.globalAlpha = pulse(0.7, 1, 2);
+      drawText(ctx, 'INCOMING ' + g.atk.bp + ' BP', W/2, L.cy - 26, 2, PAL.bad, 'c');
+      ctx.globalAlpha = 1;
+      if(isLocalTurn()) drawText(ctx, 'PICK A BLOCKER OR TAKE IT', W/2, L.cy + 22, 1, PAL.cream, 'c');
+    }
+    /* ---- inspect panel: long-press detail view; any tap closes ---- */
+    if(inspect != null && g.cardCat[inspect] != null){
+      var e = CAT[g.cardCat[inspect]];
+      hit(0, L.top.h, W, L.act.y - L.top.h, 'meld:99');   /* backdrop wins the reverse scan */
+      ctx.fillStyle = 'rgba(4,12,11,0.82)';
+      ctx.fillRect(0, L.top.h, W, L.act.y - L.top.h);
+      var TI = Math.max(2, Math.min(Math.floor(W*0.44/TEXW), Math.floor((L.act.y - L.top.h - 60)/TEXH)));
+      var spr = getSprite('f', inspect, STATE.match.backId || SET.backId, TI);
+      var pw2 = TEXW*TI, ph2 = TEXH*TI;
+      var panW = Math.min(W - 24, pw2 + 168);
+      var px0 = (W - panW)/2, py0 = L.top.h + Math.max(14, (L.act.y - L.top.h - ph2 - 44)/2);
+      ctx.fillStyle = '#10201f'; ctx.fillRect(px0, py0 - 8, panW, ph2 + 40);
+      ctx.strokeStyle = PAL.brass; ctx.lineWidth = 2; ctx.strokeRect(px0, py0 - 8, panW, ph2 + 40);
+      if(spr) ctx.drawImage(spr, px0 + 12, py0);
+      var tx = px0 + pw2 + 26, ty = py0 + 2, ls = 15;
+      drawText(ctx, e.name, tx, ty, 1, PAL.cream); ty += ls + 4;
+      if(e.kind === 'char'){
+        drawText(ctx, 'FIGHTER  BP ' + e.bp + '  SP ' + e.sp, tx, ty, 1, PAL.brassHi); ty += ls;
+        var onRing = null, rs, ri;
+        for(rs = 0; rs < 2; rs++) for(ri = 0; ri < RINGN; ri++)
+          if(g.ring[rs][ri] && g.ring[rs][ri].c === inspect) onRing = g.ring[rs][ri];
+        if(onRing){ drawText(ctx, 'NOW ' + onRing.cur + ' OF ' + onRing.max +
+          (onRing.warm ? '  WARM' : onRing.used ? '  SPENT' : '  READY'), tx, ty, 1, PAL.good); ty += ls; }
+        if(e.kw === 'RUSH'){ drawText(ctx, 'RUSH: ATTACKS THE TURN', tx, ty, 1, PAL.sel); ty += ls;
+          drawText(ctx, 'IT ENTERS', tx, ty, 1, PAL.sel); ty += ls; }
+        if(e.kw === 'GUARD'){ drawText(ctx, 'GUARD: TAKES 200 LESS', tx, ty, 1, PAL.sel); ty += ls;
+          drawText(ctx, 'WHEN BLOCKING', tx, ty, 1, PAL.sel); ty += ls; }
+        if(e.spark){ drawText(ctx, 'SPARK: ' + e.spark + ' DMG ON', tx, ty, 1, PAL.warn); ty += ls;
+          drawText(ctx, 'ENTRY, BIGGEST FOE', tx, ty, 1, PAL.warn); ty += ls; }
+        if(e.backs.length){
+          drawText(ctx, 'BACKUPS (+' + BK_BP + ' EACH):', tx, ty, 1, PAL.dim); ty += ls;
+          for(var bi = 0; bi < e.backs.length; bi++){ drawText(ctx, CAT[e.backs[bi]].name, tx, ty, 1, PAL.cream); ty += ls; }
+        } else { drawText(ctx, 'NO BACKUPS', tx, ty, 1, PAL.dim); ty += ls; }
+        drawText(ctx, 'ART: ' + e.from, tx, ty, 1, PAL.dim); ty += ls;
+      } else {
+        drawText(ctx, 'ACTION  COST SP ' + e.cost, tx, ty, 1, PAL.brassHi); ty += ls;
+        var words = e.txt.split(' '), line2 = '';
+        for(var w3 = 0; w3 < words.length; w3++){
+          if((line2 + ' ' + words[w3]).length > 20){ drawText(ctx, line2, tx, ty, 1, PAL.cream); ty += ls; line2 = words[w3]; }
+          else line2 = line2 ? line2 + ' ' + words[w3] : words[w3];
+        }
+        if(line2){ drawText(ctx, line2, tx, ty, 1, PAL.cream); ty += ls; }
+      }
+      drawText(ctx, 'TAP TO CLOSE', W/2, py0 + ph2 + 18, 1, PAL.dim, 'c');
+    }
+  },
+  paintFace:function(g2, T, id){
+    var g = STATE.g;
+    var ci = g && g.cardCat ? g.cardCat[id] : null;
+    if(ci == null){ roundedCardBase(g2, T, PAL.paper, PAL.ink); return; }
+    var e = CAT[ci];
+    /* word-wrap a name into up to two lines of <= 9 chars */
+    function nameLines(nm){
+      if(nm.length <= 9) return [nm];
+      var ws = nm.split(' '), l1 = '', l2 = '';
+      for(var w = 0; w < ws.length; w++){
+        if(!l2.length && (l1 + (l1 ? ' ' : '') + ws[w]).length <= 9) l1 = l1 ? l1 + ' ' + ws[w] : ws[w];
+        else l2 = l2 ? l2 + ' ' + ws[w] : ws[w];
+      }
+      if(l2.length > 9) l2 = l2.slice(0, 9);
+      return [l1, l2];
+    }
+    if(e.kind === 'char'){
+      roundedCardBase(g2, T, '#22333c', PAL.ink);
+      px(g2, 3*T, 3*T, (TEXW-6)*T, T, PAL.brass); px(g2, 3*T, (TEXH-4)*T, (TEXW-6)*T, T, PAL.brass);
+      px(g2, 3*T, 3*T, T, (TEXH-7)*T, PAL.brass); px(g2, (TEXW-4)*T, 3*T, T, (TEXH-7)*T, PAL.brass);
+      var nl = nameLines(e.name);
+      drawText(g2, nl[0], 32*T, 5*T, T, PAL.cream, 'c');
+      if(nl[1]) drawText(g2, nl[1], 32*T, 12*T, T, PAL.cream, 'c');
+      /* portrait window 48x38 texels */
+      px(g2, 8*T, 20*T, 48*T, 38*T, '#0d1a20');
+      px(g2, 8*T, 20*T, 48*T, T, PAL.brassLo); px(g2, 8*T, 57*T, 48*T, T, PAL.brassLo);
+      var art = ART[e.art];
+      if(art.kind === 'rows'){
+        var rows = art.rows(), palx = art.pal();
+        var sc = Math.max(1, Math.floor(36 / art.grid)) * T;
+        var dx = 8*T + Math.floor((48*T - art.grid*sc) / 2);
+        var dy = 20*T + Math.floor((38*T - art.grid*sc) / 2);
+        drawRows(g2, rows, palx, dx, dy, sc);
+      } else if(art.kind === 'glyph'){
+        var ln = LINES[art.line];
+        px(g2, 8*T, 20*T, 48*T, 38*T, ln.dark);
+        drawBits(g2, GLYPH9[ln.glyph], 32*T - Math.floor(4.5*3*T), 39*T - Math.floor(4.5*3*T), 3*T, ln.base);
+        drawBits(g2, GLYPH9[ln.glyph], 32*T - Math.floor(4.5*2*T), 39*T - Math.floor(4.5*2*T), 2*T, ln.light);
+      } else if(art.kind === 'angler' && ctx){
+        var real = ctx; ctx = g2;               /* the slice paints on its lab ctx */
+        try{
+          g2.save();
+          g2.beginPath(); g2.rect(8*T, 20*T, 48*T, 38*T); g2.clip();
+          px(g2, 8*T, 20*T, 48*T, 38*T, '#101a38');
+          g2.translate(34*T, 41*T); g2.scale(T*0.46, T*0.46);
+          drawAngler({x:0, y:0, h:0, dash:false, dx:1, vt:0, lal:true});
+          g2.restore();
+        }catch(err){ reportErr('anglerArt', err); }
+        ctx = real;
+      }
+      /* trait line, then the stat band: BP left, SP badge right, no collision */
+      if(e.kw) drawText(g2, e.kw, 32*T, 61*T, T, PAL.sel, 'c');
+      else if(e.spark) drawText(g2, 'SPARK ' + e.spark, 32*T, 61*T, T, PAL.warn, 'c');
+      drawText(g2, e.bp + '', 5*T, 72*T, 2*T, PAL.brassHi);
+      px(g2, 45*T, 70*T, 15*T, 13*T, '#173029');
+      px(g2, 45*T, 70*T, 15*T, T, PAL.brassLo);
+      drawText(g2, 'SP', 52*T, 72*T, T, PAL.dim, 'c');
+      drawText(g2, e.sp + '', 52*T, 79*T, T, PAL.brassHi, 'c');
+    } else {
+      roundedCardBase(g2, T, PAL.paper, PAL.ink);
+      px(g2, 4*T, 4*T, (TEXW-8)*T, 11*T, '#6e2a20');
+      drawText(g2, 'ACTION', 32*T, 8*T, T, '#f0e6d0', 'c');
+      var nl2 = nameLines(e.name);
+      var ns = nl2[0].length <= 4 && !nl2[1] ? 2 : 1;
+      drawText(g2, nl2[0], 32*T, 20*T, ns*T, PAL.ink, 'c');
+      if(nl2[1]) drawText(g2, nl2[1], 32*T, 28*T, T, PAL.ink, 'c');
+      px(g2, 10*T, 34*T, 44*T, T, PAL.brassLo);
+      var words = e.txt.split(' '), line = '', ly = 40*T, lines = 0;
+      for(var w2 = 0; w2 < words.length; w2++){
+        if((line + (line ? ' ' : '') + words[w2]).length > 10){
+          drawText(g2, line, 32*T, ly, T, PAL.ink, 'c'); ly += 8*T; lines++; line = words[w2];
+        } else line = line ? line + ' ' + words[w2] : words[w2];
+      }
+      if(line && lines < 4) drawText(g2, line, 32*T, ly, T, PAL.ink, 'c');
+      px(g2, 4*T, 73*T, 56*T, 11*T, '#6e2a20');
+      drawText(g2, 'SP ' + e.cost, 32*T, 76*T, T, '#f0e6d0', 'c');
+    }
+  },
+  setupRow:function(x, y, pw){
+    if(!STATE.setup.gopts) STATE.setup.gopts = {deck:'royal'};
+    drawText(ctx, 'YOUR DECK', x + 12, y, 1, PAL.brassLo);
+    chip(x + 12, y + 14, (pw - 34) / 2, 'ROYAL GUARD', 'gopt:royal', STATE.setup.gopts.deck === 'royal');
+    chip(x + 22 + (pw - 34) / 2, y + 14, (pw - 34) / 2, 'GOBLIN TIDE', 'gopt:goblin', STATE.setup.gopts.deck === 'goblin');
+    drawText(ctx, 'DROP THEIR ' + HP0 + ' HP TO ZERO', x + 12, y + 48, 1, PAL.dim);
+  },
+  onSetupTap:function(v){ STATE.setup.gopts = {deck:v === 'goblin' ? 'goblin' : 'royal'}; },
+  /* v1.04: the online lobby. Each seat picks its own starter (a mirror match is
+     allowed); an unpicked host plays ROYAL GUARD and an unpicked guest the other
+     deck, which is v1.03's online behaviour. */
+  lobbyRow:function(x, y, pw, opts, seat){
+    var mine = clashLobbyDecks(opts)[seat];
+    drawText(ctx, 'YOUR DECK', x + 12, y, 1, PAL.brassLo);
+    chip(x + 12, y + 14, (pw - 34) / 2, 'ROYAL GUARD', 'lopt:royal', mine === 'royal');
+    chip(x + 22 + (pw - 34) / 2, y + 14, (pw - 34) / 2, 'GOBLIN TIDE', 'lopt:goblin', mine === 'goblin');
+  },
+  lobbyLabel:function(opts, i){ return i < 2 ? DECKS[clashLobbyDecks(opts)[i]].name : ''; },
+  lobbyOpts:function(opts){ var d = clashLobbyDecks(opts); return {deck:d[0], decks:d}; },
+  bot:function(g, seat, diff){
+    var hand = g.hands[seat], i, sl;
+    if(g.phase === 'block'){
+      var atk = g.atk.bp, opts = [];
+      for(i = 0; i < RINGN; i++) if(g.ring[seat][i]) opts.push(i);
+      if(!opts.length) return {a:'noblock'};
+      var lethal = g.hp[seat] - atk <= 0;
+      var lead = g.ring[g.atk.by][g.atk.slots[0]];
+      var best = -1, bestScore = -1e9;
+      for(i = 0; i < opts.length; i++){
+        sl = g.ring[seat][opts[i]];
+        var guard = cardOf(g, sl.c).kw === 'GUARD' ? 200 : 0;
+        var survives = sl.cur - Math.max(0, atk - guard) > 0;
+        var kills = lead && sl.cur >= lead.cur;
+        var sc = (survives ? 500 : 0) + (kills ? 300 : 0) - sl.cur * 0.1;
+        if(sc > bestScore){ bestScore = sc; best = opts[i]; }
+      }
+      if(lethal) return {a:'block', slot:best};
+      if(diff === 0) return uiRnd() < 0.5 ? {a:'block', slot:opts[Math.floor(uiRnd()*opts.length)]} : {a:'noblock'};
+      if(bestScore >= 500 || atk >= 500) return {a:'block', slot:best};
+      return {a:'noblock'};
+    }
+    /* main: field, back up, spend, strike, end */
+    if(!g.played){
+      var bestC = -1, bestBp = -1, slot = -1;
+      for(i = 0; i < RINGN; i++) if(!g.ring[seat][i]){ slot = i; break; }
+      if(slot >= 0){
+        for(i = 0; i < hand.length; i++){
+          var e = cardOf(g, hand[i]);
+          if(e.kind === 'char' && (diff === 0 ? uiRnd() * 1000 : e.bp) > bestBp){
+            bestBp = diff === 0 ? uiRnd() * 1000 : e.bp; bestC = hand[i];
+          }
+        }
+        if(bestC >= 0) return {a:'playchar', card:bestC, slot:slot};
+      }
+    }
+    if(diff > 0 || uiRnd() < 0.4){
+      for(i = 0; i < hand.length; i++){
+        var hc = cardOf(g, hand[i]);
+        if(hc.kind !== 'char') continue;
+        for(var t = 0; t < RINGN; t++){
+          var tg = g.ring[seat][t];
+          if(tg && tg.backs.length < BK_MAX && cardOf(g, tg.c).backs.indexOf(hc.id) >= 0)
+            return {a:'backup', card:hand[i], slot:t};
+        }
+      }
+    }
+    var ready = readySlots(g, seat);
+    var sum = 0;
+    for(i = 0; i < ready.length; i++) sum += g.ring[seat][ready[i]].cur;
+    if(ready.length && sum >= g.hp[foeOf(seat)] && g.sp[seat] >= UNITED[ready.length]){
+      ready.sort(function(a2, b2){ return g.ring[seat][b2].cur - g.ring[seat][a2].cur; });
+      return {a:'attack', slots:ready};
+    }
+    for(i = 0; i < hand.length; i++){
+      var ac = cardOf(g, hand[i]);
+      if(ac.kind !== 'act' || g.sp[seat] < ac.cost) continue;
+      var bf = biggestFoe(g, seat), sf = smallestFoe(g, seat);
+      if(diff === 0 && uiRnd() < 0.35) return {a:'action', card:hand[i]};
+      if(diff === 0) continue;
+      if(ac.fx === 'crush' && sf >= 0 && g.ring[foeOf(seat)][sf].cur >= 450) return {a:'action', card:hand[i]};
+      if(ac.fx === 'fire' && bf >= 0 && g.ring[foeOf(seat)][bf].cur <= 400) return {a:'action', card:hand[i]};
+      if(ac.fx === 'mend' && hurtAlly(g, seat) >= 0 && g.ring[seat][hurtAlly(g, seat)].max - g.ring[seat][hurtAlly(g, seat)].cur >= 300) return {a:'action', card:hand[i]};
+      if(ac.fx === 'draw2' && hand.length <= 2 && g.decks[seat].length) return {a:'action', card:hand[i]};
+      if(ac.fx === 'rally' && ringSum(g, seat) >= 700 && g.sp[seat] >= ac.cost + 200) return {a:'action', card:hand[i]};
+      if(ac.fx === 'sabo' && diff === 2 && g.sp[foeOf(seat)] >= 300) return {a:'action', card:hand[i]};
+    }
+    if(ready.length){
+      var foeBest = biggestFoe(g, seat);
+      var foeBp = foeBest >= 0 ? g.ring[foeOf(seat)][foeBest].cur : 0;
+      ready.sort(function(a3, b3){ return g.ring[seat][b3].cur - g.ring[seat][a3].cur; });
+      var lead2 = g.ring[seat][ready[0]].cur;
+      if(diff === 0){ if(uiRnd() < 0.7) return {a:'attack', slots:[ready[0]]}; }
+      else if(diff === 1){
+        if(ready.length >= 2 && g.sp[seat] >= UNITED[ready.length] && (foeBp === 0 || sum >= foeBp + 300))
+          return {a:'attack', slots:ready};
+        return {a:'attack', slots:[ready[0]]};
+      } else {
+        if(foeBp === 0 || lead2 + 200 >= foeBp || g.hp[foeOf(seat)] <= 600)
+          return {a:'attack', slots:[ready[0]]};
+        if(ready.length >= 2 && g.sp[seat] >= UNITED[2] && sum >= foeBp + 200)
+          return {a:'attack', slots:ready.slice(0, 2)};
+      }
+    }
+    return {a:'end'};
+  },
+  fallback:function(g, seat){
+    return g.phase === 'block' ? {a:'noblock'} : {a:'end'};
+  },
+  ctrl:{
+    tapCard:function(id){
+      if(inspect != null){ inspect = null; sfx('tick'); return; }
+      if(STATE.g.hands[STATE.pov].indexOf(id) < 0) return;
+      STATE.sel = STATE.sel[0] === id ? [] : [id];
+      sfx('tick');
+    },
+    tapPile:function(){},
+    tapMeld:function(k){
+      if(inspect != null){ inspect = null; sfx('tick'); return; }
+      syncSel();
+      var g = STATE.g, s = Math.floor(k / 3), i = k % 3;
+      if(k > 5) return;
+      if(!isLocalTurn() || choreoBusy()){ return; }
+      if(g.phase === 'block'){
+        if(s === STATE.pov && g.ring[s][i]){ blockSel = blockSel === i ? -1 : i; sfx('tick'); }
+        return;
+      }
+      if(s !== STATE.pov) return;
+      var sl = g.ring[s][i];
+      if(!sl){
+        if(STATE.sel.length === 1 && cardOf(g, STATE.sel[0]).kind === 'char')
+          tryLocalAction({a:'playchar', card:STATE.sel[0], slot:i});
+        return;
+      }
+      if(STATE.sel.length === 1){
+        var hc = cardOf(g, STATE.sel[0]);
+        if(hc.kind === 'char' && cardOf(g, sl.c).backs.indexOf(hc.id) >= 0 && sl.backs.length < BK_MAX){
+          tryLocalAction({a:'backup', card:STATE.sel[0], slot:i});
+          return;
+        }
+      }
+      if(!sl.warm && !sl.used){
+        var k2 = mySel.indexOf(i);
+        if(k2 >= 0) mySel.splice(k2, 1); else mySel.push(i);
+        sfx('tick');
+      } else sfx('denied');
+    },
+    buttons:function(){
+      syncSel();
+      var g = STATE.g;
+      if(g.phase === 'block'){
+        var bs = blockSel;
+        return [
+          {label:'BLOCK', en:bs >= 0, fire:function(){ if(inspect != null){ inspect = null; return; } var b = blockSel; blockSel = -1; tryLocalAction({a:'block', slot:b}); }},
+          {label:'NO BLOCK', en:true, fire:function(){ if(inspect != null){ inspect = null; return; } tryLocalAction({a:'noblock'}); }}
+        ];
+      }
+      var sel = STATE.sel, canCast = false;
+      if(sel.length === 1){
+        var e = cardOf(g, sel[0]);
+        canCast = e && e.kind === 'act' && GAMES.clash.legal(g, g.turn, {a:'action', card:sel[0]});
+      }
+      var atkEn = mySel.length > 0 && g.sp[g.turn] >= UNITED[mySel.length];
+      return [
+        {label:'CAST', en:canCast, fire:function(){ if(inspect != null){ inspect = null; return; } tryLocalAction({a:'action', card:sel[0]}); }},
+        {label:'ATTACK', en:atkEn, fire:function(){ if(inspect != null){ inspect = null; return; }
+          var s2 = mySel.slice(); mySel = [];
+          s2.sort(function(a4, b4){ return STATE.g.ring[STATE.g.turn][b4].cur - STATE.g.ring[STATE.g.turn][a4].cur; });
+          tryLocalAction({a:'attack', slots:s2});
+        }},
+        {label:'END TURN', en:true, fire:function(){ if(inspect != null){ inspect = null; return; } tryLocalAction({a:'end'}); }}
+      ];
+    }
+  }
+});
+})();
+/*==== GAME:CLASH END ====*/
+
+/*==== BOOT BEGIN ====*/
+function init(){
+  loadSet();
+  fitCanvas();
+  computeLayout();
+  if(!HEADLESS) win.requestAnimationFrame(pump);
+}
+init();
+/*==HOOK-SPLICE==*/
+/*==== BOOT END ====*/
+})();
+</script>
+</body>
+</html>
