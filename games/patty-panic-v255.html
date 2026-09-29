@@ -3,9 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>PATTY PANIC - BUILD 253</title>
+<title>PATTY PANIC - BUILD 255</title>
 <!--
 PATTY PANIC build changelog
+v255: THE BURGER KIT (the Director's pick, 2026-09-29: "Fitted for Play is a good middle ground";
+    MEMO-SNAILCADE-BURGER-CHOICE-v1.00 and MEMO-SNAILCADE-BURGER-KIT-v1.00). Every burger layer in play
+    is now the arcade's original teaser burger, the SNAILCADE seat's PATTY BURGER KIT v1.00 in its FITTED
+    style: the dome, sesame seeds, lettuce frill, cheese drips and grill mark column, each original pixel
+    two wide and fitted to this game's layer box. The kit rides above drawPiece byte for byte as filed
+    (titles/snailcade/art/patty-burger-kit/, generated and never edited by hand); drawPiece draws each
+    16 px segment through drawPieceSegKit with the layer's segment count (L A B R at 4, L A R at 3), and
+    any layer a style lacks falls back to the legacy drawPieceSeg, which stays as it was. BURGER_STYLE
+    is the one knob: 'fitted' (the pick), 'chunky' (the title screen look, taller than the layer box),
+    or '' for the v111 art. Every fitted layer stays in rows y+1 to y+8, so PH, pressing, the pop hop,
+    ramps, falling, stacking and the plate are untouched: a draw change only. The patty keeps its three
+    doneness steps: rare and medium in the v111 colours, well done in the original's (lighter than
+    v111's char, with the grill mark column). The kit's new tomato and greens are used too, so every
+    layer shares one look. Gate, red first against 254: burgerkittest (14 checks; 11 red there).
+v254: VERTICAL CARRIERS, the ECHO seat's capability (MEMO-ECHO-CAP-VERTICAL-CARRIERS-v1.00; doc 09
+    section 8: a need proven style local travels UP and lands dormant under an ENGINE_VER bump; ENGINE_VER
+    1.13, resealed). A carrier given a gate and two rows (r0 its rest, r1) travels at a constant
+    CARRIER_SPD (42 px a second, ECHO's proven lift pace) toward r1 while the gate holds and back to r0
+    when it lets go, and RESTS at either end. At rest it is the floor of its span at its row
+    (carrierFloorAt, for a style's own floor test; floorAt is untouched); in transit neither row is.
+    onDepart runs BEFORE its row clears (board before leave), onArrive after the new row is set, onReset
+    on carrierReset, which snaps every gated carrier to rest with its riders (loop styles). The legacy
+    chef rides one: he boards at the ledge as on any platform, cannot step off or act mid-shaft, his
+    feet follow the slab, and he takes the new row on arrival. A level def's vertical mover
+    [c,r0,c,r1,w,per] rides carrierCycleGate: rest per seconds at r0, travel, rest, return. A carrier
+    with no gate is the v228 ping-pong, byte for byte. THE STALE RIDER, found building this: a chef who
+    died aboard a platform, or began a new level while aboard, kept it under him, and on his first
+    step at the start he snapped 70 to 90 px onto the platform's column; the start placements, the
+    respawn and the co-op timeout respawn now clear it. THE LADDER LEDGE, found the same way: where a
+    shelf ends at a ladder the chef stops on the ladder centre (v187), 8 px from the gap, and the mount
+    probe reached only 7 px past his feet, so he could never board from that side: THE ASSEMBLY LINE's
+    two ladder ledges (col 5 for its first mover, col 16 for its second). The probe now reaches 3 px
+    into the gap cell itself, which is the old reach exactly on a plain edge. Gate, red first against
+    253: vcarriertest (40 checks; 26 red there, each on its own assert; the ping-pong control, the edge
+    law checker and the clean sim green on both).
 v253: MR. SPUD BOWLS ONLY THE FOE HE HITS, AND ROLLS ON (the Director's device pass, 2026-09-29;
     ENGINE_VER 1.12, resealed: spudCharge lives in ENGINE-CORE). A floor or ladder charge that ran
     into a foe stunned EVERY foe on that floor (or every foe within a tile and a half on that ladder),
@@ -2311,14 +2346,14 @@ canvas#cv{image-rendering:pixelated;image-rendering:crisp-edges;background:#0b0b
 (function(){
 'use strict';
 /*==== FENCE:BUILD-STAMP:BEGIN ====*/
-var BUILD=253;
+var BUILD=255;
 /*==== FENCE:BUILD-STAMP:END ====*/
 /*==== FENCE:ENGINE-CORE:BEGIN ====*/
 /* the CABINET: one shared machine. Constants, canvas, the audio engine and this
    game's sound book (styles may register their own books later), and helpers.
    The BUILD stamp lives in the BUILD-STAMP region just above, outside every hashed
    span (09 law 9, v248): a build bump alone never reds the seal. */
-var ENGINE_VER='1.12';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239); v253: 1.12, MR. SPUD's charge strikes only the foe it hits
+var ENGINE_VER='1.13';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239); v253: 1.12, MR. SPUD's charge strikes only the foe it hits; v254: 1.13, vertical CARRIERS
   try{ if(typeof document!=='undefined'&&document) document.title='PATTY PANIC - BUILD '+BUILD; }catch(e){}
 /* ============ error reporter (first, per studio doctrine) ============ */
 var ERRMSG='';
@@ -3164,11 +3199,17 @@ function camTick(dt){ if(CAM.mode!=='follow'){CAM.x=0;CAM.y=0;return;}
   if(Math.abs(tx-CAM.x)<0.05)CAM.x=tx; if(Math.abs(ty-CAM.y)<0.05)CAM.y=ty; }
 /* CARRIERS: moving platforms, generalized from the burger ride logic. */
 var CARRIERS=[];
+var CARRIER_SPD=42;   /* v254: a gated carrier's travel, px a second (one second per two rows: ECHO ESCAPE's proven lift pace) */
 function addCarrier(d){ var c={x:d.x0,y:d.y0,w:(d.w!=null?d.w:32),h:(d.h!=null?d.h:4),
   x0:d.x0,y0:d.y0,x1:(d.x1!=null?d.x1:d.x0),y1:(d.y1!=null?d.y1:d.y0),
-  per:Math.max(0.1,d.per||3),t:d.t||0,dir:1,dx:0,dy:0}; CARRIERS.push(c); return c; }
+  per:Math.max(0.1,d.per||3),t:d.t||0,dir:1,dx:0,dy:0,
+  gate:d.gate||null,spd:(d.spd>0?d.spd:CARRIER_SPD),r0:(d.r0!=null?d.r0:-1),r1:(d.r1!=null?d.r1:-1),row:-1,moving:false,clock:0,   /* v254: gated, row aware carriers */
+  onDepart:d.onDepart||null,onArrive:d.onArrive||null,onReset:d.onReset||null};
+  if(c.gate){ c.t=0; c.row=c.r0; }   /* v254: a gated carrier starts at rest at end 0 */
+  CARRIERS.push(c); return c; }
 function clearCarriers(){CARRIERS.length=0;}
 function carrierTick(dt){ for(var i=0;i<CARRIERS.length;i++){ var c=CARRIERS[i];
+  if(c.gate){ carrierGateStep(c,dt); continue; }   /* v254: gated travel; a carrier with no gate keeps the v228 ping-pong */
   c.t+=c.dir*dt/c.per; if(c.t>1){c.t=2-c.t;c.dir=-1;} if(c.t<0){c.t=-c.t;c.dir=1;}
   var e=(c.t<0.5)?2*c.t*c.t:1-Math.pow(-2*c.t+2,2)/2;
   var nx=c.x0+(c.x1-c.x0)*e, ny=c.y0+(c.y1-c.y0)*e;
@@ -3178,6 +3219,32 @@ function carrierAt(x,y,pad){ pad=(pad==null?3:pad);
     if(x>=c.x&&x<=c.x+c.w&&y>=c.y-pad&&y<=c.y+pad)return c; } return null; }
 function carrierCarry(ent){ if(!ent||!ent.carrier)return;
   ent.x+=ent.carrier.dx; if(ent.fy!=null)ent.fy+=ent.carrier.dy; else ent.y+=ent.carrier.dy; }
+/* v254 VERTICAL CARRIERS (the ECHO seat's capability memo): a gated carrier seeks end 1 while its gate
+   holds and end 0 when it lets go, at a constant spd, and RESTS at either end. At rest it is the floor
+   of its span at its row (carrierFloorAt, for a style's own floor test; floorAt is untouched); in
+   transit neither row is. onDepart runs BEFORE the row clears (board before leave: the other order
+   boards nobody), onArrive after the new row is set; a chef aboard takes the new row on arrival. */
+function carrierGateStep(c,dt){
+  c.clock+=dt; var want=c.gate(c)?1:0;
+  if(!c.moving&&c.t===want){ c.dx=0; c.dy=0; return; }
+  if(!c.moving){ carrierDepart(c); c.moving=true; c.row=-1; }
+  var len=Math.max(1,Math.sqrt((c.x1-c.x0)*(c.x1-c.x0)+(c.y1-c.y0)*(c.y1-c.y0))), st=c.spd*dt/len;
+  var nt=(want>c.t)?Math.min(want,c.t+st):Math.max(want,c.t-st);
+  var nx=c.x0+(c.x1-c.x0)*nt, ny=c.y0+(c.y1-c.y0)*nt;
+  c.t=nt; c.dx=nx-c.x; c.dy=ny-c.y; c.x=nx; c.y=ny;
+  if(nt===want){ c.moving=false; c.row=want?c.r1:c.r0; carrierArrive(c); } }
+function carrierDepart(c){ for(var i=0;i<2;i++){ var pl=players[i];   /* a chef standing on it when it leaves rides it */
+    if(pl&&pl.active&&!pl.dead&&!pl.onCarrier&&!pl.onLad&&!pl.air&&!(pl.jmpH>0)&&pl.row===c.row&&pl.x>=c.x&&pl.x<=c.x+c.w)pl.onCarrier=c; }
+  if(c.onDepart)c.onDepart(c); }
+function carrierArrive(c){ for(var i=0;i<2;i++){ var pl=players[i]; if(pl&&pl.onCarrier===c)pl.row=c.row; }
+  if(c.onArrive)c.onArrive(c); }
+function carrierFloorAt(r,col){ for(var i=0;i<CARRIERS.length;i++){ var c=CARRIERS[i];
+    if(c.row===r&&!c.moving&&col>=Math.floor(c.x/TW)&&col<=Math.floor((c.x+c.w-1)/TW))return c; } return null; }
+function carrierReset(){ for(var i=0;i<CARRIERS.length;i++){ var c=CARRIERS[i]; if(!c.gate)continue;   /* loop styles: every gated carrier snaps to rest, riders with it */
+    var dx=c.x0-c.x; c.t=0; c.x=c.x0; c.y=c.y0; c.dx=0; c.dy=0; c.moving=false; c.row=c.r0; c.clock=0;
+    for(var k=0;k<2;k++){ var pl=players[k]; if(pl&&pl.onCarrier===c){ pl.x+=dx; pl.row=c.r0; } }
+    if(c.onReset)c.onReset(c); } }
+function carrierCycleGate(c){ return (Math.floor(c.clock/c.per)%2)===1; }   /* a level def's vertical mover: rest per seconds, travel, rest, return */
 /* SHOTS: two-way projectiles, generalized from the pepper and KONG throws. */
 var SHOTS=[]; var MAX_SHOTS=24;
 function fireShot(d){ if(SHOTS.length>=MAX_SHOTS)return null;
@@ -3207,22 +3274,25 @@ function tileTick(dt){ var w=0; for(var i=0;i<TILE_REGROW.length;i++){ var q=TIL
 /* v232: level-def platforms ride the CARRIERS service. movers:[[c0,r,c1,r,wCells?,perSec?]] */
 function syncCarriersFromLV(){ clearCarriers();
   if(!(LV&&LV.movers))return;
-  for(var i=0;i<LV.movers.length;i++){ var m=LV.movers[i];
-    addCarrier({x0:m[0]*TW,y0:rowYr(m[1]),x1:m[2]*TW,y1:rowYr(m[3]),w:((m[4]||2))*TW,per:(m[5]||3)}); } }
+  for(var i=0;i<LV.movers.length;i++){ var m=LV.movers[i], vt=(m[1]!==m[3]);   /* v254: a vertical mover [c,r0,c,r1,w,per] rests at r0 and cycles on its per */
+    addCarrier({x0:m[0]*TW,y0:rowYr(m[1]),x1:m[2]*TW,y1:rowYr(m[3]),w:((m[4]||2))*TW,per:(m[5]||3),gate:vt?carrierCycleGate:null,r0:vt?m[1]:null,r1:vt?m[3]:null}); } }
 function carrierWalk(pl,IN,predictOnly){   /* v232: aboard a platform. It carries him; he may walk its width; floor releases him. */
   var cc=pl.onCarrier;
   pl.x+=cc.dx;
   if(IN.h!==0){ pl.dir=IN.h; pl.x+=IN.h*SPD*(pl.sick>0?SICK_SLOW:1)*(pl.girl?GIRL_SPD_MUL:1); pl.anim+=SPD; }
   var mn=cc.x+4, mx=cc.x+cc.w-4;
+  if(!cc.moving){   /* v254: a travelling gated carrier holds him: neither row is standable until it rests */
   if(IN.h>0&&pl.x>=mx-0.5){ var ncr=colOf(mx)+1; if(ncr<COLSN&&floorAt(pl.row,ncr)){ pl.onCarrier=null; pl.x=ncr*TW+8; return; } }
   if(IN.h<0&&pl.x<=mn+0.5){ var ncl=colOf(mn)-1; if(ncl>=0&&floorAt(pl.row,ncl)){ pl.onCarrier=null; pl.x=ncl*TW+8; return; } }
+  }
   if(pl.x<mn)pl.x=mn; if(pl.x>mx)pl.x=mx;
-  if(floorAt(pl.row,colOf(pl.x)))pl.onCarrier=null;   /* ground under his feet: he is ashore */
+  if(!cc.moving&&floorAt(pl.row,colOf(pl.x)))pl.onCarrier=null;   /* ground under his feet: he is ashore */
 }
 function drawCarriers(){ for(var i=0;i<CARRIERS.length;i++){ var c=CARRIERS[i];
   var x=Math.round(c.x), y=Math.round(c.y);
   var tx0=Math.round(Math.min(c.x0,c.x1)), tx1=Math.round(Math.max(c.x0,c.x1))+c.w;
   for(var t=tx0;t<tx1;t+=6)R(t,y+2,2,1,'#2a3350');
+  if(c.y0!==c.y1){ var sy0=Math.round(Math.min(c.y0,c.y1)), sy1=Math.round(Math.max(c.y0,c.y1)); for(var sy=sy0-3;sy<sy1+2;sy+=6){ R(x-2,sy,1,2,'#2a3350'); R(x+c.w+1,sy,1,2,'#2a3350'); } }   /* v254: a vertical carrier's shaft rails */
   R(x,y-3,c.w,4,'#5a6272');
   R(x,y-3,c.w,1,'#9fc4d0');
   R(x+1,y+1,c.w-2,1,'#20242e');
@@ -3564,9 +3634,9 @@ function loadLevel(i){
   var br=LV.rows-1;
   var sc0=(LV.start!=null)?LV.start:6;
   players[0].x=sc0*TW+8;players[0].row=(LV.startRow!=null?LV.startRow:br);players[0].onLad=false;players[0].dead=false;players[0].air=false;mountChefLadder(players[0]);
-  players[0].riding=null;players[0].dir=1;
+  players[0].riding=null;players[0].dir=1;players[0].onCarrier=null;   // v254: no platform carried into a new level (the stale rider)
   players[1].x=(LV.start2!=null?LV.start2:13)*TW+8;players[1].row=(LV.start2Row!=null?LV.start2Row:br);players[1].onLad=false;players[1].dead=false;players[1].air=false;mountChefLadder(players[1]);
-  players[1].riding=null;players[1].dir=-1;
+  players[1].riding=null;players[1].dir=-1;players[1].onCarrier=null;
   bonus.on=false;bonus.t=0;
   initClouds();parts=[];popups=[];
   spawnT=(LV.grace!=null?LV.grace:2.0);graceT=0;freezeT=0;seqMode='';clearT=0;shake=0;introT=1.3;
@@ -4251,6 +4321,7 @@ function playerUpdate(pl,idx,predictOnly){
       }
     }
   }
+  if(pl.onCarrier&&pl.onCarrier.moving){ carrierWalk(pl,IN,predictOnly); return; }   // v254: aboard a travelling gated carrier he rides: no ladder, zip, pepper or pressing until it rests
   if(!pl.onLad){
     if(IN.v<0){
       var _zr=zipRowOf(pl,-1);   // v202 WEB CHEF: a floor above in his column outranks the ladder grab
@@ -4282,7 +4353,7 @@ function playerUpdate(pl,idx,predictOnly){
               var nc2=colOf(pl.x)+IN.h;
               if(nc2>=0&&nc2<COLSN&&!floorAt(pl.row,nc2)){ var sr2=springAtOrBelow(nc2,pl.row); if(sr2>=0&&!predictOnly){ hopOntoSpring(pl,nc2,pl.row,sr2); return; } }
               if(nc2>=0&&nc2<COLSN&&!floorAt(pl.row,nc2)&&!pl.onCarrier&&!predictOnly){   // v232: a platform within reach mounts him (the spring precedent)
-                var _mc=carrierAt(pl.x+IN.h*7,rowYr(pl.row),4);
+                var _mc=carrierAt((IN.h>0)?nc2*TW+3:(nc2+1)*TW-3,rowYr(pl.row),4);   // v254 THE LADDER LEDGE: probe 3 px into the gap cell itself (the old pl.x+7 on a plain edge, exactly); a shelf ending at a ladder stops him on its centre (v187), 8 px from the gap, where the 7 px reach fell 1 px short
                 if(_mc){ pl.onCarrier=_mc; } }
               if(pl.webs&&nc2>=0&&nc2<COLSN&&!walkAt(pl.row,nc2)){   // v206 WEB CHEF: at a gap edge, grapple across when a landing is in range
                 var _gx=grappleTargetX(pl,IN.h);
@@ -4406,7 +4477,7 @@ function timeoutDown(pl,idx){   // not revived in time: respawn at the player's 
   var br=LV.rows-1;
   var sc=(idx===0)?((LV.start!=null)?LV.start:6):((LV.start2!=null)?LV.start2:13);
   var srow=(idx===0)?(LV.startRow!=null?LV.startRow:br):(LV.start2Row!=null?LV.start2Row:br);
-  pl.x=sc*TW+8;pl.row=srow;pl.onLad=false;pl.air=false;pl.riding=null;mountChefLadder(pl);
+  pl.x=sc*TW+8;pl.row=srow;pl.onLad=false;pl.air=false;pl.riding=null;pl.onCarrier=null;mountChefLadder(pl);   // v254: respawn clear of any platform
   pl.inv=REVIVE_INV;introT=1.3;
 }
 function killPlayer(pl,kind){ if(predGuard('killPlayer'))return;
@@ -4458,10 +4529,10 @@ function afterDeath(){
   introT=1.3;                                    // chef waves a thumbs-up on respawn too (v36)
   var br=LV.rows-1;
   var sc0=(LV.start!=null)?LV.start:6;
-  players[0].x=sc0*TW+8;players[0].row=(LV.startRow!=null?LV.startRow:br);players[0].onLad=false;players[0].dead=false;players[0].riding=null;players[0].air=false;mountChefLadder(players[0]);
+  players[0].x=sc0*TW+8;players[0].row=(LV.startRow!=null?LV.startRow:br);players[0].onLad=false;players[0].dead=false;players[0].riding=null;players[0].air=false;players[0].onCarrier=null;mountChefLadder(players[0]);
   if(LV.swear)for(var sw=0;sw<LV.swear.length;sw++)LV.swear[sw]=0; players[0].aspring=-1;players[0].breakfall=false;players[1].aspring=-1;players[1].breakfall=false;   // v81: trampolines recover fully on respawn
   if(players[1].active){
-    players[1].x=(LV.start2!=null?LV.start2:13)*TW+8;players[1].row=(LV.start2Row!=null?LV.start2Row:br);players[1].onLad=false;players[1].dead=false;players[1].riding=null;players[1].air=false;mountChefLadder(players[1]);
+    players[1].x=(LV.start2!=null?LV.start2:13)*TW+8;players[1].row=(LV.start2Row!=null?LV.start2Row:br);players[1].onLad=false;players[1].dead=false;players[1].riding=null;players[1].air=false;players[1].onCarrier=null;mountChefLadder(players[1]);
   }
   for(var pz=0;pz<pieces.length;pz++){
     var rd=pieces[pz].riders;
@@ -5526,6 +5597,255 @@ function drawPieceSeg(type,x,y,seg,cook){
     R(x+3+(seg%2)*7,y+6,3,3,'#ffd23f');
   }
 }
+/* PATTY BURGER KIT v1.00 | GENERATED by titles/snailcade/working/tools/burger-kit.js v1.00 (the SNAILCADE seat) | never edit by hand
+   The arcade's original teaser burger (the Director's word, 2026-09-29), for PATTY PANIC's own piece renderer.
+   Styles: fitted (the original read pixel for pixel, each pixel two wide, rows fitted to PATTY's layer box: drops into play) and chunky (the original
+   exactly as the title screen showed it, every pixel doubled; the top bun, patty and bottom bun stand taller than the box).
+   Types use drawPieceSeg's codes: top, let, che, pat, bot; fitted also tom and grn (isNew: never in the original).
+   A layer: oy (its first row, from the piece's y), h, tiles L (first segment), A and B (middles, alternating), R (last),
+   each h rows of 16 letters ('.' clear), and pal, or for the patty cook[0 rare, 1 medium, 2 well] (roles T top, P body, D dark).
+   drawPieceSegKit(type, x, y, seg, cook, n, style) takes drawPieceSeg's arguments plus n (the layer's segment count, p.seg)
+   and draws through the game's own R(x, y, w, h, color); it returns false for a type the style lacks, so the caller falls
+   back to its own drawPieceSeg. */
+var PATTY_BURGER_KIT = {
+  version: "1.00",
+  defaultStyle: "fitted",
+  fitted: {
+    top: {
+      oy: 1,
+      h: 7,
+      tiles: {
+        L: ["..........AAAAAA", "......BBBBBBBBBB", "..BBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"],
+        A: ["AAAAAAAAAAAAAAAA", "CCBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"],
+        B: ["AAAAAAAAAAAAAAAA", "CCBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"],
+        R: ["AAAAAA..........", "CCBBBBBBBB......", "BBBBBBBBCCBBBB..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"]
+      },
+      pal: {
+        A: "#f2b35a",
+        B: "#e39b3f",
+        C: "#fff3d6",
+        E: "#b56d22"
+      }
+    },
+    let: {
+      oy: 2,
+      h: 6,
+      tiles: {
+        L: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EE....EE....EE.."],
+        A: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "..EE....EE....EE"],
+        B: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "....EE....EE...."],
+        R: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EE....EE....EE.."]
+      },
+      pal: {
+        A: "#6fdc5a",
+        B: "#51c24a",
+        C: "#3aa83c",
+        E: "#2a8f33"
+      }
+    },
+    che: {
+      oy: 2,
+      h: 5,
+      tiles: {
+        L: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCBBCCCCCCCC", "......CCCC......"],
+        A: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCBBCCCCCCCCCC", "....CCCC........"],
+        B: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCBBCCCCCCCCCCCC", "..CCCC.........."],
+        R: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBCCCCCCCCCCCCBB", "CCCC..........CC"]
+      },
+      pal: {
+        A: "#ffe27a",
+        B: "#ffcc2e",
+        C: "#f0b21e"
+      }
+    },
+    pat: {
+      oy: 2,
+      h: 6,
+      tiles: {
+        L: ["..TTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "..DDDDDDDDDDDDDD"],
+        A: ["TTTTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDDDD"],
+        B: ["TTTTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDDDD"],
+        R: ["TTTTTTTTTTTTTT..", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDD.."]
+      },
+      cook: [
+        {
+          T: "#e05a48",
+          P: "#c33a2e",
+          D: "#7d2018"
+        },
+        {
+          T: "#c87c44",
+          P: "#a85c30",
+          D: "#6e341a"
+        },
+        {
+          T: "#9c5a2f",
+          P: "#7a4121",
+          D: "#4f2712"
+        }
+      ]
+    },
+    bot: {
+      oy: 2,
+      h: 6,
+      tiles: {
+        L: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "..EEEEEEEEEEEEEE"],
+        A: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEEEE"],
+        B: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEEEE"],
+        R: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEE.."]
+      },
+      pal: {
+        A: "#f2b35a",
+        B: "#e39b3f",
+        C: "#b56d22",
+        E: "#9a5a1a"
+      }
+    },
+    tom: {
+      oy: 2,
+      h: 6,
+      tiles: {
+        L: [".....AAAAAA.....", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."],
+        A: [".....AAAAAA.....", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."],
+        B: [".....AAAAAA.....", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."],
+        R: [".....AAAAAA.....", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."]
+      },
+      pal: {
+        A: "#ff7a6a",
+        B: "#e84545",
+        C: "#ffd9c7",
+        E: "#b02f2f"
+      },
+      isNew: true
+    },
+    grn: {
+      oy: 2,
+      h: 6,
+      tiles: {
+        L: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBCCBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "FF....FF....FF.."],
+        A: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "CCBBBBBBBBBBCCBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "..FF....FF....FF"],
+        B: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "....FF....FF...."],
+        R: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBCCBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "FF....FF....FF.."]
+      },
+      pal: {
+        A: "#56a83a",
+        B: "#3f7d2e",
+        C: "#2b5a1f",
+        E: "#2f6a24",
+        F: "#23491a"
+      },
+      isNew: true
+    }
+  },
+  chunky: {
+    top: {
+      oy: -4,
+      h: 12,
+      tiles: {
+        L: ["..........AAAAAA", "..........AAAAAA", "......BBBBBBBBBB", "......BBBBBBBBBB", "..BBBBBBCCBBBBBB", "..BBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE"],
+        A: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "CCBBBBBBBBBBBBBB", "CCBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE"],
+        B: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "CCBBBBBBBBBBBBBB", "CCBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE"],
+        R: ["AAAAAA..........", "AAAAAA..........", "CCBBBBBBBB......", "CCBBBBBBBB......", "BBBBBBBBCCBBBB..", "BBBBBBBBCCBBBB..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE"]
+      },
+      pal: {
+        A: "#f2b35a",
+        B: "#e39b3f",
+        C: "#fff3d6",
+        E: "#b56d22"
+      }
+    },
+    let: {
+      oy: 0,
+      h: 8,
+      tiles: {
+        L: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EE....EE....EE..", "EE....EE....EE.."],
+        A: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "..EE....EE....EE", "..EE....EE....EE"],
+        B: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "....EE....EE....", "....EE....EE...."],
+        R: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EE....EE....EE..", "EE....EE....EE.."]
+      },
+      pal: {
+        A: "#6fdc5a",
+        B: "#51c24a",
+        C: "#3aa83c",
+        E: "#2a8f33"
+      }
+    },
+    che: {
+      oy: 1,
+      h: 8,
+      tiles: {
+        L: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCBBCCCCCCCC", "CCCCCCBBCCCCCCCC", "......CCCC......", "......CCCC......"],
+        A: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCBBCCCCCCCCCC", "CCCCBBCCCCCCCCCC", "....CCCC........", "....CCCC........"],
+        B: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCBBCCCCCCCCCCCC", "CCBBCCCCCCCCCCCC", "..CCCC..........", "..CCCC.........."],
+        R: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBCCCCCCCCCCCCBB", "BBCCCCCCCCCCCCBB", "CCCC..........CC", "CCCC..........CC"]
+      },
+      pal: {
+        A: "#ffe27a",
+        B: "#ffcc2e",
+        C: "#f0b21e"
+      }
+    },
+    pat: {
+      oy: -2,
+      h: 10,
+      tiles: {
+        L: ["..TTTTTTTTTTTTTT", "..TTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "..DDDDDDDDDDDDDD", "..DDDDDDDDDDDDDD"],
+        A: ["TTTTTTTTTTTTTTTT", "TTTTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDDDD", "DDDDDDDDDDDDDDDD"],
+        B: ["TTTTTTTTTTTTTTTT", "TTTTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDDDD", "DDDDDDDDDDDDDDDD"],
+        R: ["TTTTTTTTTTTTTT..", "TTTTTTTTTTTTTT..", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDD..", "DDDDDDDDDDDDDD.."]
+      },
+      cook: [
+        {
+          T: "#e05a48",
+          P: "#c33a2e",
+          D: "#7d2018"
+        },
+        {
+          T: "#c87c44",
+          P: "#a85c30",
+          D: "#6e341a"
+        },
+        {
+          T: "#9c5a2f",
+          P: "#7a4121",
+          D: "#4f2712"
+        }
+      ]
+    },
+    bot: {
+      oy: -2,
+      h: 10,
+      tiles: {
+        L: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "..EEEEEEEEEEEEEE", "..EEEEEEEEEEEEEE"],
+        A: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE"],
+        B: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE"],
+        R: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEE..", "EEEEEEEEEEEEEE.."]
+      },
+      pal: {
+        A: "#f2b35a",
+        B: "#e39b3f",
+        C: "#b56d22",
+        E: "#9a5a1a"
+      }
+    }
+  }
+};
+function drawPieceSegKit(type, x, y, seg, cook, n, style){
+  var S = PATTY_BURGER_KIT[style || PATTY_BURGER_KIT.defaultStyle], L = S && S[type];
+  if(!L) return false;
+  var nn = n || 4, t = seg <= 0 ? L.tiles.L : (seg >= nn - 1 ? L.tiles.R : (seg % 2 ? L.tiles.A : L.tiles.B));
+  var pal = L.pal || L.cook[cook == null ? 2 : Math.max(0, Math.min(2, cook))];
+  for(var r = 0; r < t.length; r++){
+    var row = t[r], c = 0;
+    while(c < 16){
+      var ch = row.charAt(c); if(ch === '.'){ c++; continue; }
+      var e = c + 1; while(e < 16 && row.charAt(e) === ch) e++;
+      R(x + c, y + L.oy + r, e - c, 1, pal[ch]); c = e;
+    }
+  }
+  return true;
+}
+var BURGER_STYLE='fitted';   // v255: the burger kit style (the Director's pick, FITTED); 'chunky' is the title screen look; '' draws the legacy v111 layers
 function drawPiece(p){
   var pj=0,glow=0;
   if(p.pop>0){var pt=p.pop/POP_T;pj=-Math.round(Math.sin(pt*Math.PI)*4);glow=pt;}   // a little hop as it pops back to full (v24)
@@ -5535,7 +5855,8 @@ function drawPiece(p){
     var oy=(!p.falling&&!p.plated&&p.pressed[s])?2:0;
     if(p.nudge>0)oy+=1;
     var segY=(p.onRamp>=0&&LV.ramps&&LV.ramps[p.onRamp])?(rampY(LV.ramps[p.onRamp],p.x+s*16+8)-5):p.y;   // v215: on a ramp each segment sits on the slope
-    drawPieceSeg(p.type,p.x+s*16,segY+oy+pj,s,rck);
+    if(!(BURGER_STYLE&&drawPieceSegKit(p.type,p.x+s*16,segY+oy+pj,s,rck,p.seg,BURGER_STYLE)))   // v255: the SNAILCADE burger kit
+      drawPieceSeg(p.type,p.x+s*16,segY+oy+pj,s,rck);                  // any layer the style lacks keeps the legacy art
   }
   if(p.type==='pat'&&!p.plated&&LV.grills&&LV.grills.length){       // v111/v113: a thermometer (grill levels only); mercury fills as it heats and holds at each step, the top bulb lighting at well-done
     var tck=(p.cook==null?2:p.cook), tx=p.x+Math.round(p.pw/2), baseY=p.y+pj-1;
