@@ -194,6 +194,19 @@
      scale with cell size. Applies everywhere blocks draw. Visuals only;
      full ten-gate chain green.
 ---------------------------------------------------------------------
+ v62  ADD LINE  (an incoming Add Line can top you out)
+   - Bug (found by the bot suite's coverage, v1.03): an Add Line fired
+     at you landed through applyNetSpecial, which called applyGarbage
+     and dropped the overflow it returns, so a block in your top row
+     was pushed off and play went on. Garbage and sudden death topped
+     you out, and since v60 your Add Line topped the CPU out; the
+     CPU's (and a rival's over the wire) now tops you out too.
+   - No bot match reached the case (0 of 768), so every bot report
+     replays; the fix changes nothing else.
+   - GATE: vscputest v1.06: a block in your top row and the CPU's Add
+     Line end the match, and so does one over the wire; with a clear
+     top row neither does (red on v61).
+---------------------------------------------------------------------
  v61  PHONE CODEX  (the codex reads on a phone; the game is v60's)
    - Codex: from v58 to v60 it ran 603 px wide at 390 px (its QA
      table; five tables at 360), so a phone scrolled it sideways.
@@ -977,7 +990,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e14">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
-<title>GRID GRUDGE - BUILD 61</title>
+<title>GRID GRUDGE - BUILD 62</title>
 <style>
   :root { --safe: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
   html, body {
@@ -1002,7 +1015,7 @@
 /* =====================================================================
    BUILD STAMP
 ===================================================================== */
-var BUILD = 61;
+var BUILD = 62;
 
 /* =====================================================================
    TUNABLES  (single-knob, intent-commented; codex SYSTEMS mirrors these)
@@ -1487,7 +1500,7 @@ function invFireThem(){
   STATE.tgtOverride = null;                                  // new front = back to its default target (v23)
   if (VSCPU){                                                // v54: local CPU target, real effects
     if (letter === 'S'){ var tf=STATE.field, ts=STATE.spec; STATE.field=cpu.field; STATE.spec=cpu.spec; cpu.field=tf; cpu.spec=ts; }
-    else if (letter === 'A'){ if (cpuAddGarbage(1, Math.floor(rng()*FIELD_W))) topOutCpu(); }   // v60: Add Line can top the CPU out, as it can you (same rng draw as applyEffect's)
+    else if (letter === 'A'){ if (cpuAddGarbage(1, Math.floor(rng()*FIELD_W))) topOutCpu(); }   // v60: Add Line can top the CPU out, as it can you since v62 (same rng draw as applyEffect's)
     else applyEffect(letter, cpu);
     return true;
   }
@@ -1724,7 +1737,7 @@ function applyGarbage(T, nLines, gap){       // add nLines from the bottom, shar
 }
 function applyNetSpecial(T, letter, p){      // received special applied to a local target
   if (T === STATE){ fireSpecialFx(letter); }   // v24/v36: unique per-powerup effect on the local field
-  if (letter==='A'){ applyGarbage(T, 1, (p && p.gap!=null) ? p.gap : Math.floor(rng()*FIELD_W)); return; }
+  if (letter==='A'){ if (applyGarbage(T, 1, (p && p.gap!=null) ? p.gap : Math.floor(rng()*FIELD_W)) && T === STATE) topOut(); return; }   // v62: an Add Line that pushes a block past your top tops you out, as garbage does (until v61 the block vanished and play went on)
   if (T === STATE && (letter==='G' || letter==='Q' || letter==='N')){ startLocalEffect(letter); return; }   // v44: animate locally
   applyEffect(letter, T);                     // C,N,R,B,Q,G,O act on the local field (+ local rng)
 }
