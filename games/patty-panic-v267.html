@@ -3,9 +3,57 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>PATTY PANIC - BUILD 263</title>
+<title>PATTY PANIC - BUILD 267</title>
 <!--
 PATTY PANIC build changelog
+v267: WEB CHEF KEEPS HIS MASK (deferred at v241, when CAP CHEF's cap was routed through the same draws; this seat's
+    open item). Three chef draws had no mask: the transporter (drawChefTeleport) and the fire fright (drawChefFire)
+    showed THE CHEF's bare face, sideburns and mustache under a red toque (the palette map recolours, it cannot mask),
+    and the slam death tipped a small mask piece in the hat's place while the x-eyes and the mustache were redrawn on
+    the bare face. drawWebsDeco is split (drawWebsDecoAt, its lines unchanged; drawWebsFront holds the palette map off
+    so the lens whites stay white, as the deco pass does) and all three draw his mask and suit facing front: inside
+    the teleport's wipe and fade; over the fright face before the ash rises (his flung arms, the sweat and the alarm
+    still read); and in the death's own frame, tipping with him, the x-eyes on its lenses and no mustache. His arms
+    stay bare, as they are standing, walking and climbing. THE CHEF, GIRL CHEF and CAP CHEF draw as before. All in
+    STYLE-PATTY-LEGACY: ENGINE_VER 1.17, the seal unchanged. Gate webmasktest, red first on 266; the hook gains
+    drawChefPlayed (one chef as the play loop draws him).
+v266: MR. ICE IN CO-OP (a finding carried since the BUILD 226 handover, verified at 265; ENGINE_VER 1.17, resealed).
+    A co-op guest never runs the sim (update sends it to guestTick), and the host snapshot carried neither Mr. Ice nor
+    his ice cubes: on MR. ICE (campaign 11) the guest saw him frozen as the level loaded and no cubes at all, while the
+    host's cubes rolled on and killed both chefs through iceKill. The snapshot now carries him (ib: his phase, clock
+    and stomp count; his place and facing come from the level) and every cube (ic: id, x, y, row, roll or fall or
+    descend, direction, spin), about 25 bytes a cube and 8 cubes at most; applySnap mirrors them. Each cube is
+    numbered as it spawns (cubeSeq), so the guest eases it between snapshots by its id (ipCap and ipApply, beside the
+    chefs and the foes), and between snapshots the guest runs his stomp clock and the cubes' spin on, as it runs the
+    foes' walk cycle. The host's sim is the one it was: the id is a new field and nothing reads it there. The level
+    change clears both as before. Gate icecooptest (a host and a guest in one process, snapshots handed over in
+    bursts every third frame as a jittery network does), red first on 265.
+v265: ECHO ESCAPE CUT v1.09 (the ECHO seat's MEMO-ECHO-CUT-v1.09-v1.00, the walker ruling's step 3; region span
+    43292 bytes, sha256 c257027c6be2004a, spliced BEGIN to END into 264, the cut's own base 262 differing from 264
+    nowhere in STYLE-ECHO).
+    ECHO ESCAPE cut v1.09 (the ECHO seat): ECHO walks on CORE's nodeTick (v260, ENGINE_VER 1.15; the
+    walker ruling's step 3) with its own options (turn back mid edge, stop at a node when the stick is
+    released, the near node snap, the carried overshoot, CLIMB on ladders and SPD on floors) and its own
+    graph (doors, drops, lift floors); the region's step and its copies of the walker helpers are
+    deleted. Its lifts are draw:false carriers (the CARRIERS splice around drawWorld is gone) and the
+    rider's feet read carrierPeek. Play unchanged: every field of every tick of every room's solution
+    equals v1.08. Room card badge ECHO v1.09. echowalktest v1.04 adds TURN (the walker turns back mid
+    edge), red against the reverse option removed.
+    All three cartridges now walk on CORE's node walker. No CORE change: ENGINE_VER 1.16, the seal unchanged.
+v264: THE BURGER IS STACKED (the Director's word, 2026-09-30, after the BURGER LAB: "Yes chunky layers is amazing.
+    Let's provide a memo to the Patty seat so that can update it in game please"; MEMO-SNAILCADE-BURGER-STACKED-v1.00).
+    The SNAILCADE seat's PATTY BURGER KIT v1.02 replaces v1.00 above drawPiece, byte for byte as filed (the renderer is
+    unchanged; v1.02 adds the hearty and stacked styles), and BURGER_STYLE reads 'stacked': CHUNKY's patty, cheese,
+    lettuce, tomato and greens with HEARTY's lighter top bun (10 rows where CHUNKY's has 12). Its layers stand taller
+    than the 8 row pitch (top bun, patty and bottom bun rows y-2 to y+7; lettuce, tomato and greens y to y+8; cheese
+    y+1 to y+8), so drawGame now draws the live pieces lowest first (a stable sort on y, largest first): each layer
+    tucks under the one above and a finished burger stands on its plate with no gap. STACKED's own tomato and greens
+    are used (this seat's call, so every layer shares one look). Only the drawing changes: PH stays 8, hitboxes,
+    pressing, falling, stacking, the plate and every level are untouched; the grill thermometer keeps its place and
+    now stands in the patty's raised top; the attract loop's title and demo draw STACKED through drawPiece (its title
+    stack already drew lowest first). All in STYLE-PATTY-LEGACY: ENGINE_VER 1.16, the seal unchanged.
+    Gate burgerkittest v1.01 (kit v1.02, STACKED, the lowest first composite on real plates, no gap from the top bun
+    to the plate, the attract demo), red first on 263.
 v263: THE ATTRACT LOOP IN THE GAME (the Director's pick, 2026-09-30, of the SNAILCADE seat's
     MEMO-SNAILCADE-TEASER-INTRO-PATTY-v1.00; ENGINE_VER 1.16, resealed). Left idle 15 s on the title, the game plays the
     cabinet's four scenes on its own art: TITLE (4.2 s: the fire tile's flame grown into two pillars, embers, a shelf,
@@ -2431,14 +2479,14 @@ canvas#cv{image-rendering:pixelated;image-rendering:crisp-edges;background:#0b0b
 (function(){
 'use strict';
 /*==== FENCE:BUILD-STAMP:BEGIN ====*/
-var BUILD=263;
+var BUILD=267;
 /*==== FENCE:BUILD-STAMP:END ====*/
 /*==== FENCE:ENGINE-CORE:BEGIN ====*/
 /* the CABINET: one shared machine. Constants, canvas, the audio engine and this
    game's sound book (styles may register their own books later), and helpers.
    The BUILD stamp lives in the BUILD-STAMP region just above, outside every hashed
    span (09 law 9, v248): a build bump alone never reds the seal. */
-var ENGINE_VER='1.16';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239); v253: 1.12, MR. SPUD's charge strikes only the foe it hits; v254: 1.13, vertical CARRIERS; v257: 1.14, crumble tiles; v260: 1.15, the node walker, the carrier draw opt-out and peek; v263: 1.16, the attract loop
+var ENGINE_VER='1.17';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239); v253: 1.12, MR. SPUD's charge strikes only the foe it hits; v254: 1.13, vertical CARRIERS; v257: 1.14, crumble tiles; v260: 1.15, the node walker, the carrier draw opt-out and peek; v263: 1.16, the attract loop; v266: 1.17, Mr. Ice and his cubes in the co-op snapshot
   try{ if(typeof document!=='undefined'&&document) document.title='PATTY PANIC - BUILD '+BUILD; }catch(e){}
 /* ============ error reporter (first, per studio doctrine) ============ */
 var ERRMSG='';
@@ -2987,7 +3035,8 @@ var Z_CROUCH=5, ZIPCAST_SPD=3.2, Z_TENSION=3, ZIP_FRAMES=12, Z_OVER=3, Z_SETTLE=
 var GRAPPLE_RANGE=60, GRAPPLE_SPD=3.4, GRAPPLE_FRAMES=12;   // v206 WEB CHEF horizontal grapple (spiderlab v7 defaults): widest crossable gap px, cast speed, pull frames
 /* ===== v207 MR. ICE: a boss you attach to any level (level prop iceBoss:[c,r]); he stomps out ice cubes that roll the real rows and ride the real ladders down ===== */
 var ICEB_GAP=150, ICEB_WIND=26, ICEB_LIFE=15, CUBE_SPD=0.7, CUBE_LAD=0.9, CUBE_FALLV=2.4, CUBE_LADCHANCE=0.34, CUBE_MAX=8;
-var mrIce=null, iceCubes=[];
+var mrIce=null, iceCubes=[], cubeSeq=0;   // v266: cubeSeq numbers each cube, so a co-op guest can ease it between snapshots
+var CUBE_PH=['roll','fall','descend'];   // v266: a cube's phase as it rides the snapshot
 var webShots=[];
 function zipRowOf(pl,d){   // v202: the nearest floored row in his column, above (d<0) or below (d>0); -1 when none or not the WEB CHEF
   if(!pl.webs||pl.zp>0||pl.wsh>0||pl.riding||pl.air||pl.transit>0||pl.rising||pl.teleStage>0)return -1;
@@ -4978,8 +5027,8 @@ function iceKill(b){ for(var i=0;i<2;i++){ var pl=players[i];
   if(!pl.active||pl.dead||pl.downed||pl.riding||pl.air||pl.landInvuln>0||pl.teleStage>0||pl.inv>0||pl.zp>0||pl.gp>0)continue;   // v207: same untouchable set as contactCheck, so zip/grapple/jump/land-grace dodge a cube
   if(pl.jmpH>=STOMP_LO&&pl.jvy<0)continue;                                                                                    // descending in the stomp band = a jump over the cube
   if(Math.abs(b.x-pl.x)<9&&Math.abs(b.y-feetY(pl))<11){ killPlayer(pl); return true; } } return false; }
-function spawnCube(x,row,dir){ if(iceCubes.length>=CUBE_MAX)return; iceCubes.push({x:x,row:row,dir:dir,y:rowYr(row),ph:'roll',ladCol:-1,descTo:-1,lastLad:-1,spin:0,life:ICEB_LIFE,thru:false,dead:false}); }
-function spawnCubeThrown(x,y,dir){ if(iceCubes.length>=CUBE_MAX)return; iceCubes.push({x:x,row:0,dir:dir,y:y,ph:'fall',ladCol:-1,descTo:-1,lastLad:-1,spin:0,life:ICEB_LIFE,thru:true,dead:false}); }
+function spawnCube(x,row,dir){ if(iceCubes.length>=CUBE_MAX)return; iceCubes.push({id:++cubeSeq,x:x,row:row,dir:dir,y:rowYr(row),ph:'roll',ladCol:-1,descTo:-1,lastLad:-1,spin:0,life:ICEB_LIFE,thru:false,dead:false}); }
+function spawnCubeThrown(x,y,dir){ if(iceCubes.length>=CUBE_MAX)return; iceCubes.push({id:++cubeSeq,x:x,row:0,dir:dir,y:y,ph:'fall',ladCol:-1,descTo:-1,lastLad:-1,spin:0,life:ICEB_LIFE,thru:true,dead:false}); }
 function cubeUpdate(b){
   b.spin+=CUBE_SPD*0.3; b.life-=DT; if(b.life<=0){ b.dead=true; return; }
   if(b.ph==='descend'){ b.x=b.ladCol*TW+8; b.y+=CUBE_LAD; if(b.y>=rowYr(b.descTo)){ b.y=rowYr(b.descTo); b.row=b.descTo; b.ph='roll'; b.lastLad=-1; } }
@@ -5310,10 +5359,11 @@ function ipLerp(a,b,t){return a+(b-a)*t;}
 function ipVi(o){return o.riding?3:(o.air?2:((o.onLad||o.rising)?1:-1));}   // which captured slot is the live vertical; -1 = floor (row-based, not interpolated)
 function ipSetV(o,vi,val){ if(vi===1)o.ly=val; else if(vi===2)o.ay=val; else if(vi===3)o.fy=val; }
 function ipCap(){                                 // v144: capture the continuous render fields the guest interpolates (players + foes): x and the active vertical
-  var P=[],F=[],i,o;
+  var P=[],F=[],C={},i,o;
   for(i=0;i<2;i++){o=players[i];P.push([o.x,o.ly,o.ay||0,o.fy]);}
   for(i=0;i<foes.length;i++){o=foes[i];F.push([o.x,o.ly,o.ay||0,o.fy]);}
-  return {P:P,F:F};
+  for(i=0;i<iceCubes.length;i++){o=iceCubes[i];if(o.id!=null)C[o.id]=[o.x,o.y];}   // v266: the ice cubes, by id (they come and go)
+  return {P:P,F:F,C:C};
 }
 function ipApply(from,to,a){
   if(!from||!to)return;
@@ -5330,6 +5380,11 @@ function ipApply(from,to,a){
     dx=B[0]-A[0]; dv=(vi>=0)?(B[vi]-A[vi]):0;
     if(o.dead||dx*dx+dv*dv>IP_SNAP*IP_SNAP){ o.x=B[0]; if(vi>=0)ipSetV(o,vi,B[vi]); }
     else { o.x=ipLerp(A[0],B[0],a); if(vi>=0)ipSetV(o,vi,ipLerp(A[vi],B[vi],a)); }
+  }
+  if(from.C&&to.C)for(i=0;i<iceCubes.length;i++){   // v266: a cube in both snapshots eases from one to the other; a new one appears where it is
+    o=iceCubes[i];A=from.C[o.id];B=to.C[o.id];if(!A||!B)continue;
+    dx=B[0]-A[0]; dv=B[1]-A[1];
+    if(dx*dx+dv*dv>IP_SNAP*IP_SNAP){ o.x=B[0]; o.y=B[1]; } else { o.x=ipLerp(A[0],B[0],a); o.y=ipLerp(A[1],B[1],a); }
   }
 }
 function guestTick(){
@@ -5376,6 +5431,7 @@ function guestTick(){
   if(graceT>0)graceT-=DT;          // v145: respawn-blink timer, synced each snapshot, decayed smoothly between
   if(shake>0)shake-=0.4;           // v145: screen shake, synced and decayed between snapshots
   for(var _fi=0;_fi<foes.length;_fi++)foes[_fi].anim+=0.5;   // v145: the foe walk-cycle counter is host-sim only, so advance it locally or foes freeze on the guest
+  if(!gotSnap){ if(mrIce)mrIce.t++; for(var _ci=0;_ci<iceCubes.length;_ci++)iceCubes[_ci].spin+=CUBE_SPD*0.3; }   // v266: between snapshots, his stomp clock and the cubes' spin run on as the host's do
   for(var _pi=0;_pi<2;_pi++){var _p=players[_pi]; if(_p.dead){ if(!_p._wd){_p.deathT=(_p.deathKind==='fire')?FIRE_DEATH_T:1.3;_p._wd=true;} else {_p.deathT=Math.max(0,_p.deathT-DT);} } else _p._wd=false; if(_p.inv>0)_p.inv-=DT; if(_p.downed&&_p.downT>0)_p.downT-=DT; }   // v145: drive the death animation locally; v155: decay invuln + revive clock (deathKind synced; deathT counts down like the host)
   if(STATE==='game'){
     var IN=gatherInput(0);
@@ -5429,6 +5485,8 @@ function snapshot(){
     ct:catActor?[1,r1(catActor.x),catActor.row,({enter:0,walk:1,thumbs:2,exit:3}[catActor.phase]||0),catActor.dir]:[0,0,0,0,0],
     pt:pukeActor?[1,r1(pukeActor.x),pukeActor.row,({enter:0,walk:1,belch:2,exit:3}[pukeActor.phase]||0),pukeActor.dir]:[0,0,0,0,0],
     dr:(LV&&LV.doors&&LV.doors.length)?LV.doors.map(function(d){return [d.open?1:0,r1(d.anim)];}):0,   // v247: door open/anim state, so a guest never sees stale doors
+    ib:mrIce?[mrIce.phase,mrIce.t,mrIce.stomps]:0,   // v266: Mr. Ice's stomp clock (his place and facing come from the level)
+    ic:(mrIce||iceCubes.length)?iceCubes.map(function(b){ return [b.id,r1(b.x),r1(b.y),b.row,CUBE_PH.indexOf(b.ph),b.dir,r1(b.spin)]; }):0,   // v266: every ice cube
     cr:(LV&&LV.crumble&&LV.crumble.length)?LV.crumble.map(function(q){ var k=q[0]+'_'+q[1]; return [TILEMOD[q[1]+'_'+q[0]]===0?1:0,(CRUMBLE_FUSE[k]!==undefined)?r1(CRUMBLE_FUSE[k]):-1]; }):0,   // v257: each crumble cell dug, and its fuse
     fz:r1(freezeT),spt:r1(spawnT),go:(LV&&LV.grillOn)?1:0,gr:r1(graceT),sh:r1(shake),ack:(net.p2seq||0),sx:sfxQueue.splice(0),fx:fxQueue.splice(0),pl:pl,fo:fo,ig:ig,cl:cl,ws:ws};
 }
@@ -5440,6 +5498,8 @@ function applySnap(m){
   if(m.cr&&LV&&LV.crumble){ for(var ci=0;ci<LV.crumble.length&&ci<m.cr.length;ci++){ var cq=LV.crumble[ci], ck=cq[0]+'_'+cq[1], cs=m.cr[ci];   // v257: the host's crumble cells and fuses
     if(cs[0])TILEMOD[cq[1]+'_'+cq[0]]=0; else delete TILEMOD[cq[1]+'_'+cq[0]]; if(cs[1]>=0)CRUMBLE_FUSE[ck]=cs[1]; else delete CRUMBLE_FUSE[ck]; } }
   bonus.on=!!m.bo[0];bonus.type=m.bo[1];bonus.t=m.bo[2];
+  if(m.ib!==undefined){ if(m.ib&&mrIce){ mrIce.phase=m.ib[0]; mrIce.t=m.ib[1]; mrIce.stomps=m.ib[2]; }   // v266: Mr. Ice and his cubes, as the host has them
+    iceCubes=m.ic?m.ic.map(function(c){ return {id:c[0],x:c[1],y:c[2],row:c[3],ph:CUBE_PH[c[4]]||'roll',dir:c[5],spin:c[6],ladCol:-1,descTo:-1,lastLad:-1,life:ICEB_LIFE,thru:false,dead:false}; }):[]; }
   if(m.dr&&LV&&LV.doors)for(var _dd=0;_dd<LV.doors.length&&_dd<m.dr.length;_dd++){LV.doors[_dd].open=!!m.dr[_dd][0];LV.doors[_dd].anim=m.dr[_dd][1]||0;}   // v247 door sync
   freezeT=m.fz;spawnT=(m.spt!=null?m.spt:0);if(m.go!=null&&LV)LV.grillOn=!!m.go;if(m.gr!=null)graceT=m.gr;if(m.sh!=null)shake=m.sh;if(m.sx)for(var _si=0;_si<m.sx.length;_si++){var _e=m.sx[_si],_fn=sfx[_e[0]];if(_fn){try{_fn.apply(null,_e.slice(1));}catch(_x){}coopSfxPlayed++;}}if(m.fx)for(var _fj=0;_fj<m.fx.length;_fj++){var _ev=m.fx[_fj];try{if(_ev[0]==='p')popup(_ev[1],_ev[2],_ev[3],_ev[4]);else if(_ev[0]==='s')spark(_ev[1],_ev[2],_ev[3],_ev[4]);}catch(_y){}coopFxPlayed++;}
   for(var i=0;i<2&&i<m.pl.length;i++){
@@ -5630,8 +5690,11 @@ function charMap(p){ COLORMAP=(p&&p.webs)?WEBS_MAP:((p&&p.caps)?CAPS_MAPS[(p.idx
 function drawWebsDeco(p,i){   // v202 WEB CHEF: full mask, teardrop lenses, suit lattice, navy collar, throw arm. Drawn AFTER the mapped body with COLORMAP reset (lab z-order): the lens whites are 4x2 and would be palette-mapped under the hook
   var x=Math.round(p.x),fy=Math.round(feetY(p));
   var step=(Math.floor(p.anim/4)%2)===0, walkLike=(p.face==='side'||p.face==='up'||p.face==='down');
-  var bob=(walkLike&&!p.dead)?(step?0:1):0; function Y(v){return v-bob;}
-  var fd=p.face, sdir=(p.dir>0)?1:-1;
+  var bob=(walkLike&&!p.dead)?(step?0:1):0;
+  drawWebsDecoAt(x,fy,p.face,(p.dir>0)?1:-1,bob,p);
+}
+function drawWebsDecoAt(x,fy,fd,sdir,bob,p){   // v267: the costume at a feet point, split from drawWebsDeco (its lines unchanged) so the teleport, the fire fright and the slam death draw his mask too; p null draws no throw arm
+  function Y(v){return v-bob;}
   R(x-4,Y(fy-5),8,1,'#101a44');                                             // belt
   R(x-2,Y(fy-9),1,4,'#8f1414'); R(x+1,Y(fy-9),1,4,'#8f1414');               // suit lattice
   R(x-4,Y(fy-8),8,1,'#8f1414');
@@ -5658,13 +5721,14 @@ function drawWebsDeco(p,i){   // v202 WEB CHEF: full mask, teardrop lenses, suit
       R(gx+((sdir>0)?4:1),Y(fy-13),1,1,'#bcd2ff');
     }
   }
-  if(p.wsh>0){                                                              // the throw arm rides the lock clock: cocked elbow, then the extended glove and a silk wisp
+  if(p&&p.wsh>0){                                                           // the throw arm rides the lock clock: cocked elbow, then the extended glove and a silk wisp
     var t=SHOOT_T-p.wsh, d=p.dir;
     if(t<WINDUP_F){ R(x-d*4,Y(fy-9),2,2,'#d92626'); R(x-d*5,Y(fy-8),1,1,'#101a44'); }
     else { if(d>0){ R(x+2,Y(fy-10),6,2,'#d92626'); R(x+7,Y(fy-10),2,2,'#101a44'); R(x+7,Y(fy-11),1,1,'#f4f6fb'); }
       else { R(x-8,Y(fy-10),6,2,'#d92626'); R(x-9,Y(fy-10),2,2,'#101a44'); R(x-9,Y(fy-11),1,1,'#f4f6fb'); } }
   }
 }
+function drawWebsFront(x,fy){ var cm=COLORMAP; COLORMAP=null; drawWebsDecoAt(x,fy,'down',1,0,null); COLORMAP=cm; }   // v267: his mask and suit facing front, the palette map held off so the lens whites stay white (as the deco pass draws after the map is reset)
 function drawWebsDecoScaled(p,i){   // ride the same squash transform as the body
   var s=chefScale(p);
   if(s.x===1&&s.y===1){ drawWebsDeco(p,i); return; }
@@ -5776,9 +5840,11 @@ function drawPieceSeg(type,x,y,seg,cook){
     R(x+3+(seg%2)*7,y+6,3,3,'#ffd23f');
   }
 }
-/* PATTY BURGER KIT v1.00 | GENERATED by titles/snailcade/working/tools/burger-kit.js v1.00 (the SNAILCADE seat) | never edit by hand
+/* PATTY BURGER KIT v1.02 | GENERATED by titles/snailcade/working/tools/burger-kit.js v1.02 (the SNAILCADE seat) | never edit by hand
    The arcade's original teaser burger (the Director's word, 2026-09-29), for PATTY PANIC's own piece renderer.
-   Styles: fitted (the original read pixel for pixel, each pixel two wide, rows fitted to PATTY's layer box: drops into play) and chunky (the original
+   Styles: fitted (the original read pixel for pixel, each pixel two wide, rows fitted to PATTY's layer box: drops into play), hearty (v1.01,
+   between the two: fitted's fit on the tray with chunky's rounder, heavier top bun, which alone rises above the box), stacked (v1.02: chunky's
+   layers with hearty's top bun; taller than the 8 row pitch, so drawn from the bottom up the stack has no gaps) and chunky (the original
    exactly as the title screen showed it, every pixel doubled; the top bun, patty and bottom bun stand taller than the box).
    Types use drawPieceSeg's codes: top, let, che, pat, bot; fitted also tom and grn (isNew: never in the original).
    A layer: oy (its first row, from the piece's y), h, tiles L (first segment), A and B (middles, alternating), R (last),
@@ -5787,7 +5853,7 @@ function drawPieceSeg(type,x,y,seg,cook){
    and draws through the game's own R(x, y, w, h, color); it returns false for a type the style lacks, so the caller falls
    back to its own drawPieceSeg. */
 var PATTY_BURGER_KIT = {
-  version: "1.00",
+  version: "1.02",
   defaultStyle: "fitted",
   fitted: {
     top: {
@@ -5916,6 +5982,260 @@ var PATTY_BURGER_KIT = {
       isNew: true
     }
   },
+  hearty: {
+    top: {
+      oy: -2,
+      h: 10,
+      tiles: {
+        L: ["..........AAAAAA", "..........AAAAAA", "......BBBBBBBBBB", "......BBBBBBBBBB", "..BBBBBBCCBBBBBB", "..BBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"],
+        A: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "CCBBBBBBBBBBBBBB", "CCBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"],
+        B: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "CCBBBBBBBBBBBBBB", "CCBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"],
+        R: ["AAAAAA..........", "AAAAAA..........", "CCBBBBBBBB......", "CCBBBBBBBB......", "BBBBBBBBCCBBBB..", "BBBBBBBBCCBBBB..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"]
+      },
+      pal: {
+        A: "#f2b35a",
+        B: "#e39b3f",
+        C: "#fff3d6",
+        E: "#b56d22"
+      }
+    },
+    let: {
+      oy: 2,
+      h: 6,
+      tiles: {
+        L: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EE....EE....EE.."],
+        A: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "..EE....EE....EE"],
+        B: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "....EE....EE...."],
+        R: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EE....EE....EE.."]
+      },
+      pal: {
+        A: "#6fdc5a",
+        B: "#51c24a",
+        C: "#3aa83c",
+        E: "#2a8f33"
+      }
+    },
+    che: {
+      oy: 2,
+      h: 6,
+      tiles: {
+        L: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCBBCCCCCCCC", "......CCCC......", "......CCCC......"],
+        A: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCBBCCCCCCCCCC", "....CCCC........", "....CCCC........"],
+        B: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCBBCCCCCCCCCCCC", "..CCCC..........", "..CCCC.........."],
+        R: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBCCCCCCCCCCCCBB", "CCCC..........CC", "CCCC..........CC"]
+      },
+      pal: {
+        A: "#ffe27a",
+        B: "#ffcc2e",
+        C: "#f0b21e"
+      }
+    },
+    pat: {
+      oy: 1,
+      h: 7,
+      tiles: {
+        L: ["..TTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "..DDDDDDDDDDDDDD"],
+        A: ["TTTTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDDDD"],
+        B: ["TTTTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDDDD"],
+        R: ["TTTTTTTTTTTTTT..", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDD.."]
+      },
+      cook: [
+        {
+          T: "#e05a48",
+          P: "#c33a2e",
+          D: "#7d2018"
+        },
+        {
+          T: "#c87c44",
+          P: "#a85c30",
+          D: "#6e341a"
+        },
+        {
+          T: "#9c5a2f",
+          P: "#7a4121",
+          D: "#4f2712"
+        }
+      ]
+    },
+    bot: {
+      oy: 1,
+      h: 7,
+      tiles: {
+        L: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "..EEEEEEEEEEEEEE"],
+        A: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEEEE"],
+        B: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEEEE"],
+        R: ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEE.."]
+      },
+      pal: {
+        A: "#f2b35a",
+        B: "#e39b3f",
+        C: "#b56d22",
+        E: "#9a5a1a"
+      }
+    },
+    tom: {
+      oy: 2,
+      h: 6,
+      tiles: {
+        L: [".....AAAAAA.....", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."],
+        A: [".....AAAAAA.....", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."],
+        B: [".....AAAAAA.....", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."],
+        R: [".....AAAAAA.....", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."]
+      },
+      pal: {
+        A: "#ff7a6a",
+        B: "#e84545",
+        C: "#ffd9c7",
+        E: "#b02f2f"
+      },
+      isNew: true
+    },
+    grn: {
+      oy: 2,
+      h: 6,
+      tiles: {
+        L: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBCCBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "FF....FF....FF.."],
+        A: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "CCBBBBBBBBBBCCBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "..FF....FF....FF"],
+        B: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "....FF....FF...."],
+        R: ["..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBCCBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "FF....FF....FF.."]
+      },
+      pal: {
+        A: "#56a83a",
+        B: "#3f7d2e",
+        C: "#2b5a1f",
+        E: "#2f6a24",
+        F: "#23491a"
+      },
+      isNew: true
+    }
+  },
+  stacked: {
+    top: {
+      oy: -2,
+      h: 10,
+      tiles: {
+        L: ["..........AAAAAA", "..........AAAAAA", "......BBBBBBBBBB", "......BBBBBBBBBB", "..BBBBBBCCBBBBBB", "..BBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"],
+        A: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "CCBBBBBBBBBBBBBB", "CCBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"],
+        B: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "CCBBBBBBBBBBBBBB", "CCBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"],
+        R: ["AAAAAA..........", "AAAAAA..........", "CCBBBBBBBB......", "CCBBBBBBBB......", "BBBBBBBBCCBBBB..", "BBBBBBBBCCBBBB..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "EEEEEEEEEEEEEEEE"]
+      },
+      pal: {
+        A: "#f2b35a",
+        B: "#e39b3f",
+        C: "#fff3d6",
+        E: "#b56d22"
+      }
+    },
+    let: {
+      oy: 0,
+      h: 9,
+      tiles: {
+        L: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EE....EE....EE..", "EE....EE....EE.."],
+        A: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "..EE....EE....EE", "..EE....EE....EE"],
+        B: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "....EE....EE....", "....EE....EE...."],
+        R: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EE....EE....EE..", "EE....EE....EE.."]
+      },
+      pal: {
+        A: "#6fdc5a",
+        B: "#51c24a",
+        C: "#3aa83c",
+        E: "#2a8f33"
+      }
+    },
+    che: {
+      oy: 1,
+      h: 8,
+      tiles: {
+        L: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCBBCCCCCCCC", "CCCCCCBBCCCCCCCC", "......CCCC......", "......CCCC......"],
+        A: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCBBCCCCCCCCCC", "CCCCBBCCCCCCCCCC", "....CCCC........", "....CCCC........"],
+        B: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCBBCCCCCCCCCCCC", "CCBBCCCCCCCCCCCC", "..CCCC..........", "..CCCC.........."],
+        R: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBCCCCCCCCCCCCBB", "BBCCCCCCCCCCCCBB", "CCCC..........CC", "CCCC..........CC"]
+      },
+      pal: {
+        A: "#ffe27a",
+        B: "#ffcc2e",
+        C: "#f0b21e"
+      }
+    },
+    pat: {
+      oy: -2,
+      h: 10,
+      tiles: {
+        L: ["..TTTTTTTTTTTTTT", "..TTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "..DDDDDDDDDDDDDD", "..DDDDDDDDDDDDDD"],
+        A: ["TTTTTTTTTTTTTTTT", "TTTTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDDDD", "DDDDDDDDDDDDDDDD"],
+        B: ["TTTTTTTTTTTTTTTT", "TTTTTTTTTTTTTTTT", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDDDD", "DDDDDDDDDDDDDDDD"],
+        R: ["TTTTTTTTTTTTTT..", "TTTTTTTTTTTTTT..", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "PPPPPPDDPPPPPPPP", "DDDDDDDDDDDDDD..", "DDDDDDDDDDDDDD.."]
+      },
+      cook: [
+        {
+          T: "#e05a48",
+          P: "#c33a2e",
+          D: "#7d2018"
+        },
+        {
+          T: "#c87c44",
+          P: "#a85c30",
+          D: "#6e341a"
+        },
+        {
+          T: "#9c5a2f",
+          P: "#7a4121",
+          D: "#4f2712"
+        }
+      ]
+    },
+    bot: {
+      oy: -2,
+      h: 10,
+      tiles: {
+        L: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "..EEEEEEEEEEEEEE", "..EEEEEEEEEEEEEE"],
+        A: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE"],
+        B: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE"],
+        R: ["AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "BBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCC", "CCCCCCCCCCCCCCCC", "EEEEEEEEEEEEEE..", "EEEEEEEEEEEEEE.."]
+      },
+      pal: {
+        A: "#f2b35a",
+        B: "#e39b3f",
+        C: "#b56d22",
+        E: "#9a5a1a"
+      }
+    },
+    tom: {
+      oy: 0,
+      h: 9,
+      tiles: {
+        L: [".....AAAAAA.....", "..BAAAABBBBBBB..", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."],
+        A: [".....AAAAAA.....", "..BAAAABBBBBBB..", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."],
+        B: [".....AAAAAA.....", "..BAAAABBBBBBB..", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."],
+        R: [".....AAAAAA.....", "..BAAAABBBBBBB..", "..BAAAABBBBBBB..", ".BBBCCBBBBCCBBB.", ".BBBBBBCCBBBBBB.", ".BBBBBBCCBBBBBB.", "..BBBBBBBBBBBB..", "..BBBBBBBBBBBB..", "...EEEEEEEEEE..."]
+      },
+      pal: {
+        A: "#ff7a6a",
+        B: "#e84545",
+        C: "#ffd9c7",
+        E: "#b02f2f"
+      },
+      isNew: true
+    },
+    grn: {
+      oy: 0,
+      h: 9,
+      tiles: {
+        L: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBCCBBBBBBBBBB", "BBBBCCBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "FF....FF....FF.."],
+        A: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "CCBBBBBBBBBBCCBB", "CCBBBBBBBBBBCCBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "..FF....FF....FF"],
+        B: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBBBBBCCBBBBBB", "BBBBBBBBCCBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "....FF....FF...."],
+        R: ["..AAAA....AAAA..", "..AAAA....AAAA..", "BBBBBBBBBBBBBBBB", "BBBBCCBBBBBBBBBB", "BBBBCCBBBBBBBBBB", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "EEEEEEEEEEEEEEEE", "FF....FF....FF.."]
+      },
+      pal: {
+        A: "#56a83a",
+        B: "#3f7d2e",
+        C: "#2b5a1f",
+        E: "#2f6a24",
+        F: "#23491a"
+      },
+      isNew: true
+    }
+  },
   chunky: {
     top: {
       oy: -4,
@@ -6024,7 +6344,7 @@ function drawPieceSegKit(type, x, y, seg, cook, n, style){
   }
   return true;
 }
-var BURGER_STYLE='fitted';   // v255: the burger kit style (the Director's pick, FITTED); 'chunky' is the title screen look; '' draws the legacy v111 layers
+var BURGER_STYLE='stacked';   // v255: the burger kit style, FITTED then; v264: STACKED (the Director's pick, kit v1.02), taller than the 8 row pitch, so drawGame draws the pieces lowest first; 'fitted', 'hearty', 'chunky' (the title screen look); '' draws the legacy v111 layers
 function drawPiece(p){
   var pj=0,glow=0;
   if(p.pop>0){var pt=p.pop/POP_T;pj=-Math.round(Math.sin(pt*Math.PI)*4);glow=pt;}   // a little hop as it pops back to full (v24)
@@ -6499,12 +6819,7 @@ function drawChef(p,i){
     var base=fy-6-dHop+dJolt, ax2=x+5*Math.sin(dAng), ay2=base-5*Math.cos(dAng);   // band anchor rides the top of his head
     var landed=dDF>=dT2, wq=landed?Math.min(1,(dDF-dT2)/16):0, wilt=1-(1-wq)*(1-wq);
     var bandRot=dAng, crownRot=dAng+wilt*(Math.PI*0.06);
-    if(p.webs){   // v202 WEB CHEF: the masked head tips with him
-      ctx.save(); ctx.translate(ax2,ay2); ctx.rotate(crownRot);
-      R(-5,-5,11,5,'#d92626'); R(-4,-6,8,2,'#d92626'); R(-3,-7,6,1,'#d92626');
-      R(-1,-7,1,7,'#8f1414'); R(-5,-2,11,1,'#8f1414');
-      R(-4,-4,4,3,'#101a44'); R(-3,-4,2,2,'#ffffff');
-      ctx.restore();
+    if(p.webs){   // v202 WEB CHEF: the masked head tips with him; v267: the whole mask, in the body's frame below (this piece rode the hat's place and left the face bare)
     } else if(p.caps){   // v193 CAP CHEF: the knocked cap tips with him, brim and all, in his colours
       ctx.save(); ctx.translate(ax2,ay2); ctx.rotate(crownRot);
       R(-4,-5,8,4,'#ffffff'); R(-3,-6,6,1,'#ffffff'); R(-4,-5,2,3,'#eaeaf2'); R(-4,-1,8,1,'#d8d8e2'); R(4,-1,4,1,'#d8d8e2');
@@ -6522,8 +6837,10 @@ function drawChef(p,i){
       if(impactT<3){ R(x-8-impactT,fy-2,3,1,'rgba(255,255,255,'+a.toFixed(2)+')'); R(x+5+impactT,fy-2,3,1,'rgba(255,255,255,'+a.toFixed(2)+')'); }
     }
     ctx.save(); ctx.translate(x,base); ctx.rotate(dAng); ctx.translate(-x,-(fy-6));   // redraw the x-eyes + mustache on top so the limp hat never covers them
-    var xe2=function(px,py){R(px,py,1,1,DK);R(px+1,py+1,1,1,DK);R(px+2,py+2,1,1,DK);R(px+2,py,1,1,DK);R(px,py+2,1,1,DK);}; xe2(x-4,fy-12); xe2(x+1,fy-12);
-    if(!p.girl){ R(x-4,fy-9,8,1,BEARD); R(x-4,fy-10,1,1,BEARD); R(x+3,fy-10,1,1,BEARD); }
+    var xe2=function(px,py){R(px,py,1,1,DK);R(px+1,py+1,1,1,DK);R(px+2,py+2,1,1,DK);R(px+2,py,1,1,DK);R(px,py+2,1,1,DK);};
+    if(p.webs)drawWebsFront(x,fy);                                                  // v267: WEB CHEF's mask tips with him, over the face; the x-eyes land on its lenses
+    xe2(x-4,fy-12); xe2(x+1,fy-12);
+    if(!p.girl&&!p.webs){ R(x-4,fy-9,8,1,BEARD); R(x-4,fy-10,1,1,BEARD); R(x+3,fy-10,1,1,BEARD); }
     ctx.restore();
   }
   ctx.globalAlpha=1;
@@ -6812,7 +7129,8 @@ function drawChefTeleport(p,i,x,fy){                                // v103/v105
   R(x-3,fy-11,2,2,DK); R(x+1,fy-11,2,2,DK); R(x-3,fy-11,1,1,'#ffffff'); R(x+1,fy-11,1,1,'#ffffff');   // eyes
   R(x-4,fy-9,8,1,BEARD); R(x-4,fy-10,1,1,BEARD); R(x+3,fy-10,1,1,BEARD); R(x-1,fy-10,2,1,SKIN);   // mustache
   var by=fy-12, baseH=(i===1)?9:6;
-  if(p.caps){                                   /* v241: CAP CHEF keeps his ballcap through the fire fright and the teleport (Director report; the palette map colours it) */
+  if(p.webs){                                   /* v267: WEB CHEF wears no toque; his mask goes on below, fading with him */
+  } else if(p.caps){                                   /* v241: CAP CHEF keeps his ballcap through the fire fright and the teleport (Director report; the palette map colours it) */
     R(x-4,by-2,8,2,SKIN); R(x-4,by-1,8,1,'#f0c89a');                        /* bare forehead where the toque band sat */
     R(x-4,by-6,8,4,'#ffffff'); R(x-3,by-7,6,1,'#ffffff');                   /* the cap dome */
     R(x-4,by-6,2,3,'#eaeaf2'); R(x-4,by-3,8,1,'#d8d8e2');
@@ -6822,6 +7140,7 @@ function drawChefTeleport(p,i,x,fy){                                // v103/v105
   R(x-4,by-2,8,2,'#ffffff'); R(x-4,by-2,8,1,acc); R(x-4,by-1,8,1,'#d8d8e2');                       // band
     R(x-5,by-2-baseH,10,baseH,'#ffffff'); R(x-5,by-2-baseH,2,baseH,'#eaeaf2'); R(x-3,by-3-baseH,6,1,'#ffffff'); R(x-1,by-4-baseH,3,1,'#ffffff'); R(x+2,by-3-baseH,2,1,'#f4f4fa');   // puffy crown
   }
+  if(p.webs)drawWebsFront(x,fy);                // v267: WEB CHEF keeps his mask through the transporter (deferred at v241), inside the wipe and the fade
   ctx.restore();
   var box=fy-19, nn=Math.round(10+dis*16);                                         // sparkles, more as it dissolves
   for(var k=0;k<nn;k++){
@@ -6864,7 +7183,8 @@ function drawChefFire(p,i,x,fy){                                    // v102/v105
     R(x-4,fy-12,8,4,SKIN);                                                                          // head
     if(p.girl){ R(x-5,fy-13,1,4,'#7c4a24'); R(x+4,fy-13,1,4,'#7c4a24'); R(x-4,fy-13,8,1,'#7c4a24'); } else { R(x-5,fy-12,1,3,HAIR); R(x+4,fy-12,1,3,HAIR); }   // hair / sideburns
     var by=fy-12, baseH=(i===1)?9:6;
-    if(p.caps){                                   /* v241: CAP CHEF keeps his ballcap through the fire fright and the teleport (Director report; the palette map colours it) */
+    if(p.webs){                                   /* v267: WEB CHEF wears no toque; his mask goes on over the fright face below */
+    } else if(p.caps){                                   /* v241: CAP CHEF keeps his ballcap through the fire fright and the teleport (Director report; the palette map colours it) */
       R(x-4,by-2,8,2,SKIN); R(x-4,by-1,8,1,'#f0c89a');                        /* bare forehead where the toque band sat */
       R(x-4,by-6,8,4,'#ffffff'); R(x-3,by-7,6,1,'#ffffff');                   /* the cap dome */
       R(x-4,by-6,2,3,'#eaeaf2'); R(x-4,by-3,8,1,'#d8d8e2');
@@ -6887,6 +7207,7 @@ function drawChefFire(p,i,x,fy){                                    // v102/v105
     } else {
       R(x-3,fy-11,2,2,'#ffffff'); R(x+1,fy-11,2,2,'#ffffff'); R(x-3,fy-11,1,1,DK); R(x+2,fy-11,1,1,DK); if(!p.girl){ R(x-4,fy-9,8,1,BEARD); R(x-1,fy-10,2,1,SKIN); } else { R(x-1,fy-9,2,1,'#c8606a'); }   // wide-eyed scared
     }
+    if(p.webs)drawWebsFront(x,fy);              // v267: WEB CHEF keeps his mask through the fright (deferred at v241); his flung arms, the sweat and the alarm still read; the ash rises over it
     if(df>=20){
       var pp=Math.min(1,(df-20)/24), charTop=fy-Math.round(pp*19);
       for(var yy=fy;yy>charTop;yy--){ var r=fy-yy, hw=(r<=3)?4:(r<=9)?5:(r<=12)?4:5; R(x-hw-1,yy,hw*2+2,1,'#161210'); R(x-hw,yy,hw*2,1,'#46423b'); }
@@ -7327,6 +7648,7 @@ function drawIceCubes(){ function IR(a,b,c,d,e){ ctx.fillStyle=e; FR(a,b,c,d); }
     var o=(ph<2?0:1), o2=(ph%2?1:0); IR(x-2+o,y-3,1,10,'rgba(255,255,255,0.5)'); IR(x+1-o2,y-3,1,10,'rgba(79,146,200,0.6)'); IR(x-4+o,y-2,3,3,'#eaf7ff');
   }
 }
+var PDRAW=[];   // v264: the live pieces in draw order, reused every frame
 function drawGame(){
   drawBackdrop();                                         // v200: behind everything, outside the shake transform
   var ox=0,oy=0;
@@ -7336,7 +7658,9 @@ function drawGame(){
   if(LV.ramps)drawRamps();
   if(BOSS)drawBoss();
   if(mrIce)drawMrIce();
-  for(var i=0;i<pieces.length;i++)if(!pieces[i]._spent)drawPiece(pieces[i]);
+  PDRAW.length=0; for(var i=0;i<pieces.length;i++)if(!pieces[i]._spent)PDRAW.push(pieces[i]);
+  PDRAW.sort(function(a,b){return b.y-a.y;});                  // v264: lowest first, so each STACKED layer tucks under the one above (a stable sort: equal y keeps the array order)
+  for(var i=0;i<PDRAW.length;i++)drawPiece(PDRAW[i]);
   drawBonus();
   if(spawnT>0&&STATE==='game'){var SPN=LV.spawns||FOESPAWNS,pz=0.4+0.6*Math.abs(Math.sin(spawnT*9));ctx.globalAlpha=pz;for(var st=0;st<LV.foes.length;st++){var sc=SPN[st%SPN.length],tx=Math.round(sc[0]*TW+8),ty=Math.round(rowYr(sc[1])-6);R(tx-4,ty-2,8,2,'#ff5b5b');R(tx-2,ty-5,4,2,'#ff5b5b');R(tx-1,ty-7,2,2,'#ffd23f');}ctx.globalAlpha=1;}
   if(STATE!=='catsup')for(var j=0;j<foes.length;j++)drawFoe(foes[j]);
@@ -8315,8 +8639,9 @@ registerStyle('kitchen',{
    the sfx book; adds clocks, the recorder and replayer (trajectory replay, frame for
    frame), plates, doors (plain and latching), vertical LIFTS with riders and the drop,
    the exit, the loop clock, the HUD, the TUTORIAL (arrows and the button named), all
-   style local. The node walker is the TEST KITCHEN copy (itself from MUNCH MAZE),
-   marked for commons extraction, with ONE change: the chef STOPS when the stick is
+   style local. The node walker was the TEST KITCHEN copy (itself from MUNCH MAZE);
+   from cut v1.09 it is CORE's nodeTick (ENGINE_VER 1.15, the walker ruling) with ECHO's
+   options, ONE of them the change from TEST KITCHEN: the chef STOPS when the stick is
    released (a puzzle walker, not a Pac-Man runner). Rooms carry a SOLUTION script
    that echosolvetest replays to WIN, so no room ships unproven. THE STRANDING LAW:
    the recorder ends where the take ends, so every room gives the live chef a path
@@ -8324,7 +8649,7 @@ registerStyle('kitchen',{
 (function(){
 'use strict';
 var TW=16, S=null;
-var ECHO_VER='v1.08';    // the cut badge (CLAUDE.md s9): a candidate's stamp reads its base BUILD, so the room card names the ECHO cut
+var ECHO_VER='v1.09';    // the cut badge (CLAUDE.md s9): a candidate's stamp reads its base BUILD, so the room card names the ECHO cut
 var WALK_PX_S=SPD*60;    // candidate v1.03: the cabinet's own SPD (0.92 px per tick), so the chef walks and cycles his legs exactly as in PATTY PANIC
 var CLIMB_PX_S=CLIMB*60; // and the cabinet's own CLIMB on ladders
 var LIFT_PX_S=42;        // one second per two rows: slow enough to watch, fast enough to plan around (v1.08: the CORE carrier's spd; CARRIER_SPD is the same 42)
@@ -8440,43 +8765,27 @@ var ROOMS=[
             ['walk','R',13],['wait',300],['walk','R',16],['rec'],['walk','R',18],['ride',2],['walk','L',10],['stop'],   // v1.05: wait at the ledge for lift 1 (a ledge over an empty shaft drops you onto the resting lift)
             ['walk','R',17]]}
 ];
-/* ---- the walk graph (TEST KITCHEN copy, door and lift aware) ---- */
+/* ---- the walk graph: ECHO's own rules (doors, drops, lift floors) over CORE's ladder and node tests ---- */
 function liftAt(c,r){ if(!S)return null; var k=carrierFloorAt(r,c); if(!k)return null; for(var i=0;i<S.lifts.length;i++){ if(S.lifts[i].car===k)return S.lifts[i]; } return null; }   // v1.08: a resting CORE carrier is the floor of its span (carrierFloorAt, ENGINE_VER 1.13)
 function inLiftSpan(L,c){ return c>=L.c0&&c<=L.c1; }
 function floorLike(r,c){ return floorAt(r,c)||!!liftAt(c,r); }
-function ladThrough(c,r){ return !!(ladAt(c,r)||(r>0&&ladAt(c,r-1))); }
-function stand(c,r){ return floorLike(r,c)||ladThrough(c,r); }
+function stand(c,r){ return floorLike(r,c)||nodeLadThrough(c,r); }   // v1.09: the ladder test is CORE's (nodeLadThrough, ENGINE_VER 1.15)
 function doorAtCell(c,r){ if(!S)return null; for(var i=0;i<S.doors.length;i++){ var d=S.doors[i]; if(d.c===c&&d.r===r)return d; } return null; }
 function landingBelow(c,r){ if(!S)return -1; for(var rr=r+1;rr<LV.rows;rr++){ if(floorLike(rr,c)){ var d=doorAtCell(c,rr); return (d&&!d.open)?-1:rr; } } return -1; }   // the first floor (or resting lift) under a column; a closed door is not a landing
 function dropEdge(c,r,dc){ var nc=c+dc; if(nc<0||nc>=COLSN||!floorLike(r,c)||stand(nc,r))return false; return landingBelow(nc,r)>=0; }   // candidate v1.05 (the Director's verdict: the chef could not leave a platform): a ledge is an edge into the gap column when there is somewhere to land
 function edgeH(c,r,dc){ if(!(stand(c,r)&&stand(c+dc,r)&&(floorLike(r,c)||floorLike(r,c+dc))))return dropEdge(c,r,dc);
   var d=doorAtCell(c+dc,r); return !(d&&!d.open); }   // a closed door has no edges INTO it; leaving is always allowed
-function edgeV(c,r,dr){ return dr>0?ladAt(c,r):(r>0&&ladAt(c,r-1)); }
 function canGo(c,r,d){ if(d==='L')return edgeH(c,r,-1); if(d==='R')return edgeH(c,r,1);
-  if(d==='U')return edgeV(c,r,-1); if(d==='D')return edgeV(c,r,1); return false; }
-function stepOf(d){ return d==='L'?[-1,0]:d==='R'?[1,0]:d==='U'?[0,-1]:[0,1]; }
-function px(e){ var s=stepOf(e.d||'R'); return (e.c+(e.d?s[0]*e.prog:0))*TW+8; }
-function py(e){ var s=stepOf(e.d||'R'); return rowYr(e.r+(e.d?s[1]*e.prog:0)); }
-var OPP={L:'R',R:'L',U:'D',D:'U'};
-function edgeLen(d){ return (d==='U'||d==='D')?RGAP:TW; }
+  if(d==='U')return nodeEdgeV(c,r,-1); if(d==='D')return nodeEdgeV(c,r,1); return false; }   // v1.09: ladder edges are CORE's (nodeEdgeV); the rest of ECHO's graph (doors, drops, lift floors) stays here
 var NODE_SNAP=0.07;      // released within about a pixel of a node: stand on the node (the residual carry never costs a cell)
-function tickEnt(e){
-  e.hit=false;                                                          // set on the tick he reaches a node while rolling (the exit reads it: no still frame is needed to win)
-  if(e.d&&e.prog>0&&e.want===OPP[e.d]){ var rs=stepOf(e.d); e.c+=rs[0]; e.r+=rs[1]; e.d=e.want; e.prog=1-e.prog; e.want=null; }
-  if(e.prog===0)e.d=(e.want&&canGo(e.c,e.r,e.want))?e.want:null;   // ECHO: at a node the stick decides; released means STOP (the TEST KITCHEN copy keeps rolling)
-  else if(!e.want&&e.prog<NODE_SNAP){ e.prog=0; e.d=null; return; }
-  if(!e.d)return;
-  var vert=(e.d==='U'||e.d==='D');
-  e.prog+=(vert?CLIMB:SPD)/edgeLen(e.d);                              // the cabinet's px per tick, exactly the legacy chef's pace
-  if(e.prog>=1){ var over=e.prog-1, st=stepOf(e.d); e.c+=st[0]; e.r+=st[1]; e.hit=true;
-    e.d=(e.want&&canGo(e.c,e.r,e.want))?e.want:null;                   // arrive and keep rolling while the stick is held: no front facing frame at every node (the v1.02 jerk)
-    e.prog=e.d?over:0; }                                                // the overshoot carries into the next edge, so the pace is the legacy 0.92 px per tick, never quantized to whole ticks per cell
-}
-function cellOf(e){ if(e.d&&e.prog>=0.5){ var s=stepOf(e.d); return [e.c+s[0],e.r+s[1]]; } return [e.c,e.r]; }
+var ECHO_WALK={reverse:true, stop:true, snap:NODE_SNAP, carry:true, canGo:canGo,   // v1.09: ECHO walks on CORE's nodeTick (the walker ruling, step 3)
+  pace:function(e,d){ return (d==='U'||d==='D')?CLIMB:SPD; }};   // turn back mid edge; a released stick stops at a node; the near node snap; the overshoot carried; ECHO's own graph; the legacy chef's px per tick
+function tickEnt(e){ nodeTick(e,ECHO_WALK); }   // e.hit is set on the tick he reaches a node while rolling (the exit reads it)
+function cellOf(e){ if(e.d&&e.prog>=0.5){ var s=nodeStepOf(e.d); return [e.c+s[0],e.r+s[1]]; } return [e.c,e.r]; }
 function atCell(e,c,r){ var q=cellOf(e); return q[0]===c&&q[1]===r; }
 function standingAt(e,c,r){ return e.prog===0&&!e.air&&e.c===c&&e.r===r; }
 function reached(e,c,r){ return !e.air&&e.c===c&&e.r===r&&(e.prog===0||!!e.hit); }   // standing on the node, or arriving at it this tick while rolling on
-function movingInto(e,c,r){ if(!e.d||e.prog<=0)return false; var s=stepOf(e.d); return e.c+s[0]===c&&e.r+s[1]===r; }
+function movingInto(e,c,r){ if(!e.d||e.prog<=0)return false; var s=nodeStepOf(e.d); return e.c+s[0]===c&&e.r+s[1]===r; }
 function bodies(){ var out=[S.p]; for(var i=0;i<CHANS.length;i++){ var k=CHANS[i]; if(S.traj[k]&&S.rec!==k)out.push(S.echo[k]); } return out; }
 function poseFrom(e,f){ e.c=f.c; e.r=f.r; e.d=f.d; e.prog=f.prog; e.face=f.face; e.dir=f.dir; e.onLad=f.onLad; e.anim=f.anim; e.air=!!f.air; e.ay=f.ay||0; }
 function snap(e){ return {c:e.c,r:e.r,d:e.d,prog:e.prog,face:e.face,dir:e.dir,onLad:e.onLad,anim:e.anim,air:!!e.air,ay:e.air?e.ay:0}; }
@@ -8532,7 +8841,7 @@ function settleGates(){
         the want settled in the last running frame, so a frozen lift neither moves nor departs. The lift object keeps
         its v1.07 shape (c0,c1,r0,r1,by and row, y, moving, now read from and written to the carrier). ---- */
 function mkLift(l){ var L={c0:l.c0,c1:l.c1,r0:l.r0,r1:l.r1,by:l.by.slice(),want:false,car:null};
-  L.car=addCarrier({x0:l.c0*TW,y0:rowYr(l.r1),x1:l.c0*TW,y1:rowYr(l.r0),w:(l.c1-l.c0+1)*TW,r0:l.r1,r1:l.r0,spd:LIFT_PX_S,
+  L.car=addCarrier({x0:l.c0*TW,y0:rowYr(l.r1),x1:l.c0*TW,y1:rowYr(l.r0),w:(l.c1-l.c0+1)*TW,r0:l.r1,r1:l.r0,spd:LIFT_PX_S,draw:false,   // v1.09: drawCarriers skips it (ENGINE_VER 1.15); ECHO draws its own lift
     gate:function(){ return L.want; }, onDepart:function(){ if(S)boardRiders(L); }, onArrive:function(){ if(S)landRider(L); }, onReset:function(){ if(S)resetRider(L); }});
   Object.defineProperty(L,'row',{enumerable:true,get:function(){ return L.car.row; },set:function(v){ L.car.row=v; if(v===L.r0)L.car.t=1; else if(v===L.r1)L.car.t=0; }});   // a written row is an end: the carrier's t follows
   Object.defineProperty(L,'y',{enumerable:true,get:function(){ return L.car.y; },set:function(v){ L.car.y=v; }});
@@ -8540,7 +8849,7 @@ function mkLift(l){ var L={c0:l.c0,c1:l.c1,r0:l.r0,r1:l.r1,by:l.by.slice(),want:
   return L; }
 function boardRiders(L){
   var p=S.p; if(p.air||p.fall||p.lift)return;
-  var s=p.d?stepOf(p.d):[0,0], tc=p.c+s[0], tr=p.r+s[1];
+  var s=p.d?nodeStepOf(p.d):[0,0], tc=p.c+s[0], tr=p.r+s[1];
   if(p.r===L.row&&p.prog===0&&inLiftSpan(L,p.c)){ ride(p,L); return; }
   if(p.d&&(p.d==='L'||p.d==='R')&&p.r===L.row){
     if(p.prog>=0.5&&inLiftSpan(L,tc)){ p.c=tc; p.prog=0; p.d=null; ride(p,L); }
@@ -8550,7 +8859,7 @@ function ride(p,L){ p.lift=L; p.air=true; p.ay=L.y; p.d=null; p.want=null; p.fac
 function landRider(L){ var p=S.p; if(p.lift===L){ p.r=L.car.row; p.air=false; p.ay=0; p.lift=null; sfx.land(); } }   // onArrive: the carrier's row is already the new row
 function liftWants(){ for(var i=0;i<S.lifts.length;i++){ var L=S.lifts[i]; L.want=allHeld(L.by,S.held);   // after settleGates, as tickLifts read it
     if(!L.car.moving&&L.car.t!==(L.want?1:0))boardRiders(L); } }   // a lift about to leave boards now, before the recorder, as v1.07 did (CORE's onDepart then finds its rider aboard)
-function slabNext(L){ var k={}, q; for(q in L.car)k[q]=L.car[q]; k.onDepart=null; k.onArrive=null; k.onReset=null; carrierGateStep(k,DT); return k.y; }   // where CORE leaves the slab after this frame: CORE's own step, run on a throwaway copy
+function slabNext(L){ return carrierPeek(L.car,DT).y; }   // v1.09: where CORE leaves the slab after this frame (carrierPeek, ENGINE_VER 1.15: the step's own formula, nothing moved)
 function liftPace(go){ for(var i=0;i<S.lifts.length;i++)S.lifts[i].car.spd=go?LIFT_PX_S:0; }
 function resetRider(L){ var p=S.p, onTop=(!p.air&&p.prog===0&&p.r===L.r0&&inLiftSpan(L,p.c));
   if(p.lift===L||onTop){ p.lift=null; p.air=false; p.ay=0; p.r=L.r1; p.d=null; p.want=null; } }   // a body on a lift rides the snap down at the wrap
@@ -8650,7 +8959,7 @@ registerStyle('echo',{
     if(pp.air){ pp.face='front'; pp.onLad=false; }
     else if(pp.d==='L'||pp.d==='R'){ pp.face='side'; pp.dir=(pp.d==='R')?1:-1; pp.onLad=false; pp.anim+=SPD; }     // the legacy walk cycle: anim advances by SPD per tick
     else if(pp.d==='U'||pp.d==='D'){ pp.onLad=true; pp.anim+=CLIMB; }                                            // and by CLIMB on a ladder
-    else { pp.onLad=ladThrough(pp.c,pp.r)&&!floorLike(pp.r,pp.c); if(!pp.onLad)pp.face='front'; }
+    else { pp.onLad=nodeLadThrough(pp.c,pp.r)&&!floorLike(pp.r,pp.c); if(!pp.onLad)pp.face='front'; }
     /* echoes replay frame for frame at this loop tick */
     tickEchoes();
     /* plates, doors, the exit, then the lifts they drive, then the floor under the chef */
@@ -8675,8 +8984,7 @@ registerStyle('echo',{
     if(!S)return;
     var i,j,k,e,x,y,c,tg;
     ctx.save(); ctx.translate(0,S.oy);
-    var hid=CARRIERS.splice(0,CARRIERS.length);   // v1.08: the lifts are CORE carriers, but ECHO draws its own lift (drawLift): hide them from drawCarriers for this one call
-    try{ drawWorld(); } finally { for(var hi=0;hi<hid.length;hi++)CARRIERS.push(hid[hi]); }
+    drawWorld();   // v1.09: ECHO's carriers are draw:false, so drawCarriers paints none of them; drawLift paints ECHO's own
     for(i=0;i<S.lifts.length;i++)drawLift(S.lifts[i]);
     /* wires under everything: plate to what it drives, lit while held */
     for(i=0;i<S.rm.plates.length;i++){ var pl=S.rm.plates[i], lit=!!S.held[pl.id], tn=S.tint[pl.id];
@@ -8692,11 +9000,11 @@ registerStyle('echo',{
     /* echoes: the real chef in a channel toque, translucent; frozen ones pulse, lost ones flicker */
     for(i=0;i<CHANS.length;i++){ k=CHANS[i]; if(!S.traj[k]||S.rec===k)continue; e=S.echo[k];
       if(e.lost&&((S.tick>>2)&1))continue;
-      e.x=px(e); e.row=e.r; y=e.air?e.ay:py(e); e.fy=y; e.ly=y;
+      e.x=nodeX(e); e.row=e.r; y=e.air?e.ay:nodeY(e); e.fy=y; e.ly=y;
       ctx.globalAlpha=e.frozen?(0.5+0.15*Math.abs(Math.sin(S.tick*0.08))):0.78;
       COLORMAP=ECHO_MAPS[k]; drawChef(e,0); COLORMAP=null; ctx.globalAlpha=1; }
     /* the live chef */
-    S.p.x=px(S.p); S.p.row=S.p.r; y=S.p.air?S.p.ay:py(S.p); S.p.fy=y; S.p.ly=y;
+    S.p.x=nodeX(S.p); S.p.row=S.p.r; y=S.p.air?S.p.ay:nodeY(S.p); S.p.fy=y; S.p.ly=y;
     charMap(S.p); drawChefJuiced(S.p,0); COLORMAP=null;   // the legacy chef draw call, verbatim: costume map plus the squash and stretch wrapper, same fidelity as PATTY PANIC
     for(i=0;i<S.rm.plates.length;i++)drawPlateLamp(S.rm.plates[i],!!S.held[S.rm.plates[i].id],S.tint[S.rm.plates[i].id]);   // the plate lamp is drawn after the bodies and sits above the toque: never hidden
     /* the clock prompt and the countdown, in room space */
