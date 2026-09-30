@@ -3,9 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>PATTY PANIC - BUILD 262</title>
+<title>PATTY PANIC - BUILD 263</title>
 <!--
 PATTY PANIC build changelog
+v263: THE ATTRACT LOOP IN THE GAME (the Director's pick, 2026-09-30, of the SNAILCADE seat's
+    MEMO-SNAILCADE-TEASER-INTRO-PATTY-v1.00; ENGINE_VER 1.16, resealed). Left idle 15 s on the title, the game plays the
+    cabinet's four scenes on its own art: TITLE (4.2 s: the fire tile's flame grown into two pillars, embers, a shelf,
+    the burger bobbing under the PATTY PANIC logo), DEMO (the real game on a demo board, the chef walking every floor top
+    to bottom by script; the real cascade, pepper stun, crush and ORDER UP, held 2.6 s), HIGH SCORES (4.4 s: the game's
+    top ten, one row at a time, under the chef standing front on) and HOW TO PLAY (4.6 s: three lines, a part, a plate,
+    the chef and a wurst), and round again. It rides the splash's gate: silent (the v245 flag), no sticks, and any key,
+    tap or click returns to the title and does nothing else. It writes nothing (addScore leaves the high score alone
+    while splashOn). Calm motion (prefers-reduced-motion) shows the title and the scores, still.
+    THE PARTS' LENGTHS, the Director's rule: measured from the Intellivision campaign's current data, not from memory.
+    attractMeasure reads INTV_LEVELS' seven MAZE boards at run time; at this build: parts 3 segments, 48 px (103 of 103
+    parts; 135 of 135 with the four lab boards); stack top, patty, lettuce, bottom (19 of 26 burgers); 4 burgers a maze
+    (5 of 7); columns 3, 7, 12, 16 (4 of those 5). The cabinet's own demo draws 4 segment (64 px) layers; this one
+    draws 3. Also: drawPlate (one plate, shared by drawWorld and the loop), drawOrderUp (the clear banner, shared), the
+    pause button neither drawn nor hit while splashOn, and the headless document records its listeners (keyPress).
+    Gate, red first on 262: attracttest (26 checks; on 262, 1 green and 8 red).
 v262: MUNCH MAZE WALKS ON CORE'S NODE WALKER (the Studio Head's walker ruling, step 2, the second cartridge). Its copy
     (ladThrough, stand, edgeH, edgeV, canGo, stepOf, px, py, OPP, edgeLen, tickEnt) is deleted; one local walk() calls
     nodeTick: the muncher with his pace, the mid edge turn back and arrive (the pellets), a ghost with its pace,
@@ -2415,14 +2431,14 @@ canvas#cv{image-rendering:pixelated;image-rendering:crisp-edges;background:#0b0b
 (function(){
 'use strict';
 /*==== FENCE:BUILD-STAMP:BEGIN ====*/
-var BUILD=262;
+var BUILD=263;
 /*==== FENCE:BUILD-STAMP:END ====*/
 /*==== FENCE:ENGINE-CORE:BEGIN ====*/
 /* the CABINET: one shared machine. Constants, canvas, the audio engine and this
    game's sound book (styles may register their own books later), and helpers.
    The BUILD stamp lives in the BUILD-STAMP region just above, outside every hashed
    span (09 law 9, v248): a build bump alone never reds the seal. */
-var ENGINE_VER='1.15';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239); v253: 1.12, MR. SPUD's charge strikes only the foe it hits; v254: 1.13, vertical CARRIERS; v257: 1.14, crumble tiles; v260: 1.15, the node walker, the carrier draw opt-out and peek
+var ENGINE_VER='1.16';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239); v253: 1.12, MR. SPUD's charge strikes only the foe it hits; v254: 1.13, vertical CARRIERS; v257: 1.14, crumble tiles; v260: 1.15, the node walker, the carrier draw opt-out and peek; v263: 1.16, the attract loop
   try{ if(typeof document!=='undefined'&&document) document.title='PATTY PANIC - BUILD '+BUILD; }catch(e){}
 /* ============ error reporter (first, per studio doctrine) ============ */
 var ERRMSG='';
@@ -2532,6 +2548,8 @@ var pepBtnFlash=0;
 var inOv=[null,null];
 document.addEventListener('keydown',function(e){
   try{
+    titleIdleT=0;                                                                     // v263: any key restarts the title's idle clock
+    if(splashOn&&attractLoop){ if(e.preventDefault)e.preventDefault(); splashEnd(); firstGesture(); return; }   // v263: any key leaves the attract loop and does nothing else
     keys[e.key]=true;
     if(STATE==='enterInit'){   // v204: initials entry keyboard (arrows change/move, letters type, Enter submits)
       if(e.key==='ArrowUp')initCycle(1);
@@ -2564,7 +2582,7 @@ function btnAt(x,y){   // v249: THE one button hit test, topmost first; onPress 
 }
 function onTS(e){
   try{
-    e.preventDefault(); var audioUnlockedBefore=audioUnlocked; firstGesture();
+    e.preventDefault(); var audioUnlockedBefore=audioUnlocked; firstGesture(); titleIdleT=0;   // v263: a touch restarts the title's idle clock
     for(var i=0;i<e.changedTouches.length;i++){
       var t=e.changedTouches[i],p=cvPos(t);
       var _pk=playtestBtnHit(p.x,p.y); if(_pk){playtestHudAct(_pk);continue;}   // v154/v240
@@ -2625,7 +2643,7 @@ function onTE(e){
 }
 function onMD(e){
   try{
-    var audioUnlockedBefore=audioUnlocked; firstGesture();
+    var audioUnlockedBefore=audioUnlocked; firstGesture(); titleIdleT=0;   // v263: a click restarts the title's idle clock
     var p=cvPos(e);
     var _pk2=playtestBtnHit(p.x,p.y); if(_pk2){playtestHudAct(_pk2);return;}   // v154/v240
     if(pauseBtnHit(p.x,p.y)){togglePause();return;}
@@ -3734,7 +3752,7 @@ function scoreMult(p){ return (p.catMult||1)*burgerMult(p.bi); }         // v111
 function predGuard(s){ if(predicting){ if(!predViol){predViol=s; ERRMSG='ERR predict-leak: '+s;} return true; } return false; }   // v149: a host-authoritative side effect must never run during the joiner predicted re-sim; a forgotten fence is blocked here and flagged for the gate and the on-screen reporter
 function addScore(n){ if(predGuard('addScore'))return;
   score+=n;
-  if(score>hi){hi=score;try{localStorage.setItem('pp_hi',String(hi))}catch(e){}}
+  if(score>hi&&!splashOn){hi=score;try{localStorage.setItem('pp_hi',String(hi))}catch(e){}}   // v263: the attract never writes a high score
 }
 function loadLevel(i){
   levelIdx=i;
@@ -3796,7 +3814,7 @@ function setMode(mode){
   LSET=(gameMode==='intv')?INTV_LEVELS:(gameMode==='boss')?BOSSES:(gameMode==='arcade')?ARCADE_LEVELS:LEVELS;
 }
 function startGame(lvl,coop,mode){
-  splashOn=false;                 // v151: any real start leaves the attract
+  splashOn=false; attractLoop=false;   // v151: any real start leaves the attract; v263 the loop too
   paused=false;                   // v247: a stale pause (the v210 solo background-stall) must never leak into a fresh start; in co-op RESUME is solo-gated so it would soft-lock
   setMode(mode);
   diffMode=selDiff; DIFF_FOE=(diffMode==='easy')?0.6:(diffMode==='peasy')?0.4:1; DIFF_NOFOES=(diffMode==='cake');   // v176 lock in difficulty; v178 Cake suppresses all enemies; v191 Peasy foes at 0.4 (60% slower)
@@ -5240,7 +5258,8 @@ function update(){
   frame++;
   if(net.role==='guest'){guestTick();return}
   if(net.role==='host')netInbox();
-  if(splashOn){ splashClock++; var _ap=splashAutopilot(); inOv[0]={h:_ap.h,v:_ap.v,pep:false}; graceT=999; paused=false; }   // v151 attract drive
+  if(STATE==='title'&&!splashOn&&!editorOpen&&net.role==='solo'&&!net.coop){ titleIdleT+=DT; if(titleIdleT>=ATTRACT_IDLE-1e-9)attractEnter(); } else if(!splashOn)titleIdleT=0;   // v263: idle on the title starts the attract loop
+  if(splashOn){ splashClock++; var _ap=attractLoop?attractStep():splashAutopilot(); inOv[0]={h:_ap.h,v:_ap.v,pep:!!_ap.pep}; graceT=999; paused=false; }   // v151 attract drive; v263 the loop's
   if(STATE==='levelintro'){ levelIntroDrive(); }                                                                       // v151 level-intro card
   else if(STATE==='game'){simGame();cookGrills();
     if((tutMove||tutPep)&&!paused&&net.role==='solo'&&!net.local){   // v167: clear each coach the first time that control is used, with a safety timeout (inside the game branch so simGame still runs)
@@ -5261,7 +5280,7 @@ function update(){
   }
   else if(STATE==='catsup'){catsupUpdate();partsUpdate();}
   else partsUpdate();
-  if(splashOn){ if(foes.length)foes.length=0; splashStepFoes(); if(STATE==='win'||STATE==='over'||(STATE==='clear'&&splashAP.phase!=='dance'&&splashAP.phase!=='predance'))splashEnter(); }   // v151 foe parade + safety reset
+  if(splashOn&&!attractLoop){ if(foes.length)foes.length=0; splashStepFoes(); if(STATE==='win'||STATE==='over'||(STATE==='clear'&&splashAP.phase!=='dance'&&splashAP.phase!=='predance'))splashEnter(); }   // v151 foe parade + safety reset
   if(net.role==='host'&&net.coop&&LV&&frame%SNAP_EVERY===0&&
      (STATE==='game'||STATE==='clear'||STATE==='over'||STATE==='win'||STATE==='catsup'))netSend(snapshot());
 }
@@ -5565,12 +5584,12 @@ function toTitle(){
     var _ef=document.getElementById('edFrame'); if(_ef&&_ef.contentWindow){try{_ef.contentWindow.postMessage({t:'pp-playtest-state',playing:false},'*');}catch(e){}}
     return;}   // v153/v240: end a playtest back in the editor and tell it the run ended
   leaveNet();
-  splashOn=false;                 // v151: leave the attract
+  splashOn=false; attractLoop=false;   // v151: leave the attract; v263 the loop too
   STATE='title';
   ERRMSG='';
   paused=false;
 }
-function pauseBtnHit(x,y){return net.role==='solo'&&STATE==='game'&&x>=226&&x<=252&&y>=2&&y<=24;}
+function pauseBtnHit(x,y){return !splashOn&&net.role==='solo'&&STATE==='game'&&x>=226&&x<=252&&y>=2&&y<=24;}
 function playtestBtnHit(x,y){ if(!playtesting||y<27||y>46)return null;              // v240: the four playtest HUD buttons share the reserved band
   if(x>=88&&x<=134)return 'pause'; if(x>=138&&x<=164)return 'step'; if(x>=168&&x<=212)return 'restart'; if(x>=216&&x<=254)return 'edit'; return null; }
 function playtestHudAct(k){ if(k==='pause'){playtestPaused=!playtestPaused;playtestStep=false;}
@@ -6969,11 +6988,13 @@ function drawWorld(){
   if(LV.portals)for(var qp=0;qp<LV.portals.length;qp++)drawPortalTile(LV.portals[qp][0],LV.portals[qp][1],LV.portals[qp][2]|0);   // v103: Stargate-style gateways
   if(LV.doors)for(var qd=0;qd<LV.doors.length;qd++)drawDoorTile(LV.doors[qd]);
   for(var b=0;b<LV.bs.length;b++){
-    var px=LV.bs[b].c*TW, bpw=(LV.bs[b].seg||4)*TW;
-    R(px-4,LV.plateTop,bpw+8,3,'#cfe8ff');
-    R(px-7,LV.plateTop+3,bpw+14,2,'#7fb8ff');
-    R(px+bpw/2-6,LV.plateTop+5,12,3,'#5a86c8');
+    drawPlate(LV.bs[b].c*TW,(LV.bs[b].seg||4)*TW,LV.plateTop);
   }
+}
+function drawPlate(px,bpw,top){   // v263: one plate (was inline in drawWorld); the attract's HOW TO PLAY lays the same one
+  R(px-4,top,bpw+8,3,'#cfe8ff');
+  R(px-7,top+3,bpw+14,2,'#7fb8ff');
+  R(px+bpw/2-6,top+5,12,3,'#5a86c8');
 }
 function drawBonus(){
   if(!bonus.on)return;
@@ -7215,13 +7236,13 @@ function drawTutorial(){                                  // v167: first-solo-ru
   }
 }
 function drawHUD(){
-  if(splashOn)return;   // v151: no HUD on the splash
+  if(splashOn&&!attractHud)return;   // v151: no HUD on the splash; v263: the attract demo draws the real HUD
   R(0,0,W,26,'rgba(5,5,12,0.6)');
   T('SCORE',6,9,7,'#8ea0ff');
   T(pad6(score),6,20,10,'#ffd23f',null,true);
   T('HI',88,9,7,'#8ea0ff');
   T(pad6(hi),88,20,10,'#f4f4f8');
-  T('LV '+(levelIdx+1)+'/'+LSET.length,168,20,9,'#8ea0ff');
+  T(splashOn?'DEMO':'LV '+(levelIdx+1)+'/'+LSET.length,168,20,9,'#8ea0ff');   // v263: the attract demo is a demo
   if(net.coop)T(net.local?'2P LOCAL':(net.role==='host'?'CO-OP HOST':'CO-OP GUEST'),168,9,7,'#58d858');   // v156
   for(var i=0;i<Math.max(0,Math.min(8,lives));i++){
     R(6+i*10,28,7,3,'#ffffff');
@@ -7239,7 +7260,12 @@ function drawHUD(){
     ctx.globalAlpha=_sa*0.85; R(_sx,38,_sw,17,'rgba(8,6,14,0.92)'); R(_sx,38,_sw,1,statusNote.col); R(_sx,54,_sw,1,statusNote.col);
     ctx.globalAlpha=_sa; T(statusNote.txt,W/2,50,11,statusNote.col,'center',true); ctx.globalAlpha=1; }   // v60: a prominent, longer-lived status notice
   if(BOSS&&!BOSS.dead&&(STATE==='game'||STATE==='clear'))drawBossHud();
-  if(net.role==='solo'&&STATE==='game')drawPauseBtn();
+  if(net.role==='solo'&&STATE==='game'&&!splashOn)drawPauseBtn();
+}
+function drawOrderUp(){   /* v263: the clear banner, shared by play and the attract demo */
+  R(0,0,W,46,'rgba(5,5,12,0.86)');
+  T('ORDER UP!',W/2,24,20,'#ffd23f','center',true);
+  T('+'+SC.clear,W/2,40,10,'#58d858','center');
 }
 function drawPauseBtn(){
   var px=230,py=4,ps=18;
@@ -7377,6 +7403,7 @@ function btn(x,y,w,h,label,fn,small){
   T(label,x+w/2,y+h/2+4,small?9:12,'#f4f4f8','center',true);
 }
 function onPress(x,y){
+  titleIdleT=0;
   if(splashOn){splashEnd();return;}                            // v245: tap skips the attract (silent)
   if(STATE==='levelintro'){levelIntroFinish();return;}         // v151 tap skips the card
   var b=btnAt(x,y); if(b){b.fn();return}                       // v249: the one CORE hit test, shared with onTS
@@ -7568,7 +7595,7 @@ function drawHowto(){
 }
 function draw(){
   R(0,0,W,H,'#0b0b16');
-  if(splashOn){drawSplash();return;}                          // v151
+  if(splashOn){ if(attractLoop)drawAttract(); else drawSplash(); return; }   // v151; v263 the loop
   if(STATE==='levelintro'){BTNS=[];drawLevelIntro();return;}  // v151
   if(STATE==='style'){BTNS=[];styleHook('draw');return;}      // v229: a cartridge owns its whole frame
   if(STATE==='title'){drawTitle();drawStyleRow();}           // v229: registry-driven cartridge row (empty registry draws nothing)
@@ -7580,10 +7607,7 @@ function draw(){
   else if(STATE==='game'){BTNS=[];drawGame();}
   else if(STATE==='catsup'){BTNS=[];drawGame();drawCatsupActor();}
   else if(STATE==='clear'){
-    BTNS=[];drawGame();
-    R(0,0,W,46,'rgba(5,5,12,0.86)');
-    T('ORDER UP!',W/2,24,20,'#ffd23f','center',true);
-    T('+'+SC.clear,W/2,40,10,'#58d858','center');
+    BTNS=[];drawGame();drawOrderUp();
   }
   else if(STATE==='scores'){ BTNS=[]; drawScores(); }
   else if(STATE==='enterInit'){ BTNS=[]; drawEnterInit(); }
@@ -7678,6 +7702,7 @@ var SPLASH_SHIFT=120;
 function ease01(u){ u=u<0?0:(u>1?1:u); return u*u*(3-2*u); }
 function mkAttractFoe(type,x,row){ return {type:type,x:x,px:x,row:row,hdir:1,onLad:false,ly:0,lcol:0,chainTop:0,chainBot:0,vdir:1,dead:false,respT:0,stun:0,harmless:0,riding:null,fy:0,decideT:0,nodeRow:-1,hold:false,anim:0,rideDeath:false,rdCol:0,rdRow:0,rdPlate:false,rising:false,landT:0,ph:Math.random()*100,spudMode:0,windT:0,ventT:0,air:false,ay:0,arise:false,acol:0,atop:0,abot:0,springCD:0,transit:0,tt:0,tph:0,tx0:0,tx1:0,ty0:0,tcol:0,trow:0,hangT:0,landBeat:0,springDwell:0,iceVx:0,skidT:0,teleStage:0,teleT:0,teleDest:null,teleArmed:true,burn:0,spawnT:0}; }
 function splashEnter(){
+  attractLoop=false;                            // v263: the boot splash is never the loop
   splashClock=0; splashAP={phase:'settle',t:0};
   LSET=LEVELS;                                  // the studio splash always uses THE DINER as the representative stage
   try{ startGame(0,false,'campaign'); }catch(e){}
@@ -7711,7 +7736,9 @@ function splashStepFoes(){
     f.dead=false;f.air=false;f.rising=false;f.stun=0;f.harmless=0;f.onLad=false;
   }
 }
-function splashEnd(){ splashOn=false; inOv[0]=null; STATE='title'; }
+function splashEnd(){ var loop=attractLoop; splashOn=false; attractLoop=false; inOv[0]=null; STATE='title'; titleIdleT=0;
+  if(loop){ setMode(selMode); if(attractPick){ charPick=attractPick; attractPick=null; } foes.length=0; }   /* v263: the loop leaves the title as it found it */
+}
 function splashIntroOverlay(t){
   var a1=ease01(t/0.6), a2=ease01((t-0.15)/0.6);
   var y1=-50+114*a1, y2=-50+154*a2;
@@ -7728,6 +7755,173 @@ function drawSplash(){
   ctx.restore();
   var ma=ease01((t-0.2)/0.6); if(ma<1)R(0,0,W,H,'rgba(11,11,22,'+(1-ma).toFixed(3)+')');
   splashIntroOverlay(t);
+}
+/* ============ THE ATTRACT LOOP (v263, ENGINE_VER 1.16; the Director's pick 2026-09-30 of the SNAILCADE seat's
+   MEMO-SNAILCADE-TEASER-INTRO-PATTY-v1.00) ============
+   Left idle on the title for ATTRACT_IDLE seconds, the game plays the SNAILCADE cabinet's four scene loop on its own
+   art: TITLE, DEMO (the real game on a demo board, the chef driven by a script), HIGH SCORES, HOW TO PLAY, and round
+   again. It rides the splash's gate, splashOn: silent (the v245 standing flag: the attract is silent), no sticks, no
+   coaches, and every key, tap or click returns to the title and does nothing else. It writes nothing: addScore leaves
+   the high score alone while splashOn, and the demo never reaches a game over. Calm motion (prefers-reduced-motion)
+   shows the title and the scores only, still.
+   THE DIRECTOR'S RULE: the demo's food parts are what the Intellivision campaign typically uses NOW, measured from its
+   current data, not from memory. attractMeasure reads the seven MAZE boards of INTV_LEVELS at run time (the most
+   common part length, stack, burger count and burger columns) and attractBuildBoard lays the demo board from that, so
+   it follows the campaign if the mazes change. At BUILD 263: 3 segments (48 px) on 103 of 103 parts; top, patty,
+   lettuce, bottom on 19 of 26 stacks; 4 burgers on 5 of 7 mazes; columns 3, 7, 12, 16 on 4 of those 5. */
+var ATTRACT_IDLE=15;                 /* seconds of no input on the title before the loop starts */
+var ATTRACT_CLEAR_HOLD=2.6;          /* ORDER UP holds this long after the demo board clears (the cabinet's BOARD CLEAR beat) */
+var ATTRACT_DEMO_CAP=45;             /* a demo that has not cleared by then moves on: a safety net, never reached in play */
+var ATTRACT_SHIFT=86;                /* the demo board sits in the middle of the screen, as the splash's does */
+var ATTRACT_DUR={title:4.2,scores:4.4,howto:4.6};
+var ATTRACT_FOE_PX=0.5;              /* the demo's foes patrol their floors at this pace (px a tick); they never chase */
+var attractLoop=false, attractScene=0, attractT=0, titleIdleT=0, attractCalmForce=null, attractClearAt=-1;
+var attractBoard=null, attractAP=null, attractEmbers=[], attractHud=false, attractPick=null;
+function attractIsCalm(){ if(attractCalmForce!=null)return attractCalmForce;
+  try{ return !!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){ return false; } }
+function attractOrder(){ return attractIsCalm()?['title','scores']:['title','demo','scores','howto']; }
+function attractSceneName(){ var o=attractOrder(); return o[attractScene%o.length]; }
+function attractMeasure(){   /* the Intellivision campaign's parts, from its current data: its seven MAZE boards */
+  var mz=[], segs=[], stacks=[], counts=[], cols=[], i, j, k;
+  function mode(list){ var c={}, best=null; for(var q=0;q<list.length;q++){ var v=list[q]; c[v]=(c[v]||0)+1; if(best===null||c[v]>c[best])best=v; } return best; }
+  for(i=0;i<INTV_LEVELS.length;i++)if(/^MAZE /.test(INTV_LEVELS[i].n))mz.push(INTV_LEVELS[i]);
+  for(i=0;i<mz.length;i++){ counts.push(String(mz[i].bs.length));
+    for(j=0;j<mz[i].bs.length;j++){ var b=mz[i].bs[j]; stacks.push(b.t.join('/')); for(k=0;k<b.t.length;k++)segs.push(String(b.seg||4)); } }
+  var nb=mode(counts);
+  for(i=0;i<mz.length;i++)if(String(mz[i].bs.length)===nb)cols.push(mz[i].bs.map(function(q){ return q.c; }).sort(function(a,c){ return a-c; }).join('/'));
+  return {mazes:mz.length, seg:+(mode(segs)||3), stack:(mode(stacks)||'top/pat/let/bot').split('/'), burgers:+(nb||4),
+    cols:(mode(cols)||'3/7/12/16').split('/').map(Number)};
+}
+function attractBuildBoard(m){   /* one floor per layer; the chef walks every floor, top to bottom, and each walk drops the column one shelf */
+  var fl=m.stack.length, rows=[], gaps=[], lads=[], bs=[], i;
+  for(i=0;i<fl;i++)rows.push(i*2);
+  for(i=0;i<fl-1;i++){ gaps.push([i*2+1,0,COLSN-1]); var lc=(i%2===0)?COLSN-1:0; lads.push([lc,i*2]); lads.push([lc,i*2+1]); }
+  for(i=0;i<m.cols.length;i++)bs.push({c:m.cols[i],seg:m.seg,t:m.stack.slice(),rows:rows.slice()});
+  return {n:'ATTRACT',R:fl*2-1,gaps:gaps,lads:lads,bs:bs,foes:'wy',spawns:[[10,Math.min(4,rows[fl-1])],[4,Math.min(2,rows[fl-1])]],
+    sp:1,resp:3,perch:[9,rows[fl-1]],start:1,startRow:0,start2:2,start2Row:0,grace:0};
+}
+function attractEnter(){ attractLoop=true; splashOn=true; titleIdleT=0; attractEmbers.length=0; attractGo(0); }
+function attractGo(i){
+  attractScene=i; attractT=0; attractClearAt=-1; BTNS=[]; paused=false; inOv[0]=null;
+  if(attractSceneName()==='demo')attractDemoStart();
+  else { STATE='attract'; foes.length=0; }
+}
+function attractNext(){ attractGo((attractScene+1)%attractOrder().length); }
+function attractDemoStart(){   /* the real game: the real level builder, sim, cascade, pepper, crush and clear */
+  attractBoard=attractBuildBoard(attractMeasure());
+  if(!attractPick)attractPick=charPick.slice(); charPick=[0,0];   /* THE CHEF, whose button is pepper */
+  setMode('intv'); LSET=[attractBoard];                         /* an Intellivision board: its black ground, its pepper */
+  DIFF_FOE=1; DIFF_NOFOES=false; bossRush=false;
+  score=0; lives=4; pepper=INTV_START_PEP;
+  players=[mkPlayer(0),mkPlayer(1)]; players[1].active=false;
+  loadLevel(0);
+  STATE='game'; spawnT=0; introT=1.3; graceT=999;
+  for(var i=0;i<foes.length;i++){ foes[i].hold=true; foes[i].adir=(i%2)?1:-1; }
+  attractAP={leg:0,phase:'walk',pepCool:0};
+}
+function attractFoes(){   /* the demo's foes walk their floors to and fro; stunned, crushed or riding, the game has them */
+  for(var i=0;i<foes.length;i++){ var f=foes[i]; f.hold=true; if(!f.adir)f.adir=1;
+    if(f.dead||f.stun>0||f.riding||f.rising||f.air||f.sinking||f.spawnHold>0)continue;
+    f.x+=f.adir*ATTRACT_FOE_PX; f.onLad=false;
+    if(f.x<TW+8){ f.x=TW+8; f.adir=1; } if(f.x>(COLSN-2)*TW+8){ f.x=(COLSN-2)*TW+8; f.adir=-1; }
+    f.hdir=f.adir; }
+}
+function attractAutopilot(){   /* every floor, top to bottom: walk its length, take the ladder at its end */
+  var p=players[0], ap=attractAP, B=attractBoard, none={h:0,v:0,pep:false};
+  if(!p||p.dead||p.air||introT>0||!B)return none;
+  if(ap.pepCool>0)ap.pepCool--;
+  var rows=B.bs[0].rows, k=ap.leg; if(k>=rows.length)return none;   /* walked every floor: the cascade finishes the board */
+  var dir=(k%2===0)?1:-1, last=(k>=rows.length-1);
+  if(ap.phase==='down'){ var nr=rows[k+1];
+    if(!p.onLad&&p.row===nr){ ap.leg++; ap.phase='walk'; return none; }
+    if(p.onLad&&p.ly>=rowYr(nr)-2)return {h:-dir,v:0,pep:false};   /* at the foot: step off toward the next floor's walk */
+    return {h:0,v:1,pep:false}; }
+  var tx=last?((dir>0)?(B.bs[B.bs.length-1].c+B.bs[0].seg)*TW+8:(B.bs[0].c-1)*TW+8):((dir>0)?(COLSN-1)*TW+8:TW/2);
+  var pep=false;
+  if(pepper>0&&ap.pepCool<=0)for(var i=0;i<foes.length;i++){ var f=foes[i];
+    if(f.dead||f.stun>0||f.row!==p.row||f.onLad)continue; var dx=(f.x-p.x)*dir; if(dx>6&&dx<30){ pep=true; ap.pepCool=45; break; } }
+  if(Math.abs(p.x-tx)<=1){ if(last){ ap.leg++; return none; } p.x=tx; ap.phase='down'; return {h:0,v:1,pep:false}; }
+  return {h:(tx>p.x)?1:-1,v:0,pep:pep};
+}
+function attractStep(){   /* one tick of the loop; the demo's scripted input is returned for inOv */
+  attractT+=DT; var n=attractSceneName(), none={h:0,v:0,pep:false};
+  if(n==='demo'){
+    if(STATE==='clear'){ if(attractClearAt<0)attractClearAt=attractT; clearT=99;
+      if(attractT-attractClearAt>=ATTRACT_CLEAR_HOLD-1e-9)attractNext(); return none; }
+    if(STATE!=='game'||attractT>=ATTRACT_DEMO_CAP){ attractNext(); return none; }
+    attractFoes(); return attractAutopilot();
+  }
+  if(n==='title'&&!attractIsCalm())attractEmbersStep();
+  if(attractT>=ATTRACT_DUR[n]-1e-9)attractNext();
+  return none;
+}
+function attractEmbersStep(){
+  if(attractEmbers.length<40&&(frame%3)===0)attractEmbers.push({x:(frame%6<3?52:268)+(Math.random()*24-12),y:318,v:0.6+Math.random()*0.9,t:1+Math.random()*1.2,c:Math.random()<0.5?'#ff7a1e':'#ffd23f'});
+  for(var i=attractEmbers.length-1;i>=0;i--){ var e=attractEmbers[i]; e.y-=e.v; e.x+=Math.sin((frame+i*7)*0.08)*0.3; e.t-=DT; if(e.t<=0)attractEmbers.splice(i,1); }
+}
+function attractPillar(cx,baseY,h,ph){   /* the fire tile's flame (drawFireTile: its palette, taper and sway), grown into a pillar */
+  for(var j=0;j<3;j++){
+    var x0=cx-8+j*8, q=ph*19.2+j*2.3, th=Math.round(h*(0.8+0.12*Math.sin(q)+0.06*Math.sin(q*1.7)));
+    for(var y=0;y<th;y+=2){ var frac=y/th, half=Math.round((1-frac)*9+(1-frac*frac)*2), sway=Math.round(Math.sin(q+y*0.09)*frac*6);
+      var col=frac<0.18?'#2f6fd0':frac<0.55?'#ff7a1e':frac<0.85?'#ffd23f':'#fff3b0';
+      R(x0-half+sway,baseY-y-2,half*2+1,2,col); } }
+}
+function attractPart(type,x,y,seg){   /* a burger layer drawn by drawPiece, the game's own (the kit, the legacy fallback) */
+  var pr=[]; for(var s=0;s<seg;s++)pr.push(0);
+  drawPiece({type:type,x:x,y:y,seg:seg,pw:seg*TW,pressed:pr,cook:2,pop:0,nudge:0,onRamp:-1,falling:false,plated:true});
+}
+function attractChef(x,feet,face,dir,sc){   /* the real chef, through the title preview's own path (drawTitle) */
+  var pp={idx:0,isPlayer:true,active:true,x:0,fy:0,row:6,onLad:false,dir:dir,dead:false,deathT:0,deathKind:'',downed:false,downT:0,reviveT:0,inv:0,riding:null,air:false,anim:attractIsCalm()?0:frame,face:face,_blink:0,_pa:0,hatPhase:0,hatAmp:0,teleStage:0,teleT:0,slimeWet:0,girl:false,caps:false,webs:false,wsh:0,zp:0};
+  ctx.save(); ctx.translate(x,feet); ctx.scale(sc,sc); chefPreview=true; charMap(pp); drawChef(pp,0); COLORMAP=null; chefPreview=false; ctx.restore();
+}
+function drawAttractTitle(t,calm){
+  for(var y=70;y<H;y+=42)R(0,y,W,1,'#11112a');                   /* the title screen's own ground */
+  attractPillar(52,318,190,calm?0:t); attractPillar(268,318,190,calm?0.7:t+0.7);
+  if(!calm)for(var i=0;i<attractEmbers.length;i++){ var e=attractEmbers[i]; ctx.globalAlpha=Math.min(1,e.t); R(Math.round(e.x),Math.round(e.y),2,2,e.c); } ctx.globalAlpha=1;
+  R(16,318,W-32,4,'#2c3aa8'); R(16,318,W-32,1,'#8ea0ff'); for(var rx=24;rx<W-16;rx+=16)R(rx,320,2,2,'#1a2470');   /* a shelf, as drawWorld lays one */
+  var m=attractMeasure(), pw=m.seg*TW, bob=calm?0:Math.round(Math.sin(t*3)*2);
+  ctx.save(); ctx.translate(W/2,318+bob); ctx.scale(2,2);          /* the measured burger, 3 segments, at the cabinet's proportion */
+  for(var k=0;k<m.stack.length;k++)attractPart(m.stack[m.stack.length-1-k],-pw/2,-(k+1)*PH-1,m.seg);
+  ctx.restore();
+  T('PATTY',W/2+3,99,44,'#7a2222','center',true); T('PATTY',W/2,96,44,'#ffd23f','center',true);
+  T('PANIC',W/2+3,143,44,'#5a1414','center',true); T('PANIC',W/2,140,44,'#e84545','center',true);
+  T('© 2026 SNAIL ATTACK STUDIOS',W/2,428,8,'#cdd0bf','center');
+}
+function drawAttractDemo(){
+  ctx.save(); ctx.translate(0,ATTRACT_SHIFT); drawGame(); ctx.restore();
+  attractHud=true; drawHUD(); attractHud=false;
+  if(STATE==='clear')drawOrderUp();
+}
+function drawAttractScores(t,calm){
+  for(var gy=70;gy<H;gy+=42)R(0,gy,W,1,'#11112a');
+  T('HIGH SCORES',W/2+2,50,22,'#7a2222','center',true); T('HIGH SCORES',W/2,48,22,'#ffd23f','center',true);
+  attractChef(W/2,112,'front',1,2);                                /* the chef standing front on */
+  T('RANK',40,134,8,'#8ea0ff'); T('NAME',W/2,134,8,'#8ea0ff','center'); T('SCORE',W-36,134,8,'#8ea0ff','right');
+  R(28,139,W-56,1,'#3a4bd8');
+  for(var i=0;i<lbBoard.length&&i<10;i++){ if(!calm&&t<0.25+i*0.18)break;
+    var y=158+i*24, e=lbBoard[i], col=(i===0?'#f4f4f8':'#cfd4ff');
+    T((i+1)+'.',46,y,11,col,'right',true); T(e.n,W/2,y,13,col,'center',true); T(pad6(e.s),W-36,y,11,col,'right',true); }
+}
+function drawAttractHowto(t,calm){
+  for(var gy=70;gy<H;gy+=42)R(0,gy,W,1,'#11112a');
+  T('HOW TO PLAY',W/2,58,14,'#ffd23f','center',true);
+  var L=[['WALK OVER EVERY BURGER PART','#ffd23f'],['DROP THEM ALL TO THE PLATES','#f4f4f8'],['PEPPER STUNS THE FOES','#8ea0ff']];
+  for(var i=0;i<L.length;i++)if(calm||t>=0.3+i*0.5)T(L[i][0],W/2,104+i*92,10,L[i][1],'center',true);
+  var m=attractMeasure(), pw=m.seg*TW;
+  ctx.save(); ctx.scale(2,2);
+  if(calm||t>0.4)attractPart(m.stack[0],W/4-pw/2,64,m.seg);     /* a top bun, the measured length */
+  if(calm||t>0.9)drawPlate(W/4-pw/2,pw,112);                       /* a plate, as drawWorld lays one */
+  ctx.restore();
+  if(calm||t>1.4){ attractChef(W/2-30,352,'side',1,2);
+    ctx.save(); ctx.translate(W/2+30,352); ctx.scale(2,2); drawFoeBody({type:'w',hdir:-1,anim:attractIsCalm()?0:frame*0.5,x:0},0,0,attractIsCalm()?0:frame*0.25); ctx.restore(); }
+}
+function drawAttract(){
+  var n=attractSceneName(), calm=attractIsCalm(), t=attractT; BTNS=[];
+  if(n==='demo')drawAttractDemo();
+  else if(n==='title')drawAttractTitle(t,calm);
+  else if(n==='scores')drawAttractScores(t,calm);
+  else drawAttractHowto(t,calm);
+  if(calm||Math.floor(t*1.5)%2===0)T('TAP TO START',W/2,408,11,'#ffd23f','center',true);
 }
 // ----- LEVEL INTRO card -----
 var INTRO_CARD_TICKS=170;                        // ~2.8s at 60Hz, or tap to skip
@@ -7789,7 +7983,7 @@ function startPlaytest(txt,setName){
   try{
     var def=(new Function('return ('+txt+')'))();
     var fr=document.getElementById('edFrame'); if(fr)fr.style.display='none';
-    editorOpen=false; splashOn=false; playtesting=true;
+    editorOpen=false; splashOn=false; attractLoop=false; playtesting=true;
     playtestPaused=false; playtestStep=false; lastPlaytestTxt=txt; lastPlaytestSet=setName;   // v240: RESTART re-runs this def; pause state resets per run
     var mode=(setName==='intv')?'intv':(setName==='arcade')?'arcade':'campaign';
     setMode(mode);
