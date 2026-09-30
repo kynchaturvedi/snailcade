@@ -3,9 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>PATTY PANIC - BUILD 267</title>
+<title>PATTY PANIC - BUILD 268</title>
 <!--
 PATTY PANIC build changelog
+v268: THE CODEX CORRECTIONS (no game change: this entry, the title tag and BUILD only). The codex's current-state
+    sections, audited against 267's live data: OVERVIEW and THE TEN KITCHENS (now THE FOURTEEN KITCHENS) counted ten
+    kitchens where LEVELS holds fourteen; INTELLIVISION MODE named a ten-level campaign and gave the v68 burger counts
+    (the data: ONE and FOUR carry 3 burgers, TWO, THREE, FIVE, SIX and SEVEN carry 4); CO-OP AND NETCODE's snap row
+    left out the web balls, the doors, the crumble cells and Mr. Ice with his cubes, and called the snapshot constant
+    in length, which the web balls ended at v202. On record here too: echoroomtest v1.03 (the ECHO seat, gate only):
+    BADGE, every room card draws 'ECHO '+ECHO_VER, the region's own vX.YZ cut version (red against the version
+    blanked and against the badge drawn without it). Overlaid on 267, 2026-09-30. ENGINE_VER 1.17, the seal unchanged.
 v267: WEB CHEF KEEPS HIS MASK (deferred at v241, when CAP CHEF's cap was routed through the same draws; this seat's
     open item). Three chef draws had no mask: the transporter (drawChefTeleport) and the fire fright (drawChefFire)
     showed THE CHEF's bare face, sideburns and mustache under a red toque (the palette map recolours, it cannot mask),
@@ -2479,7 +2487,7 @@ canvas#cv{image-rendering:pixelated;image-rendering:crisp-edges;background:#0b0b
 (function(){
 'use strict';
 /*==== FENCE:BUILD-STAMP:BEGIN ====*/
-var BUILD=267;
+var BUILD=268;
 /*==== FENCE:BUILD-STAMP:END ====*/
 /*==== FENCE:ENGINE-CORE:BEGIN ====*/
 /* the CABINET: one shared machine. Constants, canvas, the audio engine and this
