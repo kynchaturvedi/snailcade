@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>panda-smash</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+#canvas{position:absolute;inset:0;margin:auto;image-rendering:pixelated;width:100vmin;height:100vmin}
+#start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font:bold 6vmin monospace;cursor:pointer;background:#000}
+</style></head><body>
+<canvas id="canvas" width="128" height="128" oncontextmenu="event.preventDefault()"></canvas>
+<div id="start">PRESS ANY KEY OR CLICK TO PLAY</div>
+<script>
+var pico8_buttons=[0,0,0,0,0,0,0,0], pico8_gpio=new Array(128), pico8_state=[], pico8_mouse=[], pico8_gamepads={count:0};
+var Module={canvas:document.getElementById('canvas'), arguments:[]};
+var started=false;
+function go(){ if(started) return; started=true;
+  document.getElementById('start').remove();
+  var s=document.createElement('script'); s.src='game.js'; document.body.appendChild(s);
+  document.getElementById('canvas').focus(); }
+document.getElementById('start').addEventListener('click',go);
+addEventListener('keydown',go);
+addEventListener('keydown',function(e){ if([32,37,38,39,40].indexOf(e.keyCode)>=0) e.preventDefault(); });
+</script></body></html>
