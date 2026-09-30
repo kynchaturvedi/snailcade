@@ -3,9 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>PATTY PANIC - BUILD 258</title>
+<title>PATTY PANIC - BUILD 262</title>
 <!--
 PATTY PANIC build changelog
+v262: MUNCH MAZE WALKS ON CORE'S NODE WALKER (the Studio Head's walker ruling, step 2, the second cartridge). Its copy
+    (ladThrough, stand, edgeH, edgeV, canGo, stepOf, px, py, OPP, edgeLen, tickEnt) is deleted; one local walk() calls
+    nodeTick: the muncher with his pace, the mid edge turn back and arrive (the pellets), a ghost with its pace,
+    pickGhost at every node and arrive; the ghost's hdir line stays here. isNode reads nodeStand (its canGo's isNode
+    checks were implied by the edges, the ECHO seat's 537592 check proof). TW=16 goes (CORE's). No CORE change:
+    ENGINE_VER 1.15, the seal unchanged. nodewalktest plays both mazes tick for tick as in 259, Math.random seeded
+    alike, so every ghost's choice matches too.
+v261: TEST KITCHEN WALKS ON CORE'S NODE WALKER (the Studio Head's walker ruling, step 2, the first cartridge). Its own
+    copy of the walker (ladThrough, stand, edgeH, edgeV, canGo, stepOf, px, py, OPP, edgeLen, tickEnt) is deleted;
+    it calls nodeTick with its pace (62 px a second) and the mid edge turn back, reads nodeX, nodeY and
+    nodeLadThrough, and hands nodeCanGo to its state; its TW=16 goes too (CORE's). No CORE change: ENGINE_VER 1.15,
+    the seal unchanged. nodewalktest proves it plays tick for tick as in 259 (red with its pace one px off).
+v260: THE NODE WALKER IN CORE (ENGINE_VER 1.15, resealed; the Studio Head's ruling MEMO-STUDIO-HEAD-WALKER-RULING-v1.00,
+    option A, on the ECHO seat's MEMO-ECHO-WALKER-COMMONS-PROPOSAL-v1.00, step 1). nodeTick(e,o) and its graph and
+    geometry (nodeCanGo, nodeStand, nodeEdgeH, nodeEdgeV, nodeLadThrough, nodeStepOf, nodeEdgeLen, nodeX, nodeY,
+    NODE_OPP) land dormant: one step with the options pace, canGo, reverse, stop, snap, carry, pick and onArrive
+    reproduces MUNCH MAZE's, TEST KITCHEN's and ECHO ESCAPE's walkers to the float. No cartridge moves in this build.
+    With the bump, the ECHO seat's two carrier asks (MEMO-ECHO-CUT-v1.08-v1.00 section 7), dormant: a carrier made with
+    draw:false is skipped by drawCarriers, and carrierPeek(c,dt) answers where carrierGateStep will leave a gated
+    carrier this tick, moving nothing (the travel formula now lives once, in carrierGateNext). Gates, red first on 259:
+    nodewalktest (new, seeded from the ECHO seat's walkparity harness; its fixture is the three walkers as published
+    in 259) and vcarriertest (the opt-out and the peek).
+v259: ECHO ESCAPE cut v1.08 (the ECHO seat): the lifts ride CORE's vertical CARRIERS (v254, ENGINE_VER
+    1.13), each a gated carrier: rest and top ends, the lift pace, CORE's carrierFloorAt as its floor,
+    carrierReset at the wrap; the region's own lift motion is deleted. The region holds its carriers
+    still while the cartridge is paused or on a card (CORE ticks every frame), boards a rider before
+    its recorder as before, and keeps ECHO's own lift art (its carriers are hidden from drawCarriers).
+    A lift arrives one tick sooner than before (CORE arrives on the step that reaches the end). Room
+    card badge ECHO v1.08. echolifttest v1.10 proves it through CORE; red against the v1.07 region.
+    echoplatetest and echorectest v1.10 (the ECHO seat's mutation audit): an airborne body holds no
+    plate; an echo whose recorded cell cannot stand now is lost and flickers. Integrated by
+    MEMO-ECHO-INTEGRATION-SHEET-v1.00: STYLE-ECHO span 44242 bytes (sha256 f8efc4953d2cdbc6), the cabinet
+    byte identical to the seat's candidate v1.08 before this entry and the stamp; CORE untouched, seal
+    intact (ENGINE_VER 1.14).
 v258: CRUMBLE TIMING IN THE EDITOR (the Director's pick, option b after BUILD 257). The embedded level editor
     is v61: the Level card's "Crumble fuse s" and "Crumble regrow s" boxes set a level's crumbleFuse and
     crumbleRegrow (blank keeps the game defaults, 0.45 s and 4 s; clamped to 0.1 to 3 s and 1 to 60 s). The
@@ -2381,14 +2415,14 @@ canvas#cv{image-rendering:pixelated;image-rendering:crisp-edges;background:#0b0b
 (function(){
 'use strict';
 /*==== FENCE:BUILD-STAMP:BEGIN ====*/
-var BUILD=258;
+var BUILD=262;
 /*==== FENCE:BUILD-STAMP:END ====*/
 /*==== FENCE:ENGINE-CORE:BEGIN ====*/
 /* the CABINET: one shared machine. Constants, canvas, the audio engine and this
    game's sound book (styles may register their own books later), and helpers.
    The BUILD stamp lives in the BUILD-STAMP region just above, outside every hashed
    span (09 law 9, v248): a build bump alone never reds the seal. */
-var ENGINE_VER='1.14';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239); v253: 1.12, MR. SPUD's charge strikes only the foe it hits; v254: 1.13, vertical CARRIERS; v257: 1.14, crumble tiles
+var ENGINE_VER='1.15';   // cabinet version: bumped by the ENGINE SEAT only, resealed via coreseal (v239); v253: 1.12, MR. SPUD's charge strikes only the foe it hits; v254: 1.13, vertical CARRIERS; v257: 1.14, crumble tiles; v260: 1.15, the node walker, the carrier draw opt-out and peek
   try{ if(typeof document!=='undefined'&&document) document.title='PATTY PANIC - BUILD '+BUILD; }catch(e){}
 /* ============ error reporter (first, per studio doctrine) ============ */
 var ERRMSG='';
@@ -3240,7 +3274,8 @@ function addCarrier(d){ var c={x:d.x0,y:d.y0,w:(d.w!=null?d.w:32),h:(d.h!=null?d
   x0:d.x0,y0:d.y0,x1:(d.x1!=null?d.x1:d.x0),y1:(d.y1!=null?d.y1:d.y0),
   per:Math.max(0.1,d.per||3),t:d.t||0,dir:1,dx:0,dy:0,
   gate:d.gate||null,spd:(d.spd>0?d.spd:CARRIER_SPD),r0:(d.r0!=null?d.r0:-1),r1:(d.r1!=null?d.r1:-1),row:-1,moving:false,clock:0,   /* v254: gated, row aware carriers */
-  onDepart:d.onDepart||null,onArrive:d.onArrive||null,onReset:d.onReset||null};
+  onDepart:d.onDepart||null,onArrive:d.onArrive||null,onReset:d.onReset||null,
+  draw:(d.draw!==false)};   /* v260: draw:false, a style that paints its own carrier (drawCarriers skips it) */
   if(c.gate){ c.t=0; c.row=c.r0; }   /* v254: a gated carrier starts at rest at end 0 */
   CARRIERS.push(c); return c; }
 function clearCarriers(){CARRIERS.length=0;}
@@ -3264,11 +3299,21 @@ function carrierGateStep(c,dt){
   c.clock+=dt; var want=c.gate(c)?1:0;
   if(!c.moving&&c.t===want){ c.dx=0; c.dy=0; return; }
   if(!c.moving){ carrierDepart(c); c.moving=true; c.row=-1; }
-  var len=Math.max(1,Math.sqrt((c.x1-c.x0)*(c.x1-c.x0)+(c.y1-c.y0)*(c.y1-c.y0))), st=c.spd*dt/len;
-  var nt=(want>c.t)?Math.min(want,c.t+st):Math.max(want,c.t-st);
+  var nt=carrierGateNext(c,want,dt);
   var nx=c.x0+(c.x1-c.x0)*nt, ny=c.y0+(c.y1-c.y0)*nt;
   c.t=nt; c.dx=nx-c.x; c.dy=ny-c.y; c.x=nx; c.y=ny;
   if(nt===want){ c.moving=false; c.row=want?c.r1:c.r0; carrierArrive(c); } }
+function carrierGateNext(c,want,dt){   /* v260: the one travel formula, shared by the step and the peek */
+  var len=Math.max(1,Math.sqrt((c.x1-c.x0)*(c.x1-c.x0)+(c.y1-c.y0)*(c.y1-c.y0))), st=c.spd*dt/len;
+  return (want>c.t)?Math.min(want,c.t+st):Math.max(want,c.t-st); }
+function carrierPeek(c,dt){   /* v260: where carrierGateStep will leave a gated carrier this tick, moving nothing and calling
+     no hook (the ECHO seat's ask: a rider's feet on this frame's slab). The gate sees the clock the step will see. Null
+     for an ungated carrier. */
+  if(!c||!c.gate)return null;
+  var q=Object.create(c); q.clock=c.clock+dt; var want=c.gate(q)?1:0;
+  if(!c.moving&&c.t===want)return {x:c.x,y:c.y,t:c.t,moving:false};
+  var nt=carrierGateNext(c,want,dt);
+  return {x:c.x0+(c.x1-c.x0)*nt,y:c.y0+(c.y1-c.y0)*nt,t:nt,moving:nt!==want}; }
 function carrierDepart(c){ for(var i=0;i<2;i++){ var pl=players[i];   /* a chef standing on it when it leaves rides it */
     if(pl&&pl.active&&!pl.dead&&!pl.onCarrier&&!pl.onLad&&!pl.air&&!(pl.jmpH>0)&&pl.row===c.row&&pl.x>=c.x&&pl.x<=c.x+c.w)pl.onCarrier=c; }
   if(c.onDepart)c.onDepart(c); }
@@ -3322,6 +3367,56 @@ function crumbleReset(){ for(var k in CRUMBLE_FUSE)delete CRUMBLE_FUSE[k]; tileC
 function crumbleFall(pl){ if(predGuard('crumbleFall'))return;   /* the dug cell under a chef: the spring's airborne fall (breakfall), landing alive on the floor below */
   var c=colOf(pl.x); pl.air=true; pl.breakfall=true; pl.softfall=true; pl.arise=false; pl.transit=0; pl.acol=c; pl.aspring=-1;
   pl.ay=rowYr(pl.row); pl.bfloor=floorAtOrBelow(c,pl.row+1); pl.onLad=false; pl.iceVx=0; pl.face='fall'; }
+/* v260 THE NODE WALKER (ENGINE_VER 1.15; the Studio Head's ruling MEMO-STUDIO-HEAD-WALKER-RULING-v1.00, option A, on
+   MEMO-ECHO-WALKER-COMMONS-PROPOSAL-v1.00). One step for a cartridge body that walks the shelf and ladder graph node to
+   node, {c,r,d,prog,want}: d the edge it is on (L R U D, or null at rest), prog the fraction of that edge walked, want the
+   stick. MUNCH MAZE, TEST KITCHEN and ECHO ESCAPE each carried a copy; this is the one copy, and the seal guards it.
+   The graph: a cell stands on a floor or on a ladder through it; a sideways edge needs both cells standing and a floor
+   under one of them (on and off a ladder sideways onto a shelf, never ladder to ladder through air); a vertical edge is
+   a ladder. nodeTick(e,o) takes the style's options:
+     pace(e,d)     px this tick along edge d (the one option required)
+     canGo(c,r,d)  the graph, nodeCanGo by default; a style with floors of its own (doors, drops, lifts) passes its own
+     reverse       a want opposite the travel turns back mid edge
+     stop          at a node the stick decides and a released stick stops (else the body rolls on while it can)
+     snap          with stop: released within this fraction of a node, stand on the node
+     carry         the overshoot past a node carries into the next edge (else it is dropped)
+     pick(e)       an AI's direction, when it has none and at every node
+     onArrive(e)   on reaching a node, before the next direction is chosen
+   e.hit is true on the tick the body reaches a node. nodeX and nodeY place it for drawing. nodewalktest holds it equal,
+   to the float and tick for tick, to the three copies it replaces as they shipped in BUILD 259. */
+var NODE_OPP={L:'R',R:'L',U:'D',D:'U'};
+function nodeStepOf(d){ return d==='L'?[-1,0]:d==='R'?[1,0]:d==='U'?[0,-1]:[0,1]; }
+function nodeEdgeLen(d){ return (d==='U'||d==='D')?RGAP:TW; }   /* rows are RGAP apart, columns TW */
+function nodeX(e){ var s=nodeStepOf(e.d||'R'); return (e.c+(e.d?s[0]*e.prog:0))*TW+8; }
+function nodeY(e){ var s=nodeStepOf(e.d||'R'); return rowYr(e.r+(e.d?s[1]*e.prog:0)); }
+function nodeLadThrough(c,r){ return !!(ladAt(c,r)||(r>0&&ladAt(c,r-1))); }
+function nodeStand(c,r){ return floorAt(r,c)||nodeLadThrough(c,r); }
+function nodeEdgeH(c,r,dc){ return nodeStand(c,r)&&nodeStand(c+dc,r)&&(floorAt(r,c)||floorAt(r,c+dc)); }
+function nodeEdgeV(c,r,dr){ return dr>0?ladAt(c,r):(r>0&&ladAt(c,r-1)); }
+function nodeCanGo(c,r,d){ if(d==='L')return nodeEdgeH(c,r,-1); if(d==='R')return nodeEdgeH(c,r,1);
+  if(d==='U')return nodeEdgeV(c,r,-1); if(d==='D')return nodeEdgeV(c,r,1); return false; }
+function nodeTick(e,o){
+  var go=o.canGo||nodeCanGo, s;
+  e.hit=false;
+  if(o.reverse&&e.d&&e.prog>0&&e.want===NODE_OPP[e.d]){   /* turn back mid edge: the far node becomes the origin */
+    s=nodeStepOf(e.d); e.c+=s[0]; e.r+=s[1]; e.d=e.want; e.prog=1-e.prog; e.want=null; }
+  if(o.stop){
+    if(e.prog===0)e.d=(e.want&&go(e.c,e.r,e.want))?e.want:null;
+    else if(o.snap&&!e.want&&e.prog<o.snap){ e.prog=0; e.d=null; return; }
+  } else {
+    if(!e.d||!go(e.c,e.r,e.d)){ if(e.prog===0)e.d=null; }
+    if(e.want&&go(e.c,e.r,e.want)&&e.prog===0)e.d=e.want;
+  }
+  if(!e.d&&o.pick)e.d=o.pick(e);
+  if(!e.d)return;
+  e.prog+=o.pace(e,e.d)/nodeEdgeLen(e.d);   /* a constant px pace on every edge */
+  if(e.prog>=1){ var over=e.prog-1; s=nodeStepOf(e.d); e.c+=s[0]; e.r+=s[1]; e.hit=true; e.prog=0;
+    if(o.onArrive)o.onArrive(e);
+    if(o.pick)e.d=o.pick(e);
+    else if(o.stop)e.d=(e.want&&go(e.c,e.r,e.want))?e.want:null;
+    else e.d=(e.want&&go(e.c,e.r,e.want))?e.want:(go(e.c,e.r,e.d)?e.d:null);
+    if(o.carry&&e.d)e.prog=over; }
+}
 /* v232: level-def platforms ride the CARRIERS service. movers:[[c0,r,c1,r,wCells?,perSec?]] */
 function syncCarriersFromLV(){ clearCarriers();
   if(!(LV&&LV.movers))return;
@@ -3339,7 +3434,7 @@ function carrierWalk(pl,IN,predictOnly){   /* v232: aboard a platform. It carrie
   if(pl.x<mn)pl.x=mn; if(pl.x>mx)pl.x=mx;
   if(!cc.moving&&floorAt(pl.row,colOf(pl.x)))pl.onCarrier=null;   /* ground under his feet: he is ashore */
 }
-function drawCarriers(){ for(var i=0;i<CARRIERS.length;i++){ var c=CARRIERS[i];
+function drawCarriers(){ for(var i=0;i<CARRIERS.length;i++){ var c=CARRIERS[i]; if(c.draw===false)continue;   /* v260: a style paints its own */
   var x=Math.round(c.x), y=Math.round(c.y);
   var tx0=Math.round(Math.min(c.x0,c.x1)), tx1=Math.round(Math.max(c.x0,c.x1))+c.w;
   for(var t=tx0;t<tx1;t+=6)R(t,y+2,2,1,'#2a3350');
@@ -7784,26 +7879,19 @@ function drawStyleRow(){ var ids=Object.keys(STYLES); if(!ids.length)return;
    walks the engine's floors-and-ladders graph via floorAt and ladAt, boards
    are the REAL Intellivision mazes, the muncher is the REAL chef, the ghosts
    are the REAL foe bodies, the sounds are the shipped book. It never writes
-   inside ENGINE CORE. Working title; the name is the Director's to change. */
+   inside ENGINE CORE. Working title; the name is the Director's to change.
+   v262: the muncher and the ghosts walk on CORE's node walker (nodeTick,
+   ENGINE_VER 1.15, the Studio Head's walker ruling); the copy here is deleted. */
 (function(){
 'use strict';
-var TW=16, S=null;
+var S=null;   // v262: TW is CORE's
 var BOARDS=[1,2];   // INTV_LEVELS indices: MAZE TWO, MAZE THREE
 var PERS=['chase','ambush','flighty','wander'], GTYPE=['w','y','g','p'];
 function boardDef(ix){ var d=JSON.parse(JSON.stringify(INTV_LEVELS[BOARDS[ix%BOARDS.length]])); d.bs=[]; return d; }
-function ladThrough(c,r){ return !!(ladAt(c,r)||(r>0&&ladAt(c,r-1))); }
-function stand(c,r){ return floorAt(r,c)||ladThrough(c,r); }
-function isNode(c,r){ return stand(c,r); }
-function edgeH(c,r,dc){ return stand(c,r)&&stand(c+dc,r)&&(floorAt(r,c)||floorAt(r,c+dc)); }   // v231: the game's real rule: mount and dismount SIDEWAYS onto a shelf beside the ladder; ladder to ladder air strafe stays forbidden
-function edgeV(c,r,dr){ return dr>0?ladAt(c,r):(r>0&&ladAt(c,r-1)); }
-function canGo(c,r,d){ if(d==='L')return edgeH(c,r,-1)&&isNode(c-1,r); if(d==='R')return edgeH(c,r,1)&&isNode(c+1,r);
-  if(d==='U')return edgeV(c,r,-1)&&isNode(c,r-1); if(d==='D')return edgeV(c,r,1)&&isNode(c,r+1); return false; }
-function stepOf(d){ return d==='L'?[-1,0]:d==='R'?[1,0]:d==='U'?[0,-1]:[0,1]; }
-function px(e){ var s=stepOf(e.d||'R'); return (e.c+ (e.d?s[0]*e.prog:0))*TW+8; }
-function py(e){ var s=stepOf(e.d||'R'); return rowYr(e.r+ (e.d?s[1]*e.prog:0)); }
+function isNode(c,r){ return nodeStand(c,r); }   // v262: CORE's graph (its canGo's isNode checks were implied by the edges)
 function nodesOf(){ var out=[]; for(var r=0;r<LV.rows;r++)for(var c=0;c<20;c++)if(isNode(c,r))out.push([c,r]); return out; }
 function mobileNodes(ns){ var out=[]; for(var i=0;i<ns.length;i++){ var c=ns[i][0],r=ns[i][1];
-  if(floorAt(r,c)&&(edgeH(c,r,-1)||edgeH(c,r,1)))out.push(ns[i]); } return out; }
+  if(floorAt(r,c)&&(nodeEdgeH(c,r,-1)||nodeEdgeH(c,r,1)))out.push(ns[i]); } return out; }
 function spawnPick(ns){ var fl=mobileNodes(ns), best=null,bs=-1e9;   // v230: a spawn must be able to WALK
   for(var i=0;i<fl.length;i++){ var s=fl[i][1]*100-Math.abs(fl[i][0]-10); if(s>bs){bs=s;best=fl[i];} }
   return best||ns[ns.length-1]; }
@@ -7834,15 +7922,15 @@ function arrive(e,isP){
       if(S.npel<=0){ S.lvl++; S.score+=500; sfx.plate(); loadBoard(S.lvl); return; } } }
 }
 function pickGhost(g){
-  var dirs=['L','R','U','D'].filter(function(d){return canGo(g.c,g.r,d);});
+  var dirs=['L','R','U','D'].filter(function(d){return nodeCanGo(g.c,g.r,d);});
   if(!dirs.length)return null;
   var back={L:'R',R:'L',U:'D',D:'U'}[g.d];
   var fwd=dirs.filter(function(d){return d!==back;}); if(fwd.length)dirs=fwd;
   var tx=S.p.c,ty=S.p.r;
-  if(g.pers==='ambush'){ var s=stepOf(S.p.d||'R'); tx+=s[0]*3; ty+=s[1]*3; }
+  if(g.pers==='ambush'){ var s=nodeStepOf(S.p.d||'R'); tx+=s[0]*3; ty+=s[1]*3; }
   if(g.pers==='wander'||(g.pers==='flighty'&&Math.random()<0.45))return dirs[Math.floor(Math.random()*dirs.length)];
   var best=dirs[0],bv=null;
-  for(var i=0;i<dirs.length;i++){ var st=stepOf(dirs[i]);
+  for(var i=0;i<dirs.length;i++){ var st=nodeStepOf(dirs[i]);
     var d2=Math.abs(g.c+st[0]-tx)+Math.abs(g.r+st[1]-ty);
     if(S.power>0)d2=-d2;
     if(bv===null||d2<bv){bv=d2;best=dirs[i];} }
@@ -7850,27 +7938,16 @@ function pickGhost(g){
 }
 function resetPositions(){ var keepPel=S.pel,keepPow=S.pow,keepN=S.npel;
   loadBoard(S.lvl); S.pel=keepPel; S.pow=keepPow; S.npel=keepN; }
-var OPP={L:'R',R:'L',U:'D',D:'U'};
-function edgeLen(d){ return (d==='U'||d==='D')?RGAP:TW; }   // v231: rows are 21px, cols 16px
-function tickEnt(e,spd,isP){
-  if(isP&&e.d&&e.prog>0&&e.want===OPP[e.d]){   // v230: mid-edge reversal, tap back and turn NOW
-    var rs=stepOf(e.d); e.c+=rs[0]; e.r+=rs[1]; e.d=e.want; e.prog=1-e.prog; e.want=null; }
-  if(!e.d||!canGo(e.c,e.r,e.d)){ if(e.prog===0)e.d=null; }
-  if(isP&&e.want&&canGo(e.c,e.r,e.want)&&(e.prog===0||e.want===e.d)){ if(e.prog===0)e.d=e.want; }
-  if(!e.d&&!isP){ e.d=pickGhost(e); }
-  if(!e.d)return;
-  e.prog+=spd*DT/edgeLen(e.d);   // v231: constant px per second on every edge
-  if(e.prog>=1){ var st=stepOf(e.d); e.c+=st[0]; e.r+=st[1]; e.prog=0;
-    arrive(e,isP);
-    if(isP){ e.d=(e.want&&canGo(e.c,e.r,e.want))?e.want:(canGo(e.c,e.r,e.d)?e.d:null); }
-    else { e.d=pickGhost(e); } }
+function walk(e,spd,isP){   // v262: CORE's nodeTick. The muncher turns back mid edge and rolls on; a ghost picks at every node
+  nodeTick(e,isP?{reverse:true,pace:function(){ return spd*DT; },onArrive:function(q){ arrive(q,true); }}
+                :{pace:function(){ return spd*DT; },pick:pickGhost,onArrive:function(q){ arrive(q,false); }});
   if(!isP&&(e.d==='L'||e.d==='R'))e.hdir=(e.d==='L')?-1:1;   // v252: a ghost faces its travel (MR. SPUD's lean and pupils read hdir)
 }
 registerStyle('pacman',{
   name:'MUNCH MAZE',
   start:function(lv){ reg(); S.lvl=lv|0; loadBoard(S.lvl); },
   stop:function(){ S=null; },
-  state:function(){ return {S:S,canGo:canGo,arrive:arrive,loadBoard:loadBoard,nodesOf:nodesOf}; },
+  state:function(){ return {S:S,canGo:nodeCanGo,arrive:arrive,loadBoard:loadBoard,nodesOf:nodesOf}; },
   update:function(){
     if(STATE!=='style'||!S)return;
     S.tick++;
@@ -7880,16 +7957,16 @@ registerStyle('pacman',{
     if(inp.h<0)S.p.want='L'; else if(inp.h>0)S.p.want='R';
     else if(inp.v<0)S.p.want='U'; else if(inp.v>0)S.p.want='D';
     var pspd=58+S.lvl*3;   // v231: px per second, matched to the chef's read
-    tickEnt(S.p,pspd,true); if(!S)return;   // loadBoard on a clear rebuilt state
+    walk(S.p,pspd,true); if(!S)return;   // loadBoard on a clear rebuilt state
     var pp=S.p;                                        // v231: drive the REAL chef animation
     if(pp.d==='L'||pp.d==='R'){ pp.onLad=false; pp.face='side'; pp.dir=(pp.d==='R')?1:-1; pp.anim++; }
     else if(pp.d==='U'||pp.d==='D'){ pp.onLad=true; pp.anim++; }
-    else { pp.onLad=ladThrough(pp.c,pp.r)&&!floorAt(pp.r,pp.c); if(!pp.onLad)pp.face='front'; }
+    else { pp.onLad=nodeLadThrough(pp.c,pp.r)&&!floorAt(pp.r,pp.c); if(!pp.onLad)pp.face='front'; }
     if(S.power>0)S.power-=DT;
     for(var i=0;i<S.gs.length;i++){ var g=S.gs[i];
       if(g.dead>0){ g.dead-=DT; if(g.dead<=0){ g.c=g.hc; g.r=g.hr; g.d=null; g.prog=0; } continue; }
-      tickEnt(g,(S.power>0?pspd*0.60:pspd*0.85),false);
-      if(Math.abs(px(g)-px(S.p))<7&&Math.abs(py(g)-py(S.p))<7){
+      walk(g,(S.power>0?pspd*0.60:pspd*0.85),false);
+      if(Math.abs(nodeX(g)-nodeX(S.p))<7&&Math.abs(nodeY(g)-nodeY(S.p))<7){
         if(S.power>0){ g.dead=3; S.score+=200; sfx.ride(); }
         else { S.lives--; sfx.crush();
           if(S.lives<0){ S.phase='over'; } else { resetPositions(); } return; } } }
@@ -7901,11 +7978,11 @@ registerStyle('pacman',{
       if(S.pow[k]){ if((S.tick>>4)&1)R(c*TW+6,rowYr(r)-9,4,4,'#fff3b0'); }
       else R(c*TW+7,rowYr(r)-8,2,2,'#ffd9a0'); }
     for(var i=0;i<S.gs.length;i++){ var g=S.gs[i]; if(g.dead>0)continue;
-      var gx=px(g),gy=py(g);
+      var gx=nodeX(g),gy=nodeY(g);
       if(S.power>0&&((S.power>2)||((S.tick>>3)&1)))R(gx-6,gy-16,12,16,'#2a3a8c');
       drawFoeBody(g,gx,gy,S.tick*0.25); }
-    S.p.x=px(S.p); S.p.row=S.p.r;
-    var _py=py(S.p); S.p.fy=_py; S.p.ly=_py;   // v231: ly feeds feetY while climbing: SMOOTH, not rung-snapped
+    S.p.x=nodeX(S.p); S.p.row=S.p.r;
+    var _py=nodeY(S.p); S.p.fy=_py; S.p.ly=_py;   // v231: ly feeds feetY while climbing: SMOOTH, not rung-snapped
     drawChef(S.p,0);
     T('SCORE '+S.score,6,14,10,'#cfe6f5','left',true);
     T('LIVES '+Math.max(0,S.lives),W-6,14,10,'#ffd23f','right',true);
@@ -7927,36 +8004,18 @@ registerStyle('pacman',{
    on a taller-than-screen board, two-way SHOTS with dummy and riding targets
    plus a turret, a MUTABLE TILES crumble strip with regrow, and a CARRIER
    under the v235 edge law. Real chef, real foe bodies, shipped sounds. The
-   walker is duplicated from MUNCH MAZE, marked for commons extraction. */
+   walker was duplicated from MUNCH MAZE; v261: it walks on CORE's node walker
+   (nodeTick, ENGINE_VER 1.15, the Studio Head's walker ruling), its copy deleted. */
 (function(){
 'use strict';
-var TW=16, S=null;
+var S=null;   // v261: TW is CORE's
 var BOARD={n:'TEST KITCHEN',R:26,
   gaps:[[1,0,19],[3,0,19],[5,0,19],[7,0,19],[9,0,19],[11,0,19],[13,0,19],[15,0,19],[17,0,19],[19,0,19],[21,0,19],[23,0,19],[25,0,19],[4,7,12]],
   lads:(function(){var L=[];for(var r=0;r<25;r++){L.push([1,r]);L.push([18,r]);}return L;})(),
   movers:[[7,4,10,4]],
   bs:[],foes:'',sp:1,resp:9,perch:[10,0]};
 var CRUMB_R=8, CRUMB_C0=5, CRUMB_C1=10;
-function ladThrough(c,r){ return !!(ladAt(c,r)||(r>0&&ladAt(c,r-1))); }
-function stand(c,r){ return floorAt(r,c)||ladThrough(c,r); }
-function edgeH(c,r,dc){ return stand(c,r)&&stand(c+dc,r)&&(floorAt(r,c)||floorAt(r,c+dc)); }
-function edgeV(c,r,dr){ return dr>0?ladAt(c,r):(r>0&&ladAt(c,r-1)); }
-function canGo(c,r,d){ if(d==='L')return edgeH(c,r,-1); if(d==='R')return edgeH(c,r,1);
-  if(d==='U')return edgeV(c,r,-1); if(d==='D')return edgeV(c,r,1); return false; }
-function stepOf(d){ return d==='L'?[-1,0]:d==='R'?[1,0]:d==='U'?[0,-1]:[0,1]; }
-function px(e){ var s=stepOf(e.d||'R'); return (e.c+(e.d?s[0]*e.prog:0))*TW+8; }
-function py(e){ var s=stepOf(e.d||'R'); return rowYr(e.r+(e.d?s[1]*e.prog:0)); }
-var OPP={L:'R',R:'L',U:'D',D:'U'};
-function edgeLen(d){ return (d==='U'||d==='D')?RGAP:TW; }
-function tickEnt(e,spd){
-  if(e.d&&e.prog>0&&e.want===OPP[e.d]){ var rs=stepOf(e.d); e.c+=rs[0]; e.r+=rs[1]; e.d=e.want; e.prog=1-e.prog; e.want=null; }
-  if(!e.d||!canGo(e.c,e.r,e.d)){ if(e.prog===0)e.d=null; }
-  if(e.want&&canGo(e.c,e.r,e.want)&&e.prog===0)e.d=e.want;
-  if(!e.d)return;
-  e.prog+=spd*DT/edgeLen(e.d);
-  if(e.prog>=1){ var st=stepOf(e.d); e.c+=st[0]; e.r+=st[1]; e.prog=0;
-    e.d=(e.want&&canGo(e.c,e.r,e.want))?e.want:(canGo(e.c,e.r,e.d)?e.d:null); }
-}
+var WALK={reverse:true,pace:function(){ return 62*DT; }};   // v261: CORE's nodeTick; TEST KITCHEN walks 62 px a second and may turn back mid edge
 function spawnChef(){ S.p.c=3; S.p.r=24; S.p.d=null; S.p.prog=0; S.p.want=null; }
 registerStyle('kitchen',{
   name:'TEST KITCHEN',
@@ -7971,27 +8030,27 @@ registerStyle('kitchen',{
     spawnChef();
   },
   stop:function(){ S=null; },
-  state:function(){ return {S:S,canGo:canGo,CRUMB:{r:CRUMB_R,c0:CRUMB_C0,c1:CRUMB_C1}}; },
+  state:function(){ return {S:S,canGo:nodeCanGo,CRUMB:{r:CRUMB_R,c0:CRUMB_C0,c1:CRUMB_C1}}; },
   update:function(){
     if(STATE!=='style'||!S)return;
     S.tick++; S.hintT+=DT; if(S.hintT>4){S.hintT=0;S.hintI=(S.hintI+1)%4;}
     var inp=gatherInput(0);
     if(inp.h<0)S.p.want='L'; else if(inp.h>0)S.p.want='R';
     else if(inp.v<0)S.p.want='U'; else if(inp.v>0)S.p.want='D';
-    if(!S.p.fall)tickEnt(S.p,62);
+    if(!S.p.fall)nodeTick(S.p,WALK);
     /* v238 THE DROP: lose the ground, lose your footing */
-    if(!S.p.fall&&S.p.prog===0&&!floorAt(S.p.r,S.p.c)&&!ladThrough(S.p.c,S.p.r)){
+    if(!S.p.fall&&S.p.prog===0&&!floorAt(S.p.r,S.p.c)&&!nodeLadThrough(S.p.c,S.p.r)){
       var fr=-1; for(var rr=S.p.r+1;rr<LV.rows;rr++)if(floorAt(rr,S.p.c)){fr=rr;break;}
       if(fr>=0){ S.p.fall={to:fr,y:rowYr(S.p.r)}; S.p.d=null; S.p.want=null; } }
     if(S.p.fall){ S.p.fall.y+=240*DT;
       if(S.p.fall.y>=rowYr(S.p.fall.to)){ S.p.r=S.p.fall.to; S.p.fall=null; sfx.land(); } }
-    var cx=px(S.p), cy=S.p.fall?S.p.fall.y:py(S.p);
+    var cx=nodeX(S.p), cy=S.p.fall?S.p.fall.y:nodeY(S.p);
     camFollow(cx,cy);
     if(inp.pep){ fireShot({x:cx+(S.p.dir>0?6:-6),y:cy-10,vx:(S.p.dir>0?150:-150),vy:0,team:'player',ttl:1.1,r:3}); sfx.pepper(); }
     if(S.p.fall){ S.p.face='fall'; S.p.onLad=false; }
     else if(S.p.d==='L'||S.p.d==='R'){ S.p.face='side'; S.p.dir=(S.p.d==='R')?1:-1; S.p.onLad=false; S.p.anim++; }
     else if(S.p.d==='U'||S.p.d==='D'){ S.p.onLad=true; S.p.anim++; }
-    else { S.p.onLad=ladThrough(S.p.c,S.p.r)&&!floorAt(S.p.r,S.p.c); if(!S.p.onLad)S.p.face='front'; }
+    else { S.p.onLad=nodeLadThrough(S.p.c,S.p.r)&&!floorAt(S.p.r,S.p.c); if(!S.p.onLad)S.p.face='front'; }
     /* crumble strip (v237 touch-and-burn): stepping on a cell LIGHTS ITS FUSE,
        and the fuse keeps burning after he leaves, so the floor falls BEHIND him */
     if(S.p.r===CRUMB_R&&S.p.c>=CRUMB_C0&&S.p.c<=CRUMB_C1&&floorAt(CRUMB_R,S.p.c)&&S.fuse[''+S.p.c]===undefined)S.fuse[''+S.p.c]=0;
@@ -8033,8 +8092,8 @@ registerStyle('kitchen',{
     drawFoeBody({type:'p'},16*TW+8,rowYr(10),0);
     for(i=0;i<SHOTS.length;i++){ var sh=SHOTS[i];
       R(Math.round(sh.x)-1,Math.round(sh.y)-1,3,3,(sh.team==='player')?'#ffd23f':'#ff7a5c'); }
-    S.p.x=px(S.p); S.p.row=S.p.r;
-    var _py2=S.p.fall?S.p.fall.y:py(S.p); S.p.fy=_py2; S.p.ly=_py2;
+    S.p.x=nodeX(S.p); S.p.row=S.p.r;
+    var _py2=S.p.fall?S.p.fall.y:nodeY(S.p); S.p.fy=_py2; S.p.ly=_py2;
     if(S.p.fall){ S.p.air=true; S.p.ay=_py2; }else{ S.p.air=false; }   /* v238: feetY rides a.ay while airborne */
     drawChef(S.p,0);
     if(S.p.fall){ S.p.air=false; }
@@ -8071,10 +8130,10 @@ registerStyle('kitchen',{
 (function(){
 'use strict';
 var TW=16, S=null;
-var ECHO_VER='v1.07';    // the cut badge (CLAUDE.md s9): a candidate's stamp reads its base BUILD, so the room card names the ECHO cut
+var ECHO_VER='v1.08';    // the cut badge (CLAUDE.md s9): a candidate's stamp reads its base BUILD, so the room card names the ECHO cut
 var WALK_PX_S=SPD*60;    // candidate v1.03: the cabinet's own SPD (0.92 px per tick), so the chef walks and cycles his legs exactly as in PATTY PANIC
 var CLIMB_PX_S=CLIMB*60; // and the cabinet's own CLIMB on ladders
-var LIFT_PX_S=42;        // one second per two rows: slow enough to watch, fast enough to plan around
+var LIFT_PX_S=42;        // one second per two rows: slow enough to watch, fast enough to plan around (v1.08: the CORE carrier's spd; CARRIER_SPD is the same 42)
 var FALL_PX_S=240;       // the v238 drop
 var TIME_MULT=100;       // score per loop second to spare at the exit
 var CLONE_BONUS=500;     // per unused channel
@@ -8188,7 +8247,7 @@ var ROOMS=[
             ['walk','R',17]]}
 ];
 /* ---- the walk graph (TEST KITCHEN copy, door and lift aware) ---- */
-function liftAt(c,r){ if(!S)return null; for(var i=0;i<S.lifts.length;i++){ var L=S.lifts[i]; if(L.row===r&&c>=L.c0&&c<=L.c1)return L; } return null; }
+function liftAt(c,r){ if(!S)return null; var k=carrierFloorAt(r,c); if(!k)return null; for(var i=0;i<S.lifts.length;i++){ if(S.lifts[i].car===k)return S.lifts[i]; } return null; }   // v1.08: a resting CORE carrier is the floor of its span (carrierFloorAt, ENGINE_VER 1.13)
 function inLiftSpan(L,c){ return c>=L.c0&&c<=L.c1; }
 function floorLike(r,c){ return floorAt(r,c)||!!liftAt(c,r); }
 function ladThrough(c,r){ return !!(ladAt(c,r)||(r>0&&ladAt(c,r-1))); }
@@ -8235,12 +8294,13 @@ function loadRoom(i){
   var rm=ROOMS[i]; if(!rm)return;
   S.ri=i; S.rm=rm; S.loopT=rm.loop*60; S.t=0; S.rec=null; S.recBuf=null; S.traj={}; S.ready=true; S.flash=0; S.win=null; S.tick=0; S.paused=false;
   S.doors=rm.doors.map(function(d){ return {c:d.c,r:d.r,by:d.by.slice(),latch:!!d.latch,latched:false,open:false,anim:0}; });
-  S.lifts=rm.lifts.map(function(l){ return {c0:l.c0,c1:l.c1,r0:l.r0,r1:l.r1,by:l.by.slice(),row:l.r1,y:rowYr(l.r1),moving:false}; });
+  S.lifts=[];   // v1.08: the lifts are CORE carriers, made after styleLoadLevel (which clears CARRIERS)
   S.exit={c:rm.exit.c,r:rm.exit.r,by:rm.exit.by.slice(),open:rm.exit.by.length===0,anim:(rm.exit.by.length===0)?1:0};   // an ungated exit starts open, silently
   S.held={};
   S.tint={}; for(var pi=0;pi<rm.plates.length;pi++)S.tint[rm.plates[pi].id]=WIRE[pi%WIRE.length];   // the wiring palette by plate order
   S.tut={i:0,note:null,noteUntil:-1};
   styleLoadLevel({n:rm.n,R:rm.R,gaps:rm.gaps,lads:rm.lads,bs:[],foes:'',sp:1,resp:9,perch:[0,0]});
+  S.lifts=rm.lifts.map(mkLift);
   placeAt(S.p,rm.start[0],rm.start[1]);
   /* vertical centering of small rooms in the band between the HUD and the message band */
   var top=null,bot=null;
@@ -8268,9 +8328,22 @@ function settleGates(){
   for(var k in H){ if(H[k]&&!S.held[k])sfx.plate(); }
   S.held=H;
 }
-/* ---- LIFTS: the lift is the floor wherever it rests; while it moves, neither row is
-        standable; a body standing on it when it leaves rides (the live chef, by physics;
-        an echo, by its recorded air frames). ---- */
+/* ---- LIFTS on CORE's vertical CARRIERS (v1.08; ENGINE_VER 1.13, the ECHO seat's capability memo, PATTY's mapping in
+        MEMO-ECHO-VERTICAL-CARRIERS-LANDED-v1.00). Each lift is a gated CORE carrier: end 0 (r0) is the lift's REST row,
+        end 1 (r1) its top. CORE ticks it once a frame after this style's update, at its spd; at rest it is the floor
+        of its span (carrierFloorAt); onDepart runs BEFORE the row clears (board before leave), onArrive after the new
+        row is set, onReset at the wrap (carrierReset). CORE carries only the legacy chef, so the region still boards,
+        lands and lifts its own walker, whose feet follow the slab (c.y). CORE also ticks while this cartridge is paused,
+        on its card or on its win card, where the old lifts stood still: liftPace sets spd 0 there, and the gate reads
+        the want settled in the last running frame, so a frozen lift neither moves nor departs. The lift object keeps
+        its v1.07 shape (c0,c1,r0,r1,by and row, y, moving, now read from and written to the carrier). ---- */
+function mkLift(l){ var L={c0:l.c0,c1:l.c1,r0:l.r0,r1:l.r1,by:l.by.slice(),want:false,car:null};
+  L.car=addCarrier({x0:l.c0*TW,y0:rowYr(l.r1),x1:l.c0*TW,y1:rowYr(l.r0),w:(l.c1-l.c0+1)*TW,r0:l.r1,r1:l.r0,spd:LIFT_PX_S,
+    gate:function(){ return L.want; }, onDepart:function(){ if(S)boardRiders(L); }, onArrive:function(){ if(S)landRider(L); }, onReset:function(){ if(S)resetRider(L); }});
+  Object.defineProperty(L,'row',{enumerable:true,get:function(){ return L.car.row; },set:function(v){ L.car.row=v; if(v===L.r0)L.car.t=1; else if(v===L.r1)L.car.t=0; }});   // a written row is an end: the carrier's t follows
+  Object.defineProperty(L,'y',{enumerable:true,get:function(){ return L.car.y; },set:function(v){ L.car.y=v; }});
+  Object.defineProperty(L,'moving',{enumerable:true,get:function(){ return L.car.moving; },set:function(v){ L.car.moving=!!v; }});
+  return L; }
 function boardRiders(L){
   var p=S.p; if(p.air||p.fall||p.lift)return;
   var s=p.d?stepOf(p.d):[0,0], tc=p.c+s[0], tr=p.r+s[1];
@@ -8280,20 +8353,14 @@ function boardRiders(L){
     else if(p.prog<0.5&&inLiftSpan(L,p.c)){ p.prog=0; p.d=null; ride(p,L); } }
 }
 function ride(p,L){ p.lift=L; p.air=true; p.ay=L.y; p.d=null; p.want=null; p.face='front'; p.onLad=false; sfx.ride(); }
-function tickLifts(){
-  for(var i=0;i<S.lifts.length;i++){ var L=S.lifts[i], want=allHeld(L.by,S.held)?L.r0:L.r1, ty=rowYr(want);
-    if(!L.moving&&L.row===want)continue;
-    if(!L.moving){ boardRiders(L); L.moving=true; L.row=-1; }   // board BEFORE the row is cleared, or nobody is ever standing on it
-    var dy=ty-L.y, stp=LIFT_PX_S*DT;
-    if(Math.abs(dy)<=stp){ L.y=ty; L.moving=false; L.row=want; if(S.p.lift===L){ S.p.r=want; S.p.air=false; S.p.ay=0; S.p.lift=null; sfx.land(); } }
-    else { L.y+=(dy>0?stp:-stp); if(S.p.lift===L)S.p.ay=L.y; } }
-}
-function resetLifts(){ var p=S.p;
-  for(var i=0;i<S.lifts.length;i++){ var L=S.lifts[i];
-    var onTop=(!p.air&&p.prog===0&&p.r===L.r0&&inLiftSpan(L,p.c));
-    L.row=L.r1; L.y=rowYr(L.r1); L.moving=false;
-    if(p.lift===L||onTop){ p.lift=null; p.air=false; p.ay=0; p.r=L.r1; p.d=null; p.want=null; } }   // a body on a lift rides the snap down at the wrap
-}
+function landRider(L){ var p=S.p; if(p.lift===L){ p.r=L.car.row; p.air=false; p.ay=0; p.lift=null; sfx.land(); } }   // onArrive: the carrier's row is already the new row
+function liftWants(){ for(var i=0;i<S.lifts.length;i++){ var L=S.lifts[i]; L.want=allHeld(L.by,S.held);   // after settleGates, as tickLifts read it
+    if(!L.car.moving&&L.car.t!==(L.want?1:0))boardRiders(L); } }   // a lift about to leave boards now, before the recorder, as v1.07 did (CORE's onDepart then finds its rider aboard)
+function slabNext(L){ var k={}, q; for(q in L.car)k[q]=L.car[q]; k.onDepart=null; k.onArrive=null; k.onReset=null; carrierGateStep(k,DT); return k.y; }   // where CORE leaves the slab after this frame: CORE's own step, run on a throwaway copy
+function liftPace(go){ for(var i=0;i<S.lifts.length;i++)S.lifts[i].car.spd=go?LIFT_PX_S:0; }
+function resetRider(L){ var p=S.p, onTop=(!p.air&&p.prog===0&&p.r===L.r0&&inLiftSpan(L,p.c));
+  if(p.lift===L||onTop){ p.lift=null; p.air=false; p.ay=0; p.r=L.r1; p.d=null; p.want=null; } }   // a body on a lift rides the snap down at the wrap
+function resetLifts(){ for(var i=0;i<S.lifts.length;i++)S.lifts[i].want=false; carrierReset(); }   // want cleared first: held plates settle again next frame, so no lift leaves on a stale want
 function tickFall(p){
   if(!p.fall&&!p.air&&!p.lift&&p.prog===0&&!stand(p.c,p.r)){
     var to=-1; for(var rr=p.r+1;rr<LV.rows;rr++){ if(floorLike(rr,p.c)){to=rr;break;} }
@@ -8373,6 +8440,7 @@ registerStyle('echo',{
   update:function(){
     if(STATE!=='style'||!S)return;
     S.tick++;
+    liftPace(!(S.win||S.paused||S.ready));   // v1.08: CORE ticks the carriers every frame; they stand still where the v1.07 lifts did
     if(S.flash>0)S.flash--;
     if(S.win){ gatherInput(0); return; }              // the overlay owns the frame; buttons drive it; input is drained, never queued into the next room
     var inp=gatherInput(0);
@@ -8393,9 +8461,10 @@ registerStyle('echo',{
     tickEchoes();
     /* plates, doors, the exit, then the lifts they drive, then the floor under the chef */
     settleGates();
-    tickLifts();
+    liftWants();   // v1.08: CORE moves the lifts after this update, toward these wants
     tickFall(pp);
     /* the recorder appends the live pose at this tick */
+    if(pp.lift)pp.ay=slabNext(pp.lift);   // v1.08: a rider's feet sit on the slab where CORE leaves it this frame (v1.07's order: move, then record)
     if(S.rec)S.recBuf.push(snap(pp));
     /* the win: the live chef standing in an open exit */
     if(S.exit.open&&reached(pp,S.exit.c,S.exit.r)){ winRoom(); tickTut(); return; }   // stepping into the open exit wins, still or rolling
@@ -8412,7 +8481,8 @@ registerStyle('echo',{
     if(!S)return;
     var i,j,k,e,x,y,c,tg;
     ctx.save(); ctx.translate(0,S.oy);
-    drawWorld();
+    var hid=CARRIERS.splice(0,CARRIERS.length);   // v1.08: the lifts are CORE carriers, but ECHO draws its own lift (drawLift): hide them from drawCarriers for this one call
+    try{ drawWorld(); } finally { for(var hi=0;hi<hid.length;hi++)CARRIERS.push(hid[hi]); }
     for(i=0;i<S.lifts.length;i++)drawLift(S.lifts[i]);
     /* wires under everything: plate to what it drives, lit while held */
     for(i=0;i<S.rm.plates.length;i++){ var pl=S.rm.plates[i], lit=!!S.held[pl.id], tn=S.tint[pl.id];
