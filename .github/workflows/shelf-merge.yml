@@ -1,16 +1,24 @@
-# shelf-merge.yml v1.00 | THE SHELF MERGE BOT (the snailcade half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's
+# shelf-merge.yml v1.01 | THE SHELF MERGE BOT (the snailcade half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's
 # answer "A" on studio issue 321, 2026-10-03; studio doc 13 section 15.2): when a pull request opens, moves or leaves draft,
-# and when started by hand, run .github/shelf/shelf-merge.js --sweep from main over every open pull request into main. With
+# every 15 minutes, and when started by hand, run .github/shelf/shelf-merge.js --sweep from main over every open pull request into main. With
 # `shelfmerge: on` in .github/shelf/AUTOPILOT.md it merges a claude/ branch that only adds versioned builds under
 # test/<slug>/ and starts the shelf bot (its own token starts no workflow, so it starts shelf-page.yml itself); with
 # `shelfmerge: off` it merges and comments nothing. pull_request_target runs this repository's main, never the pull request's
 # code: the bot checks out main and only reads each pull request with git (its file list and its builds' text), so a branch,
 # or a fork of this public repository, cannot change the rules it is judged by.
+# v1.01, THE SWEEP ON A CLOCK (the Director's word, 2026-10-04 06:44 UTC: "let's be consistent" with the studio's merge bot,
+#   mergebot.yml v1.01): a pull request one sweep passed over while it only waited (GitHub had not yet read whether it merges
+#   cleanly) gets no comment, and nothing ran the bot again until another pull request moved; the studio's SKYROADS 735 sat
+#   41 minutes that way. So it also sweeps every 15 minutes, off the hour (7, 22, 37 and 52 past; GitHub may start a
+#   scheduled run late, never early). A sweep with nothing to merge changes nothing, and a refused pull request is still
+#   commented once. This repository is public, so its scheduled runs use no paid Actions minutes.
 name: shelf merge
 on:
   pull_request_target:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
 permissions:
   contents: write
