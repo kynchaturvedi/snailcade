@@ -324,8 +324,8 @@ footer p { margin: 0; max-width: 70ch; }
 <footer>
   <div class="wrap">
     <span class="paid">PAID FOR BY THE COMMITTEE TO KEEP CLOUT ABOVE ZERO</span>
-    <p>Hail to the Clout is a Snail Attack Studios game. It is a parody and party neutral: the president is you, and every character, outlet and country in it is invented. Its numbers are tuned to real presidential history anyway.</p>
-    <p class="lbl" id="site-ver">SITE V1.01 · GAME BUILD V7.1</p>
+    <p>Hail to the Clout is a Snail Attack Studios game. It is a parody and party neutral: the president is you, every character, outlet and country in it is invented, and the lookalikes you can unlock are caricatures of presidents past. Its numbers are tuned to real presidential history anyway.</p>
+    <p class="lbl" id="site-ver">SITE V1.02 · GAME BUILD V7.2</p>
   </div>
 </footer>
 
@@ -663,6 +663,10 @@ var ART = (function () {
       case 'afro': H(6, 4, 12, 2); H(5, 6, 2, 6); H(17, 6, 2, 6); break;
       case 'quiff': H(9, 1, 6, 2); H(8, 3, 8, 1); H(7, 4, 10, 2); H(7, 6, 1, 2); H(16, 6, 1, 2); break;
       case 'bouffant': H(7, 1, 10, 2); H(5, 3, 14, 3); H(4, 6, 3, 8); H(17, 6, 3, 8); break;
+      /* v7.2: the lookalikes' hair */
+      case 'wig': H(8, 3, 8, 1); H(7, 4, 10, 2); H(7, 6, 1, 2); H(16, 6, 1, 2); px(c, 5, 8, 2, 2, hr); px(c, 17, 8, 2, 2, hr); px(c, 5, 11, 2, 2, hr); px(c, 17, 11, 2, 2, hr); px(c, 5, 10, 1, 1, shade(hr, 0.85)); px(c, 18, 10, 1, 1, shade(hr, 0.85)); px(c, 5, 13, 1, 1, shade(hr, 0.85)); px(c, 18, 13, 1, 1, shade(hr, 0.85)); break;
+      case 'parted': H(8, 3, 8, 1); H(7, 4, 10, 2); H(7, 6, 1, 2); H(16, 6, 1, 2); px(c, 10, 3, 1, 3, shade(sk, 1.05)); break;
+      case 'swept': H(8, 1, 7, 1); H(7, 2, 10, 2); H(6, 4, 12, 2); H(6, 6, 2, 3); H(16, 6, 2, 3); H(12, 6, 4, 1); px(c, 9, 2, 4, 1, shade(hr, 1.2)); break;
     }
     /* face */
     var eyeY = 9;
@@ -675,6 +679,8 @@ var ART = (function () {
       case 'frown': px(c, 10, 13, 4, 1, '#7a2a2a'); px(c, 9, 14, 1, 1, '#7a2a2a'); px(c, 14, 14, 1, 1, '#7a2a2a'); break;
       case 'open': px(c, 10, 13, 4, 2, '#5a1a1a'); px(c, 11, 14, 2, 1, '#c24a5a'); break;
       case 'smirk': px(c, 10, 14, 3, 1, '#7a2a2a'); px(c, 13, 13, 2, 1, '#7a2a2a'); break;
+      case 'teeth': px(c, 9, 13, 6, 2, '#7a2a2a'); px(c, 9, 13, 6, 1, '#ffffff'); px(c, 11, 13, 1, 1, '#e8e2d0'); break;
+      case 'beam': px(c, 8, 13, 8, 2, '#7a2a2a'); px(c, 9, 13, 6, 1, '#ffffff'); px(c, 7, 12, 1, 1, skd); px(c, 16, 12, 1, 1, skd); break;
       default: px(c, 10, 14, 4, 1, '#7a2a2a');
     }
     if (has('burn')) { px(c, 8, 12, 2, 1, '#ff7a6a'); px(c, 14, 12, 2, 1, '#ff7a6a'); }
@@ -702,6 +708,69 @@ var ART = (function () {
     if (has('epaulettes')) { px(c, 2, 20, 4, 1, '#f0b429'); px(c, 18, 20, 4, 1, '#f0b429'); }
     if (has('pin')) { px(c, 6, 21, 2, 1, '#d23a3a'); px(c, 6, 22, 2, 1, '#2f5bd3'); }
     if (has('bowtie')) { px(c, 10, 19, 1, 2, s.bow); px(c, 13, 19, 1, 2, s.bow); px(c, 11, 19, 2, 1, shade(s.bow, 0.8)); }
+    /* v7.2: the lookalikes' marks, and the presidents' */
+    if (has('jabot')) { px(c, 10, 19, 4, 4, '#ffffff'); px(c, 11, 20, 2, 1, '#e8e2d0'); px(c, 10, 22, 4, 1, '#e8e2d0'); }
+    if (has('chinbeard')) { px(c, 7, 12, 1, 3, hr); px(c, 16, 12, 1, 3, hr); px(c, 8, 14, 1, 2, hr); px(c, 15, 14, 1, 2, hr); px(c, 9, 16, 6, 1, hr); px(c, 9, 15, 1, 1, hr); px(c, 14, 15, 1, 1, hr); }
+    if (has('bigstache')) { var mc = s.stache || hr; px(c, 8, 12, 8, 1, mc); px(c, 7, 13, 2, 1, mc); px(c, 15, 13, 2, 1, mc); }
+    if (has('pincenez')) { var pc = '#2a2d40'; px(c, 8, 11, 3, 1, pc); px(c, 13, 11, 3, 1, pc); px(c, 11, 10, 2, 1, pc); px(c, 16, 11, 1, 4, '#f0b429'); }
+    if (has('roundspecs')) { var rc = '#2a2d40'; [8, 12].forEach(function (x) { px(c, x + 1, 8, 2, 1, rc); px(c, x + 1, 11, 2, 1, rc); px(c, x, 9, 1, 2, rc); px(c, x + 3, 9, 1, 2, rc); }); px(c, 7, 9, 1, 1, rc); px(c, 16, 9, 1, 1, rc); }
+    if (has('stovepipe')) { px(c, 8, 0, 8, 4, '#141418'); px(c, 8, 3, 8, 1, '#3a3d52'); px(c, 6, 4, 12, 1, '#141418'); px(c, 9, 0, 1, 3, '#2a2d40'); }
+    if (has('cape')) { px(c, 2, 19, 6, 5, s.cape); px(c, 16, 19, 6, 5, s.cape); px(c, 1, 21, 1, 3, s.cape); px(c, 22, 21, 1, 3, s.cape); px(c, 8, 19, 1, 1, '#f0b429'); px(c, 15, 19, 1, 1, '#f0b429'); }
+    if (has('stars')) { [3, 5, 18, 20].forEach(function (x) { px(c, x, 20, 1, 1, '#f0b429'); }); px(c, 4, 21, 1, 1, '#f0b429'); px(c, 19, 21, 1, 1, '#f0b429'); }
+    if (has('square')) { px(c, 16, 21, 2, 1, '#f0b429'); px(c, 16, 22, 1, 1, '#ffe08a'); }
+  }
+  /* v7.2: a lookalike still to be earned draws as a shadow */
+  function silhouette(canvas) {
+    var c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
+    px(c, 0, 0, 24, 24, '#2a2d40');
+    var d = '#141726';
+    px(c, 3, 20, 18, 4, d); px(c, 2, 21, 20, 3, d); px(c, 10, 16, 4, 4, d);
+    px(c, 9, 4, 6, 1, d); px(c, 8, 5, 8, 1, d); px(c, 7, 6, 10, 9, d); px(c, 8, 15, 8, 1, d);
+    px(c, 11, 8, 2, 1, '#5a5f78'); px(c, 13, 9, 1, 2, '#5a5f78'); px(c, 12, 11, 1, 1, '#5a5f78'); px(c, 12, 13, 1, 1, '#5a5f78');
+  }
+
+  /* ---------- v7.2: presidents ----------
+     A face record from the engine (E.faceOf: part numbers) becomes a CAST entry here, dressed by the president's origin.
+     The engine reads these lists by index in this order (skin SK, hair color, hair style, mouth, tie): change them with
+     its FACE_N and OKAFOR_KEY. No tie is red or blue: nothing on a president reads as a party color. */
+  var PRES_HAIR = ['#161616', '#3a3a3a', '#5a3620', '#8a5a2a', '#c4622d', '#e8d070', '#cfcfcf', '#8a2e1a', '#6b3f22'];
+  var PRES_HS = ['short', 'crop', 'bob', 'long', 'pony', 'bun', 'bald', 'slick', 'messy', 'curly', 'afro', 'quiff'];
+  var PRES_MOUTH = ['smile', 'grin', 'flat', 'smirk'];
+  var PRES_TIE = ['#f0b429', '#37a85a', '#8a3fd0', '#8a8fa8'];
+  /* the origin dresses the person: Career Politician a navy suit and flag pin, Celebrity a loud color and shades, Tycoon
+     black with gold, General a uniform and medals; a new VP wears the VP's suit */
+  var DRESS = {
+    pol: function (s, t) { s.jacket = '#232e66'; s.shirt = '#f7f3e6'; s.tie = t; s.acc.push('pin'); s.bg = '#b9d8ff'; },
+    celeb: function (s, t, f) { s.jacket = ['#8a3fd0', '#ff6fae', '#2bb3a3', '#e0782a'][f ? f.t : 0]; s.shirt = s.jacket; s.open = true; s.acc = s.acc.filter(function (a) { return a !== 'glasses'; }); s.acc.push('shades'); s.bg = '#ffcf7a'; },
+    tycoon: function (s) { s.jacket = '#141726'; s.shirt = '#f7f3e6'; s.tie = '#f0b429'; s.acc.push('square'); s.bg = '#f7f3e6'; },
+    gen: function (s) { s.jacket = '#4a5a2e'; s.shirt = '#c9c6a0'; s.tie = '#2a3318'; s.acc.push('medals'); s.bg = '#c9c6bd'; },
+    vp: function (s, t) { s.jacket = '#1d2a57'; s.shirt = '#f7f3e6'; s.tie = t; s.acc.push('pin'); s.bg = '#e8dcae'; }
+  };
+  /* the lookalikes: caricatures of historical presidents, unnamed (the Director's answer A on issue 511) */
+  var LOOKS = {
+    founder:    { skin: SK[0], hair: '#f2f0ea', hs: 'wig', acc: ['jabot'], jacket: '#2b2f4a', shirt: '#f7f3e6', mouth: 'flat', bg: '#e8dcae' },
+    stovepipe:  { skin: SK[1], hair: '#161616', hs: 'crop', acc: ['stovepipe', 'chinbeard', 'bowtie'], bow: '#10131f', jacket: '#141726', shirt: '#f7f3e6', mouth: 'flat', bg: '#c9c6bd' },
+    roughrider: { skin: SK[0], hair: '#6b3f22', hs: 'short', acc: ['pincenez', 'bigstache'], jacket: '#7a5a3a', shirt: '#f7f3e6', tie: '#141726', mouth: 'teeth', bg: '#f0b429' },
+    camelot:    { skin: SK[0], hair: '#8a4a1e', hs: 'swept', acc: [], jacket: '#232e66', shirt: '#f7f3e6', tie: '#141726', mouth: 'teeth', bg: '#ffcf7a' },
+    fireside:   { skin: SK[0], hair: '#bdbdbd', hs: 'slick', acc: ['pincenez', 'cape'], cape: '#1d2a57', jacket: '#3a3d52', shirt: '#f7f3e6', tie: '#5a5f78', mouth: 'smile', bg: '#9cc8ff' },
+    buckstops:  { skin: SK[0], hair: '#cfcfcf', hs: 'parted', acc: ['roundspecs', 'bowtie'], bow: '#8a3fd0', jacket: '#5a5f78', shirt: '#f7f3e6', mouth: 'smile', bg: '#e8dcae' },
+    fivestar:   { skin: SK[0], hair: '#e8d8b0', hs: 'bald', acc: ['stars'], jacket: '#4a5a2e', shirt: '#c9c6a0', tie: '#2a3318', mouth: 'beam', bg: '#c9c6bd' }
+  };
+  /* the default face, "The President", for the Daily, the Campaign and Training: silver hair no dealt face has */
+  var DEFAULT_FACE = { skin: SK[2], hair: '#9aa0aa', hs: 'slick', mouth: 'smile', acc: [] };
+  function president(f, dress) {
+    f = f || { k: 'default' }; dress = DRESS[dress] ? dress : 'pol';
+    var id = 'pr-' + (f.k === 'face' ? [f.sk, f.hc, f.hs, f.m, f.g, f.t].join('') : f.k === 'lk' ? 'lk-' + f.id : f.k) + '-' + dress;
+    if (CAST[id]) return id;
+    var spec;
+    if (f.k === 'lk' && LOOKS[f.id]) spec = JSON.parse(JSON.stringify(LOOKS[f.id]));
+    else if (f.k === 'okafor') { spec = JSON.parse(JSON.stringify(CAST.vp)); if (dress !== 'vp') spec.bg = '#b9d8ff'; }
+    else {
+      spec = f.k === 'face' ? { skin: SK[f.sk], hair: PRES_HAIR[f.hc], hs: PRES_HS[f.hs], mouth: PRES_MOUTH[f.m], acc: f.g ? ['glasses'] : [] } : JSON.parse(JSON.stringify(DEFAULT_FACE));
+      DRESS[dress](spec, PRES_TIE[f.k === 'face' ? f.t : 0], f.k === 'face' ? f : null);
+    }
+    CAST[id] = spec;
+    return id;
   }
 
   /* ---------- icons (8x8, currentColor) ---------- */
@@ -792,7 +861,8 @@ var ART = (function () {
     CAST[id] = spec;
     return id;
   }
-  return { PAL: PAL, drawScene: drawScene, portrait: portrait, icon: icon, face: face, SCENES: SCENES, CAST: CAST, text: text, px: px, ell: ell, applicant: applicant };
+  return { PAL: PAL, drawScene: drawScene, portrait: portrait, icon: icon, face: face, SCENES: SCENES, CAST: CAST, text: text, px: px, ell: ell, applicant: applicant,
+    president: president, silhouette: silhouette, LOOKS: LOOKS, PRES_HAIR: PRES_HAIR, PRES_HS: PRES_HS, PRES_MOUTH: PRES_MOUTH, PRES_TIE: PRES_TIE, SK: SK, DRESS: DRESS };
 })();
 /* ===== ART END ===== */
 
@@ -800,7 +870,7 @@ var ART = (function () {
 <script>
 (function () {
   const A = ART, $ = (id) => document.getElementById(id);
-  const HL = ["PRESIDENT: 'BIGGEST CROWD EVER'", "PRESIDENT LAUNCHES $CLOUT COIN", "PRESIDENT'S FACE ON HOT SAUCE", "PRESIDENT FEUDS WITH COMEDIAN AT 3 AM", "PRESIDENT EATS THE PARDON TURKEY", "PRESIDENT HANDS HECKLER THE MIC", "REBATE CHECKS HIT MAILBOXES", "PRESIDENT FIRES POLLSTER", "PRESIDENT FUNDRAISES AS TOWN FLOODS", "CYBER WAR WITH RIVALIA", "PRESIDENT PLAYS HARDBALL ON CHEESE", "BROTHER IN LAW NAMED AMBASSADOR", "CABINET SHAKE UP AT WHITE HOUSE", "PRESIDENT POSES WITH UNFLATTERING MURAL", "COOLING CENTERS OPEN NATIONWIDE", "PRESIDENT BLAMES STATES FOR BRIDGE", "PRESIDENT ORDERS AIRBAG RECALL", "PRESIDENT: 'IT IS A BIT DAMP'", "PRESIDENT HIRES NIECE", "CANAL CASE SETTLED", "WHITE HOUSE KEPT ASTEROID QUIET", "PRESIDENT DOES MATTRESS AD", "PRESIDENT LAUGHS OFF TELEPROMPTER FLUB", "PRESIDENT STUMPS IN SPECIAL ELECTION", "GET OUT THE VOTE BLITZ", "PRESIDENT DOUBLES DOWN ON TAPE", "BOT FARM SHUT DOWN", "PRESIDENT BACKS A FRESH FACE", "PRESIDENT SWAPS CABINET PICK", "MOTORCADE STRANDS SCHOOL BUS", "PRESIDENT: EGGS ARE '40 CENTS'", "NEW PRESIDENT VOWS TO UNITE THE COUNTRY", "PRESIDENT PLAYS TO THE HOME CROWD", "REELECTION CAMPAIGN LAUNCHES WITH A BANG", "PRESIDENT TAPS THE OIL RESERVE", "FEDS FLOOD THE COAST WITH AID", "PENTAGON GETS THE GADGETS", "LOOPHOLES SURVIVE IN TAX BILL", "THE GREAT SEA WALL BEGINS", "PRESIDENT'S FACE ON THE MOON", "PRESIDENT DRINKS HIS OWN LATTE", "PRESIDENT BACKS RANDY RECOUNT", "PRESIDENT MEETS KROV'S SON IN SECRET"];
+  const HL = ["PRESIDENT: 'BIGGEST CROWD EVER'", "PRESIDENT LAUNCHES $CLOUT COIN", "PRESIDENT'S FACE ON HOT SAUCE", "PRESIDENT FEUDS WITH COMEDIAN AT 3 AM", "PRESIDENT EATS THE PARDON TURKEY", "PRESIDENT HANDS HECKLER THE MIC", "REBATE CHECKS HIT MAILBOXES", "PRESIDENT FIRES POLLSTER", "PRESIDENT FUNDRAISES AS TOWN FLOODS", "CYBER WAR WITH RIVALIA", "PRESIDENT PLAYS HARDBALL ON CHEESE", "BROTHER IN LAW NAMED AMBASSADOR", "CABINET SHAKE UP AT WHITE HOUSE", "PRESIDENT POSES WITH UNFLATTERING MURAL", "COOLING CENTERS OPEN NATIONWIDE", "PRESIDENT BLAMES STATES FOR BRIDGE", "PRESIDENT ORDERS AIRBAG RECALL", "PRESIDENT: 'IT IS A BIT DAMP'", "PRESIDENT HIRES NIECE", "CANAL CASE SETTLED", "WHITE HOUSE KEPT ASTEROID QUIET", "PRESIDENT DOES MATTRESS AD", "PRESIDENT LAUGHS OFF TELEPROMPTER FLUB", "PRESIDENT STUMPS IN SPECIAL ELECTION", "GET OUT THE VOTE BLITZ", "PRESIDENT DOUBLES DOWN ON TAPE", "BOT FARM SHUT DOWN", "PRESIDENT BACKS A FRESH FACE", "PRESIDENT SWAPS CABINET PICK", "MOTORCADE STRANDS SCHOOL BUS", "PRESIDENT: EGGS ARE '40 CENTS'", "NEW PRESIDENT VOWS TO UNITE THE COUNTRY", "PRESIDENT PLAYS TO THE HOME CROWD", "REELECTION CAMPAIGN LAUNCHES WITH A BANG", "PRESIDENT TAPS THE OIL RESERVE", "FEDS FLOOD THE COAST WITH AID", "PENTAGON GETS THE GADGETS", "LOOPHOLES SURVIVE IN TAX BILL", "THE GREAT SEA WALL BEGINS", "PRESIDENT'S FACE ON THE MOON", "PRESIDENT DRINKS OWN LATTE", "PRESIDENT BACKS RANDY RECOUNT", "PRESIDENT MEETS KROV'S SON IN SECRET"];
   const WHO = {"chief": {"n": "DANA", "r": "Chief of Staff", "t": "Thousands of protesters are outside the gates. They brought drums."}, "press": {"n": "MARCUS", "r": "Press Secretary", "t": "A fan made an AI image of you as a muscled superhero. Post it?"}, "camp": {"n": "RITA", "r": "Campaign Manager", "t": "Your base is begging for a big rally in the heartland."}, "bil": {"n": "RANDY", "r": "Brother in Law", "t": "Randy wants to sell 'Commander in Chili' hot sauce with your face on it."}, "crypto": {"n": "CHAD", "r": "Crypto Guy", "t": "Chad wants to launch $CLOUT, your official meme coin. 'Number go up.'"}, "gen": {"n": "GEN. STONE", "r": "Joint Chiefs", "t": "Rivalia shot down one of our drones."}, "counsel": {"n": "ESTHER", "r": "White House Counsel", "t": "Your old campaign aide was convicted. He's asking for a pardon."}, "anchor": {"n": "VIV STEELE", "r": "Anchor, Away Team News", "t": "Viv Steele of Away Team News wants a live sit down. Nothing off limits."}, "rival": {"n": "MARSHAL KROV", "r": "Ruler of Rivalia", "t": "Marshal Krov invites you to a peace summit. Cameras everywhere."}, "poll": {"n": "PRIYA", "r": "Pollster", "t": "Priya says your numbers are soft. Like, pudding soft."}};
   const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
