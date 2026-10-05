@@ -1,0 +1,2847 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!-- ==================== PORTAL ADAPTER FENCE : BEGIN ====================
+     Per-title metadata and platform SDK hooks live inside this fence ONLY.
+     Portal SDK script tags (Poki, CrazyGames, Telegram, Discord) are added
+     here and wired through the PORTAL object in the script below. Nothing
+     outside the fences may depend on a portal being present.                -->
+<meta property="og:title" content="TAP ATTACK : a Snail Attack Studios bar">
+<meta property="og:description" content="Pour it. Slide it. Catch the empties. Two bartenders, six bars, one last call.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TAP ATTACK : a Snail Attack Studios bar">
+<meta name="twitter:description" content="Pour it. Slide it. Catch the empties. Two bartenders, six bars, one last call.">
+<!-- ==================== PORTAL ADAPTER FENCE : END   ==================== -->
+<title>TAP ATTACK v1.05 : BUILD 6</title>
+<style>
+html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden;}
+body{display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#07060c;touch-action:none;
+       -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+#fs{position:fixed;top:calc(6px + env(safe-area-inset-top));right:calc(6px + env(safe-area-inset-right));
+    z-index:9;border:1px solid #2a4a6a;background:#0a1a2ccc;color:#9ecbff;
+    padding:7px 9px;font:bold 11px monospace;border-radius:4px;user-select:none;cursor:pointer;}
+</style>
+</head>
+<body>
+<canvas id="cv" width="640" height="880"></canvas>
+<div id="fs">FULLSCREEN</div>
+<script>
+/* =============================================================================
+   TAP ATTACK v1.05 | Snail Attack Studios | 2026-09-30 | var BUILD=6
+   -----------------------------------------------------------------------------
+   An homage to Bally Midway's TAPPER (1983) in the studio's arcade style: four
+   bars, patrons pushing toward the taps, full mugs sliding out, empties sliding
+   back. Up and down move between bars (wrapping, like the original); ONE
+   button pours (hold) and slides (release). Six venues of three rounds and a
+   SHAKE UP bonus game, seven patron types, six hazards, five bartenders with
+   their own stats and perks, a local high score board, and two player online
+   co-op over SNAIL-NETCODE (host authority, queue mode).
+   -----------------------------------------------------------------------------
+   CHANGELOG (embedded; append-only; one entry per build, written for a future
+   developer):
+   v1.00 (2026-09-25) FIRST LIGHT. Copied from studio-seed-v1.05 per doctrine
+        07 (error reporter first, 640x880 logical grid per doc 11, device-sized
+        backing store, closed-loop fit, fullscreen, audio behind a gesture,
+        catch-up ceiling, fold survival, portal fence, SNAILNET slot, HOOK).
+        Not a grid-arcade family title (no walk graph, no ladders: four lanes
+        and a fixed tap end), so it starts from the SEED per 09 section 7.
+        Seed section 3 replaced by the verb map: MOVE UP / MOVE DOWN edges and
+        ONE held BUTTON; touch through a drawn control deck (UP, DOWN, POUR)
+        plus vertical swipes; setInput(l,r,u,d,a) kept as the harness shim.
+        Seed section 5 replaced by the game. THE ONE PRIMARY ECONOMY: THE TAB
+        (score). Pour law: hold fills the mug under that bar's tap; release at
+        or past the FULL line slides it; release inside the gold HEAD band is
+        a PERFECT pour; holding into the foam past the band is SLOPPY; release
+        below FULL keeps the half mug under that tap (TOP OFF). Lives go on a
+        full mug hitting the door, an empty falling off the tap end, or a
+        patron reaching the taps. Commons adopted verbatim: SNAIL AUDIO KIT
+        core and the GRID GRUDGE music engine (bound to the kit instance), the
+        FEEL PACK core, SNAIL-NETCODE v1.00. Gates: the seed chain adapted to
+        these verbs plus pourtest, bartest, stagetest, boardtest, looptest.
+   v1.01 (2026-09-29) BUILD 2, THE POUR THAT CANNOT BE GAMED. From the
+        Director's first phone pass and his rulings. Letting go always
+        throws: below FULL the mug flies SHORT and any patron sends it back
+        (catch it, no points); a tap below SHORT_MIN pours out; walking away
+        mid-pour pours the mug out (TOP OFF retired, no tap keeps a half
+        mug). SLOPPY now costs: SLOP_V slide, SLOP_PUSH shove, a slick spill
+        on the pourer's own bar for WET_T, and HAPPY HOUR emptied as before.
+        Every STREAK_N-th PERFECT in a row pays PTS_STREAK more. SHELLY's
+        second perk: her mugs shove SHELLY_PUSH farther (her bot red).
+   v1.02 (2026-09-30) BUILD 3, PERFECT HARDER. The Director's BUILD 2 phone
+        pass: a SHORT pour came back drawn full inside a red box. A sent-back
+        mug now keeps the level it went out with and carries a red arrow
+        toward the taps instead of the box. THE POUR YOU CAN SEE (his next
+        pass: the beer filling up and the measuring bar were hard to see):
+        the glass under the tap is bigger and drawn in front of the
+        bartender; the meter is a tall tube of beer with a pointer, the gold
+        band bracketed and glowing while you are in it; the meter and the
+        POUR ring share one scale that zooms the head, and the ring shows the
+        gold band and the spill zone at full brightness with a needle.
+        PERFECT harder, his pick of the five POUR FEEL options (2026-09-30):
+        B NARROW, every gold band 40% narrower at the same pour speed
+        (PEARL's window 177 ms, was 294). And between rounds the game waits:
+        ROUND CLEAR holds until either player presses POUR (a 1.2 s guard
+        first), instead of moving straight on to the next round.
+   v1.03 (2026-09-30) BUILD 4, THE FRAME BUDGET. The Director: "is the game
+        slowing down when I play? Can you implement an FPS counter in debug
+        and check yourself". Measured in Chromium at phone speed (CPU x4)
+        with the scripted bartender playing: the game's own work is about 2
+        ms a frame and nothing grows over a game, but on a 3x screen the
+        canvas was 1920x2640, painted whole every frame, 2.4x the pixels a
+        412-wide phone shows: 34 to 37 frames a second. The backing store is
+        now capped at 2x (doc 11 s3, "capped sanely ... for fill-rate"):
+        58 to 59. With ?debug=1 a line under the HUD shows the frames a
+        second, the work a frame costs, the slowest frame of the last half
+        second, the backing scale, and CLOCK BEHIND when frames come too
+        slow for the fixed step to keep up (the game then runs slow).
+   v1.04 (2026-09-30) BUILD 5, THE FEEL PACK SWAP. Doc 08 v1.04: a pack
+        draws randomness only through its own handle, and a title may
+        paste the core byte for byte under a marker. The FEEL core is
+        pack v1.06's (the same bytes as the one pasted from v1.04), now
+        under that marker, and its handle, FEEL.state._rnd, is handed a
+        cosmetic generator of the game's own (fxr): the sparks and the
+        shake used to draw Math.random; now nothing they draw can touch
+        the game's dice. No rule moves: the bot suite plays v1.03's report
+        row for row. A new gate, feeltest, proves the paste and the hand-off.
+   v1.05 (2026-09-30) BUILD 6, THE DIRECTOR'S PHONE NOTES. A POUR held as
+        a round starts (the press that continued past ROUND CLEAR or the
+        venue card, still down) no longer pours: it is latched until let
+        go, so no mug slides down an empty bar to the door; the same after
+        a mishap. PERFECT a bit easier: every gold band is BUILD 2's x0.75
+        (BUILD 3's POUR FEEL B was x0.6), the pour speed unchanged (PEARL's
+        window 221 ms, was 177). The pour meter shows only while a bartender
+        stands at the tap: FIZZ's HOT STREAK glass waits without one.
+   ============================================================================= */
+(function(){
+'use strict';
+var BUILD=6;                              // integer line for the hook; VER is the stamp of record
+var VER='1.05';                           // Director's law: v + x.yz in notes and filename
+
+/* ---- 1. ERROR REPORTER (always first; doctrine 07). Crashes become
+        photographable: the ERR line draws LAST, above everything. ---- */
+var lastError=null, ERRMSG='';
+function reportErr(site,e){ lastError=String(site)+': '+(e&&e.message?e.message:String(e)); ERRMSG='ERR: '+lastError; }
+
+/* ---- 2. SHELL: canvas, integer scaler, fullscreen (seed v1.05, verbatim) ---- */
+var W=640,H=880;                              // RESOLUTION LAW (doc 11 s3): 16/32-bit class grid
+var cv=(typeof document!=='undefined')?document.getElementById('cv'):null;
+var ctx=(cv&&cv.getContext)?cv.getContext('2d'):null;
+var DPR=1, DEV_DPR=1;
+function applyBacking(){
+  var d=(typeof window!=='undefined'&&window.devicePixelRatio)?window.devicePixelRatio:1;
+  DEV_DPR=d; DPR=Math.max(1,Math.min(2,d));   // BUILD 4: capped at 2 for fill-rate (doc 11 s3): at 3 a phone painted 1920x2640 a frame, 2.4x what its screen shows
+  if(cv){ cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); }
+  if(ctx){ if(ctx.setTransform)ctx.setTransform(DPR,0,0,DPR,0,0);
+           ctx.imageSmoothingEnabled=false; }
+}
+applyBacking();
+function viewSize(){
+  var vw=window.innerWidth, vh=window.innerHeight;
+  try{ if(window.visualViewport){
+    vw=Math.min(vw,window.visualViewport.width);
+    vh=Math.min(vh,window.visualViewport.height); }
+  }catch(e){}
+  try{ if(document.body&&document.body.clientWidth){
+    vw=Math.min(vw,document.body.clientWidth);
+    if(document.body.clientHeight)vh=Math.min(vh,document.body.clientHeight); }
+  }catch(e){}
+  return {w:vw,h:vh};
+}
+function computeScale(vw,vh){
+  var s=Math.min(vw/W,vh/H);
+  if(s>=2)s=Math.floor(s); if(s<0.25)s=0.25;
+  return s;
+}
+function fitScale(){
+  if(!cv||!cv.style||typeof window==='undefined')return;
+  var v=viewSize(), s=computeScale(v.w,v.h);
+  for(var i=0;i<8;i++){
+    cv.style.width=Math.floor(W*s)+'px';
+    cv.style.height=Math.floor(H*s)+'px';
+    var r=cv.getBoundingClientRect?cv.getBoundingClientRect():null;
+    if(!r||!r.width||r.bottom===undefined)break;
+    var vw=window.innerWidth, vh=window.innerHeight;
+    try{ if(window.visualViewport){ vw=Math.min(vw,window.visualViewport.width);
+         vh=Math.min(vh,window.visualViewport.height); } }catch(e){}
+    if(r.bottom<=vh+0.5&&r.right<=vw+0.5)break;
+    if(s<=0.25)break;
+    s=(s>2)?(s-1):(s*0.9); if(s<0.25)s=0.25;
+  }
+  applyBacking();
+}
+function settleFit(){
+  fitScale();
+  setTimeout(fitScale,150); setTimeout(fitScale,450); setTimeout(fitScale,1000);
+}
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('resize',fitScale);
+  window.addEventListener('orientationchange',function(){ settleFit(); });
+  window.addEventListener('pageshow',function(){ settleFit(); });
+  try{ if(window.visualViewport&&window.visualViewport.addEventListener)
+    window.visualViewport.addEventListener('resize',fitScale); }catch(e){}
+}
+if(typeof document!=='undefined'&&document.addEventListener)
+  document.addEventListener('fullscreenchange',function(){ settleFit(); });
+settleFit();
+var fsBtn=(typeof document!=='undefined')?document.getElementById('fs'):null;
+if(fsBtn&&fsBtn.addEventListener)fsBtn.addEventListener('click',function(){
+  try{ var el=document.documentElement;
+    if(document.fullscreenElement){ if(document.exitFullscreen)document.exitFullscreen(); }
+    else if(el.requestFullscreen)el.requestFullscreen();
+  }catch(e){}
+  settleFit();
+});
+
+/* ---- 3. INPUT: THE VERB MAP. MOVE UP and MOVE DOWN are EDGES (one bar per
+        press, wrapping top to bottom like the original); the ONE BUTTON is a
+        HELD state (hold to pour, release to slide). Touch arrives through the
+        drawn CONTROL DECK (UP, DOWN, POUR, PAUSE) plus vertical swipes on the
+        bars; menus also take taps on their items. setInput(l,r,u,d,a) is the
+        harness shim: rising edges become moves and presses, a is the button.
+        touch-action none lives on the CANVAS only (07). ---- */
+var SWIPE_MIN=34;                                  // logical px of vertical drag per bar step
+var DECK_Y=684;                                    // the control deck owns y >= DECK_Y
+var UPB={x:14,y:696,w:178,h:86}, DNB={x:14,y:786,w:178,h:86};
+var PAUSEB={x:212,y:830,w:96,h:40}, POUR_X0=320, POURB={cx:500,cy:784,r:92};
+var inp={l:false,r:false,u:false,d:false,a:false};   // held state for the shim and edge detection
+var EV={u:0,d:0,l:0,r:0,press:0,back:0,bk:0,tap:null};   // edges waiting for update() to consume
+var HOLD={kb:false,shim:false,touch:{}};           // every source of the ONE button
+var hasTouch=false;                                // deck hints: finger words or key words
+var DF={u:0,d:0};                                  // deck button flash timers (render only)
+function btnHeld(){ if(HOLD.kb||HOLD.shim)return true; for(var k in HOLD.touch){ if(HOLD.touch[k])return true; } return false; }
+function setInput(l,r,u,d,a){
+  if(u&&!inp.u)EV.u++; if(d&&!inp.d)EV.d++; if(l&&!inp.l)EV.l++; if(r&&!inp.r)EV.r++;
+  if(a&&!inp.a)EV.press++;
+  HOLD.shim=!!a;
+  inp.l=!!l; inp.r=!!r; inp.u=!!u; inp.d=!!d; inp.a=!!a;
+}
+var KEYMAP={ArrowUp:'u',w:'u',W:'u',ArrowDown:'d',s:'d',S:'d',ArrowLeft:'l',a:'l',A:'l',ArrowRight:'r',d:'r',D:'r',
+  ' ':'a',z:'a',Z:'a',Enter:'a',j:'a',J:'a',Escape:'esc',p:'esc',P:'esc',Backspace:'bk'};
+var kdown={};
+function keyIn(e,on){
+  var typing=(STATE==='initials')||(STATE==='lobby'&&NET.phase==='code');
+  if(typing&&on&&/^[a-zA-Z.]$/.test(e.key)){ EV.typed=e.key.toUpperCase(); if(e.preventDefault)e.preventDefault(); return; }
+  if(typing&&/^[a-zA-Z.]$/.test(e.key))return;
+  var k=KEYMAP[e.key]; if(!k)return;
+  if(on)firstGesture();
+  if(on&&!kdown[k]){
+    if(k==='u'){ EV.u++; DF.u=0.14; } else if(k==='d'){ EV.d++; DF.d=0.14; } else if(k==='l')EV.l++; else if(k==='r')EV.r++;
+    else if(k==='a')EV.press++; else if(k==='esc')EV.back++; else if(k==='bk')EV.bk++;
+  }
+  kdown[k]=on;
+  if(k==='a')HOLD.kb=on;
+  if(e.preventDefault)e.preventDefault();
+}
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('keydown',function(e){ if(e.repeat&&KEYMAP[e.key]){ if(e.preventDefault)e.preventDefault(); return; } keyIn(e,true); });
+  window.addEventListener('keyup',function(e){ keyIn(e,false); });
+  window.addEventListener('blur',function(){ kdown={}; HOLD.kb=false; HOLD.touch={}; PT={}; });
+}
+function inR(x,y,r){ return x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h; }
+function zoneAt(x,y){
+  if(y>=DECK_Y){ if(inR(x,y,UPB))return 'up'; if(inR(x,y,DNB))return 'dn'; if(inR(x,y,PAUSEB))return 'pause';
+    if(x>=POUR_X0)return 'pour'; return 'deck'; }
+  return 'field';
+}
+var PT={};                                         // pointerId -> a live touch
+function toLogical(cx,cy){ var r=cv.getBoundingClientRect(); return {x:(cx-r.left)*W/r.width, y:(cy-r.top)*H/r.height}; }
+function ptrDown(id,cx,cy,touch){
+  firstGesture(); if(touch)hasTouch=true;
+  var p=toLogical(cx,cy), z=zoneAt(p.x,p.y);
+  PT[id]={x0:p.x,y0:p.y,x:p.x,y:p.y,zone:z,swiped:false,sy:p.y};
+  if(z==='up'){ EV.u++; DF.u=0.14; } else if(z==='dn'){ EV.d++; DF.d=0.14; } else if(z==='pause')EV.back++;
+  else if(z==='pour'){ HOLD.touch[id]=true; EV.press++; }
+}
+function ptrMove(id,cx,cy){
+  var t=PT[id]; if(!t)return; var p=toLogical(cx,cy); t.x=p.x; t.y=p.y;
+  if(t.zone!=='field')return;
+  var dy=p.y-t.sy;                                  // a long drag steps several bars: re-anchor per step
+  if(Math.abs(dy)>=SWIPE_MIN&&Math.abs(dy)>=Math.abs(p.x-t.x0)*0.8){ t.swiped=true; t.sy=p.y; if(dy<0)EV.u++; else EV.d++; }
+}
+function ptrUp(id){
+  var t=PT[id]; if(!t)return;
+  if(t.zone==='field'&&!t.swiped&&Math.abs(t.x-t.x0)<24&&Math.abs(t.y-t.y0)<24)EV.tap={x:t.x0,y:t.y0};
+  else if(t.zone==='deck')EV.tap={x:t.x0,y:t.y0};
+  delete PT[id]; delete HOLD.touch[id];
+}
+if(cv&&cv.addEventListener){
+  if(typeof window!=='undefined'&&'onpointerdown' in window){
+    cv.addEventListener('pointerdown',function(e){ ptrDown(e.pointerId,e.clientX,e.clientY,e.pointerType==='touch'); try{ cv.setPointerCapture(e.pointerId); }catch(x){} if(e.preventDefault)e.preventDefault(); });
+    cv.addEventListener('pointermove',function(e){ ptrMove(e.pointerId,e.clientX,e.clientY); });
+    cv.addEventListener('pointerup',function(e){ ptrUp(e.pointerId); });
+    cv.addEventListener('pointercancel',function(e){ ptrUp(e.pointerId); });
+  }else{
+    cv.addEventListener('touchstart',function(e){ for(var i=0;i<e.changedTouches.length;i++){ var t=e.changedTouches[i]; ptrDown('t'+t.identifier,t.clientX,t.clientY,true); } if(e.preventDefault)e.preventDefault(); },{passive:false});
+    cv.addEventListener('touchmove',function(e){ for(var i=0;i<e.changedTouches.length;i++){ var t=e.changedTouches[i]; ptrMove('t'+t.identifier,t.clientX,t.clientY); } if(e.preventDefault)e.preventDefault(); },{passive:false});
+    cv.addEventListener('touchend',function(e){ for(var i=0;i<e.changedTouches.length;i++)ptrUp('t'+e.changedTouches[i].identifier); if(e.preventDefault)e.preventDefault(); },{passive:false});
+    cv.addEventListener('touchcancel',function(e){ for(var i=0;i<e.changedTouches.length;i++)ptrUp('t'+e.changedTouches[i].identifier); },{passive:false});
+    cv.addEventListener('mousedown',function(e){ ptrDown('m',e.clientX,e.clientY,false); });
+    cv.addEventListener('mousemove',function(e){ ptrMove('m',e.clientX,e.clientY); });
+    if(typeof window!=='undefined')window.addEventListener('mouseup',function(){ ptrUp('m'); });
+  }
+  cv.addEventListener('contextmenu',function(e){ if(e.preventDefault)e.preventDefault(); });
+}
+
+/* ---- 4. AUDIO: the SNAIL AUDIO KIT (commons, 08 reuse rule). The core
+        module below is spliced VERBATIM from snail-audio-lab-v1.06 (kit
+        v1.02); the GRID GRUDGE music engine follows, bound to THE kit
+        instance per the integration law (its two binding lines are marked).
+        Compositions after the engine are this title's own. AKIT.boot() runs
+        inside every gesture (firstGesture); headless every call is a silent
+        no-op and cannot move a gate. ---- */
+/* ---- SNAIL AUDIO KIT v1.00 core (spliced verbatim from the lab) ---- */
+var AKIT = (function(){
+'use strict';
+var VERSION = '1.02';   /* kit v1.02: ctx/bus accessors + the five-title merge */
+var AC = null, master = null, VOL = 0.16;          // NEON SWARM shipped master
+
+function boot(){                                    // call inside every gesture
+  try{
+    if(!AC){
+      var C = (typeof AudioContext !== 'undefined') ? AudioContext :
+              (typeof webkitAudioContext !== 'undefined' ? webkitAudioContext : null);
+      if(!C) return false;
+      AC = new C();
+      master = AC.createGain(); master.gain.value = VOL;
+      master.connect(AC.destination);
+    }
+    if(AC.state === 'suspended' && AC.resume) AC.resume();   // the seed lesson
+    return true;
+  }catch(e){ AC = null; return false; }
+}
+function setVolume(v){ VOL = Math.max(0, Math.min(1, v)); if(master) master.gain.value = VOL; }
+function ready(){ return !!AC; }
+
+/* PATTY PANIC v217 tone(), verbatim shape: linear slide, exp decay */
+function tone(f, dur, type, vol, slide){
+  if(!AC) return;
+  try{
+    var o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime;
+    o.type = type || 'square'; o.frequency.setValueAtTime(f, t);
+    if(slide) o.frequency.linearRampToValueAtTime(Math.max(30, f + slide), t + dur);
+    g.gain.setValueAtTime(vol || 0.5, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
+  }catch(e){}
+}
+/* NEON SWARM v78 beep(), verbatim shape: exponential ramp to a target pitch */
+function sweep(freq, end, dur, type, vol){
+  if(!AC) return;
+  try{
+    var o = AC.createOscillator(), gn = AC.createGain(), t = AC.currentTime;
+    o.type = type || 'square';
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20, end), t + dur);
+    gn.gain.setValueAtTime(vol || 0.5, t);
+    gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(gn); gn.connect(master); o.start(t); o.stop(t + dur + 0.02);
+  }catch(e){}
+}
+/* PATTY PANIC arp(), verbatim shape */
+function arp(notes, step, dur, type, vol){
+  if(!AC) return;
+  for(var i = 0; i < notes.length; i++)
+    (function(nt, j){ setTimeout(function(){ tone(nt, dur, type, vol); }, j * step); })(notes[i], i);
+}
+
+/* THE RECIPE BOOK: shipped sounds, per-recipe provenance. Grade your game's
+   events (UI < action < impact < big < fail) and pick within the grade. */
+var sfx = {
+  /* UI */
+  press:      function(){ tone(660, 0.05, 'square', 0.3); },                    // PATTY press
+  tick:       function(){ tone(880, 0.03, 'square', 0.2); },                    // PATTY idiom, lighter
+  /* ACTION */
+  jump:       function(){ tone(340, 0.11, 'square', 0.3, 620); },               // PATTY v195 CAP CHEF chirp
+  spring:     function(){ tone(300, 0.13, 'triangle', 0.4, 520); },             // PATTY v75 boing
+  web:        function(){ tone(520, 0.06, 'square', 0.28, -160); },             // PATTY v202 thwip
+  shoot:      function(){ sweep(880, 220, 0.07, 'square', 0.22); },             // NEON SWARM shoot
+  dive:       function(){ sweep(1200, 500, 0.25, 'square', 0.18); },            // NEON SWARM dive
+  /* IMPACT */
+  land:       function(){ tone(110, 0.09, 'square', 0.45); },                   // PATTY land
+  hit:        function(){ sweep(300, 60, 0.18, 'sawtooth', 0.6); },             // NEON SWARM hit
+  stun:       function(){ tone(1250, 0.08, 'square', 0.3, -300); },             // PATTY pepper
+  crush:      function(){ tone(150, 0.16, 'sawtooth', 0.5, -90); },             // PATTY crush
+  reflect:    function(){ sweep(1000, 1800, 0.1, 'square', 0.4); },             // NEON SWARM deflect ping
+  /* BIG */
+  big:        function(){ sweep(160, 30, 0.45, 'sawtooth', 0.9);
+                          sweep(90, 25, 0.5, 'triangle', 0.7); },               // NEON SWARM layered boom
+  nova:       function(){ sweep(70, 20, 1.0, 'sawtooth', 1.0);
+                          sweep(900, 80, 0.7, 'triangle', 0.8); },              // NEON SWARM nova
+  /* REWARD */
+  pickup:     function(){ sweep(600, 1400, 0.12, 'sine', 0.5); },               // NEON SWARM absorb
+  charge:     function(){ sweep(600, 1200, 0.25, 'sine', 0.6); },               // NEON SWARM nova-ready
+  jingle:     function(){ arp([523, 659, 784, 1047], 70, 0.09, 'square', 0.35); }, // PATTY arp idiom, C major run
+  waveclear:  function(){ sweep(440, 880, 0.3, 'triangle', 0.5); },             // NEON SWARM wave
+  /* FAIL */
+  death:      function(){ sweep(500, 40, 0.8, 'sawtooth', 1.0); },              // NEON SWARM death
+  breakdown:  function(){ tone(220, 0.2, 'sawtooth', 0.45, 60); },              // PATTY v81 spring-break crunch
+  overheat:   function(){ sweep(400, 70, 0.5, 'square', 0.6); }                 // NEON SWARM overheat
+};
+
+return { VERSION:VERSION, boot:boot, ready:ready, setVolume:setVolume,
+         tone:tone, sweep:sweep, arp:arp, sfx:sfx,
+         ctx:function(){return AC;}, bus:function(){return master;} };   /* kit v1.02: the shared context and master, exposed so contributions bind to THE kit instead of guessing internals (FRENZY FLEET's noiseFlat asked for exactly this) */
+})();
+
+/* ---- GRID GRUDGE CONTRIBUTION (music engine + noise voice), TRIMMED to the
+        parts this title uses (define, start, stop, mute, the step sequencer,
+        the voices, the noise primitive). Every retained line is verbatim from
+        the lab except those marked MERGE: the binding lines (integration law:
+        wrappers bind to THE kit instance; the lab copy fell back to its own
+        context because AKIT.ac never existed) and boot, which no longer makes
+        a second context. Omitted as unused: pool, sync, suppressNextSync,
+        resumeSameTrack, scale walk, the demo loop. The v49 hidden-tab stop
+        lives in this title's visibility handler (section 8). ---- */
+(function (AKIT) {
+  'use strict';
+  AKIT.music = AKIT.music || {};
+  var _ac = null, _master = null, _musicBus = null, _sfxBus = null, _nbuf = null;
+  function ac(){ return AKIT.ctx() || _ac; }                                        /* MERGE: bound to THE kit */
+  function masterOf(A){ return AKIT.bus() || _master || (A ? A.destination : null); } /* MERGE: bound to THE kit */
+  function ensureBuses(){
+    var A = ac(); if (!A) return;
+    if (!_musicBus){ _musicBus = A.createGain(); _musicBus.gain.value = 0.5; _musicBus.connect(masterOf(A)); }
+    if (!_sfxBus){ _sfxBus = A.createGain(); _sfxBus.gain.value = 0.9; _sfxBus.connect(masterOf(A)); }
+  }
+  function musicBus(){ ensureBuses(); return _musicBus; }
+  function sfxBus(){ ensureBuses(); return _sfxBus; }
+  AKIT.music.boot = function (){
+    if (ac()){ ensureBuses(); return true; }
+    return false;                                                                   /* MERGE: never a second context; AKIT.boot() owns it */
+  };
+  function mtof(m){ return 440 * Math.pow(2, (m - 69) / 12); }
+  function aenv(g, t, a, peak, d){ g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
+  function osc(bus, type, f0, t, a, peak, d, f1, fT){ var A = ac(); if (!A || !bus) return; var o = A.createOscillator(), g = A.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); if (f1 != null) o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + (fT || d)); aenv(g, t, a, peak, d); o.connect(g); g.connect(bus); o.start(t); o.stop(t + a + d + 0.05); }
+  function noiseBuf(){ var A = ac(); if (!A) return null; if (_nbuf) return _nbuf; var nn = Math.floor(A.sampleRate * 0.5); _nbuf = A.createBuffer(1, nn, A.sampleRate); var d = _nbuf.getChannelData(0); for (var i = 0; i < nn; i++) d[i] = Math.random() * 2 - 1; return _nbuf; }
+  function noise(bus, t, a, peak, d, ftype, f0, f1){ var A = ac(); if (!A || !bus) return; var s = A.createBufferSource(); s.buffer = noiseBuf(); var fq = A.createBiquadFilter(); fq.type = ftype || 'bandpass'; fq.frequency.setValueAtTime(f0 || 1000, t); if (f1 != null) fq.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + d); var g = A.createGain(); aenv(g, t, a, peak, d); s.connect(fq); fq.connect(g); g.connect(bus); s.start(t); s.stop(t + a + d + 0.05); }
+  AKIT.noise = function (opts){
+    opts = opts || {}; var A = ac(); var t = (opts.t != null) ? opts.t : (A ? A.currentTime : 0);
+    noise(opts.bus || sfxBus(), t, opts.a || 0.001, opts.peak || 0.2, opts.d || 0.05, opts.type || 'highpass', opts.f0 || 2000, opts.f1);
+  };
+  function pluckVoice(bus, freq, t, dur, peak){ var A = ac(); if (!A || !bus) return; var o = A.createOscillator(), g = A.createGain(), fl = A.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = freq; fl.type = 'lowpass'; fl.Q.value = 7; fl.frequency.setValueAtTime(freq*6 + 1400, t); fl.frequency.exponentialRampToValueAtTime(freq*1.4 + 200, t + dur*0.55); aenv(g, t, 0.002, peak, dur); o.connect(fl); fl.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05); }
+  function subVoice(bus, freq, t, dur){ var A = ac(); if (!A || !bus) return; var o = A.createOscillator(), g = A.createGain(); o.type = 'sine'; o.frequency.value = freq; aenv(g, t, 0.004, 0.5, dur); o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05); }
+  function playStep(tr, s, t){
+    if (!ac() || !tr) return; var bus = musicBus(); var st = 60 / tr.bpm / 4;
+    if (tr.kick && tr.kick[s]) osc(bus, 'sine', 150, t, 0.001, 0.7, 0.12, 42, 0.1);
+    if (tr.hat && tr.hat[s]) noise(bus, t, 0.001, 0.10, 0.03, 'highpass', 6500);
+    if (tr.ohat && tr.ohat[s]) noise(bus, t, 0.001, 0.07, 0.11, 'highpass', 6200);
+    if (tr.snare && tr.snare[s]) noise(bus, t, 0.001, 0.22, 0.09, 'bandpass', 1800);
+    if (tr.bass && tr.bass[s]){ var A = ac(), o = A.createOscillator(), g = A.createGain(), fl = A.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = mtof(tr.bass[s]); fl.type = 'lowpass'; fl.frequency.setValueAtTime(900, t); fl.frequency.exponentialRampToValueAtTime(220, t + st*0.9); aenv(g, t, 0.004, 0.30, st*0.95); o.connect(fl); fl.connect(g); g.connect(bus); o.start(t); o.stop(t + st + 0.05); }
+    if (tr.sub && tr.sub[s]) subVoice(bus, mtof(tr.sub[s]), t, st*0.95);
+    if (tr.arp && tr.arp[s]) pluckVoice(bus, mtof(tr.arp[s]), t, st*1.6, 0.12);
+    if (tr.pluck && tr.pluck[s]) pluckVoice(bus, mtof(tr.pluck[s]), t, st*2.4, 0.15);
+    if (tr.stab && tr.stab[s]) tr.stab[s].forEach(function(m){ pluckVoice(bus, mtof(m), t, st*3.0, 0.10); });
+    if (tr.pad && tr.pad[s]){ tr.pad[s].forEach(function(m){ var A = ac(), o1 = A.createOscillator(), o2 = A.createOscillator(), g = A.createGain(), fl = A.createBiquadFilter(); o1.type = 'sawtooth'; o2.type = 'sawtooth'; o1.frequency.value = mtof(m); o2.frequency.value = mtof(m)*1.007; fl.type = 'lowpass'; fl.frequency.value = 1600; aenv(g, t, 0.05, 0.05, st*15); o1.connect(fl); o2.connect(fl); fl.connect(g); g.connect(bus); o1.start(t); o2.start(t); o1.stop(t + st*16); o2.stop(t + st*16); }); }
+  }
+  var TRACKS = {};
+  var MUS = { track: null, step: 0, nextT: 0, timer: null };
+  AKIT.music.muted = false;
+  function tick(){
+    if (!ac() || AKIT.music.muted || !MUS.track) return;
+    var tr = MUS.track, st = 60 / tr.bpm / 4, ahead = ac().currentTime + 0.12;   // 120ms lookahead
+    while (MUS.nextT < ahead){ playStep(tr, MUS.step % tr.steps, MUS.nextT); MUS.step++; MUS.nextT += st; }
+  }
+  AKIT.music.define = function (name, spec){ var tr = {}; for (var k in spec){ if (spec.hasOwnProperty(k)) tr[k] = spec[k]; } tr.name = name; tr.bpm = spec.bpm || 100; tr.steps = spec.steps || 16; TRACKS[name] = tr; return AKIT.music; };
+  AKIT.music.get = function (name){ return TRACKS[name] || null; };
+  AKIT.music.start = function (name){
+    var tr = (typeof name === 'string') ? TRACKS[name] : name;
+    var A = ac();
+    if (!A || AKIT.music.muted || !tr || MUS.track === tr) return AKIT.music;   // GRID GRUDGE musicStart guard
+    AKIT.music.stop(); MUS.track = tr; MUS.step = 0; MUS.nextT = A.currentTime + 0.1;
+    if (typeof setInterval === 'function') MUS.timer = setInterval(tick, 25);
+    return AKIT.music;
+  };
+  AKIT.music.stop = function (){ if (MUS.timer){ clearInterval(MUS.timer); MUS.timer = null; } MUS.track = null; return AKIT.music; };   // v49: interval AND track
+  AKIT.music.setMuted = function (v){ AKIT.music.muted = !!v; if (AKIT.music.muted) AKIT.music.stop(); return AKIT.music; };
+  AKIT.music.nowPlaying = function (){ return MUS.track ? MUS.track.name : null; };
+  if (typeof window !== 'undefined' && window.addEventListener){
+    window.addEventListener('pagehide', function (){ try { AKIT.music.stop(); } catch (e){} });
+  }
+})(AKIT);
+
+/* ---- 4b. THIS TITLE'S COMPOSITIONS (original, 32 steps each, one per
+        venue plus the title, the bonus game and HAPPY HOUR). MIDI notes. ---- */
+function Z(n){ var a=[]; for(var i=0;i<n;i++)a.push(0); return a; }
+function EVERY(n,len,off){ var a=Z(len); for(var i=(off||0);i<len;i+=n)a[i]=1; return a; }
+function PAD4(a,b,c,d){ var p=Z(32); p[0]=a; p[8]=b; p[16]=c; p[24]=d; return p; }
+AKIT.music.define('LAST CALL', { bpm:112, steps:32,
+  bass:[36,0,0,36,0,0,43,0, 41,0,0,41,0,0,43,0, 36,0,0,36,0,0,43,0, 38,0,0,38,0,0,43,0],
+  arp:[72,0,75,0,76,0,79,0, 77,0,76,0,72,0,0,0, 72,0,75,0,76,0,79,0, 84,0,82,0,79,0,0,0],
+  kick:[1,0,0,0,0,0,1,0, 1,0,0,0,0,0,0,0, 1,0,0,0,0,0,1,0, 1,0,0,0,0,0,0,0], hat:EVERY(4,32,2) });
+AKIT.music.define('SPUR RAG', { bpm:138, steps:32,
+  bass:[36,0,0,0,31,0,0,0, 36,0,0,0,31,0,0,0, 41,0,0,0,36,0,0,0, 43,0,0,0,38,0,0,0],
+  stab:(function(){ var s=Z(32),C=[60,64,67],F=[60,65,69],Gc=[59,62,67]; [2,6,10,14].forEach(function(i){s[i]=C;}); [18,22].forEach(function(i){s[i]=F;}); [26,30].forEach(function(i){s[i]=Gc;}); return s; })(),
+  arp:[76,0,74,72,74,0,76,0, 79,0,76,0,72,0,0,0, 77,0,76,74,72,0,69,0, 71,0,74,0,79,0,0,0], hat:EVERY(4,32,2) });
+AKIT.music.define('HALFTIME', { bpm:120, steps:32,
+  kick:[1,0,0,0,1,0,0,0, 0,0,0,0,0,0,0,0, 1,0,0,0,1,0,0,0, 0,0,0,0,0,0,0,0],
+  snare:[0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 1,0,0,0,1,0,0,0],
+  bass:[43,0,0,0,43,0,0,0, 48,0,0,0,48,0,0,0, 43,0,0,0,43,0,0,0, 50,0,0,0,48,0,0,0],
+  arp:[67,0,72,0,76,0,79,0, 76,0,79,0,0,0,0,0, 67,0,72,0,76,0,79,0, 84,0,79,0,0,0,0,0], hat:EVERY(2,32,1) });
+AKIT.music.define('SAFETY PIN', { bpm:168, steps:32,
+  bass:[40,0,40,0,40,0,40,0, 40,0,40,0,40,0,40,0, 45,0,45,0,45,0,45,0, 43,0,43,0,47,0,47,0],
+  kick:[1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0, 1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
+  snare:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0, 0,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0], hat:EVERY(2,32,0),
+  arp:[64,0,0,0,67,0,0,0,69,0,0,0,67,0,64,0, 69,0,0,0,72,0,0,0,71,0,0,0,67,0,0,0] });
+AKIT.music.define('VELVET', { bpm:92, steps:32,
+  pad:PAD4([48,52,55,59],[53,57,60,64],[50,53,57,60],[43,47,50,55]),
+  sub:[36,0,0,0,40,0,0,0,43,0,0,0,45,0,0,0, 38,0,0,0,41,0,0,0,43,0,0,0,47,0,0,0],
+  hat:[0,0,1,0,0,0,1,1, 0,0,1,0,0,0,1,1, 0,0,1,0,0,0,1,1, 0,0,1,0,0,0,1,1],
+  pluck:[0,0,0,0,76,0,0,74,0,0,72,0,0,0,0,0, 0,0,0,0,79,0,0,77,0,0,76,0,74,0,0,0] });
+AKIT.music.define('SLOW LANE', { bpm:80, steps:32,
+  bass:[43,0,0,0,0,0,43,0,0,0,50,0,0,0,0,0, 48,0,0,0,0,0,48,0,0,0,55,0,0,0,0,0],
+  stab:(function(){ var s=Z(32),A=[67,71,74],B=[64,67,72]; [2,6,10,14].forEach(function(i){s[i]=A;}); [18,22,26,30].forEach(function(i){s[i]=B;}); return s; })(),
+  kick:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  snare:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], hat:EVERY(4,32,2) });
+AKIT.music.define('ORBIT 9', { bpm:116, steps:32,
+  arp:[69,72,76,81,76,72,69,72, 67,71,74,79,74,71,67,71, 65,69,72,77,72,69,65,69, 64,67,71,76,71,67,64,67],
+  pad:PAD4([45,52,57],[43,50,55],[41,48,53],[40,47,52]), kick:EVERY(4,32,0), ohat:EVERY(4,32,2),
+  sub:[33,0,0,0,0,0,0,0,31,0,0,0,0,0,0,0,29,0,0,0,0,0,0,0,28,0,0,0,0,0,0,0] });
+AKIT.music.define('SHAKE UP', { bpm:140, steps:32,
+  arp:[72,76,79,76,72,76,79,84, 74,77,81,77,74,77,81,86, 72,76,79,76,72,76,79,84, 79,83,86,83,79,74,71,67],
+  kick:EVERY(8,32,0), hat:EVERY(2,32,1), bass:[36,0,0,0,0,0,0,0,38,0,0,0,0,0,0,0,36,0,0,0,0,0,0,0,43,0,0,0,0,0,0,0] });
+AKIT.music.define('HAPPY HOUR', { bpm:152, steps:32,
+  bass:[36,0,48,0,36,0,48,0, 41,0,53,0,41,0,53,0, 43,0,55,0,43,0,55,0, 36,0,48,0,43,0,48,0],
+  arp:[72,0,76,0,79,0,84,0, 81,0,77,0,72,0,77,0, 79,0,74,0,71,0,74,0, 76,0,79,0,84,0,0,0],
+  kick:EVERY(4,32,0), hat:EVERY(4,32,2), snare:EVERY(8,32,4) });
+
+/* ---- 4c. THE SOUND BOOK for this title: every game event is graded and
+        mapped to kit primitives or shipped recipes (08 audio doctrine). ---- */
+var SND={on:true,mus:true};
+function nz(peak,d,type,f0,f1){ if(AKIT.noise&&AKIT.ready())AKIT.noise({a:0.001,peak:peak,d:d,type:type,f0:f0,f1:f1}); }
+var SFX={
+  /* UI */
+  move:function(){ AKIT.sfx.tick(); },
+  sel:function(){ AKIT.sfx.press(); },
+  back:function(){ AKIT.tone(440,0.06,'square',0.25,-120); },
+  lock:function(){ AKIT.sfx.jingle(); },
+  /* ACTION */
+  step:function(){ AKIT.tone(520,0.03,'square',0.14,80); },
+  pour:function(f){ AKIT.tone(260+Math.min(1.4,f)*420,0.035,'triangle',0.16); },     // rises with the fill
+  foam:function(){ nz(0.10,0.06,'highpass',4200); },                                 // over the band: fizz
+  slide:function(){ AKIT.sweep(900,300,0.12,'square',0.16); nz(0.06,0.14,'bandpass',2600,900); },
+  perfect:function(){ AKIT.arp([880,1320,1760],35,0.06,'square',0.22); },
+  sloppy:function(){ AKIT.tone(200,0.1,'sawtooth',0.25,-60); },
+  topoff:function(){ AKIT.tone(340,0.05,'square',0.18,-60); },
+  /* IMPACT */
+  catch:function(){ AKIT.tone(520,0.05,'square',0.25,-100); },
+  clink:function(){ AKIT.sweep(1800,2400,0.05,'sine',0.3); AKIT.tone(2600,0.04,'triangle',0.15); },
+  sendback:function(){ AKIT.tone(180,0.15,'sawtooth',0.35,-40); },
+  meow:function(){ AKIT.sweep(700,1100,0.12,'triangle',0.25); AKIT.sweep(1100,600,0.18,'triangle',0.2); },
+  slurp:function(){ nz(0.16,0.25,'bandpass',900,400); },
+  keg:function(){ AKIT.tone(180,0.05,'square',0.4,-60); AKIT.tone(90,0.09,'square',0.3,40); },   // PATTY v109 gswitch
+  beam:function(){ AKIT.arp([700,1000,1400,1900,2400],28,0.05,'sine',0.16); },                    // PATTY v103 teleport
+  buzz:function(){ AKIT.tone(90,0.2,'square',0.3); },
+  split:function(){ AKIT.sfx.web(); AKIT.tone(760,0.05,'sine',0.18); },
+  /* REWARD */
+  serve:function(){ AKIT.arp([520,660,780],45,0.07,'square',0.3); },                // PATTY plate
+  tip:function(){ AKIT.arp([1320,1760,2093,2637],45,0.06,'square',0.25); },
+  show:function(){ AKIT.arp([784,988,784,1175,988,784,659,784],95,0.09,'square',0.3); },   // PATTY dance
+  clear:function(){ AKIT.arp([520,660,780,1040,1300],70,0.1,'square',0.35); },      // PATTY clear
+  oneup:function(){ AKIT.arp([523,659,784,1047],60,0.08,'square',0.3); },
+  happy:function(){ AKIT.sfx.charge(); AKIT.arp([523,659,784,1047,1319],60,0.1,'square',0.3); },
+  win:function(){ AKIT.arp([659,784,1047,1319,1568],70,0.1,'square',0.32); },
+  /* FAIL */
+  shatter:function(){ nz(0.35,0.3,'highpass',3000); AKIT.sweep(1400,200,0.25,'sawtooth',0.3); },
+  mishap:function(){ AKIT.arp([520,390,260,160],90,0.12,'sawtooth',0.4); },        // PATTY death
+  spray:function(){ nz(0.3,0.5,'bandpass',1800,500); },
+  over:function(){ AKIT.arp([392,330,262,196],220,0.24,'triangle',0.3); },
+  rattle:function(){ nz(0.12,0.08,'bandpass',2400); }
+};
+function playSfx(n,a){ if(!SND.on)return; var f=SFX[n]; if(f){ try{ f(a); }catch(e){} } }
+var wantTrack=null;
+function music(name){ wantTrack=name; if(!SND.mus||!AKIT.ready()){ return; } if(name){ AKIT.music.boot(); AKIT.music.start(name); } else AKIT.music.stop(); }
+function firstGesture(){
+  try{ AKIT.boot(); if(SND.mus&&wantTrack&&AKIT.music.nowPlaying()!==wantTrack){ AKIT.music.boot(); AKIT.music.start(wantTrack); } }catch(e){}
+}
+
+/* ---- 5. FEEL: the SNAIL FEEL PACK core (commons). Pure feel: shake, flash,
+        bursts. Hitstop is never used here (the host sim must not freeze for
+        one device's cosmetics). BUILD 5: the core re-pasted from pack v1.06
+        under its marker (doc 08 v1.04 section 5; the pack doc's section
+        5b), no slices: the range between the two markers is the pack's
+        core, unchanged (feeltest finds it verbatim in the pack file). ---- */
+/* SNAIL FEEL PACK v1.06: core + slices [none] (byte for byte; doc v1.10 section 5b) */
+var FEEL = (function(){
+'use strict';
+var VERSION = '1.00';
+var S = {
+  shakeT:0, shakeMag:4,        // FRENZY FLEET: jitter = shakeMag * shakeT
+  flashT:0, flashCol:'#ffffff',
+  hitstop:0,                   // sim frames still frozen
+  parts:[], pops:[],
+  MAX_PARTS:240,               // pool cap; oldest are recycled, never unbounded
+  _shook:false, _rnd:Math.random
+};
+function shake(t, mag){ S.shakeT = Math.max(S.shakeT, t||0.5); if(mag)S.shakeMag = mag; }
+function flash(t, col){ S.flashT = Math.max(S.flashT, t||0.3); if(col)S.flashCol = col; }
+function hitstop(frames){ S.hitstop = Math.max(S.hitstop, frames|0); }
+function burst(x, y, col, n, spd){
+  n = n||14; spd = spd||120;
+  for(var i=0;i<n;i++){
+    if(S.parts.length >= S.MAX_PARTS) S.parts.shift();
+    var a = S._rnd()*6.28318, v = spd*(0.35+S._rnd()*0.65);
+    S.parts.push({x:x, y:y, vx:Math.cos(a)*v, vy:Math.sin(a)*v,
+                  life:0.35+S._rnd()*0.3, max:0.65, col:col||'#eaffff',
+                  sz:(S._rnd()<0.3)?3:2});
+  }
+}
+function pop(x, y, text, col){
+  S.pops.push({x:x, y:y, t:0.8, text:String(text), col:col||'#ffe34d'});
+}
+function tick(dt){
+  if(S.hitstop > 0){ S.hitstop--; return false; }   // freeze the SIM, not the show
+  S.shakeT = Math.max(0, S.shakeT - dt*3);          // FRENZY FLEET decay
+  S.flashT = Math.max(0, S.flashT - dt*3);
+  var i, p, w=0;
+  for(i=0;i<S.parts.length;i++){ p=S.parts[i];
+    if(p.kind==='ember'){                           // contributed ember contract:
+      p.t -= dt; if(p.t <= 0) continue;             // per-frame velocity units,
+      p.vy += (p.g||0)*60*dt;                       // aged here, DRAWN by drawEmbers
+      p.x += p.vx*60*dt; p.y += p.vy*60*dt;
+    } else {
+      p.life -= dt; if(p.life <= 0) continue;
+      p.x += p.vx*dt; p.y += p.vy*dt;
+      p.vx *= (1 - 2.2*dt); p.vy *= (1 - 2.2*dt);   // drag so sparks settle
+    }
+    S.parts[w++]=p;
+  }
+  S.parts.length = w;      // compact IN PLACE: external aliases MUST survive (integration law)
+  var w2=0;
+  for(i=0;i<S.pops.length;i++){ p=S.pops[i];
+    p.t -= dt; if(p.t <= 0) continue;
+    p.y -= 30*dt; S.pops[w2++]=p;
+  }
+  S.pops.length = w2;
+  return true;
+}
+function preWorld(ctx){
+  if(!ctx || !ctx.save) return;
+  if(S.shakeT > 0){
+    ctx.save(); S._shook = true;
+    var j = S.shakeMag * S.shakeT;                  // the shipped formula
+    ctx.translate((S._rnd()*2-1)*j, (S._rnd()*2-1)*j);
+  }
+}
+function postWorld(ctx){
+  if(ctx && ctx.fillRect){
+    var i, p;
+    for(i=0;i<S.parts.length;i++){ p=S.parts[i];
+      if(p.kind==='ember') continue;                // drawEmbers owns these; never double-draw
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.life/p.max));
+      ctx.fillStyle = (p.life < 0.12) ? '#eaffff' : p.col;   // die toward white, never brighter
+      ctx.fillRect((p.x|0), (p.y|0), p.sz, p.sz);
+    }
+    ctx.globalAlpha = 1;
+    if(ctx.fillText){
+      for(i=0;i<S.pops.length;i++){ p=S.pops[i];
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.t/0.8));
+        ctx.font = 'bold 10px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillStyle='#000'; ctx.fillText(p.text, p.x+1, p.y+1);
+        ctx.fillStyle = p.col; ctx.fillText(p.text, p.x, p.y);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+  if(S._shook && ctx && ctx.restore){ ctx.restore(); }
+  S._shook = false;
+}
+function overlay(ctx, W, H){
+  if(!ctx || !ctx.fillRect) return;
+  if(S.flashT > 0){
+    ctx.globalAlpha = Math.min(0.8, S.flashT*2.5);  // the shipped alpha curve
+    ctx.fillStyle = S.flashCol;
+    ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha = 1;
+  }
+}
+return { VERSION:VERSION, shake:shake, flash:flash, hitstop:hitstop,
+         burst:burst, pop:pop, tick:tick,
+         preWorld:preWorld, postWorld:postWorld, overlay:overlay, state:S };
+})();
+/* SNAIL FEEL PACK v1.06: end of the pasted range */
+/* TAP ATTACK's side of the pack (BUILD 5; not a pack line). The pack draws
+   only through FEEL.state._rnd, Math.random unless a title sets it (doc 08
+   v1.04 section 5). This title hands it a cosmetic generator of its own:
+   fxr, a mulberry32 on its own state (FXR.s), never G.rs (the sim's dice,
+   which snapshots carry) and never Math.random. So no spark or shake can
+   move the game's dice or a bot's report (the game-bots skill's trap 2). */
+var FXR={s:0x7A9A7F01};
+function fxr(){ FXR.s=(FXR.s+0x6D2B79F5)>>>0; var t=FXR.s; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }
+FEEL.state._rnd=fxr;
+
+/* ---- 6. DESIGN DATA. Every constant is named and intent-commented so one
+        knob tunes one feel (07). The codex SYSTEMS tables mirror these. ---- */
+/* geometry: four lanes between the HUD and the deck */
+var HUD_H=80, BAR_TOP=92, LANE_H=148, NBARS=4;   // lanes span 92..684
+var TOP_Y=92;              // counter top inside a lane (mugs ride here)
+var DOOR_X=24;             // the door edge; a full mug past BREAK_X shatters
+var BREAK_X=10;            // full mug x below this: broke at the door
+var SPAWN_X=30;            // patrons step in here
+var EXIT_X=14;             // a patron shoved past this is served out
+var END_X=534;             // a walking patron reaching this grabs the bartender
+var MUG_X0=546;            // full mugs leave the tap here
+var MUG_END=556;           // empties arrive at the tap end here
+var HAND_DX=22;            // a patron's catching hand, right of centre (sprites at 5x)
+var BT_X=566;              // bartender sprite left edge
+/* pour law */
+var POUR_T=[0,1.30,1.10,0.92,0.76,0.62];   // seconds to FULL by POUR stat 1..5
+var FOAM_SLOW=0.5;         // fill rate multiplier above FULL (the head rises slower: a timing window)
+var HEAD_W=[0,0.075,0.0975,0.12,0.15,0.195];   // PERFECT band width above FULL by HEAD stat. BUILD 6 (the Director, 2026-09-30: "a bit easier to hit perfect"): BUILD 2's [0,0.10,0.13,0.16,0.20,0.26] x0.75 (BUILD 3's POUR FEEL B was x0.6), the same pour speed
+var OVER_PAD=0.24;         // beyond the band: still CLEAN for this much, then SLOPPY
+var FILL_MAX=1.75;         // the foam stops rising here (it is spilling)
+var FIZZ_TOPUP=0.4;        // HOT STREAK: fill left in the tap after a perfect
+var SHORT_MIN=0.12;        // BUILD 2: letting go always throws; a tap released below this pours out (no mug, no creeping)
+var SLOP_V=0.7, SLOP_PUSH=0.6;   // BUILD 2: a SLOPPY mug slides 30% slower and shoves 40% less
+var WET_T=5.0, WET_W=90;   // BUILD 2: a SLOPPY pour wets the pourer's own bar in front of the tap (a slick patch) for WET_T s
+var STREAK_N=3, PTS_STREAK=100;  // BUILD 2: every third PERFECT in a row pays PTS_STREAK more
+/* slide, move, catch */
+var SLIDE_V=[0,300,345,395,450,510];       // full mug px/s by SLIDE stat
+var SLIDE_PUSH=[0,0.88,0.95,1.0,1.08,1.18];// shove multiplier by SLIDE stat
+var MOVE_T=[0,0.24,0.17,0.12,0.075,0.035]; // seconds per bar step by MOVE stat
+var CATCH_T=[0,0.05,0.12,0.2,0.3,0.42];    // grace an empty hangs at the tap end by CATCH stat
+var TANK_PUSH=1.35;        // BIG SHOVE
+var PEARL_TIP=2.0;         // REGULARS
+var SHELLY_CALM=0.8;       // CALM AURA walk multiplier on her bar
+var SHELLY_PUSH=1.35;      // BUILD 2: her second perk, her mugs shove 35% farther (the Director's pick, 2026-09-29); with POUR 3 (his yes, the same day)
+var PUSH_V=270;            // px/s a caught mug shoves its patron
+var NET_TRUST=0.35;        // online: the host honours the guest's own predicted fill at release within this much
+/* the table: lives, bonuses, points */
+var LIVES_SOLO=3, LIVES_DUO=4, LIVES_MAX=6;
+var EXTRA_FIRST=20000, EXTRA_EVERY=40000;
+var PTS_EMPTY=100, PTS_PERFECT=50, PTS_TIP=1500, PTS_CLEAR=1000, PTS_CLEAN=1000, PTS_BONUS=3000;
+var HAPPY_MAX=8;           // perfect serves that open HAPPY HOUR
+var HH_T=7.0;              // HAPPY HOUR seconds: patrons half speed, points x2, every full pour perfect
+var HH_WALK=0.5;
+var SHOW_T=3.4;            // the SHOW a tip buys
+var SHOW_WATCH=0.55;       // share of walking patrons who stop to watch (and will not catch); BUILD 2: never one with a mug coming
+var TIP_BASE=0.10;         // chance an empty comes back with a tip in it
+/* hazards */
+var CAT_V=46, CAT_LAP=1.4, CAT_GAP=[9,15];
+var SLICK_K=1.7, STICKY_K=0.5;
+var BLACK_WARN=0.7, BLACK_T=2.4, BLACK_GAP=[6,9];
+var KEG_T=1.3;             // seconds of HOLD to change an empty keg
+var BEAM_P=0.3, BEAM_T=0.9, BEAM_X=[90,240];   // beam-ins land in the door half of the bar
+var LOWG_MUG=0.82, LOWG_PUSH=1.3;
+/* ceremony */
+var MISHAP_T=2.4, CLEAR_T=1.2, CARD_GUARD=0.5, OVER_GUARD=1.5;   // BUILD 3: ROUND CLEAR waits for POUR (the Director); CLEAR_T is its guard (was 2.6 s, then on by itself)
+
+var STAT_KEYS=['pour','slide','move','catch','head'];
+var CHARS=[
+ {id:'pearl', name:'PEARL', tag:'THE PRO', st:{pour:3,slide:3,move:3,catch:3,head:3}, perk:'REGULARS', perkLine:'Patrons tip her twice as often.',
+  pal:{H:'#c8452a',h:'#8f2a18',S:'#f0c8a0',s:'#d19a70',C:'#15121a',c:'#000000',R:'#d92b2b'}, arm:'#f4f1ea'},
+ {id:'tank', name:'TANK', tag:'STRONG ARM', st:{pour:2,slide:5,move:2,catch:3,head:3}, perk:'BIG SHOVE', perkLine:'His mugs shove patrons 35% farther.',
+  pal:{H:'#5a3418',S:'#d9a066',s:'#b07040',C:'#2b5fb0',c:'#1a3a70'}, arm:'#d9a066'},
+ {id:'zip', name:'ZIP', tag:'QUICK FEET', st:{pour:3,slide:2,move:5,catch:2,head:3}, perk:'SLIDE STEP', perkLine:'Catches empties even mid-step.',
+  pal:{H:'#2ecc71',h:'#1d8f4c',S:'#8a5230',s:'#6a3a20',C:'#f0802a',c:'#b0561a',D:'#ffffff'}, arm:'#8a5230'},
+ {id:'fizz', name:'FIZZ', tag:'FAST HANDS', st:{pour:5,slide:3,move:3,catch:2,head:2}, perk:'HOT STREAK', perkLine:'A perfect pour leaves the next mug 40% full.',
+  pal:{H:'#ff5fb4',h:'#c23a86',S:'#f6d7b8',s:'#d8b090',C:'#6a3ab0',c:'#4a2280'}, arm:'#6a3ab0'},
+ {id:'shelly', name:'SHELLY', tag:'SLOW AND STEADY', st:{pour:3,slide:3,move:1,catch:4,head:5}, perk:'CALM AURA', perkLine:'Patrons on her bar walk 20% slower. Her mugs shove 35% farther.',
+  pal:{S:'#b8c85a',s:'#8a9a3a',N:'#e8742a',n:'#9a3e12'}, arm:'#b8c85a'}
+];
+function cstat(c,k){ return CHARS[c].st[k]; }
+
+var TYPES={
+ regular:{name:'REGULAR', line:'Walks, waits, walks. One good shove sends him home.', spd:1.0, push:1.0, drink:1.0, pts:1, tip:1, hp:1},
+ sprinter:{name:'SPRINTER', line:'Dashes in bursts. Keep an eye on the fast lane.', spd:2.2, walkT:[0.28,0.5], waitT:[0.9,1.5], push:1.1, drink:0.9, pts:1.5, tip:1, hp:1},
+ bruiser:{name:'BRUISER', line:'Takes TWO mugs. The first one barely moves him.', spd:0.85, push:1.0, firstPush:0.35, firstDrink:0.35, drink:1.2, pts:2, tip:1, hp:2},
+ critic:{name:'CRITIC', line:'Only a PERFECT pour. Anything else slides back full: catch it.', spd:0.95, push:1.25, drink:1.0, pts:2, tip:1.5, hp:1, perfectOnly:true},
+ snail:{name:'SNAIL', line:'Slow and stubborn, always tips. Worth five patrons.', spd:0.35, push:0.55, drink:1.8, pts:5, tip:99, hp:1},
+ splitter:{name:'TWINS', line:'Let them finish a drink and they split in two. Serve both.', spd:0.9, push:0.9, drink:1.0, pts:2, tip:1, hp:1, split:true},
+ mini:{name:'MINI', line:'Small, quick, easy to shove.', spd:1.5, push:1.35, drink:0.6, pts:0.5, tip:0, hp:1}
+};
+var HZ={
+ cat:{name:'BAR CAT', line:'Walks the bar and drinks any mug it meets. No harm, just a wasted pour.'},
+ slick:{name:'SPILLS', line:'Wet patches on the bar: mugs speed up across them.'},
+ blackout:{name:'BLACKOUTS', line:'A bar flickers and goes dark for a moment. Trust your ears.'},
+ sticky:{name:'SYRUP', line:'Sticky patches on the bar: mugs crawl across them.'},
+ keg:{name:'SMALL KEGS', line:'Each tap pours a few mugs. HOLD on an empty keg to change it.'},
+ beam:{name:'BEAM IN', line:'Aliens can appear halfway down a bar.'},
+ lowg:{name:'LOW GRAVITY', line:'Mugs float slower but shove harder.'}
+};
+var VENUES=[
+ {id:'spur', name:'THE DUSTY SPUR', tag:'A frontier saloon. Swinging doors, thirsty cowpokes.', pts:50, track:'SPUR RAG',
+  roster:{regular:1}, newT:['regular'], hz:[[],[],['cat']], show:{name:'CAN-CAN!', col:'#ff4d6d', D:'#ffd23f'},
+  pal:{wall:'#6b3f22', wall2:'#5a331b', trim:'#3d2210', top:'#b97a3c', topHi:'#e0aa6a', front:'#7a4a23', front2:'#5a3416', neon:'#ffb347'},
+  door:'saloon', hat:'cowboy', hatPal:{H:'#8a5a2b',h:'#5a3a1a',D:'#d92b2b'}, cloth:['#8a3b2a','#3d5a8a','#6b6b2a','#7a4a8a','#2a6a5a'], detail:'#d92b2b'},
+ {id:'half', name:'HALFTIME', tag:'The sports bar. Game on, fans sprint for refills.', pts:75, track:'HALFTIME',
+  roster:{regular:.62, sprinter:.38}, newT:['sprinter'], hz:[['slick'],['slick'],['slick','cat']], show:{name:'INSTANT REPLAY!', col:'#57ff7a', D:'#ffffff'},
+  pal:{wall:'#1f3b5a', wall2:'#183049', trim:'#0f2033', top:'#8a8a94', topHi:'#d0d3da', front:'#2a2a33', front2:'#1a1a22', neon:'#57ff7a'},
+  door:'glass', hat:'cap', hatPal:{H:'#d92b2b',h:'#8f1a1a'}, cloth:['#d92b2b','#3d7dd6','#e8e8e8','#f0a82a','#2a8a4a'], detail:'#ffffff'},
+ {id:'pin', name:'THE SAFETY PIN', tag:'A punk basement. Loud, dark, and full of bruisers.', pts:100, track:'SAFETY PIN',
+  roster:{regular:.45, sprinter:.22, bruiser:.33}, newT:['bruiser'], hz:[['blackout'],['blackout'],['blackout','slick']], show:{name:'MOSH PIT!', col:'#ff6fae', D:'#15121a'},
+  pal:{wall:'#2a2230', wall2:'#221a28', trim:'#111016', top:'#3a3a40', topHi:'#74747e', front:'#1a1a1f', front2:'#0f0f12', neon:'#ff6fae'},
+  door:'steel', hat:'mohawk', hatPal:{H:'#ff3fae',h:'#b0206e'}, hatAlt:{H:'#9ad94b',h:'#5a9a2a'}, cloth:['#15121a','#3a3a40','#5a1a2a','#1f3b2a','#2a2a4a'], detail:'#c9ccd2'},
+ {id:'velvet', name:'THE VELVET ROOM', tag:'A cocktail lounge. Critics only drink perfect pours.', pts:125, track:'VELVET',
+  roster:{regular:.35, sprinter:.18, bruiser:.2, critic:.27}, newT:['critic'], hz:[['sticky'],['sticky'],['sticky','blackout']], show:{name:'THE CROONER!', col:'#c77dff', D:'#d4a531'},
+  pal:{wall:'#4a1030', wall2:'#3a0c26', trim:'#d4a531', top:'#2a1a12', topHi:'#6a4a2a', front:'#3a0c20', front2:'#28081a', neon:'#c77dff'},
+  door:'curtain', hat:'fedora', hatPal:{H:'#2a2a2e',h:'#15121a',D:'#d4a531'}, cloth:['#15121a','#2b3a5a','#5a1030','#3a3a40','#1a3a3a'], detail:'#d4a531'},
+ {id:'slow', name:'THE SLOW LANE', tag:'The studio snail pub. Tiny kegs, slow regulars, big tips.', pts:150, track:'SLOW LANE',
+  roster:{regular:.38, sprinter:.14, bruiser:.14, critic:.14, snail:.2}, newT:['snail'], hz:[['keg'],['keg'],['keg','sticky','cat']], show:{name:'SHELL SHOCK!', col:'#e8742a', D:'#ffd23f'},
+  pal:{wall:'#2f4a2a', wall2:'#263e22', trim:'#6b4a2a', top:'#8a6a3a', topHi:'#c8a36a', front:'#5a4020', front2:'#3d2a14', neon:'#e8742a'},
+  door:'round', hat:'frog', hatPal:{}, cloth:['#6b4a2a','#3d5a8a','#8a3b2a','#6a6a2a','#4a3a6a'], detail:'#e8e0c0'},
+ {id:'orbit', name:'ORBIT 9', tag:'The space bar. Low gravity, beaming aliens, twins that split.', pts:200, track:'ORBIT 9',
+  roster:{regular:.28, sprinter:.12, bruiser:.12, critic:.12, snail:.06, splitter:.3}, newT:['splitter','mini'], hz:[['beam','lowg'],['beam','lowg'],['beam','lowg','keg']], show:{name:'HOLOGRAM!', col:'#5ff5ff', D:'#ffffff'},
+  pal:{wall:'#0f1433', wall2:'#0a0f28', trim:'#3a4a8a', top:'#5a6a9a', topHi:'#a8b8e8', front:'#232a55', front2:'#161b3d', neon:'#5ff5ff'},
+  door:'airlock', hat:'alien', hatPal:{}, cloth:['#3a4a8a','#6a3ab0','#2a6a6a','#8a8a94','#5a2a5a'], detail:'#5ff5ff'}
+];
+var SKINS=['#f0c8a0','#d9a066','#b07040','#8a5230','#f6d7b8'];
+var FROGS=['#6ab04c','#4caf50','#8ac43a','#3a9a6a'];
+var ALIENS=['#7ad94b','#b58bff','#5ff5c4','#ff8fd8'];
+var HAIRS=['#2a1a10','#5a3418','#c8a040','#8a2a18','#15121a','#9a9a9a'];
+
+function roundSpec(vi,ri,loop,np){
+  var L=loop||0, k=Math.min(30,vi*3+ri+L*18);            // one progression index; LAST CALL x2 continues it (stagetest caught the reset)
+  return {
+    quota: Math.round((8+ri*3+vi*2+L*4)*(np>1?1.4:1)),   // patrons to serve out this round
+    maxPer: Math.min(4, 1+Math.floor((k+1)/2.5)),        // patrons allowed on one bar at once
+    walk: 24*(1+0.05*k),                                  // px/s during a walk phase (v1.00 probe: 0.06 made ORBIT 9 a wall)
+    gap: Math.max(0.85, 2.9-0.1*k)*(np>1?0.8:1),          // seconds between arrivals
+    push: Math.max(115, 215-5*k),                         // px a caught mug shoves (before modifiers)
+    drink: Math.max(0.75, 1.7-0.05*k),                    // seconds a patron drinks
+    empty: Math.min(240, 150+4*k),                        // px/s an empty slides home
+    walkT:[0.55,1.1], waitT:[0.45,1.2]                    // walk and pause phase lengths
+  };
+}
+function hazardsFor(vi,ri,loop){
+  var s={}, v=VENUES[vi], i;
+  for(i=0;i<v.hz[ri].length;i++)s[v.hz[ri][i]]=1;
+  if(loop>0){ s.cat=1; for(i=0;i<v.hz[2].length;i++)s[v.hz[2][i]]=1; }
+  return s;
+}
+function kegCap(vi,ri,loop){ return loop>0?5:(ri>=2?6:7); }
+
+/* ---- 7. THE SIM (host or solo authority). G is plain JSON on purpose: the
+        guest renders the host's G from snapshots, and fold survival saves it
+        whole. Cosmetic events go through fx(): they play here and ride the
+        next snapshot to the guest. ---- */
+var STATE='title';
+var G=null;
+function mkPin(){ return {u:0,d:0,l:0,r:0,press:0,btn:false,pick:-1,relFill:null}; }
+var pin=[mkPin(),mkPin()];
+function clearEdges(P){ P.u=0; P.d=0; P.l=0; P.r=0; P.press=0; P.pick=-1; }
+function rnd(){ G.rs=(G.rs+0x6D2B79F5)>>>0; var t=G.rs; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }
+function rr(a){ return a[0]+rnd()*(a[1]-a[0]); }
+function laneY(b){ return BAR_TOP+b*LANE_H; }
+function wrapBar(b){ return (b+NBARS)%NBARS; }
+var SIM_STATES={select:1,intro:1,play:1,mishap:1,clear:1,bonus:1,over:1};
+
+function fx(k,a,b,c,d,e){
+  playFx(k,a,b,c,d,e);
+  if(NET.role==='host'&&G&&G.evq){ G.evq.push([k,a,b,c,d,e]); if(G.evq.length>60)G.evq.shift(); }
+}
+function playFx(k,a,b,c,d,e){
+  try{
+    if(k==='s')playSfx(a,b);
+    else if(k==='b')FEEL.burst(a,b,c,d,e);
+    else if(k==='k')FEEL.shake(a,b);
+    else if(k==='f')FEEL.flash(a,b);
+    else if(k==='v'){ if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(a); }
+  }catch(x){}
+}
+function floatTxt(t,x,y,c,big){ G.fl.push({s:t,x:x,y:y,c:c||'#fff',z:big?22:16,l:1}); if(G.fl.length>18)G.fl.shift(); }
+function banner(s,c,d){ G.banner={s:s,c:c||'#ffd23f',t:d||1.4,d:d||1.4}; }
+
+function newMatch(mode){
+  G={mode:mode, np:(mode==='duo')?2:1, rs:((Date.now()^0x5EED)>>>0)||1, t:0,
+     sel:{c:[0,1],lock:[false,false],t:0,go:0},
+     vi:0, ri:0, loop:0, score:0, lives:(mode==='duo')?LIVES_DUO:LIVES_SOLO, nextLife:EXTRA_FIRST,
+     happy:0, hhT:0, bars:[], pts:[], mugs:[], cats:[], bts:[], show:null, card:null, banner:null, fl:[], evq:[],
+     mishap:null, clearT:0, bonus:null, overT:0, pid:1, quota:0, spawned:0, served:0, spawnT:0, spec:null, hz:{},
+     catT:0, blackT:0, roundClean:true, firstNew:null, paused:false, left:false,
+     stats:{served:0,perfect:0,empties:0,tips:0,pours:0,sloppy:0,short:0,streak:0,reached:''}};
+  for(var b=0;b<NBARS;b++)G.bars.push({fill:0,keg:-1,kegMax:-1,chg:0,dark:0,warn:0,pud:[]});
+  pin=[mkPin(),mkPin()];
+  STATE='select';
+}
+function startMatch(){
+  G.bts=[];
+  for(var p=0;p<G.np;p++)G.bts.push({p:p,c:G.sel.c[p],bar:p===0?1:2,from:p===0?1:2,to:p===0?1:2,mt:0,md:0,q:0,
+    pose:'idle',poseT:0,wasHeld:false,pourBar:-1,gone:false,streak:0,latch:false});
+  startVenue(0);
+  PORTAL.gameplayStart();
+}
+function startVenue(vi){ G.vi=vi; G.ri=0; G.card={id:'venue',t:0}; STATE='intro'; clearBars(); }
+function clearBars(){ for(var b=0;b<NBARS;b++){ var br=G.bars[b]; br.fill=0; br.chg=0; br.dark=0; br.warn=0; } }
+function startRound(){
+  G.spec=roundSpec(G.vi,G.ri,G.loop,G.np); G.quota=G.spec.quota; G.spawned=0; G.served=0; G.spawnT=0.8;
+  G.pts=[]; G.mugs=[]; G.cats=[]; G.show=null; G.mishap=null; G.roundClean=true; G.card=null;
+  G.hz=hazardsFor(G.vi,G.ri,G.loop);
+  var cap=G.hz.keg?kegCap(G.vi,G.ri,G.loop):-1;
+  for(var b=0;b<NBARS;b++){ var br=G.bars[b]; br.fill=0; br.keg=cap; br.kegMax=cap; br.chg=0; br.dark=0; br.warn=0; br.pud=[];
+    if((G.hz.slick||G.hz.sticky)&&rnd()<0.7){
+      var k=(G.hz.slick&&G.hz.sticky)?(rnd()<0.5?'slick':'sticky'):(G.hz.slick?'slick':'sticky');
+      var w=80+rnd()*40, x0=150+rnd()*(300-w); br.pud.push({x0:x0,x1:x0+w,k:k}); } }
+  G.catT=G.hz.cat?rr(CAT_GAP)*0.5:0; G.blackT=G.hz.blackout?rr(BLACK_GAP)*0.6:0;
+  G.firstNew=(G.ri===0&&G.loop===0)?VENUES[G.vi].newT[0]:null;
+  latchPours();   // BUILD 6: a POUR held into the round pours nothing until it is let go
+  banner('ROUND '+(G.ri+1)+'  :  '+G.quota+' TO SERVE','#ffd23f',1.6);
+  STATE='play';
+}
+
+/* ---- 7a. arrivals ---- */
+function countOn(b){ var n=0; for(var i=0;i<G.pts.length;i++){ var p=G.pts[i]; if(p.b===b&&p.st!=='exit')n++; } return n; }
+function countType(t){ var n=0; for(var i=0;i<G.pts.length;i++)if(G.pts[i].type===t&&G.pts[i].st!=='exit')n++; return n; }
+function pickType(){
+  if(G.firstNew){ var f=G.firstNew; G.firstNew=null; return f; }
+  var r=(G.loop>0)?VENUES[5].roster:VENUES[G.vi].roster, tot=0, k, last='regular';
+  for(k in r)tot+=r[k];
+  var x=rnd()*tot;
+  for(k in r){ last=k; x-=r[k]; if(x<=0)break; }
+  if(last==='snail'&&countType('snail')>=1)last='regular';
+  return last;
+}
+function trySpawn(){
+  var spec=G.spec, cnt=[0,0,0,0], near=[false,false,false,false], i, b;
+  for(i=0;i<G.pts.length;i++){ var p=G.pts[i]; if(p.st==='exit')continue; cnt[p.b]++; if(p.x<SPAWN_X+46)near[p.b]=true; }
+  var type=pickType(), beam=!!(G.hz.beam&&type!=='snail'&&rnd()<BEAM_P);
+  var cand=[], wsum=0;
+  for(b=0;b<NBARS;b++){ if(cnt[b]>=spec.maxPer)continue; if(!beam&&near[b])continue; cand.push(b); wsum+=spec.maxPer-cnt[b]; }
+  if(!cand.length){ G.firstNew=G.firstNew||((type!=='regular')?type:null); return false; }
+  var x=rnd()*wsum, pick=cand[0];
+  for(i=0;i<cand.length;i++){ x-=spec.maxPer-cnt[cand[i]]; if(x<=0){ pick=cand[i]; break; } }
+  spawnPatron(pick,type,beam?rr(BEAM_X):SPAWN_X,beam?'beam':'enter');
+  G.spawned++;
+  return true;
+}
+function spawnPatron(b,type,x,st){
+  var p={id:G.pid++,b:b,x:x,vx:0,type:type,st:st,t:(st==='beam')?BEAM_T:0.35,hp:TYPES[type].hp,watch:false,
+    mug:false,mq:'',by:0,look:(rnd()*1e6)|0,wk:0,pushLeft:0,drinkT:0,ang:0,fm:0};
+  G.pts.push(p);
+  fx('s',st==='beam'?'beam':'step');
+  return p;
+}
+function shellyOn(b){ for(var i=0;i<G.bts.length;i++){ var t=G.bts[i]; if(!t.gone&&t.bar===b&&CHARS[t.c].id==='shelly')return true; } return false; }
+
+/* ---- 7b. patrons ---- */
+function updPatrons(dt){
+  var spec=G.spec, hh=G.hhT>0;
+  for(var i=G.pts.length-1;i>=0;i--){
+    var p=G.pts[i], T=TYPES[p.type]; p.vx=0; p.wk+=dt; if(p.fm>0)p.fm-=dt;
+    if(p.st==='beam'){ p.t-=dt; if(p.t<=0){ p.st='wait'; p.t=0.4; } continue; }
+    if(p.st==='enter'){ p.t-=dt; if(p.t<=0){ p.st='walk'; p.t=rr(T.walkT||spec.walkT); } continue; }
+    if(p.st==='exit'){ p.vx=-PUSH_V; p.x+=p.vx*dt; if(p.x<-40)G.pts.splice(i,1); continue; }
+    if(p.st==='push'){ var d=PUSH_V*dt; p.vx=-PUSH_V; p.x-=d; p.pushLeft-=d;
+      if(p.x<=EXIT_X)serveOut(p); else if(p.pushLeft<=0){ p.st='drink'; p.t=p.drinkT; }
+      continue; }
+    if(p.st==='drink'){ p.t-=dt; if(p.t<=0)finishDrink(p,i); continue; }
+    if(p.st==='sulk'){ p.t-=dt; if(p.t<=0){ p.st='wait'; p.t=0.3; } continue; }
+    if(p.watch)continue;
+    if(p.st==='walk'){
+      var v=spec.walk*T.spd*(hh?HH_WALK:1)*(shellyOn(p.b)?SHELLY_CALM:1);
+      p.vx=v; p.x+=v*dt; p.t-=dt;
+      if(p.x>=END_X){ p.x=END_X; mishap('reach',p.b,p.x); return; }
+      if(p.t<=0){ p.st='wait'; p.t=rr(T.waitT||spec.waitT); }
+    } else if(p.st==='wait'){ p.t-=dt; if(p.t<=0){ p.st='walk'; p.t=rr(T.walkT||spec.walkT); } }
+    p.ang=(p.x>END_X-120)?1:0;
+  }
+}
+function serveOut(p){
+  p.st='exit'; p.mug=false; G.served++; G.stats.served++;
+  var pts=Math.round(VENUES[G.vi].pts*TYPES[p.type].pts*(G.loop>0?1.5:1)/5)*5;
+  addScore(pts,Math.max(40,p.x+30),laneY(p.b)+26,'#9ecbff');
+  fx('s','serve');
+}
+function tipChance(p){ var t=TYPES[p.type].tip*TIP_BASE; var bt=G.bts[p.by]; if(bt&&CHARS[bt.c].id==='pearl')t*=PEARL_TIP; return t; }
+function finishDrink(p,i){
+  p.mug=false; p.fm=1.2;   // BUILD 2: a foam moustache for a moment (cosmetic)
+  var tip=rnd()<tipChance(p);
+  spawnMug(p.b,p.x+HAND_DX+4,G.spec.empty*(G.hz.lowg?LOWG_MUG:1),'empty','',tip,p.by,1);
+  if(TYPES[p.type].split){
+    G.pts.splice(i,1);
+    var a=spawnPatron(p.b,'mini',Math.min(END_X-40,p.x+16),'wait'), c=spawnPatron(p.b,'mini',Math.max(SPAWN_X,p.x-24),'wait');
+    a.t=0.5; c.t=0.9; G.quota++; G.spawned++;
+    fx('s','split'); fx('b',p.x,laneY(p.b)+50,'#b58bff',16,160);
+    floatTxt('SPLIT!',p.x,laneY(p.b)+16,'#b58bff');
+    return;
+  }
+  p.st='wait'; p.t=0.35;
+}
+
+/* ---- 7c. mugs ---- */
+function spawnMug(b,x,v,k,q,tip,by,push){ var m={id:G.pid++,b:b,x:x,vx:(k==='full')?-v:v,k:k,q:q||'',tip:!!tip,hang:0,by:by||0,push:push||1}; G.mugs.push(m); return m; }
+function mugFactor(b,x){ var f=1, u=G.bars[b].pud; for(var i=0;i<u.length;i++){ if(x>=u[i].x0&&x<=u[i].x1)f*=(u[i].k==='slick')?SLICK_K:STICKY_K; } return f; }
+function catOn(b){ for(var i=0;i<G.cats.length;i++)if(G.cats[i].b===b)return G.cats[i]; return null; }
+function findCatcher(m,prev){
+  var best=null, bh=-1e9;
+  for(var i=0;i<G.pts.length;i++){ var p=G.pts[i];
+    if(p.b!==m.b||p.watch||p.mug)continue;
+    if(p.st!=='walk'&&p.st!=='wait'&&p.st!=='enter')continue;
+    var hand=p.x+HAND_DX;
+    if(hand>=m.x-2&&hand<=prev+8&&hand>bh){ bh=hand; best=p; } }
+  return best;
+}
+function btAt(b,catching){
+  for(var i=0;i<G.bts.length;i++){ var t=G.bts[i]; if(t.gone)continue;
+    if(t.bar===b)return t;
+    if(catching&&t.md>0&&CHARS[t.c].id==='zip'&&(t.from===b||t.to===b))return t; }
+  return null;
+}
+function graceTime(){ var g=0; for(var i=0;i<G.bts.length;i++){ if(G.bts[i].gone)continue; g=Math.max(g,CATCH_T[cstat(G.bts[i].c,'catch')]); } return g; }
+function updMugs(dt){
+  for(var i=G.mugs.length-1;i>=0;i--){
+    var m=G.mugs[i], prev=m.x; m.x+=m.vx*mugFactor(m.b,m.x)*dt;
+    if(m.k==='full'){
+      var cat=catOn(m.b);
+      if(cat&&cat.st==='walk'&&m.x<=cat.x+12&&prev>=cat.x-12){
+        G.mugs.splice(i,1); cat.st='lap'; cat.t=CAT_LAP; fx('s','slurp'); fx('s','meow');
+        floatTxt('SLURP!',cat.x,laneY(m.b)+60,'#c9ccd2'); continue; }
+      var p=findCatcher(m,prev);
+      if(p){ G.mugs.splice(i,1); catchMug(p,m); continue; }
+      if(m.x<BREAK_X){ mishap('door',m.b,DOOR_X); return; }
+    } else {
+      if(m.x>=MUG_END){ m.x=MUG_END;
+        var bt=btAt(m.b,true);
+        if(bt){ G.mugs.splice(i,1); catchEmpty(bt,m); continue; }
+        m.hang+=dt; if(m.hang>graceTime()){ mishap('drop',m.b,MUG_END); return; } }
+    }
+  }
+}
+function catchMug(p,m){
+  var T=TYPES[p.type];
+  if(m.q==='short'||(T.perfectOnly&&m.q!=='perfect')){   // BUILD 2: a SHORT pour goes back from anyone, the critic's way
+    var bk=spawnMug(p.b,p.x+HAND_DX+6,G.spec.empty*1.15,'back',m.q,false,m.by,1); bk.f=(m.q==='short')?(m.f||0.5):1;   // BUILD 3: it comes back as it went out
+    p.st='sulk'; p.t=0.8; fx('s','sendback'); floatTxt(m.q==='short'?'TOO SHORT!':'SENT BACK!',p.x+10,laneY(p.b)+14,'#ff7b7b'); return; }
+  var first=(p.hp>1); if(first)p.hp--;
+  p.mug=true; p.mq=m.q; p.by=m.by; p.watch=false;
+  p.pushLeft=G.spec.push*T.push*m.push*(first?(T.firstPush||1):1)*(G.hz.lowg?LOWG_PUSH:1);
+  p.drinkT=G.spec.drink*(first?(T.firstDrink||T.drink):T.drink);
+  p.st='push';
+  fx('s','catch');
+  if(m.q==='perfect'){ G.stats.perfect++; addScore(PTS_PERFECT,p.x+20,laneY(p.b)+8,'#ffd23f');
+    if(m.sb){ addScore(PTS_STREAK,p.x+20,laneY(p.b)-14,'#ffd23f',true); fx('s','tip'); }
+    if(G.hhT<=0){ G.happy++; if(G.happy>=HAPPY_MAX)startHappy(); } }
+}
+function catchEmpty(bt,m){
+  bt.pose='catch'; bt.poseT=0.25;
+  if(m.k==='back'){ floatTxt('SAVED',MUG_END-24,laneY(m.b)+44,'#9ecbff'); fx('s','clink'); return; }
+  G.stats.empties++; addScore(PTS_EMPTY,MUG_END-26,laneY(m.b)+46,'#dfe8ff'); fx('s','clink');
+  if(m.tip){ G.stats.tips++; addScore(PTS_TIP,MUG_END-60,laneY(m.b)+16,'#ffd23f',true); fx('s','tip');
+    fx('b',MUG_END,laneY(m.b)+TOP_Y-20,'#ffd23f',18,160); startShow(m.b); }
+}
+
+/* ---- 7d. the bartenders ---- */
+function reqMove(bt,dir){
+  if(bt.md>0){ bt.q=dir; return; }
+  if(bt.pourBar>=0){ G.bars[bt.pourBar].fill=0; bt.pourBar=-1; }   // BUILD 2: walking away mid-pour pours the mug out (no TOP OFF)
+  var t=wrapBar(bt.bar+dir);
+  if(G.np>1){ var o=G.bts[1-bt.p]; if(o&&!o.gone){ var ob=(o.md>0)?o.to:o.bar; if(t===ob)t=wrapBar(t+dir); } }
+  bt.from=bt.bar; bt.to=t; bt.mt=0; bt.md=MOVE_T[cstat(bt.c,'move')];
+}
+/* BUILD 6 (the Director, 2026-09-30: "user can accidentally throw a mug at the beginning of a level if pressing down
+   too early right when the level starts"). The POUR that continues past ROUND CLEAR or a venue card is often still
+   down when the round starts, and the game poured at once: let go, and a mug slid down an empty bar to the door (a
+   mug lost). A POUR held as a round starts, or resumes after a mishap, is latched: it pours nothing until let go,
+   and the next press pours as ever. */
+function latchPours(){ for(var i=0;i<G.bts.length;i++){ var bt=G.bts[i], P=pin[bt.p]; bt.pourBar=-1; bt.latch=!!(P&&P.btn); } }
+function updBartender(bt,dt){
+  var P=pin[bt.p];
+  if(bt.gone){ clearEdges(P); return; }
+  while(P.u>0){ P.u--; reqMove(bt,-1); }
+  while(P.d>0){ P.d--; reqMove(bt,1); }
+  if(bt.md>0){ bt.mt+=dt; if(bt.mt>=bt.md*0.5)bt.bar=bt.to;
+    if(bt.mt>=bt.md){ bt.md=0; bt.mt=0; bt.bar=bt.to; bt.from=bt.to; if(bt.q){ var d=bt.q; bt.q=0; reqMove(bt,d); } } }
+  if(bt.poseT>0){ bt.poseT-=dt; if(bt.poseT<=0)bt.pose='idle'; }
+  var held=!!P.btn, settled=bt.md<=0, br=G.bars[bt.bar];
+  if(bt.latch){ if(held)held=false; else bt.latch=false; }   // BUILD 6: a POUR held into the round waits to be let go
+  if(held&&settled){
+    if(br.keg===0){ br.chg+=dt/KEG_T; bt.pose='keg'; bt.poseT=0.12; bt.pourBar=-1;
+      if(br.chg>=1){ br.keg=br.kegMax; br.chg=0; fx('s','keg'); floatTxt('FRESH KEG',BT_X-40,laneY(bt.bar)+22,'#9ad94b'); } }
+    else { var rate=1/POUR_T[cstat(bt.c,'pour')]; if(br.fill>=1)rate*=FOAM_SLOW;
+      br.fill=Math.min(FILL_MAX,br.fill+rate*dt); bt.pourBar=bt.bar; bt.pose='pour'; bt.poseT=0.12; }
+  }
+  if(!held&&bt.wasHeld&&bt.pourBar>=0){
+    var pb=G.bars[bt.pourBar];
+    if(P.relFill!=null&&Math.abs(P.relFill-pb.fill)<=NET_TRUST)pb.fill=Math.min(FILL_MAX,Math.max(0,P.relFill));   // online guest: the fill the guest SAW when letting go (its own pour, predicted)
+    if(settled&&bt.bar===bt.pourBar){ if(pb.fill>=SHORT_MIN)throwMug(bt,pb); else pb.fill=0; }   // BUILD 2: letting go always throws; a tap pours out
+    bt.pourBar=-1;
+  }
+  if(!held)P.relFill=null;
+  bt.wasHeld=held;
+}
+function pourQuality(c,f){
+  var hw=HEAD_W[cstat(c,'head')];
+  if(f<1)return 'none';
+  if(G&&G.hhT>0)return 'perfect';
+  if(f<=1+hw)return 'perfect';
+  if(f<=1+hw+OVER_PAD)return 'clean';
+  return 'sloppy';
+}
+function throwMug(bt,br){
+  var c=bt.c, q=pourQuality(c,br.fill), id=CHARS[c].id;
+  if(q==='none')q='short';                          // BUILD 2: below FULL it still flies, and it comes back
+  var v=SLIDE_V[cstat(c,'slide')]*(G.hz.lowg?LOWG_MUG:1);
+  var push=SLIDE_PUSH[cstat(c,'slide')]*(id==='tank'?TANK_PUSH:1)*(id==='shelly'?SHELLY_PUSH:1);
+  if(q==='sloppy'){ v*=SLOP_V; push*=SLOP_PUSH; }
+  bt.streak=(q==='perfect')?(bt.streak||0)+1:0;
+  if(bt.streak>G.stats.streak)G.stats.streak=bt.streak;
+  var m=spawnMug(bt.bar,MUG_X0,v,'full',q,false,bt.p,push);
+  m.f=Math.round(Math.min(br.fill,1)*100)/100;     // the level it left with (a SHORT mug shows it)
+  if(q==='perfect'&&bt.streak%STREAK_N===0)m.sb=1;
+  br.fill=(q==='perfect'&&id==='fizz')?FIZZ_TOPUP:0;
+  if(br.keg>0)br.keg--;
+  bt.pose='throw'; bt.poseT=0.22; G.stats.pours++;
+  fx('s','slide');
+  if(q==='perfect'){ fx('s','perfect'); floatTxt(m.sb?('STREAK x'+bt.streak+'!'):'PERFECT',MUG_X0-30,laneY(bt.bar)+64,'#ffd23f',!!m.sb);
+    if(m.sb)fx('b',MUG_X0-10,laneY(bt.bar)+TOP_Y-6,'#ffd23f',14,140); }
+  else if(q==='sloppy'){ G.stats.sloppy++; G.happy=0; wetBar(bt.bar); fx('s','sloppy'); floatTxt('SLOPPY',MUG_X0-30,laneY(bt.bar)+64,'#ff9a5a'); }
+  else if(q==='short'){ G.stats.short++; fx('s','topoff'); floatTxt('SHORT',MUG_X0-30,laneY(bt.bar)+64,'#9ecbff'); }
+}
+function wetBar(b){   // BUILD 2: a SLOPPY pour's spill, a slick patch in front of the pourer's own tap for WET_T s
+  var u=G.bars[b].pud;
+  for(var i=0;i<u.length;i++)if(u[i].t){ u[i].t=WET_T; return; }
+  u.push({x0:MUG_X0-40-WET_W,x1:MUG_X0-40,k:'slick',t:WET_T});
+}
+
+/* ---- 7e. hazards, the show, happy hour, the tab ---- */
+function updHazards(dt){
+  var i;
+  if(G.hz.cat){ G.catT-=dt; if(G.catT<=0){ G.catT=rr(CAT_GAP); var b=(rnd()*NBARS)|0; if(!catOn(b)){ G.cats.push({b:b,x:DOOR_X+22,st:'walk',t:0}); fx('s','meow'); } } }
+  for(i=G.cats.length-1;i>=0;i--){ var c=G.cats[i];
+    if(c.st==='walk'){ c.x+=CAT_V*dt; if(c.x>=END_X-40){ c.st='hop'; c.t=0.45; } }
+    else if(c.st==='lap'){ c.t-=dt; if(c.t<=0)c.st='walk'; }
+    else { c.t-=dt; c.x+=90*dt; if(c.t<=0)G.cats.splice(i,1); } }
+  if(G.hz.blackout){ G.blackT-=dt; if(G.blackT<=0){ G.blackT=rr(BLACK_GAP)+BLACK_WARN+BLACK_T; var bb=(rnd()*NBARS)|0; G.bars[bb].warn=BLACK_WARN; fx('s','buzz'); } }
+  for(i=0;i<NBARS;i++){ var br=G.bars[i];
+    if(br.warn>0){ br.warn-=dt; if(br.warn<=0){ br.warn=0; br.dark=BLACK_T; } }
+    else if(br.dark>0){ br.dark-=dt; if(br.dark<0)br.dark=0; }
+    for(var j=br.pud.length-1;j>=0;j--)if(br.pud[j].t){ br.pud[j].t-=dt; if(br.pud[j].t<=0)br.pud.splice(j,1); } }   // spills dry
+}
+function startShow(b){
+  G.show={t:SHOW_T,b:b};
+  for(var i=0;i<G.pts.length;i++){ var p=G.pts[i]; if(!(p.st==='walk'||p.st==='wait'||p.st==='enter'))continue;
+    if(mugComing(p))continue;                       // BUILD 2, the Director's SHOW ruling: a patron with a mug on its way keeps an eye on it
+    if(rnd()<SHOW_WATCH)p.watch=true; }
+  fx('s','show'); var s=VENUES[G.vi].show; banner(s.name,s.col,1.6);
+}
+function mugComing(p){ for(var j=0;j<G.mugs.length;j++){ var m=G.mugs[j]; if(m.k==='full'&&m.b===p.b&&m.x>p.x)return true; } return false; }
+function endShow(){ G.show=null; for(var i=0;i<G.pts.length;i++)G.pts[i].watch=false; }
+function startHappy(){ G.happy=0; G.hhT=HH_T; fx('s','happy'); fx('f',0.3,'#ffd23f'); banner('HAPPY HOUR!','#ffd23f',1.8); }
+function addScore(n,x,y,col,big){
+  n=n*((G.hhT>0)?2:1); G.score+=n;
+  if(x!=null)floatTxt('+'+n,x,y,col,big);
+  while(G.score>=G.nextLife){ G.nextLife+=EXTRA_EVERY; if(G.lives<LIVES_MAX){ G.lives++; fx('s','oneup'); banner('EXTRA MUG!','#57ff7a',1.4); } }
+}
+var MISHAP_TXT={door:'A MUG HIT THE DOOR!', drop:'AN EMPTY HIT THE FLOOR!', reach:'THEY REACHED THE TAPS!'};
+function mishap(why,b,x){
+  if(STATE!=='play')return;
+  STATE='mishap'; G.mishap={why:why,b:b,x:x,t:0}; G.lives--; G.happy=0; G.hhT=0; G.roundClean=false;
+  if(G.show)endShow();
+  fx('s',why==='reach'?'crush':'shatter'); fx('s','mishap'); fx('k',0.5,6); fx('f',0.25,'#ff3030');
+  fx('b',x,laneY(b)+TOP_Y-8,'#dfefff',26,220); fx('v',[60,40,120]);
+}
+function resumeRound(){
+  G.pts=[]; G.mugs=[]; G.cats=[]; G.show=null; G.spawned=G.served; G.spawnT=1.0; G.mishap=null;
+  for(var b=0;b<NBARS;b++){ var rb=G.bars[b]; rb.fill=0; rb.dark=0; rb.warn=0; rb.pud=rb.pud.filter(function(u){ return !u.t; }); }
+  latchPours();   // BUILD 6: and after a mishap
+  STATE='play'; banner('READY?','#ffd23f',1.2);
+}
+function roundClear(){
+  STATE='clear'; G.clearT=0; G.cats=[]; G.clearClean=G.roundClean;
+  addScore(PTS_CLEAR); if(G.roundClean)addScore(PTS_CLEAN);
+  fx('s','clear');
+}
+function gameOver(){
+  STATE='over'; G.overT=0; fx('s','over'); PORTAL.gameplayStop(); clearSave();
+  G.stats.reached=VENUES[G.vi].name+' '+(G.loop>0?('x'+(G.loop+1)+' '):'')+(G.ri+1);
+}
+
+/* ---- 7f. the per-state updates ---- */
+function updPlay(dt){
+  G.t+=dt;
+  if(G.hhT>0){ G.hhT-=dt; if(G.hhT<=0)G.hhT=0; }
+  if(G.show){ G.show.t-=dt; if(G.show.t<=0)endShow(); }
+  for(var i=0;i<G.bts.length;i++)updBartender(G.bts[i],dt);
+  if(G.spawned<G.quota){ G.spawnT-=dt; if(G.spawnT<=0){ trySpawn(); G.spawnT=G.spec.gap*(0.7+rnd()*0.6); } }
+  updHazards(dt);
+  updPatrons(dt); if(STATE!=='play')return;
+  updMugs(dt); if(STATE!=='play')return;
+  if(G.spawned>=G.quota&&!G.pts.length&&!G.mugs.length)roundClear();
+}
+function updCard(dt){
+  G.card.t+=dt;
+  if(G.card.t<CARD_GUARD)return;
+  for(var p=0;p<G.np;p++){ if(pin[p].press>0){ fx('s','sel'); startRound(); return; } }
+}
+function updSelect(dt){
+  var S=G.sel; S.t+=dt;
+  for(var p=0;p<G.np;p++){ var P=pin[p];
+    if(!S.lock[p]){
+      var d=(P.d+P.r)-(P.u+P.l);
+      if(d){ S.c[p]=(S.c[p]+d+CHARS.length*20)%CHARS.length; fx('s','move'); }
+      if(P.pick>=0){ if(S.c[p]===P.pick&&S.t>0.3){ S.lock[p]=true; fx('s','lock'); } else { S.c[p]=P.pick; fx('s','move'); } }
+      else if(P.press>0&&S.t>0.3){ S.lock[p]=true; fx('s','lock'); }
+    } else if(P.u+P.d+P.l+P.r>0||P.pick>=0){ S.lock[p]=false; fx('s','back'); }
+  }
+  var all=true; for(p=0;p<G.np;p++)if(!S.lock[p])all=false;
+  if(all){ S.go+=dt; if(S.go>0.6)startMatch(); } else S.go=0;
+}
+function startBonus(){
+  G.bonus={ph:'show',t:0,slots:[0,1,2,3,4,5],calm:(rnd()*6)|0,swaps:6+G.vi*2+G.loop*3,
+    dur:Math.max(0.15,0.36-G.vi*0.035-G.loop*0.05),sw:null,n:0,cur:[1,4],lock:[false,false],win:[false,false],rat:0};
+  STATE='bonus'; G.banner=null;
+}
+function nextSwap(){ var B=G.bonus, a=(rnd()*6)|0, b=(a+1+((rnd()*5)|0))%6; B.sw={a:a,b:b,t:0}; fx('s','rattle'); }
+function updBonus(dt){
+  var B=G.bonus; B.t+=dt;
+  if(B.ph==='show'){ B.rat-=dt; if(B.rat<=0){ B.rat=0.16; fx('s','rattle'); } if(B.t>=2.2){ B.ph='shuffle'; B.t=0; B.n=0; nextSwap(); } }
+  else if(B.ph==='shuffle'){ B.sw.t+=dt; if(B.sw.t>=B.dur){ var s=B.sw, tmp=B.slots[s.a]; B.slots[s.a]=B.slots[s.b]; B.slots[s.b]=tmp; B.n++;
+      if(B.n>=B.swaps){ B.ph='pick'; B.t=0; B.sw=null; } else nextSwap(); } }
+  else if(B.ph==='pick'){
+    var all=true;
+    for(var p=0;p<G.np;p++){ var P=pin[p];
+      if(!B.lock[p]){ var d=(P.d+P.r)-(P.u+P.l); if(d){ B.cur[p]=(B.cur[p]+d+60)%6; fx('s','move'); }
+        if(P.pick>=0){ if(B.cur[p]===P.pick&&B.t>0.3){ B.lock[p]=true; fx('s','sel'); } else { B.cur[p]=P.pick; fx('s','move'); } }
+        else if(P.press>0&&B.t>0.3){ B.lock[p]=true; fx('s','sel'); } }
+      if(!B.lock[p])all=false; }
+    if(all){ B.ph='reveal'; B.t=0; var any=false;
+      for(p=0;p<G.np;p++){ B.win[p]=(B.slots[B.cur[p]]===B.calm); if(B.win[p]){ any=true; addScore(Math.round(PTS_BONUS*(1+G.loop*0.5)),120+B.cur[p]*80,360,'#ffd23f',true); } }
+      fx('s',any?'win':'spray'); if(!any)fx('f',0.2,'#fff3d0'); }
+  }
+  else if(B.ph==='reveal'){ if(B.t>=2.8){ G.bonus=null; G.vi++; if(G.vi>=VENUES.length){ G.vi=0; G.loop++; } startVenue(G.vi); } }
+}
+function updCosmetic(dt){
+  if(!G)return;
+  for(var i=G.fl.length-1;i>=0;i--){ var f=G.fl[i]; f.y-=36*dt; f.l-=dt*0.85; if(f.l<=0)G.fl.splice(i,1); }
+  if(G.banner){ G.banner.t-=dt; if(G.banner.t<=0)G.banner=null; }
+}
+function simStep(dt){
+  if(STATE==='select')updSelect(dt);
+  else if(STATE==='intro')updCard(dt);
+  else if(STATE==='play')updPlay(dt);
+  else if(STATE==='mishap'){ G.mishap.t+=dt; if(G.mishap.t>=MISHAP_T){ if(G.lives<=0)gameOver(); else resumeRound(); } }
+  else if(STATE==='clear'){ G.clearT+=dt; if(G.clearT>=CLEAR_T){ for(var p=0;p<G.np;p++){ if(pin[p].press>0){ fx('s','sel'); G.ri++; if(G.ri>=3)startBonus(); else startRound(); break; } } } }   // BUILD 3: it waits for either player's POUR
+  else if(STATE==='bonus')updBonus(dt);
+  else if(STATE==='over')G.overT+=dt;
+  updCosmetic(dt);
+}
+function quickStart(mode,chars,vi,ri,loop){
+  newMatch(mode||'solo'); if(chars)G.sel.c=chars.slice(0,2).concat(chars.length<2?[1]:[]);
+  startMatch(); G.vi=vi||0; G.ri=ri||0; G.loop=loop||0; startRound();
+}
+
+/* ---- 8. THE FLOW: local menus (title, online, lobby, high scores, how to
+        play, initials) run on this device only; the match states run in the
+        sim above with one input stream per player. ---- */
+var UI={menu:0,t:0,msg:'',msgT:0,board:0,how:0,ini:[0,0,0],slot:0,code:[0,0,0,0],cslot:0,pause:false,pmenu:0,entry:null,from:'title'};
+var LETTERS='ABCDEFGHJKLMNPQRSTUVWXYZ';           // room codes: no I or O
+var INI_ABC='ABCDEFGHIJKLMNOPQRSTUVWXYZ.';
+function lsGet(k){ try{ if(typeof localStorage==='undefined')return null; return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ if(typeof localStorage==='undefined')return false; localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function loadPrefs(){ SND.on=lsGet('tapattack-snd')!=='0'; SND.mus=lsGet('tapattack-mus')!=='0'; var ini=lsGet('tapattack-ini');
+  if(ini&&/^[A-Z.]{3}$/.test(ini))for(var i=0;i<3;i++)UI.ini[i]=Math.max(0,INI_ABC.indexOf(ini.charAt(i))); }
+function toggleSound(){ SND.on=!SND.on; lsSet('tapattack-snd',SND.on?'1':'0'); if(SND.on)playSfx('sel'); }
+function toggleMusic(){ SND.mus=!SND.mus; lsSet('tapattack-mus',SND.mus?'1':'0'); if(!SND.mus)AKIT.music.stop(); else { wantTrack=null; } }
+function msg(s,t){ UI.msg=s; UI.msgT=t||2.4; }
+
+/* menu layout is shared by render and hit tests */
+function menuRect(i,n,y0,h){ h=h||54; return {x:110,y:(y0||380)+i*(h+8),w:420,h:h}; }
+function hitMenu(n,tap,y0,h){ if(!tap)return -1; for(var i=0;i<n;i++){ if(inR(tap.x,tap.y,menuRect(i,n,y0,h)))return i; } return -1; }
+function navMenu(L,n){ var d=L.d-L.u; if(d){ UI.menu=(UI.menu+d+n*10)%n; playSfx('move'); } }
+function titleItems(){ return ['1 PLAYER','2 PLAYERS ONLINE','HIGH SCORES','HOW TO PLAY','SOUND: '+(SND.on?'ON':'OFF'),'MUSIC: '+(SND.mus?'ON':'OFF')]; }
+function onlineItems(){ return ['HOST A GAME','JOIN A GAME','BACK']; }
+
+function goTitle(){ STATE='title'; UI.menu=0; UI.pause=false; G=null; pin=[mkPin(),mkPin()]; }
+function stTitle(L,dt){
+  var it=titleItems(), n=it.length; UI.t+=dt;
+  navMenu(L,n);
+  var h=hitMenu(n,L.tap,318,46); if(h>=0){ UI.menu=h; L.press++; }
+  if(L.press){ var k=UI.menu; playSfx('sel');
+    if(k===0){ netClose(); newMatch('solo'); }
+    else if(k===1){ STATE='online'; UI.menu=0; }
+    else if(k===2){ STATE='board'; UI.board=0; UI.entry=null; UI.from='title'; }
+    else if(k===3){ STATE='howto'; UI.how=0; }
+    else if(k===4)toggleSound();
+    else if(k===5)toggleMusic(); }
+}
+function stOnline(L){
+  var n=3; navMenu(L,n);
+  var h=hitMenu(n,L.tap,420,56); if(h>=0){ UI.menu=h; L.press++; }
+  if(L.back){ playSfx('back'); goTitle(); UI.menu=1; return; }
+  if(L.press){ playSfx('sel');
+    if(UI.menu===0)startHost();
+    else if(UI.menu===1){ STATE='lobby'; NET.phase='code'; UI.cslot=0; }
+    else { goTitle(); UI.menu=1; } }
+}
+function stLobby(L,dt){
+  if(NET.phase==='code'){
+    if(L.u){ UI.code[UI.cslot]=(UI.code[UI.cslot]+1)%LETTERS.length; playSfx('move'); }
+    if(L.d){ UI.code[UI.cslot]=(UI.code[UI.cslot]+LETTERS.length-1)%LETTERS.length; playSfx('move'); }
+    if(L.typed){ var ix=LETTERS.indexOf(L.typed); if(ix>=0){ UI.code[UI.cslot]=ix; L.r++; } }
+    if(L.tap){ for(var s=0;s<4;s++){ if(inR(L.tap.x,L.tap.y,codeSlot(s))){ UI.cslot=s; playSfx('move'); } }
+      if(inR(L.tap.x,L.tap.y,{x:170,y:560,w:300,h:56}))L.press++; }
+    if(L.l||L.bk){ if(UI.cslot>0){ UI.cslot--; playSfx('back'); } }
+    if(L.r&&UI.cslot<3){ UI.cslot++; playSfx('move'); }
+    if(L.press){ if(UI.cslot<3){ UI.cslot++; playSfx('sel'); } else { var c=''; for(var i=0;i<4;i++)c+=LETTERS.charAt(UI.code[i]); playSfx('sel'); startJoin(c); } }
+    if(L.back){ playSfx('back'); STATE='online'; UI.menu=1; }
+    return;
+  }
+  if(NET.phase==='hosting'){
+    var hn=2; navMenu(L,hn);
+    var h=hitMenu(hn,L.tap,560,52); if(h>=0){ UI.menu=h; L.press++; }
+    if(L.back||(L.press&&UI.menu===1)){ playSfx('back'); netClose(); STATE='online'; UI.menu=0; return; }
+    if(L.press&&UI.menu===0){ playSfx('sel'); shareInvite(); }
+    return;
+  }
+  if(L.back||L.press||L.tap){ if(NET.phase!=='connecting'||L.back){ playSfx('back'); netClose(); STATE='online'; UI.menu=0; } }
+}
+function codeSlot(s){ return {x:152+s*88,y:420,w:72,h:92}; }
+function shareInvite(){
+  var url='';
+  try{ if(typeof location!=='undefined'&&/^https?:/.test(location.protocol))url=location.origin+location.pathname+'?join='+NET.code; }catch(e){}
+  var text='Join my bar in TAP ATTACK. Room code '+NET.code+(url?(': '+url):'');
+  try{ if(typeof navigator!=='undefined'&&navigator.share){ navigator.share({title:'TAP ATTACK',text:text,url:url||undefined}).then(function(){ msg('INVITE SENT'); },function(){ copyInvite(text); }); return; } }catch(e){}
+  copyInvite(text);
+}
+function copyInvite(t){ try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){ msg('INVITE COPIED'); },function(){ msg('CODE: '+NET.code); }); return; } }catch(e){} msg('CODE: '+NET.code); }
+function stHowto(L){
+  if(L.tap||L.press||L.r||L.d){ UI.how++; playSfx('move'); if(UI.how>=3){ goTitle(); UI.menu=3; } }
+  else if((L.l||L.u)&&UI.how>0){ UI.how--; playSfx('move'); }
+  if(L.back){ playSfx('back'); goTitle(); UI.menu=3; }
+}
+function stBoard(L){
+  if(L.l||L.r){ UI.board=1-UI.board; playSfx('move'); }
+  if(L.tap&&L.tap.y<200){ UI.board=1-UI.board; playSfx('move'); return; }
+  if(L.press||L.back||L.tap){ playSfx('back'); netClose(); goTitle(); UI.menu=2; }
+}
+/* ---- initials: classic three letters; up and down turn the wheel, the
+        button stamps a letter, left steps back ---- */
+function toInitials(){
+  var mode=G.mode, score=G.score;
+  UI.final={mode:mode,score:score,reached:G.stats.reached,c:(G.bts[LOCALP()]?G.bts[LOCALP()].c:0),partner:(G.np>1&&G.bts[1-LOCALP()])?G.bts[1-LOCALP()].c:-1};
+  NET.live=false;
+  if(boardQualifies(mode,score)){ STATE='initials'; UI.slot=0; UI.t=0; }
+  else { STATE='board'; UI.board=(mode==='duo')?1:0; UI.entry=null; UI.from='over'; msg('NO NEW RECORD THIS TIME',3); }
+}
+function stInitials(L,dt){
+  UI.t+=dt; var n=INI_ABC.length;
+  if(L.u){ UI.ini[UI.slot]=(UI.ini[UI.slot]+1)%n; playSfx('move'); }
+  if(L.d){ UI.ini[UI.slot]=(UI.ini[UI.slot]+n-1)%n; playSfx('move'); }
+  if(L.typed){ var ix=INI_ABC.indexOf(L.typed); if(ix>=0){ UI.ini[UI.slot]=ix; L.press++; } }
+  if((L.l||L.bk)&&UI.slot>0){ UI.slot--; playSfx('back'); }
+  if(L.tap){ for(var s=0;s<3;s++)if(inR(L.tap.x,L.tap.y,iniSlot(s))){ UI.slot=s; playSfx('move'); } }
+  if(L.press&&UI.t>0.25){ playSfx('sel'); if(UI.slot<2)UI.slot++; else finishInitials(); }
+}
+function iniSlot(s){ return {x:200+s*84,y:440,w:72,h:96}; }
+function iniString(){ var s=''; for(var i=0;i<3;i++)s+=INI_ABC.charAt(UI.ini[i]); return s; }
+function finishInitials(){
+  var n=iniString(), F=UI.final; lsSet('tapattack-ini',n);
+  UI.entry=boardAdd(F.mode,{n:n,s:F.score,r:F.reached,c:F.c,p:(F.mode==='duo')?(NET.partnerIni||'???'):'',t:Date.now()});
+  if(F.mode==='duo'&&NET.net)NET.net.send('ini',{n:n});
+  reportScore(F.score,n);
+  STATE='board'; UI.board=(F.mode==='duo')?1:0; UI.from='over';
+}
+function reportScore(s,n){ try{ if(typeof window!=='undefined'&&window.parent&&window.parent!==window)window.parent.postMessage({snailcade:'score',score:s,initials:n},'*'); }catch(e){} }
+
+/* ---- the board: local, top ten per mode ---- */
+var BOARD_KEY='tapattack-board-v1';
+function boardLoad(){ try{ var b=JSON.parse(lsGet(BOARD_KEY)||'{}'); if(!b||typeof b!=='object')b={}; if(!Array.isArray(b.solo))b.solo=[]; if(!Array.isArray(b.duo))b.duo=[]; return b; }catch(e){ return {solo:[],duo:[]}; } }
+function boardList(mode){ return boardLoad()[mode==='duo'?'duo':'solo']; }
+function boardQualifies(mode,score){ if(score<=0)return false; var l=boardList(mode); return l.length<10||score>l[l.length-1].s; }
+function boardAdd(mode,e){ var b=boardLoad(), k=(mode==='duo')?'duo':'solo'; b[k].push(e); b[k].sort(function(p,q){ return q.s-p.s||p.t-q.t; }); if(b[k].length>10)b[k].length=10; lsSet(BOARD_KEY,JSON.stringify(b)); return e.t; }
+function hiScore(mode){ var l=boardList(mode||'solo'); return l.length?l[0].s:0; }
+
+/* ---- pause (local): solo freezes the sim, online keeps the bar open ---- */
+function pauseItems(){ return ['RESUME','SOUND: '+(SND.on?'ON':'OFF'),'MUSIC: '+(SND.mus?'ON':'OFF'),NET.role?'LEAVE GAME':'QUIT TO TITLE']; }
+function stPause(L){
+  var n=4; if(L.d-L.u){ UI.pmenu=(UI.pmenu+L.d-L.u+40)%n; playSfx('move'); }
+  var h=hitMenu(n,L.tap,300,54); if(h>=0){ UI.pmenu=h; L.press++; }
+  if(L.back){ UI.pause=false; playSfx('back'); return; }
+  if(L.press){ playSfx('sel');
+    if(UI.pmenu===0)UI.pause=false; else if(UI.pmenu===1)toggleSound(); else if(UI.pmenu===2)toggleMusic();
+    else { UI.pause=false; if(NET.net)NET.net.send('bye',null); netClose(); clearSave(); PORTAL.gameplayStop(); goTitle(); } }
+}
+
+/* ---- 8b. FOLD SURVIVAL (seed v1.02 shape: localStorage, play-state only,
+        15 minute expiry, clearSave for return-to-title). The whole match G
+        is plain JSON, so a folded solo run resumes exactly; online matches
+        are never saved (the partner cannot wait). ---- */
+var SAVE_KEY='tapattack-resume';
+var SAVE_FRESH_MS=15*60*1000;
+var SAVE_STATES={intro:1,play:1,mishap:1,clear:1,bonus:1};
+function saveState(){
+  if(!G||!SAVE_STATES[STATE]||NET.role)return false;
+  if(typeof localStorage==='undefined')return false;
+  try{ localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,t:Date.now(),st:STATE,g:G})); return true; }catch(e){ return false; }
+}
+function loadState(){
+  if(typeof localStorage==='undefined')return false;
+  try{
+    var raw=localStorage.getItem(SAVE_KEY); if(!raw)return false;
+    var s=JSON.parse(raw); if(!s||s.v!==1||!SAVE_STATES[s.st]||!s.g)return false;
+    if(Date.now()-s.t>SAVE_FRESH_MS)return false;
+    G=s.g; G.evq=[]; STATE=s.st; pin=[mkPin(),mkPin()]; UI.pause=(STATE==='play');
+    for(var i=0;i<G.bts.length;i++){ G.bts[i].wasHeld=false; G.bts[i].pourBar=-1; }
+    return true;
+  }catch(e){ return false; }
+}
+function clearSave(){
+  if(typeof localStorage==='undefined')return false;
+  try{ localStorage.removeItem(SAVE_KEY); return true; }catch(e){ return false; }
+}
+
+/* ---- 8c. the orchestrator ---- */
+function takeEdges(){
+  var L={u:EV.u,d:EV.d,l:EV.l,r:EV.r,press:EV.press,back:EV.back,bk:EV.bk,tap:EV.tap,typed:EV.typed||null};
+  EV.u=EV.d=EV.l=EV.r=EV.press=EV.back=EV.bk=0; EV.tap=null; EV.typed=null;
+  return L;
+}
+function LOCALP(){ return NET.role==='guest'?1:0; }
+function tapPick(tap){                           // a tap on a character tile or a can becomes a pick
+  if(!tap||!G)return -1;
+  if(STATE==='select'){ for(var i=0;i<CHARS.length;i++)if(inR(tap.x,tap.y,charTile(i)))return i; }
+  if(STATE==='bonus'&&G.bonus&&G.bonus.ph==='pick'){ for(var j=0;j<6;j++)if(inR(tap.x,tap.y,canRect(j)))return j; }
+  return -1;
+}
+function charTile(i){ return {x:24+i*120,y:560,w:112,h:110}; }
+function canRect(j){ return {x:62+j*88,y:370,w:76,h:120}; }
+function feedLocal(P,L,held){
+  P.u+=L.u; P.d+=L.d; P.l+=L.l; P.r+=L.r; P.press+=L.press; P.btn=held;
+  var pk=tapPick(L.tap); if(pk>=0)P.pick=pk;
+  else if(L.tap&&(STATE==='intro'||STATE==='select'||STATE==='clear'))P.press++;   // BUILD 3: a tap continues from ROUND CLEAR too
+}
+var pourWatch=[0,0,0,0], pourTick=0;
+function audioWatch(dt){
+  if(!G||!G.bars||(STATE!=='play'))return;
+  pourTick-=dt;
+  for(var b=0;b<NBARS;b++){ var f=G.bars[b].fill;
+    if(f>pourWatch[b]+0.0005&&pourTick<=0){ pourTick=0.075; var bt=null;
+      for(var i=0;i<G.bts.length;i++)if(G.bts[i].bar===b)bt=G.bts[i];
+      var q=bt?pourQuality(bt.c,f):'none';
+      if(q==='sloppy'||q==='clean')playSfx('foam'); else playSfx('pour',f); }
+    pourWatch[b]=f; }
+}
+function update(dt){
+  var L=takeEdges(), held=btnHeld();
+  FEEL.tick(dt);
+  netPoll();
+  if(UI.msgT>0)UI.msgT-=dt;
+  if(NET.role==='guest'&&NET.live&&SIM_STATES[STATE]){
+    if(UI.pause){ stPause(L); guestSendInput(mkPin(),false); }
+    else if(L.back){ UI.pause=true; UI.pmenu=0; }
+    else if(STATE==='over'&&G&&G.overT>=OVER_GUARD&&(L.press||L.tap)){ toInitials(); }
+    else { guestFeed(L,held); }
+    guestTick(dt); audioWatch(dt); music(trackFor()); return;
+  }
+  if(SIM_STATES[STATE]&&G){
+    if(UI.pause){ stPause(L); if(!NET.role){ music(trackFor()); return; } L={u:0,d:0,l:0,r:0,press:0,back:0,bk:0,tap:null}; held=false; }
+    else if(L.back&&STATE!=='over'){ UI.pause=true; UI.pmenu=0; playSfx('sel'); if(!NET.role){ music(trackFor()); return; } L.back=0; }
+    if(STATE==='over'&&G.overT>=OVER_GUARD&&(L.press||L.tap)&&!UI.pause){ toInitials(); music(trackFor()); return; }
+    feedLocal(pin[0],L,held);
+    if(NET.role==='host')hostFeed();
+    simStep(dt);
+    clearEdges(pin[0]); clearEdges(pin[1]);
+    audioWatch(dt);
+    if(NET.role==='host')hostSend();
+  } else {
+    if(STATE==='title')stTitle(L,dt);
+    else if(STATE==='online')stOnline(L);
+    else if(STATE==='lobby')stLobby(L,dt);
+    else if(STATE==='howto')stHowto(L);
+    else if(STATE==='board')stBoard(L);
+    else if(STATE==='initials')stInitials(L,dt);
+    else goTitle();
+  }
+  music(trackFor());
+}
+function trackFor(){
+  if(!G||!SIM_STATES[STATE]||STATE==='select')return 'LAST CALL';
+  if(STATE==='over')return null;
+  if(STATE==='bonus')return 'SHAKE UP';
+  if(G.hhT>0)return 'HAPPY HOUR';
+  return VENUES[G.vi].track;
+}
+function resetGame(){ netClose(); goTitle(); ERRMSG=''; lastError=null; UI.pause=false; UI.msgT=0; }
+
+/* ---- 9. THE ART: procedural pixel sprites (rows of palette letters, the
+        SIGN HERE idiom), cached per palette into offscreen canvases so a
+        busy bar stays cheap. Patrons face RIGHT (toward the taps), the
+        bartenders face LEFT. Headless: no document.createElement, so the
+        cache returns null and the per-pixel path runs into the stub. ---- */
+var PAL={K:'#15121a',W:'#f4f1ea',w:'#c9c4bb',E:'#ffffff',M:'#b3262e',O:'#ffd23f',o:'#c99f16',R:'#d92b2b',X:'#8e939b',
+  S:'#f0c8a0',s:'#d19a70',H:'#5a3418',h:'#3a2210',C:'#3d5a8a',c:'#2a3f60',D:'#d92b2b',N:'#e8742a',n:'#9a3e12',A:'#57ff7a',P:'#ff6fae'};
+var SP={
+ human:[
+"............",
+"............",
+"............",
+"....HHHH....",
+"...HHHHHH...",
+"...HSSSSSS..",
+"...HSSSSKS..",
+"...SSSSSSSS.",
+"...sSSSSMS..",
+"....sSSSS...",
+".....sSs....",
+"..CCCCDDCC..",
+".CCCCCDDCCC.",
+".CCCCCDDCCC.",
+".CCCCCDDCCC.",
+".CCCCCCCCCC.",
+".CCCCCCCCCC."],
+ frog:[
+"............",
+"............",
+"............",
+"...SSS.SSS..",
+"..SEEKSEEKS.",
+"..SSSSSSSSS.",
+"..SSSSSSSSSS",
+"..SSSSSSSSSS",
+"..SsMMMMMMS.",
+"...ssssssss.",
+"....ssssss..",
+"..CCCCDDCC..",
+".CCCCCDDCCC.",
+".CCCCCDDCCC.",
+".CCCCCDDCCC.",
+".CCCCCCCCCC.",
+".CCCCCCCCCC."],
+ alien:[
+"......O.....",
+"......o.....",
+".....SSS....",
+"....SSSSS...",
+"...SSSSSSS..",
+"...SSEEESS..",
+"...SSEEKSS..",
+"...SSSSSSSS.",
+"....SSMMSS..",
+".....sSSs...",
+".....sss....",
+"..CCCCCCCC..",
+".CCCCDDCCCC.",
+".CCCCDDCCCC.",
+".CCCCDDCCCC.",
+".CCCCCCCCCC.",
+".CCCCCCCCCC."],
+ bruiser:[
+"..............",
+"..............",
+"..............",
+".....SSSSS....",
+"....SSSSSSS...",
+"....SSSSSKS...",
+"....SSSSSSSS..",
+"....sSSSSMS...",
+"....ssssss....",
+"....SSSSSSS...",
+".SSCCCCCCCCSS.",
+"SSSCCCCCCCCSSS",
+"SSSCCDDDDCCSSS",
+"SSSCCCCCCCCSSS",
+"SS.CCCCCCCC.SS",
+"...CCCCCCCC...",
+"...CCCCCCCC..."],
+ snail:[
+"...........K..K.",
+"...........S..S.",
+"...NNNN....S..S.",
+"..NNnnNN...SSSS.",
+".NNnNNnNN.SSSSSS",
+".NnNNNNnN.SSSKSS",
+".NnNnnNnNSSSSSSS",
+".NNnNNnNNSSSSMS.",
+"..NNnnNNSSSSSS..",
+"...NNNNSSSSSS...",
+".SSSSSSSSSSSS...",
+"SSSSSSSSSSSSSs..",
+".sssssssssss...."],
+ split:[
+"..O.......O...",
+"..o.......o...",
+".SSS.....SSS..",
+"SSSSS...SSSSS.",
+"SEKSS...SEKSS.",
+"SSSSSS.SSSSSS.",
+".SMSS...SMSS..",
+"..sSS...SSs...",
+"...sSSSSSs....",
+"....sSSSs.....",
+"...CCCCCCC....",
+"..CCCCDCCCC...",
+".CCCCCDCCCCC..",
+".CCCCCDCCCCC..",
+".CCCCCCCCCCC..",
+".CCCCCCCCCCC..",
+".CCCCCCCCCCC.."],
+ mini:[
+"...O....",
+"...o....",
+"..SSSS..",
+".SSEEKS.",
+".SSSSSSS",
+"..SMMS..",
+"..CCCC..",
+".CCCCCC.",
+".CCCCCC.",
+".CCCCCC."],
+ cat:[
+".........K.K",
+"K........KKK",
+"K.......KKOK",
+".K.KKKKKKKKK",
+"..KKKKKKKKK.",
+"..KKKKKKKK..",
+"..K.K..K.K..",
+"..K.K..K.K.."],
+ catLap:[
+"............",
+"K...........",
+"K.........K.",
+".K.KKKKKKKKK",
+"..KKKKKKKKOK",
+"..KKKKKKKKKK",
+"..K.K..K.K..",
+"..K.K..K.K.."],
+ dancer:[
+"....HHHH....",
+"...HHHHHH...",
+"...HSSSSH...",
+"...SKSSKS...",
+"...SSSSSS...",
+"....SMMS....",
+".....SS.....",
+"..SCCCCCCS..",
+".S.CCCCCC.S.",
+"S..CCDDCC..S",
+"...CCCCCC...",
+"..CCCCCCCC..",
+".CCCCCCCCCC.",
+"CCDCCDCCDCCC",
+"....S..S....",
+"....S..S....",
+"....S...S...",
+"....S....S..",
+"...KK....KK.",
+"............"],
+ dancer2:[
+"....HHHH....",
+"...HHHHHH...",
+"...HSSSSH...",
+"...SKSSKS...",
+"...SSSSSS...",
+"....SMMS....",
+".....SS.....",
+"S.SCCCCCCS.S",
+".S.CCCCCC.S.",
+"...CCDDCC...",
+"...CCCCCC...",
+"..CCCCCCCC..",
+".CCCCCCCCCC.",
+"CCDCCDCCDCCC",
+"....S..S....",
+"...S....S...",
+"..S......S..",
+".S........S.",
+"KK........KK",
+"............"],
+ bandit:[
+"....KKKKKK....",
+"...KKKKKKKK...",
+"...KSSSSSSK...",
+"...KKKKKKKK...",
+"...KEKKKKEK...",
+"...SSSSSSSS...",
+"....SSMMSS....",
+".....SSSS.....",
+"..CCCCCCCCCC..",
+".CCCCCCCCCCCC.",
+"SCCCCCCCCCCCCS",
+"S.CCCCCCCCCC.S"]
+};
+var HATS={
+ cowboy:[
+"....hHHh....",
+"...hHHHHh...",
+"...HHHHHH...",
+"...DDDDDD...",
+".hHHHHHHHHh."],
+ cap:[
+"............",
+"............",
+"...hHHHHh...",
+"..hHHHHHHH..",
+"...HHHHHHhhh"],
+ mohawk:[
+".....HH.....",
+"....HHHH....",
+".....HHH....",
+"....HHHH....",
+"...hhhhhh..."],
+ fedora:[
+"............",
+"....hHHh....",
+"...hHHHHh...",
+"...DDDDDD...",
+"..hHHHHHHHh."],
+ band:[
+"............",
+"............",
+"............",
+"....HHHH....",
+"...DDDDDD..."],
+ beret:[
+"............",
+"......K.....",
+"....KKKK....",
+"..KKKKKKKK..",
+"...KKKKKK..."]
+};
+var BT={
+ pearl:[
+"........HHH...",
+".......HHHHH..",
+"....HHHHHHHH..",
+"...HHHHHHHHHH.",
+"...HSSSSSSHHH.",
+"..SKSSSSSSSHH.",
+".SSSSSSSSSSH..",
+"..SMSSSSSSS...",
+"...SSSSSSSs...",
+".....sSSs.....",
+"...WWWRRWWW...",
+"..CWWWWWWWWC..",
+".CCCWWWWWWCCC.",
+".CCCWWOWWWCCC.",
+".CCCWWWWWWCCC.",
+".CCCCWWWWCCCC.",
+".CCCCWWOWCCCC.",
+".CCCCCWWCCCCC."],
+ tank:[
+"..............",
+"..............",
+"....SSSSSS....",
+"...SSSSSSSS...",
+"..SSSSSSSSSS..",
+".SKSSSSSSSSS..",
+"SSSSSSSSSSSS..",
+".HHHHHSSSSSS..",
+"..SMMSSSSSSs..",
+"...sSSSSSSs...",
+"..SSsSSSSsSS..",
+".SSCCWCCWCCSS.",
+"SSSCCWCCWCCSSS",
+"SSSCCWCCWCCSSS",
+"SSSCCWCCWCCSSS",
+"SS.CCWCCWCC.SS",
+"...CCWCCWCC...",
+"...CCWCCWCC..."],
+ zip:[
+"..............",
+"..............",
+"....HHHHH.....",
+"...HHHHHHHh...",
+"..hHHHHHHHHhh.",
+"...SSSSSSSS...",
+"..SKSSSSSSS...",
+".SSSSSSSSSS...",
+"..SWWWSSSSS...",
+"...SSSSSSs....",
+".....sSs......",
+"....CCCCCC....",
+"...CCCCCCCC...",
+"..SCCDDDCCCS..",
+"..SCCDDDCCCS..",
+"...CCCCCCCC...",
+"...CCCCCCCC...",
+"...CCCCCCCC..."],
+ fizz:[
+"....HHHHHH....",
+"...HHHHHHHH...",
+"..HHHHHHHHH...",
+"..HHHHHHHHHH..",
+"...HSSSSSSHH..",
+"..SKSSSSSSSH..",
+".SSSSSSSSSS...",
+"..SMSSSSSSS...",
+"...SSSSSSSs...",
+".....sSSs.....",
+"...WWWOOWWW...",
+"..CCWWWWWWCC..",
+".CCCCWWWWCCCC.",
+".CCCCWWWWCCCC.",
+".CCCCCWWCCCCC.",
+".CCCCCWWCCCCC.",
+".CCCCCCCCCCCC.",
+".CCCCCCCCCCCC."],
+ shelly:[
+"..K..K........",
+"..S..S........",
+"..S..S........",
+"..SSSS........",
+".SSSSSS..NNNN.",
+"SSKSSSS.NNnnNN",
+"SSSSSSSNNnNNnN",
+".SMSSSSNnNNNNn",
+"..SSSSSNnNnnNn",
+"..SSSSSNNnNNnN",
+"..WWWWWWNNnnNN",
+".SWWWWWWWNNNN.",
+".SWWWWWWWWS...",
+"..WWWWOWWW....",
+"..WWWWWWWW....",
+"..WWWWWWWW....",
+"..WWWWWWWW....",
+"..WWWWWWWW...."]
+};
+function darken(hex,k){ var v=parseInt(hex.slice(1),16), r=(v>>16)&255, g=(v>>8)&255, b=v&255;
+  r=Math.round(r*k); g=Math.round(g*k); b=Math.round(b*k); return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1); }
+function mixPal(o){ var p={}, k; for(k in PAL)p[k]=PAL[k]; for(k in o)if(o[k])p[k]=o[k]; var s=''; for(k in o)s+=k+o[k]; p.__k=s; return p; }
+var SPRC={}, PALC={};
+function canMake(){ return typeof document!=='undefined'&&typeof document.createElement==='function'; }
+function buildSprite(rows,pal,flip){
+  if(!canMake())return null;
+  try{ var w=0, i, j; for(i=0;i<rows.length;i++)w=Math.max(w,rows[i].length);
+    var c=document.createElement('canvas'); c.width=w; c.height=rows.length; var x=c.getContext('2d'); if(!x)return null;
+    for(i=0;i<rows.length;i++){ var r=rows[i]; for(j=0;j<r.length;j++){ var ch=r.charAt(j); if(ch==='.')continue; var col=pal[ch]; if(!col)continue;
+      x.fillStyle=col; x.fillRect(flip?(w-1-j):j,i,1,1); } }
+    return c; }catch(e){ return null; }
+}
+function spr(id,rows,pal,x,y,sc,flip){
+  if(!ctx)return;
+  var key=id+'|'+(pal.__k||'')+(flip?'|f':''), c=SPRC[key];
+  if(c===undefined){ c=buildSprite(rows,pal,flip); SPRC[key]=c; }
+  x=Math.round(x); y=Math.round(y);
+  if(c&&ctx.drawImage){ ctx.drawImage(c,x,y,c.width*sc,c.height*sc); return; }
+  var w=0, i, j; for(i=0;i<rows.length;i++)w=Math.max(w,rows[i].length);
+  for(i=0;i<rows.length;i++){ var r=rows[i]; for(j=0;j<r.length;j++){ var ch=r.charAt(j); if(ch==='.')continue; var col=pal[ch]; if(!col)continue;
+    ctx.fillStyle=col; ctx.fillRect(x+(flip?(w-1-j):j)*sc,y+i*sc,sc,sc); } }
+}
+/* BUILD 2: faces and moves. A mood repaints a few pixels of the real sprite (the eyes K and the
+   mouth M above the first shirt row C), memoized per sprite and mood, never outside the body. */
+var MOODC={}, ANGC={};
+function faceOf(rows){ var neck=rows.length, eyes=[], mouth=[], r, i;
+  for(r=0;r<rows.length;r++)if(rows[r].indexOf('C')>=0){ neck=r; break; }
+  for(r=2;r<neck;r++)for(i=0;i<rows[r].length;i++){ var ch=rows[r].charAt(i); if(ch==='K')eyes.push([r,i]); else if(ch==='M')mouth.push([r,i]); }
+  return {eyes:eyes,mouth:mouth,neck:neck};
+}
+function moodRows(sp,m){
+  var key=sp+':'+m, got=MOODC[key]; if(got)return got;
+  var rows=SP[sp], a=rows.map(function(s){ return s.split(''); }), f=faceOf(rows);
+  function set(r,c,ch){ if(r>=0&&r<a.length&&c>=0&&c<a[r].length&&a[r][c]!=='.')a[r][c]=ch; }
+  f.eyes.forEach(function(e){ var r=e[0], c=e[1], k=(m==='love')?'P':'K';
+    if(m==='happy'||m==='love'){ set(r,c,'s'); set(r,c-1,k); set(r-1,c,k); set(r,c+1,k); }
+    else if(m==='drink')set(r,c-1,'K');
+    else if(m==='angry'){ set(r-1,c,'K'); set(r-2,c-1,'K'); }
+    else if(m==='sulk'){ set(r-1,c,'h'); set(r-1,c-1,'h'); }
+    else if(m==='catch')set(r,c-1,'E'); });
+  f.mouth.forEach(function(e){ var r=e[0], c=e[1];
+    if(m==='happy'||m==='love'){ set(r,c-1,'M'); set(r,c+1,'M'); }
+    else if(m==='drink'||m==='catch')set(r,c,'K');
+    else if(m==='angry'){ set(r,c,'K'); set(r,c-1,'K'); set(r,c+1,'K'); }
+    else if(m==='sulk'){ set(r,c,'K'); set(r+1,c-1,'M'); } });
+  got=a.map(function(x){ return x.join(''); }); MOODC[key]=got; return got;
+}
+function mixHex(a,b,k){ var x=parseInt(a.slice(1),16), y=parseInt(b.slice(1),16);
+  function m(s){ return Math.round(((x>>s)&255)*(1-k)+((y>>s)&255)*k); }
+  return '#'+((1<<24)+(m(16)<<16)+(m(8)<<8)+m(0)).toString(16).slice(1); }
+function angryPal(pal){ var k=pal.__k||'', p=ANGC[k]; if(p)return p; p={};   // at the taps: the face flushes red
+  for(var q in pal)p[q]=pal[q]; if(p.S)p.S=mixHex(p.S,'#e0402a',0.35); p.__k=k+'|ang'; ANGC[k]=p; return p; }
+/* one palette per patron look, memoized: skin, hair, cloth come from the look seed and the venue */
+function patronLook(p,vi){
+  var key=vi+'|'+p.type+'|'+(p.look%997), pc=PALC[key]; if(pc)return pc;
+  var v=VENUES[vi], L=p.look, o={}, sprite='human', hat=v.hat, hatPal=v.hatPal;
+  var skin=SKINS[L%SKINS.length];
+  if(v.hat==='frog'){ sprite='frog'; skin=FROGS[L%FROGS.length]; hat=null; }
+  if(v.hat==='alien'){ sprite='alien'; skin=ALIENS[L%ALIENS.length]; hat=null; }
+  var cloth=v.cloth[(L>>3)%v.cloth.length];
+  o.S=skin; o.s=darken(skin,0.8); o.H=HAIRS[(L>>5)%HAIRS.length]; o.h=darken(o.H,0.7); o.C=cloth; o.c=darken(cloth,0.75); o.D=v.detail;
+  if(v.hat==='mohawk'&&(L&1))hatPal=v.hatAlt;
+  if(p.type==='sprinter'){ sprite=(sprite==='human')?'human':sprite; hat='band'; hatPal={H:o.H,D:'#ff3b3b'}; o.C='#f0d02a'; o.c='#b89a10'; o.D='#15121a'; }
+  if(p.type==='critic'){ sprite='human'; o.S=SKINS[L%SKINS.length]; o.s=darken(o.S,0.8); hat='beret'; hatPal={}; o.C='#5a2a7a'; o.c='#3a1a52'; o.D='#ff6fae'; }
+  if(p.type==='bruiser'){ sprite='bruiser'; hat=null; o.C='#e8e8e8'; o.c='#b0b0b0'; o.D='#d92b2b'; if(v.hat==='frog'||v.hat==='alien'){ o.S=skin; o.s=darken(skin,0.8); } }
+  if(p.type==='snail'){ sprite='snail'; hat=null; o.S='#c8b88a'; o.s='#9a8a5a'; o.N=['#e8742a','#d9a066','#b58bff','#57c4ff'][L%4]; o.n=darken(o.N,0.6); }
+  if(p.type==='splitter'){ sprite='split'; hat=null; o.S=ALIENS[1]; o.s=darken(ALIENS[1],0.75); o.C='#3a2a6a'; o.c='#2a1a4a'; o.D='#5ff5ff'; }
+  if(p.type==='mini'){ sprite='mini'; hat=null; o.S=ALIENS[(L>>2)%ALIENS.length]; o.s=darken(o.S,0.75); o.C='#3a2a6a'; o.c='#2a1a4a'; }
+  pc={sprite:sprite,pal:mixPal(o),hat:hat,hatPal:mixPal(hatPal||{})};
+  PALC[key]=pc; return pc;
+}
+var BT_PAL={};
+function btPal(c){ if(!BT_PAL[c])BT_PAL[c]=mixPal(CHARS[c].pal); return BT_PAL[c]; }
+
+/* ---- 10. RENDER (null-guarded so a headless stub is a no-op; the ERR line
+        draws LAST). Visual language contract (codex): GOLD is the pour band,
+        PERFECT and money; GREEN is a good catch and go; RED is danger (a mug
+        about to break, a patron at the taps); BLUE is the player's own UI.
+        Venue neon is decoration and never carries a signal. ---- */
+function rect(x,y,w,h,col){ if(!ctx)return; ctx.fillStyle=col; ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h)); }
+function txt(t,x,y,s,col,al,font){ if(!ctx)return; ctx.font=((font===undefined)?'bold ':font)+s+'px monospace';
+  ctx.textAlign=al||'center'; ctx.textBaseline='middle';
+  ctx.fillStyle='#000'; ctx.fillText(t,x+1,y+2); ctx.fillStyle=col; ctx.fillText(t,x,y); }
+function alpha(a){ if(ctx)ctx.globalAlpha=a; }
+function fmt(n){ var s=String(Math.floor(n)), o=''; while(s.length>3){ o=','+s.slice(-3)+o; s=s.slice(0,-3); } return s+o; }
+function blink(r){ return (Math.floor(Date.now()/(r||400))%2)===0; }
+function panel(x,y,w,h,edge){ rect(x-3,y-3,w+6,h+6,edge||'#3a5a8a'); rect(x,y,w,h,'#0a1220'); }
+function neon(t,x,y,s,col){ if(!ctx)return; ctx.font='bold '+s+'px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  if('shadowBlur' in ctx){ ctx.shadowColor=col; ctx.shadowBlur=s*0.45; }
+  ctx.fillStyle=col; ctx.fillText(t,x,y); ctx.fillText(t,x,y);
+  if('shadowBlur' in ctx){ ctx.shadowBlur=0; ctx.shadowColor='transparent'; }
+  ctx.fillStyle='#fff8ee'; ctx.globalAlpha=0.55; ctx.fillText(t,x,y); ctx.globalAlpha=1; }
+
+/* ---- mugs: drawn procedurally so a mug can show any fill ---- */
+var GLASS='#a8d4ea', GLASS_IN='#23394c', BEER='#f0a82a', BEER2='#d98a12', FOAM='#fffbe8';
+/* BUILD 3, THE POUR YOU CAN SEE (the Director's BUILD 2 phone pass: the beer filling up and the measuring bar were
+   hard to see). The meter and the ring share one scale that zooms where the choice is made: the beer up to FULL takes
+   the lower 42%, the head (the gold band, then the clean pad) the next 46%, the spill the top 12%. The bands are the
+   rule's own numbers (HEAD_W, OVER_PAD), so a narrower band draws narrower. */
+function pourPos(f,hw){ var E=1+hw+OVER_PAD;
+  if(f<=1)return 0.42*Math.max(0,f);
+  if(f<=E)return 0.42+0.46*(f-1)/(hw+OVER_PAD);
+  return Math.min(1,0.88+0.12*(f-E)/Math.max(0.01,FILL_MAX-E)); }
+function pourCol(q){ return q==='perfect'?'#ffd23f':(q==='sloppy'?'#ff3b3b':(q==='clean'?'#fff3d0':'#ffffff')); }
+function drawPourMeter(x,y,w,h,fill,hw,c){   // a tall tube of beer: a pointer at the level, the gold band glows while you are in it
+  var f=Math.max(0,Math.min(FILL_MAX,fill)), q=f>0?pourQuality(c,f):'none', gold=(q==='perfect'), E=1+hw+OVER_PAD, now=Date.now();
+  function Y(v){ return Math.round(y+h-pourPos(v,hw)*h); }
+  var yb=Y(1+hw), yf=Y(1), ye=Y(E);
+  if(gold){ var pu=0.5+0.5*Math.sin(now/70); alpha(0.22+0.22*pu); rect(x-14,yb-10,w+28,yf-yb+20,'#ffd23f'); alpha(1); }
+  rect(x-4,y-4,w+8,h+8,'#07060c'); rect(x-2,y-2,w+4,h+4,gold?'#ffd23f':'#6f8fb4'); rect(x,y,w,h,'#10202e');
+  alpha(0.35); rect(x,yb,w,yf-yb,'#ffd23f'); rect(x,y,w,ye-y,'#ff3b3b'); alpha(1);
+  if(f>0){ var lb=Y(Math.min(f,1)); rect(x+2,lb,w-4,y+h-lb,BEER); rect(x+3,lb+2,3,Math.max(0,y+h-lb-4),BEER2);
+    for(var k=0;k<3;k++){ var span=Math.max(1,y+h-lb-4), by=y+h-2-((now/14+k*23)%span); rect(x+6+k*Math.floor((w-10)/3),Math.round(by),2,2,'#ffe7a0'); }
+    if(f>1){ var ft=Y(f); rect(x+2,ft,w-4,lb-ft,FOAM); rect(x+2,ft,w-4,2,'#ffffff'); } }
+  rect(x-9,yb,5,yf-yb,'#ffd23f'); rect(x+w+4,yb,5,yf-yb,'#ffd23f');     // the gold band, bracketed on both sides
+  rect(x-9,y,5,ye-y,'#ff3b3b'); rect(x+w+4,y,5,ye-y,'#ff3b3b');         // the spill zone
+  rect(x-9,yf-1,w+18,3,'#ffffff');                                      // FULL
+  if(f>0&&ctx&&ctx.beginPath){ var py=Y(f); ctx.fillStyle='#07060c'; ctx.beginPath(); ctx.moveTo(x-22,py-9); ctx.lineTo(x-22,py+9); ctx.lineTo(x-6,py); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=(q==='none')?'#ffffff':pourCol(q); ctx.beginPath(); ctx.moveTo(x-20,py-6); ctx.lineTo(x-20,py+6); ctx.lineTo(x-9,py); ctx.closePath(); ctx.fill(); }
+}
+function drawTapPour(b){   // BUILD 3: the glass under the tap (bigger, in front of the bartender) and its pour meter
+  var br=G.bars[b], y=laneY(b), pouring=false, pb=null, here=false;
+  for(var i=0;i<G.bts.length;i++){ var t=G.bts[i]; if(!t.gone&&t.bar===b&&t.md<=0){ here=true; if(t.pose==='pour'){ pouring=true; pb=t; } } }
+  if(!(br.fill>0||pouring))return;
+  var dark=br.dark>0;                                                   // a blackout hides the meter, as it hid the gauge
+  if(br.fill>0)drawMug(543,y+101,4,'fill',br.fill,false,dark);
+  if(dark||!here)return;   // BUILD 6 (the Director: meters left on screen): the meter only while a bartender stands at the tap; FIZZ's HOT STREAK glass waits without it
+  var c=pb?pb.c:(G.bts[0]?G.bts[0].c:0);
+  drawPourMeter(484,y+4,30,98,br.fill,HEAD_W[cstat(c,'head')],c);
+}
+function drawMug(cx,by,sc,kind,fill,tip,dim){
+  var w=8*sc, h=9*sc, x=Math.round(cx-w/2), y=Math.round(by-h);
+  if(dim)alpha(0.45);
+  rect(x+w,y+2*sc,2*sc,sc,GLASS); rect(x+w+sc,y+2*sc,sc,5*sc,GLASS); rect(x+w,y+6*sc,2*sc,sc,GLASS);
+  rect(x,y,w,h,GLASS); rect(x+sc,y,w-2*sc,h-sc,GLASS_IN);
+  if(kind==='empty'){ rect(x+sc,y+h-3*sc,w-2*sc,sc,FOAM); rect(x+2*sc,y+h-4*sc,sc,sc,FOAM); rect(x+5*sc,y+h-5*sc,sc,sc,FOAM); }
+  else { var lv=Math.max(0,Math.min(1,fill)), bh=Math.round((h-sc)*lv);
+    if(bh>0){ rect(x+sc,y+h-sc-bh,w-2*sc,bh,BEER); rect(x+2*sc,y+h-sc-bh+sc,sc,Math.max(0,bh-2*sc),BEER2); }
+    if(fill>=0.9){ var fh=Math.round(sc*2+Math.max(0,fill-1)*h*1.1); rect(x-sc*0.5,y-fh+sc,w+sc,fh,FOAM); rect(x+sc,y-fh,w-2*sc,sc,FOAM);
+      if(fill>1.25){ rect(x-sc,y-fh+2*sc,sc,Math.min(h,fh+sc*2),FOAM); rect(x+w,y-fh+3*sc,sc,Math.min(h,fh),FOAM); } } }
+  if(kind==='back'){ var ax=Math.round(cx), ay=y-6*sc; rect(ax-3*sc,ay+sc,3*sc,sc,'#ff3b3b'); rect(ax-sc,ay,sc,sc,'#ff3b3b'); rect(ax,ay+sc,sc,sc,'#ff3b3b'); rect(ax-sc,ay+2*sc,sc,sc,'#ff3b3b'); }   // BUILD 3: sent back, a red arrow toward the taps (v1.01 drew a red box)
+  rect(x+sc,y+sc,sc,h-3*sc,'rgba(255,255,255,0.35)');
+  if(tip){ var gy=y-4*sc-(Math.floor(Date.now()/150)%2); rect(x+2*sc,gy,4*sc,4*sc,'#c99f16'); rect(x+2*sc,gy,3*sc,3*sc,'#ffd23f'); rect(x+3*sc,gy+sc,sc,sc,'#fff3b0'); }
+  if(dim)alpha(1);
+}
+
+/* ---- the lanes ---- */
+function drawWall(v,y){
+  var P=v.pal; rect(0,y,W,TOP_Y,P.wall);
+  var i;
+  if(v.id==='spur'){ for(i=0;i<W;i+=20)rect(i,y,2,TOP_Y,P.wall2); rect(0,y+30,W,3,P.trim); }
+  else if(v.id==='half'){ for(i=0;i<W;i+=64){ rect(i+8,y+12,48,30,'#0f2033'); rect(i+10,y+14,44,26,(i/64)%2?'#2a8a4a':'#1f6a3a'); rect(i+30,y+14,2,26,'#e8e8e8'); } rect(0,y+50,W,4,P.trim); }
+  else if(v.id==='pin'){ for(i=0;i<W;i+=48){ rect(i,y+((i*7)%30),30,4,['#ff6fae','#9ad94b','#57c4ff'][(i/48)%3]); } for(i=0;i<W;i+=12)rect(i,y+60,6,2,P.wall2); }
+  else if(v.id==='velvet'){ for(i=0;i<W;i+=40){ rect(i,y,20,TOP_Y,P.wall2); } rect(0,y+8,W,2,P.trim); rect(0,y+80,W,2,P.trim); }
+  else if(v.id==='slow'){ for(i=0;i<W;i+=36){ rect(i+6,y+10,24,16,'#1d3a1a'); rect(i+10,y+14,16,8,'#6ab04c'); } rect(0,y+34,W,3,P.trim); }
+  else { for(i=0;i<W;i+=26){ var s=(i*13+y)%70; rect(i,y+s,2,2,'#dfe8ff'); } rect(0,y+46,W,2,P.trim); rect(0,y+50,W,1,'#5ff5ff'); }
+}
+function drawDoor(v,y){
+  var P=v.pal, t=G?G.t:0;
+  if(v.door==='saloon'){ rect(0,y+8,30,84,'#1a0e05'); rect(0,y+8,30,4,'#3d2210'); var sw=Math.round(Math.sin(t*2)*1);
+    rect(1,y+34+sw,13,36,'#b97a3c'); rect(15,y+34-sw,13,36,'#b97a3c'); rect(1,y+34+sw,13,3,'#e0aa6a'); rect(15,y+34-sw,13,3,'#e0aa6a');
+    for(var i=0;i<3;i++){ rect(3+i*4,y+40+sw,2,26,'#8a5a2b'); rect(17+i*4,y+40-sw,2,26,'#8a5a2b'); } }
+  else if(v.door==='glass'){ rect(0,y+14,28,78,'#8a8a94'); rect(3,y+18,22,70,'#57c4ff'); rect(5,y+20,4,60,'#bfe8ff'); }
+  else if(v.door==='steel'){ rect(0,y+12,28,80,'#3a3a40'); rect(3,y+16,22,72,'#5a5a64'); rect(6,y+40,14,4,'#ff6fae'); rect(8,y+52,10,3,'#9ad94b'); }
+  else if(v.door==='curtain'){ rect(0,y+8,30,84,'#8a1a3a'); for(var j=0;j<30;j+=6)rect(j,y+8,3,84,'#6a0f2a'); rect(0,y+8,30,5,'#d4a531'); }
+  else if(v.door==='round'){ rect(0,y+20,30,72,'#3d2a14'); if(ctx&&ctx.beginPath){ ctx.fillStyle='#6ab04c'; ctx.beginPath(); ctx.arc(14,y+60,16,0,6.283); ctx.fill(); ctx.fillStyle='#ffd23f'; ctx.fillRect(22,y+58,4,4); } }
+  else { rect(0,y+10,30,82,'#3a4a8a'); rect(4,y+14,22,74,'#161b3d'); rect(4,y+48,22,2,'#5ff5ff'); if(Math.floor(t*3)%2)rect(22,y+18,3,3,'#ff3b3b'); }
+}
+var BOTTLES=['#2e8b57','#8a2a18','#d4a531','#3d7dd6','#9b5bd6','#c9ccd2'];
+function drawKeg(y,br,v){                          // the back bar: a shelf of bottles and the steel keg that feeds this tap
+  rect(566,y+6,74,86,darken(v.pal.wall,0.7)); rect(566,y+40,74,4,v.pal.trim); rect(566,y+6,74,3,v.pal.trim);
+  for(var i=0;i<5;i++){ var c=BOTTLES[(i+v.id.length)%BOTTLES.length], bx=570+i*14; rect(bx+3,y+12,4,8,c); rect(bx,y+20,10,20,c); rect(bx+2,y+24,3,12,'rgba(255,255,255,0.35)'); }
+  rect(578,y+50,54,40,'#8e939b'); rect(578,y+50,54,5,'#c9ccd2'); rect(578,y+66,54,4,'#5a5f66'); rect(578,y+82,54,4,'#5a5f66'); rect(584,y+54,6,34,'#dfe3ea');
+  if(br&&br.kegMax>0){ var f=br.keg/br.kegMax; rect(620,y+54,8,32,'#15121a'); rect(620,y+54+32*(1-f),8,32*f,br.keg===0?'#ff3b3b':'#9ad94b'); }
+}
+function drawPuddles(b,y){
+  var u=G.bars[b].pud;
+  for(var i=0;i<u.length;i++){ var p=u[i], col=(p.k==='slick')?'#6ac8ff':'#d98a12', dry=p.t?Math.min(1,p.t/1.5):1;
+    alpha(0.55*dry); rect(p.x0,y+89,p.x1-p.x0,12,col); alpha(1);
+    if(p.t){ alpha(dry); for(var j=0;j<5;j++)rect(p.x0+8+j*17,y+90+(j%2)*5,4,3,FOAM); alpha(1); }   // BUILD 2: a SLOPPY spill, foam on it, drying
+    rect(p.x0+6,y+91,10,2,(p.k==='slick')?'#e8f8ff':'#ffd08a'); rect(p.x1-20,y+95,8,2,(p.k==='slick')?'#e8f8ff':'#ffd08a'); }
+}
+function drawTap(b,y,br){
+  var pouring=false, pb=null;
+  for(var i=0;i<G.bts.length;i++){ var t=G.bts[i]; if(!t.gone&&t.bar===b&&t.md<=0&&t.pose==='pour'){ pouring=true; pb=t; } }
+  rect(556,y+56,10,36,'#c9ccd2'); rect(558,y+56,3,36,'#f4f6fb'); rect(540,y+56,26,6,'#c9ccd2'); rect(540,y+60,6,6,'#8e939b');
+  var lever=pouring?-12:0; rect(560,y+34+Math.max(0,lever+8),6,22-Math.max(0,lever+8),'#15121a'); rect(556+(pouring?-8:0),y+30,14,8,'#d92b2b');
+  if(pouring&&br.keg!==0){ rect(542,y+66,3,Math.max(0,32-8*Math.min(1,br.fill)),BEER); }
+  /* BUILD 3: the glass under the tap and its pour meter are drawn by drawTapPour(), after the bartender */
+  if(br.keg===0){ var bl=blink(250); txt('KEG EMPTY',566,y+18,11,bl?'#ff5a5a':'#ffd23f'); if(br.chg>0){ rect(540,y+4,52,6,'#15121a'); rect(540,y+4,52*br.chg,6,'#9ad94b'); } }
+}
+function patronMood(p){   // BUILD 2: what the face says
+  if(p.watch)return 'love'; if(p.st==='sulk')return 'sulk'; if(p.st==='drink')return 'drink';
+  if(p.st==='push')return 'catch'; if(p.st==='exit'||p.fm>0)return 'happy';
+  if(p.ang)return 'angry'; return '';
+}
+function drawPatron(p,v){
+  var y=laneY(p.b), look=patronLook(p,G.vi), base=SP[look.sprite], sc=5, bob=0, md=patronMood(p);
+  var rows=md?moodRows(look.sprite,md):base, id='p:'+look.sprite+(md?':'+md:''), pal=(md==='angry')?angryPal(look.pal):look.pal;
+  if(p.st==='walk'&&(Math.floor(p.wk*7)%2))bob=-2;
+  if(p.st==='exit')bob=-Math.round(Math.abs(Math.sin(p.wk*12))*5);        // served: a happy stumble out the door
+  if(p.st==='beam'){ var k=1-p.t/BEAM_T; alpha(0.25+0.6*k); }
+  var flip=!!p.watch, x=p.x-base[0].length*sc/2, top=y+TOP_Y-base.length*sc+bob, f=faceOf(base), tilt=(p.st==='drink')?sc:0;
+  if(p.st==='push')x-=3;
+  if(p.st==='enter'){ alpha(Math.max(0.3,1-p.t/0.35)); }
+  if(tilt){ spr(id+':b',rows.slice(f.neck),pal,x,top+f.neck*sc,sc,flip); spr(id+':h',rows.slice(0,f.neck),pal,x-tilt,top-tilt,sc,flip); }   // drinking: the head tips back
+  else spr(id,rows,pal,x,top,sc,flip);
+  if(look.hat)spr('h:'+look.hat,HATS[look.hat],look.hatPal,x-tilt,top-tilt,sc,flip);
+  if(p.type==='critic'&&!flip){ rect(x+9*sc-tilt,top+5*sc-tilt,sc,sc,'#ffd23f'); rect(x+10*sc-tilt,top+6*sc-tilt,sc,2*sc,'#ffd23f'); }
+  alpha(1);
+  if(p.st==='beam'&&ctx&&ctx.beginPath){ ctx.strokeStyle='#5ff5ff'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(p.x,y+60,10+30*(p.t/BEAM_T),0,6.283); ctx.stroke(); }
+  var mo=f.mouth.length?f.mouth[0]:[Math.max(2,f.neck-2),base[0].length-3], armless=(look.sprite==='snail');
+  if(p.mug){
+    if(p.st==='drink'){                                                  // the mug up at the mouth, gulping, the level falling
+      var hx=x+(mo[1]+1)*sc-tilt, hy=top-tilt+(mo[0]+1)*sc, sx=x+(base[0].length-3)*sc, sy=top+(f.neck+1)*sc;
+      if(!armless){ rect(sx-sc,sy,2*sc,2*sc,look.pal.C); rect(sx,hy+2*sc,2*sc,Math.max(0,sy-hy-2*sc),look.pal.C); }
+      if(ctx&&ctx.save){ ctx.save(); ctx.translate(Math.round(hx+2*sc),Math.round(hy+sc)); ctx.rotate(-0.75+Math.sin(G.t*9+p.id)*0.12);
+        drawMug(0,0,3,'full',0.3+0.6*Math.max(0,Math.min(1,p.t/(p.drinkT||1)))); ctx.restore(); } }
+    else { var mx=p.x+HAND_DX; drawMug(mx,y+80,3,'full',1); if(!armless)rect(mx-15,y+62,7,9,pal.S); } }   // caught: a hand on the mug
+  if(p.fm>0&&!p.mug&&f.mouth.length)rect(x+(mo[1]-1)*sc,top+mo[0]*sc-2,3*sc,3,FOAM);   // a foam moustache after the last gulp
+  if(p.watch){ txt('♪',p.x,top-8+Math.sin(G.t*6+p.id)*3,16,v.show.col); }
+  else if(p.st==='sulk'){ txt('HMPH',p.x,top-6,11,'#ff7b7b'); }
+  else if(p.ang&&p.st!=='push'&&p.st!=='drink'){ txt('!',p.x+8,top-6,16,blink(160)?'#ff3b3b':'#ffd23f');
+    for(var s=0;s<3;s++){ var a=(G.t*2+s/3+p.id*0.13)%1; alpha(0.7*(1-a)); rect(x+(3+s*3)*sc,top-4-a*28,6,6,'#f3e9d6'); } alpha(1); }   // steam
+  if(p.type==='bruiser'&&p.hp>1&&p.st!=='push'){ txt('x2',p.x-14,top+4,11,'#ffd23f'); }
+}
+function drawCat(c){
+  var y=laneY(c.b), hop=(c.st==='hop')?-Math.sin((1-c.t/0.45)*Math.PI)*26:0;
+  spr(c.st==='lap'?'catLap':'cat',c.st==='lap'?SP.catLap:SP.cat,mixPal({}),c.x-18,y+TOP_Y-24+hop,3,false);
+}
+function drawLaneBack(b){
+  var v=VENUES[G.vi], y=laneY(b), br=G.bars[b], i;
+  drawWall(v,y); drawDoor(v,y); drawKeg(y,br,v);
+  if(G.show&&G.show.b===b)drawPerformer(b,v);
+  for(i=0;i<G.pts.length;i++)if(G.pts[i].b===b)drawPatron(G.pts[i],v);
+  rect(26,y+TOP_Y-4,534,3,v.pal.topHi); rect(26,y+TOP_Y-1,534,11,v.pal.top);
+  drawPuddles(b,y);
+  for(i=0;i<G.cats.length;i++)if(G.cats[i].b===b)drawCat(G.cats[i]);
+  for(i=0;i<G.mugs.length;i++){ var m=G.mugs[i]; if(m.b!==b)continue;
+    var danger=(m.k!=='full'&&m.x>MUG_END-120&&!btAt(b,true))||(m.k==='full'&&m.x<110&&!anyCatcherLeft(m));
+    var lvl=(m.k==='back')?(m.f||1):(m.k!=='full')?1:(m.q==='short'?(m.f||0.5):(m.q==='sloppy'?1.4:1));   // BUILD 2: a SHORT mug shows its level, a SLOPPY one overflows
+    drawMug(m.x,y+TOP_Y+4,3,m.k==='empty'?'empty':(m.k==='back'?'back':'full'),lvl,m.tip);
+    if(m.k==='full'&&m.q==='sloppy')for(var z=1;z<5;z++)rect(m.x+10+z*9,y+TOP_Y+2+(z%2)*2,3,2,FOAM);
+    if(m.sb&&blink(150)){ rect(m.x-2,y+TOP_Y-42,4,4,'#ffd23f'); rect(m.x-8,y+TOP_Y-36,4,4,'#fff3b0'); rect(m.x+5,y+TOP_Y-34,4,4,'#ffd23f'); }
+    if(danger&&blink(120))rect(m.x-14,y+TOP_Y+6,28,3,'#ff3b3b'); }
+  rect(26,y+TOP_Y+10,534,38,v.pal.front); rect(26,y+TOP_Y+10,534,3,darken(v.pal.front,0.7));
+  for(i=60;i<560;i+=90)rect(i,y+TOP_Y+18,2,26,v.pal.front2);
+  rect(0,y+TOP_Y+48,W,8,'#07060c');
+  drawTap(b,y,br);
+}
+function anyCatcherLeft(m){ for(var i=0;i<G.pts.length;i++){ var p=G.pts[i]; if(p.b===m.b&&!p.watch&&!p.mug&&(p.st==='walk'||p.st==='wait'||p.st==='enter')&&p.x+HAND_DX<=m.x)return true; } return false; }
+function drawLaneFront(b){
+  var v=VENUES[G.vi], y=laneY(b), br=G.bars[b];
+  rect(560,y+TOP_Y+8,80,40,darken(v.pal.front,0.8)); rect(560,y+TOP_Y+8,80,3,v.pal.topHi);
+  if(br.warn>0&&blink(90)){ alpha(0.5); rect(0,y,560,TOP_Y+48,'#000'); alpha(1); }
+  if(br.dark>0){ alpha(0.9); rect(0,y,560,TOP_Y+48,'#030208'); alpha(1);
+    for(var i=0;i<G.pts.length;i++){ var p=G.pts[i]; if(p.b!==b)continue; rect(p.x+4,y+48,4,3,'#ffd23f'); rect(p.x+14,y+48,4,3,'#ffd23f'); }
+    for(var j=0;j<G.mugs.length;j++){ var m=G.mugs[j]; if(m.b===b)drawMug(m.x,y+TOP_Y+4,3,m.k==='empty'?'empty':'full',1,m.tip,true); } }
+}
+function drawPerformer(b,v){
+  var y=laneY(b), fr=(Math.floor(G.t*6)%2)?SP.dancer:SP.dancer2, pal=mixPal({C:v.show.col,c:darken(v.show.col,0.7),D:v.show.D,H:'#2a1a10'});
+  var x=86+Math.sin(G.t*3)*24;
+  if(ctx){ alpha(0.18); rect(x-20,y,88,TOP_Y,v.show.col); alpha(1); }
+  spr('dancer'+(fr===SP.dancer?1:2),fr,pal,x,y+TOP_Y-80,4,false);
+}
+function btDrawY(t){
+  if(t.md<=0)return laneY(t.bar);
+  var e=Math.min(1,t.mt/t.md), a=laneY(t.from), z=laneY(t.to);
+  if(Math.abs(t.from-t.to)>1)return (e<0.5)?a:z;                  // the wrap: a blink across the room
+  return a+(z-a)*e;
+}
+function drawBartender(t){
+  var c=CHARS[t.c], y=btDrawY(t)+12, x=BT_X, pal=btPal(t.c), rows=BT[c.id];
+  if(t.gone)return;
+  var sq=(t.md>0)?3:0;
+  spr('bt:'+c.id,rows,pal,x,y+sq,5,false);
+  var ax=x+6, ay=y+62;
+  if(t.pose==='pour'){ rect(ax-6,ay-40,12,40,c.arm); rect(ax-8,ay-46,12,10,pal.S); }
+  else if(t.pose==='throw'){ rect(ax-30,ay+2,34,11,c.arm); rect(ax-38,ay,10,14,pal.S); }
+  else if(t.pose==='catch'){ rect(ax-28,ay+4,32,11,c.arm); rect(ax-36,ay+2,10,14,pal.S); drawMug(ax-44,ay+22,2,'empty',0); }
+  else if(t.pose==='keg'){ rect(ax+20,ay-4,30,10,c.arm); }
+  if(G.np>1){ var col=t.p===0?'#57c4ff':'#ff6fae'; rect(x+20,y-12,30,14,col); txt((t.p+1)+'P',x+35,y-5,11,'#0a1220'); }
+}
+function drawFloats(){ for(var i=0;i<G.fl.length;i++){ var f=G.fl[i]; alpha(Math.max(0,Math.min(1,f.l*1.4))); txt(f.s,f.x,f.y,f.z,f.c); } alpha(1); }
+function drawBanner(){   // BUILD 2: over the HUD strip, never across the bars in play
+  var b=G.banner; if(!b)return; var k=b.t/b.d, a=Math.min(1,k*4,(1-k)*8+0.2);
+  alpha(Math.max(0,Math.min(1,a))); rect(0,0,W,HUD_H,'rgba(8,6,14,0.94)'); rect(0,0,W,3,b.c); rect(0,HUD_H-5,W,3,b.c); neon(b.s,W/2,HUD_H/2,30,b.c); alpha(1);
+}
+function drawHUD(){
+  var v=VENUES[G.vi];
+  rect(0,0,W,HUD_H,'#0a1220'); rect(0,HUD_H-2,W,2,'#3a5a8a');
+  txt('TAB',16,14,11,'#8fa3c4','left'); txt(fmt(G.score),16,38,28,'#57ff7a','left');
+  var hi=Math.max(hiScore(G.mode),G.score);
+  txt('HI',232,14,11,'#8fa3c4','left'); txt(fmt(hi),232,38,20,'#ffd23f','left');
+  for(var i=0;i<Math.min(LIVES_MAX,G.lives);i++)drawMug(22+i*24,76,2,'full',1);
+  var left=(STATE==='play'||STATE==='mishap')?('  \u00B7  '+Math.max(0,G.quota-G.served)+' TO GO'):'';
+  txt(v.name+(G.loop>0?(' x'+(G.loop+1)):'')+'  '+Math.min(3,G.ri+1)+'/3'+left,300,64,12,v.pal.neon);
+  var hx=470; txt(G.hhT>0?'HAPPY HOUR!':'HAPPY HOUR',hx,52,9,G.hhT>0?'#ffd23f':'#8fa3c4','left');
+  for(i=0;i<HAPPY_MAX;i++){ var on=(G.hhT>0)?(i<Math.ceil(G.hhT/HH_T*HAPPY_MAX)):(i<G.happy); rect(hx+i*20,60,16,10,on?'#ffd23f':'#1c2f4d'); }
+  var me=G.bts?G.bts[LOCALP()]:null;                                     // BUILD 2: the PERFECT streak toward its bonus
+  if(me&&STATE!=='over'){ var s=me.streak||0, lit=(s>0&&s%STREAK_N===0)?STREAK_N:s%STREAK_N;
+    txt('STREAK',hx,22,9,s?'#ffd23f':'#8fa3c4','left');
+    for(i=0;i<STREAK_N;i++)rect(hx+50+i*20,17,16,10,i<lit?'#ffd23f':'#1c2f4d');
+    if(s>=2)txt('x'+s,hx+54+STREAK_N*20,22,11,'#ffd23f','left'); }
+}
+function drawDeck(){
+  rect(0,DECK_Y,W,H-DECK_Y,'#0a1220'); rect(0,DECK_Y,W,2,'#3a5a8a');
+  deckButton(UPB,'u',DF.u>0); deckButton(DNB,'d',DF.d>0);
+  rect(PAUSEB.x,PAUSEB.y,PAUSEB.w,PAUSEB.h,'#1c2f4d'); txt('II PAUSE',PAUSEB.x+PAUSEB.w/2,PAUSEB.y+PAUSEB.h/2,11,'#9ecbff');
+  var me=null; if(G&&G.bts)me=G.bts[LOCALP()];
+  if(G&&G.bars&&(STATE==='play'||STATE==='mishap'||STATE==='clear')){          // the mini map: four taps, where the bartenders stand
+    for(var b=0;b<NBARS;b++){ var yy=700+b*30, br=G.bars[b], here=me&&me.bar===b;
+      rect(206,yy,104,24,here?'#1c3a5a':'#141c2c'); rect(206,yy+20,Math.min(104,104*br.fill/FILL_MAX),4,br.fill>=1?'#ffd23f':BEER);
+      for(var i=0;i<G.bts.length;i++){ var t=G.bts[i]; if(t.gone||t.bar!==b)continue; rect(286-i*22,yy+3,18,15,t.p===0?'#57c4ff':'#ff6fae'); txt((t.p+1)+'',295-i*22,yy+11,10,'#0a1220'); }
+      var n=0; for(var j=0;j<G.pts.length;j++)if(G.pts[j].b===b&&G.pts[j].st!=='exit')n++;
+      txt(n?String(n):'',216,yy+11,11,'#dfe8ff'); } }
+  var held=btnHeld(), br2=(me&&G.bars)?G.bars[me.bar]:null, cx=POURB.cx, cy=POURB.cy, r=POURB.r;
+  if(ctx&&ctx.beginPath){
+    ctx.fillStyle=held?'#2f7d3a':'#1c3a24'; ctx.beginPath(); ctx.arc(cx,cy,r,0,6.283); ctx.fill();
+    ctx.lineWidth=18; ctx.strokeStyle='#15121a'; ctx.beginPath(); ctx.arc(cx,cy,r-10,0,6.283); ctx.stroke();
+    if(br2&&me){ var hw=HEAD_W[cstat(me.c,'head')], a0=-Math.PI/2;
+      function ang(f){ return a0+pourPos(f,hw)*6.283; }                 // BUILD 3: the meter's zoomed scale, bright bands
+      if(br2.keg===0){ ctx.strokeStyle='#9ad94b'; ctx.beginPath(); ctx.arc(cx,cy,r-10,a0,a0+6.283*br2.chg); ctx.stroke(); }
+      else { var q=br2.fill>0?pourQuality(me.c,br2.fill):'none';
+        if(q==='perfect'){ ctx.globalAlpha=0.3+0.25*Math.sin(Date.now()/70); ctx.lineWidth=24; ctx.strokeStyle='#ffd23f'; ctx.beginPath(); ctx.arc(cx,cy,r-10,ang(1),ang(1+hw)); ctx.stroke(); ctx.globalAlpha=1; ctx.lineWidth=18; }
+        ctx.strokeStyle='#ffd23f'; ctx.beginPath(); ctx.arc(cx,cy,r-10,ang(1),ang(1+hw)); ctx.stroke();
+        ctx.strokeStyle='#c0392b'; ctx.beginPath(); ctx.arc(cx,cy,r-10,ang(1+hw+OVER_PAD),ang(FILL_MAX)); ctx.stroke();
+        ctx.strokeStyle='#ffffff'; ctx.beginPath(); ctx.arc(cx,cy,r-10,ang(1)-0.05,ang(1)); ctx.stroke();
+        if(br2.fill>0){ var fa=ang(Math.min(FILL_MAX,br2.fill)); ctx.lineWidth=8; ctx.strokeStyle=BEER; ctx.beginPath(); ctx.arc(cx,cy,r-10,a0,Math.min(fa,ang(1))); ctx.stroke();
+          if(br2.fill>1){ ctx.strokeStyle=FOAM; ctx.beginPath(); ctx.arc(cx,cy,r-10,ang(1),fa); ctx.stroke(); }
+          var nx=cx+Math.cos(fa)*(r-10), ny=cy+Math.sin(fa)*(r-10); ctx.fillStyle='#07060c'; ctx.beginPath(); ctx.arc(nx,ny,12,0,6.283); ctx.fill();
+          ctx.fillStyle=(q==='none')?'#ffffff':pourCol(q); ctx.beginPath(); ctx.arc(nx,ny,9,0,6.283); ctx.fill(); } } }
+    ctx.lineWidth=1;
+  }
+  var label='POUR', sub=hasTouch?'HOLD':'HOLD SPACE';
+  if(br2&&me&&STATE==='play'){ var qq=pourQuality(me.c,br2.fill);
+    if(br2.keg===0){ label='KEG'; sub='HOLD TO CHANGE'; }
+    else if(held&&qq==='perfect'){ label='NOW!'; sub='LET GO'; }
+    else if(held&&qq==='clean'){ label='LET GO'; sub='FOAMING'; }
+    else if(held&&qq==='sloppy'){ label='SPILL!'; sub='LET GO'; }
+    else if(held){ label='POUR'; sub=br2.fill>=SHORT_MIN?'NOT YET':'HOLD...'; }
+    else if(br2.fill>0&&br2.fill<1){ label='POUR'; sub='HOT STREAK'; } }
+  else if(STATE!=='play'){ label='OK'; sub=hasTouch?'TAP':'SPACE'; }
+  txt(label,cx,cy-8,label.length>4?24:30,label==='NOW!'?'#ffd23f':'#dfe8ff'); txt(sub,cx,cy+26,11,'#9ecbff');
+}
+function deckButton(r,dir,lit){
+  rect(r.x,r.y,r.w,r.h,lit?'#2a5a8a':'#1c2f4d'); rect(r.x,r.y,r.w,3,'#3a5a8a');
+  if(ctx&&ctx.beginPath){ var cx=r.x+r.w/2, cy=r.y+r.h/2, s=22; ctx.fillStyle='#dfe8ff'; ctx.beginPath();
+    if(dir==='u'){ ctx.moveTo(cx,cy-s); ctx.lineTo(cx+s*1.2,cy+s*0.7); ctx.lineTo(cx-s*1.2,cy+s*0.7); } else { ctx.moveTo(cx,cy+s); ctx.lineTo(cx+s*1.2,cy-s*0.7); ctx.lineTo(cx-s*1.2,cy-s*0.7); }
+    ctx.closePath(); ctx.fill(); }
+  if(!hasTouch)txt(dir==='u'?'W / UP':'S / DOWN',r.x+r.w/2,r.y+r.h-10,9,'#8fa3c4');
+}
+
+/* ---- scenes ---- */
+function drawBar(){
+  var b, i;
+  for(b=0;b<NBARS;b++)drawLaneBack(b);
+  for(i=0;i<G.bts.length;i++)drawBartender(G.bts[i]);
+  for(b=0;b<NBARS;b++)drawLaneFront(b);
+  for(b=0;b<NBARS;b++)drawTapPour(b);
+  if(STATE==='mishap'&&G.mishap){ var y=laneY(G.mishap.b); if(blink(140)){ alpha(0.35); rect(0,y,W,LANE_H,'#ff2020'); alpha(1); }
+    panel(80,300,480,110,'#ff5a5a'); neon('OOPS!',W/2,334,34,'#ff5a5a'); txt(MISHAP_TXT[G.mishap.why]||'',W/2,378,15,'#dfe8ff');
+    txt(G.lives>0?(G.lives+(G.lives===1?' MUG LEFT':' MUGS LEFT')):'LAST CALL...',W/2,398,11,'#ffd23f'); }
+  if(STATE==='clear'){ panel(90,290,460,184,'#57ff7a'); neon('ROUND CLEAR',W/2,326,34,'#57ff7a');   // BUILD 3: taller, the prompt inside
+    txt('CLOSING TIME BONUS  +'+fmt(PTS_CLEAR),W/2,372,14,'#dfe8ff'); if(G.clearClean)txt('CLEAN ROUND  +'+fmt(PTS_CLEAN),W/2,398,14,'#ffd23f');
+    txt(G.ri>=2?'NEXT: SHAKE UP BONUS':'NEXT: ROUND '+(G.ri+2),W/2,424,11,'#8fa3c4');
+    if(G.clearT>=CLEAR_T&&blink(420))txt('PRESS POUR TO CONTINUE',W/2,456,15,'#57ff7a'); }   // BUILD 3: it waits for you
+}
+function drawCard(){
+  var v=VENUES[G.vi], c=G.card; alpha(0.8); rect(0,BAR_TOP,W,DECK_Y-BAR_TOP,'#05040a'); alpha(1);
+  panel(34,110,572,556,v.pal.neon);
+  txt(G.loop>0?('LAST CALL x'+(G.loop+1)):('VENUE '+(G.vi+1)+' OF '+VENUES.length),W/2,136,12,'#8fa3c4');
+  neon(v.name,W/2,178,v.name.length>12?34:40,v.pal.neon);
+  txt(v.tag,W/2,220,12,'#dfe8ff','center','');
+  var y=254;
+  if(G.vi===0&&G.loop===0){
+    txt('HOW TO TEND BAR',W/2,y,14,'#ffd23f'); y+=26;
+    var L1=['UP / DOWN: jump between the four bars (they wrap).','HOLD POUR: fill the mug. LET GO past the white line:','it slides. Let go in the GOLD band for a PERFECT.','Catch every empty that slides home. Do not let a mug','hit the door, or a patron reach your taps.'];
+    for(var i=0;i<L1.length;i++){ txt(L1[i],W/2,y,12,'#dfe8ff','center',''); y+=22; }
+    y+=8;
+  }
+  if(G.loop===0){
+    for(var t=0;t<v.newT.length;t++){ var id=v.newT[t], T=TYPES[id], fake={type:id,look:7+t*31,b:0,x:0,st:'wait',wk:0,watch:false,id:0};
+      var lk=patronLook(fake,G.vi), rows=SP[lk.sprite];
+      rect(64,y-6,76,80,'#141c2c'); spr('p:'+lk.sprite,rows,lk.pal,102-rows[0].length*2,y+70-rows.length*4,4,false); if(lk.hat)spr('h:'+lk.hat,HATS[lk.hat],lk.hatPal,102-rows[0].length*2,y+70-rows.length*4,4,false);
+      txt((id==='regular'?'THE REGULARS':'NEW PATRON: '+T.name),156,y+10,15,'#57ff7a','left');
+      wrapTxt(T.line,156,y+34,12,'#dfe8ff',420); y+=92; }
+    var hz=hazardsFor(G.vi,0,0), h2=hazardsFor(G.vi,2,0), names=[], k;
+    for(k in hz)names.push(k); for(k in h2)if(names.indexOf(k)<0)names.push(k+'*');
+    for(var n=0;n<names.length&&y<600;n++){ var key=names[n].replace('*',''), H=HZ[key];
+      txt((names[n].indexOf('*')>0?'IN ROUND 3: ':'HAZARD: ')+H.name,64,y,13,'#ffb347','left'); wrapTxt(H.line,64,y+20,11,'#c9ccd2',520); y+=48; }
+  } else {
+    txt('Every patron type, every hazard, and faster feet.',W/2,y+10,13,'#dfe8ff','center',''); txt('Venue points are worth 50% more.',W/2,y+34,13,'#ffd23f','center','');
+  }
+  if(c.t>=CARD_GUARD&&blink(420))txt('PRESS POUR TO OPEN THE BAR',W/2,640,16,'#57ff7a');
+}
+function wrapTxt(s,x,y,sz,col,maxW){
+  if(!ctx)return; ctx.font=sz+'px monospace'; var words=s.split(' '), line='', yy=y;
+  for(var i=0;i<words.length;i++){ var t=line?line+' '+words[i]:words[i]; if(ctx.measureText&&ctx.measureText(t).width>maxW&&line){ txt(line,x,yy,sz,col,'left',''); line=words[i]; yy+=sz+6; } else line=t; }
+  if(line)txt(line,x,yy,sz,col,'left','');
+}
+function drawSelect(){
+  var S=G.sel, me=LOCALP(), c=S.c[me], C=CHARS[c];
+  rect(0,0,W,DECK_Y,'#0b0a14');
+  for(var i=0;i<W;i+=40)rect(i,0,1,DECK_Y,'#121020');
+  neon('PICK YOUR BARTENDER',W/2,48,28,'#ffb347');
+  if(G.np>1)txt('YOU ARE '+(me+1)+'P',W/2,82,12,me===0?'#57c4ff':'#ff6fae');
+  panel(24,104,592,430,'#3a5a8a');
+  rect(44,124,190,230,'#141c2c'); spr('bt:'+C.id,BT[C.id],btPal(c),75,150,9,false);
+  rect(44,318,190,36,darken('#6a4020',1)); rect(44,318,190,4,'#8a5a2b');
+  txt(C.name,260,146,34,'#57ff7a','left'); txt(C.tag,262,180,14,'#ffd23f','left');
+  for(var k=0;k<STAT_KEYS.length;k++){ var sk=STAT_KEYS[k], val=C.st[sk], yy=218+k*30;
+    txt(sk.toUpperCase(),262,yy,13,'#8fa3c4','left');
+    for(var s=0;s<5;s++)rect(360+s*44,yy-9,38,18,s<val?'#57c4ff':'#1c2f4d'); }
+  txt('PERK: '+C.perk,262,378,15,'#ffd23f','left'); wrapTxt(C.perkLine,262,402,12,'#dfe8ff',330);
+  wrapTxt(statLine(C),44,454,11,'#8fa3c4',540);
+  for(i=0;i<CHARS.length;i++){ var r=charTile(i), sel0=S.c[0]===i, sel1=G.np>1&&S.c[1]===i;
+    rect(r.x,r.y,r.w,r.h,(sel0||sel1)?'#1c3a5a':'#141c2c');
+    spr('bt:'+CHARS[i].id,BT[CHARS[i].id],btPal(i),r.x+28,r.y+14,4,false);
+    if(sel0){ rect(r.x,r.y,r.w,4,'#57c4ff'); if(G.np>1)txt('1P'+(S.lock[0]?' OK':''),r.x+30,r.y+100,11,'#57c4ff'); }
+    if(sel1){ rect(r.x,r.y+r.h-4,r.w,4,'#ff6fae'); txt('2P'+(S.lock[1]?' OK':''),r.x+82,r.y+100,11,'#ff6fae'); }
+    if(!G.np||G.np===1){ if(sel0&&S.lock[0])txt('OK',r.x+r.w/2,r.y+100,11,'#57ff7a'); } }
+  txt(S.lock[me]?(G.np>1&&!(S.lock[0]&&S.lock[1])?'WAITING FOR YOUR PARTNER':'READY!'):'UP / DOWN TO CHOOSE, POUR TO PICK',W/2,548,13,S.lock[me]?'#57ff7a':'#dfe8ff');
+}
+function statLine(C){ var s=C.st; return 'pours to full in '+POUR_T[s.pour].toFixed(2)+'s, slides at '+SLIDE_V[s.slide]+' px/s, steps in '+MOVE_T[s.move].toFixed(3)+'s, empties wait '+CATCH_T[s.catch].toFixed(2)+'s, gold band '+HEAD_W[s.head].toFixed(2)+'.'; }
+function drawBonus(){
+  var B=G.bonus, v=VENUES[G.vi];
+  drawWall(v,BAR_TOP); rect(0,BAR_TOP,W,DECK_Y-BAR_TOP,v.pal.wall); for(var i=0;i<W;i+=20)rect(i,BAR_TOP,2,DECK_Y-BAR_TOP,v.pal.wall2);
+  rect(30,470,580,14,v.pal.topHi); rect(30,484,580,60,v.pal.front);
+  neon('SHAKE UP',W/2,130,40,'#ffd23f');
+  txt(B.ph==='show'?'FIVE CANS GET SHAKEN. WATCH THE CALM ONE.':(B.ph==='shuffle'?'KEEP YOUR EYE ON IT...':(B.ph==='pick'?'PICK THE CALM CAN':'')),W/2,176,14,'#dfe8ff');
+  var bj=(B.ph==='show')?Math.sin(B.t*40)*3:0;
+  spr('bandit',SP.bandit,mixPal({C:'#2a2a2e',c:'#15121a'}),W/2-28,196+bj,4,false);
+  for(var s=0;s<6;s++){ var can=B.slots[s], x=canX(s), y=470, jx=0, jy=0;
+    if(B.sw&&(s===B.sw.a||s===B.sw.b)){ var e=Math.min(1,B.sw.t/B.dur), other=(s===B.sw.a)?B.sw.b:B.sw.a; x=canX(s)+(canX(other)-canX(s))*e; jy=(s===B.sw.a?-1:1)*Math.sin(e*Math.PI)*46; }
+    if(B.ph==='show'&&can!==B.calm){ jx=Math.sin(B.t*50+s)*4; jy=Math.cos(B.t*43+s)*3; }
+    drawCan(x+jx,y+jy,v, B.ph==='reveal'?(can===B.calm?'calm':'shaken'):'');
+  }
+  if(B.ph==='pick'||B.ph==='reveal'){ for(var p=0;p<G.np;p++){ var cx=canX(B.cur[p]), col=p===0?'#57c4ff':'#ff6fae', yy=504+p*26;
+      txt('▲ '+(G.np>1?(p+1)+'P':'YOU')+(B.lock[p]?' OK':''),cx,yy+10,16,col); } }
+  if(B.ph==='reveal'){ var any=false; for(p=0;p<G.np;p++)if(B.win[p])any=true;
+    txt(any?'CHEERS!  +'+fmt(Math.round(PTS_BONUS*(1+G.loop*0.5))):'FOAM IN THE FACE!',W/2,600,24,any?'#ffd23f':'#9ecbff'); }
+}
+function canX(s){ return 100+s*88; }
+function drawCan(cx,y,v,rev){
+  var x=Math.round(cx-26);
+  rect(x,y-80,52,90,'#c9ccd2'); rect(x+4,y-76,44,82,v.pal.neon); rect(x+4,y-50,44,20,'#fff8ee'); txt('BREW',cx,y-40,11,'#15121a'); rect(x+8,y-76,6,82,'rgba(255,255,255,0.35)');
+  rect(x+2,y-86,48,6,'#8e939b');
+  if(rev==='calm'){ alpha(0.35); rect(x-8,y-96,68,114,'#ffd23f'); alpha(1); txt('CALM',cx,y+24,12,'#ffd23f'); }
+  if(rev==='shaken'){ alpha(0.8); rect(x+10,y-120,32,36,FOAM); rect(x+4,y-140,12,20,FOAM); rect(x+30,y-136,14,18,FOAM); alpha(1); }
+}
+function drawOver(){
+  alpha(0.84); rect(0,0,W,DECK_Y,'#05040a'); alpha(1);
+  panel(50,150,540,420,'#ff5a5a');
+  neon('LAST CALL',W/2,206,52,'#ff5a5a');
+  txt('THE TAB',W/2,262,13,'#8fa3c4'); txt(fmt(G.score),W/2,304,46,'#57ff7a');
+  txt('reached '+(G.stats.reached||''),W/2,350,13,'#dfe8ff','center','');
+  txt('served '+G.stats.served+'  ·  perfect '+G.stats.perfect+'  ·  empties '+G.stats.empties+'  ·  tips '+G.stats.tips,W/2,380,12,'#dfe8ff','center','');
+  txt('pours '+G.stats.pours+'  ·  short '+(G.stats.short||0)+'  ·  sloppy '+G.stats.sloppy+'  ·  best streak '+(G.stats.streak||0),W/2,402,12,'#8fa3c4','center','');
+  if(boardQualifies(G.mode,G.score))txt('A NEW HIGH SCORE!',W/2,448,20,'#ffd23f');
+  if(G.overT>=OVER_GUARD&&blink(420))txt('PRESS POUR',W/2,520,18,'#57ff7a');
+}
+
+/* ---- local screens ---- */
+function drawBackdrop(){
+  rect(0,0,W,DECK_Y,'#0b0a14');
+  var v=VENUES[0]; for(var i=0;i<W;i+=20)rect(i,0,2,DECK_Y,'#120f1c');
+  rect(0,236,W,12,v.pal.topHi); rect(0,248,W,32,v.pal.front); rect(0,280,W,5,'#07060c');
+  var t=(Date.now()/1000)%4, mx=W+40-t*240; drawMug(mx,240,3,'full',1,false);
+  var sx=((Date.now()/1000*18)%(W+120))-60; spr('p:snail',SP.snail,mixPal({S:'#c8b88a',s:'#9a8a5a',N:'#e8742a',n:'#9a3e12'}),sx,188,4,false);
+}
+function drawTitle(){
+  drawBackdrop();
+  neon('TAP',W/2,78,80,'#ffb347'); neon('ATTACK',W/2,150,64,'#ff4d6d');
+  txt('an homage to TAPPER (Bally Midway, 1983)',W/2,192,11,'#8fa3c4','center','');
+  var it=titleItems();
+  for(var i=0;i<it.length;i++){ var r=menuRect(i,it.length,318,46), on=UI.menu===i;
+    rect(r.x,r.y,r.w,r.h,on?'#1c3a5a':'#101826'); rect(r.x,r.y,on?6:3,r.h,on?'#57ff7a':'#3a5a8a');
+    txt(it[i],W/2,r.y+r.h/2,on?20:17,on?'#57ff7a':'#dfe8ff'); }
+  var hs=boardList('solo'); if(hs.length)txt('BEST: '+hs[0].n+'  '+fmt(hs[0].s),W/2,300,13,'#ffd23f');
+  txt('TAP ATTACK v'+VER+'  ·  BUILD '+BUILD+'  ·  Snail Attack Studios',W/2,672,10,'#5f7398');
+}
+function drawOnline(){
+  drawBackdrop(); neon('ONLINE',W/2,110,56,'#57c4ff');
+  txt('Two bartenders, one bar, two phones.',W/2,170,14,'#dfe8ff','center','');
+  txt('One of you HOSTS and shares the 4 letter code.',W/2,196,13,'#8fa3c4','center','');
+  var it=onlineItems();
+  for(var i=0;i<it.length;i++){ var r=menuRect(i,it.length,420,56), on=UI.menu===i;
+    rect(r.x,r.y,r.w,r.h,on?'#1c3a5a':'#101826'); rect(r.x,r.y,on?6:3,r.h,on?'#57ff7a':'#3a5a8a'); txt(it[i],W/2,r.y+r.h/2,on?20:17,on?'#57ff7a':'#dfe8ff'); }
+}
+function drawLobby(){
+  drawBackdrop();
+  if(NET.phase==='code'){
+    neon('JOIN A GAME',W/2,110,44,'#57c4ff'); txt('Enter your host\'s room code',W/2,170,14,'#dfe8ff','center','');
+    for(var s=0;s<4;s++){ var r=codeSlot(s), on=UI.cslot===s; rect(r.x,r.y,r.w,r.h,on?'#1c3a5a':'#101826'); rect(r.x,r.y+r.h-5,r.w,5,on?'#57ff7a':'#3a5a8a');
+      txt(LETTERS.charAt(UI.code[s]),r.x+r.w/2,r.y+r.h/2,52,on?'#57ff7a':'#dfe8ff'); if(on){ txt('▲',r.x+r.w/2,r.y-16,14,'#57ff7a'); txt('▼',r.x+r.w/2,r.y+r.h+16,14,'#57ff7a'); } }
+    txt('UP / DOWN change the letter, POUR goes next',W/2,540,12,'#8fa3c4','center','');
+    rect(170,560,300,56,UI.cslot===3?'#2f7d3a':'#101826'); txt(UI.cslot===3?'JOIN!':'NEXT LETTER',W/2,588,20,'#dfe8ff');
+    txt('keyboard: type the letters',W/2,640,11,'#5f7398','center','');
+    return;
+  }
+  if(NET.phase==='hosting'){
+    neon('YOUR BAR IS OPEN',W/2,110,38,'#57ff7a'); txt('ROOM CODE',W/2,176,13,'#8fa3c4');
+    for(var i=0;i<4;i++){ rect(152+i*88,200,72,96,'#101826'); txt(NET.code.charAt(i),188+i*88,248,58,'#ffd23f'); }
+    txt(NET.status||'',W/2,340,14,'#dfe8ff','center',''); txt('Your partner picks JOIN A GAME and types the code.',W/2,372,12,'#8fa3c4','center','');
+    var it=['SHARE INVITE','CANCEL'];
+    for(i=0;i<2;i++){ var r2=menuRect(i,2,560,52), on2=UI.menu===i; rect(r2.x,r2.y,r2.w,r2.h,on2?'#1c3a5a':'#101826'); txt(it[i],W/2,r2.y+r2.h/2,on2?19:16,on2?'#57ff7a':'#dfe8ff'); }
+    return;
+  }
+  neon(NET.phase==='error'?'NO LUCK':'CONNECTING',W/2,150,44,NET.phase==='error'?'#ff5a5a':'#57c4ff');
+  txt(NET.phase==='error'?(NET.err||'SOMETHING WENT WRONG'):(NET.status||''),W/2,260,15,'#dfe8ff','center','');
+  if(NET.phase!=='error'&&blink(300))txt('. . .',W/2,300,24,'#57c4ff');
+  txt(NET.phase==='error'?'PRESS POUR TO GO BACK':'PAUSE GOES BACK',W/2,420,13,'#8fa3c4');
+}
+function drawHowto(){
+  drawBackdrop(); var p=UI.how;
+  panel(28,40,584,620,'#ffb347');
+  neon(['MOVE AND POUR','THE BAR','THE EXTRAS'][p],W/2,84,34,'#ffb347');
+  var y=130;
+  function line(s,col){ wrapTxt(s,56,y,13,col||'#dfe8ff',530); y+=46; }
+  if(p===0){
+    spr('bt:pearl',BT.pearl,btPal(0),460,y,5,false); drawMug(420,y+100,4,'fill',1.08);
+    line('UP and DOWN jump your bartender between the four bars. Going past the top wraps to the bottom.');
+    line('HOLD POUR to fill the mug under that bar\'s tap. The gauge beside the tap and the ring on the POUR button show the fill.');
+    line('LET GO once the foam passes the white FULL line and the mug slides down the bar.','#dfe8ff');
+    line('Let go inside the GOLD band for a PERFECT pour. Three in a row pay a STREAK bonus.','#ffd23f');
+    line('Hold too long and it spills: SLOPPY. It slides slow, shoves weak, wets your bar and empties HAPPY HOUR.','#ff9a5a');
+    line('Let go early and it flies SHORT: the patron sends it back and it scores nothing. Walk away and it pours out.','#9ecbff');
+  } else if(p===1){
+    var fake={type:'regular',look:12,b:0,x:0,st:'wait',wk:0,watch:false,id:0}, lk=patronLook(fake,0);
+    spr('p:human',SP.human,lk.pal,470,y,5,false); spr('h:cowboy',HATS.cowboy,lk.hatPal,470,y,5,false);
+    line('Patrons walk toward your taps. A mug they catch shoves them back. Shoved out the door means SERVED.');
+    line('If a mug does not send them home, they drink, then slide the EMPTY back to you. Be on that bar to catch it.');
+    line('You lose a mug (a life) when:','#ff7b7b');
+    line('a full mug hits the door, an empty falls off your end, or a patron reaches your taps.','#ff7b7b');
+    line('Serve every patron in the round to clear it. Three rounds and a bonus game per venue, six venues.','#57ff7a');
+  } else {
+    drawMug(520,y+60,4,'empty',0,true);
+    line('Some empties come back with a TIP in them. Catch it for 1,500 and a SHOW: some patrons stop to watch, and watchers will not catch a mug.','#ffd23f');
+    line('Eight PERFECT serves in a row open HAPPY HOUR: patrons slow down, every pour is perfect, points double.','#ffd23f');
+    line('Every venue brings a new patron and a new hazard. The intro card tells you what they do.');
+    line('ONLINE: one of you hosts, the other joins with the code. Each bartender is yours to move; the lives are shared.','#57c4ff');
+  }
+  txt((p+1)+' / 3   POUR FOR MORE',W/2,636,12,'#8fa3c4');
+}
+function drawBoard(){
+  drawBackdrop(); panel(24,30,592,640,'#ffd23f');
+  neon('HIGH SCORES',W/2,76,40,'#ffd23f');
+  var tabs=['1 PLAYER','2 PLAYERS']; for(var t=0;t<2;t++){ var on=UI.board===t; rect(90+t*236,110,224,40,on?'#1c3a5a':'#101826'); txt(tabs[t],202+t*236,130,15,on?'#57ff7a':'#8fa3c4'); }
+  var l=boardList(UI.board?'duo':'solo');
+  if(!l.length)txt('NO SCORES YET. OPEN THE BAR!',W/2,300,15,'#8fa3c4');
+  for(var i=0;i<l.length;i++){ var e=l[i], y=182+i*44, me=(UI.entry&&e.t===UI.entry);
+    rect(44,y-18,552,38,me?'#2a2a10':(i%2?'#0e1522':'#101a2a'));
+    txt(String(i+1),70,y,16,me?'#ffd23f':'#8fa3c4');
+    txt(e.n+(e.p?(' & '+e.p):''),100,y,18,me?'#ffd23f':'#dfe8ff','left');
+    txt(fmt(e.s),580,y-4,18,me?'#ffd23f':'#57ff7a','right');
+    txt((e.r||'')+(CHARS[e.c]?(' · '+CHARS[e.c].name):''),580,y+12,9,'#8fa3c4','right'); }
+  txt('LEFT / RIGHT SWITCH  ·  POUR TO CLOSE',W/2,650,11,'#8fa3c4');
+}
+function drawInitials(){
+  drawBackdrop(); panel(60,150,520,470,'#ffd23f');
+  neon('NEW HIGH SCORE',W/2,206,40,'#ffd23f');
+  txt(fmt(UI.final?UI.final.score:0),W/2,270,40,'#57ff7a');
+  txt('ENTER YOUR INITIALS',W/2,330,15,'#dfe8ff');
+  for(var s=0;s<3;s++){ var r=iniSlot(s), on=UI.slot===s; rect(r.x,r.y,r.w,r.h,on?'#1c3a5a':'#101826'); rect(r.x,r.y+r.h-5,r.w,5,on?'#57ff7a':'#3a5a8a');
+    txt(INI_ABC.charAt(UI.ini[s]),r.x+r.w/2,r.y+r.h/2,56,on?'#57ff7a':'#dfe8ff'); if(on&&blink(300)){ txt('▲',r.x+r.w/2,r.y-16,14,'#57ff7a'); txt('▼',r.x+r.w/2,r.y+r.h+16,14,'#57ff7a'); } }
+  txt('UP / DOWN pick a letter, POUR stamps it',W/2,590,12,'#8fa3c4');
+}
+function drawPause(){
+  alpha(0.8); rect(0,0,W,DECK_Y,'#05040a'); alpha(1);
+  panel(90,200,460,360,'#57c4ff'); neon('PAUSED',W/2,246,40,'#57c4ff');
+  if(NET.role)txt('ONLINE: THE BAR STAYS OPEN',W/2,280,11,'#ffd23f');
+  var it=pauseItems(); for(var i=0;i<it.length;i++){ var r=menuRect(i,it.length,300,54), on=UI.pmenu===i;
+    rect(r.x,r.y,r.w,r.h,on?'#1c3a5a':'#101826'); txt(it[i],W/2,r.y+r.h/2,on?20:17,on?'#57ff7a':'#dfe8ff'); }
+}
+function render(){
+  if(!ctx)return;
+  ctx.fillStyle='#07060c'; ctx.fillRect(0,0,W,H);
+  if(G&&SIM_STATES[STATE]){
+    if(STATE==='select'){ drawSelect(); }
+    else {
+      FEEL.preWorld(ctx);
+      if(STATE==='bonus')drawBonus(); else drawBar();
+      if(STATE==='intro')drawCard();
+      drawFloats();
+      FEEL.postWorld(ctx);
+      drawHUD(); if(STATE!=='over')drawBanner();
+      if(STATE==='over')drawOver();
+    }
+    drawDeck();
+    if(UI.pause)drawPause();
+  } else {
+    if(STATE==='title')drawTitle(); else if(STATE==='online')drawOnline(); else if(STATE==='lobby')drawLobby();
+    else if(STATE==='howto')drawHowto(); else if(STATE==='board')drawBoard(); else if(STATE==='initials')drawInitials();
+    drawDeck();
+  }
+  if(UI.msgT>0){ alpha(Math.min(1,UI.msgT*2)); panel(100,620,440,44,'#ffd23f'); txt(UI.msg,W/2,642,14,'#ffd23f'); alpha(1); }
+  FEEL.overlay(ctx,W,H);
+  /* cosmetic layers (e.g. CRT RASTER PACK) draw here, under the ERR line */
+  if(PERF.on)perfDraw();   // BUILD 4: the frame counter, only with ?debug=1
+  if(ERRMSG)txt(ERRMSG,W/2,H-8,10,'#ff4646');
+}
+
+/* ---- 11. FRAME PACING: the catch-up defenses (seed, verbatim) ---- */
+var STEP_CAP=5;
+var STEP_MS=16.6667;
+function frameStep(prevLast,now){
+  var acc=now-prevLast;
+  if(acc>200)return {steps:1,last:now,resync:true};
+  var steps=Math.floor(acc/STEP_MS);
+  if(steps>STEP_CAP)steps=STEP_CAP;
+  return {steps:steps,last:prevLast+steps*STEP_MS,resync:false};
+}
+var tick={last:0}; var lastSaveAt=0;
+function frameTick(){
+  try{
+    var now=performance.now();
+    if(!tick.last)tick.last=now;
+    var fs=frameStep(tick.last,now);
+    tick.last=fs.last;
+    for(var i=0;i<fs.steps;i++){ update(1/60); DF.u-=1/60; DF.d-=1/60; }
+    render();
+    if(now-lastSaveAt>5000){ saveState(); lastSaveAt=now; }
+  }catch(e){ reportErr('frameTick',e); }
+  if(typeof requestAnimationFrame==='function')requestAnimationFrame(frameTick);
+}
+
+/* ---- 11b. THE FRAME COUNTER (BUILD 4; the Director, 2026-09-30: "is the
+        game slowing down when I play? Can you implement an FPS counter in
+        debug"). With ?debug=1 a line under the HUD shows the frames drawn a
+        second, the work a frame costs (update and draw, ms), the slowest
+        frame of the last half second, the backing scale (and the device's
+        when the cap holds it lower), and CLOCK BEHIND when frames came too
+        slow for the fixed step to catch up: past STEP_CAP steps, or a gap
+        over 200 ms, the game drops time and plays slow. It reads the clock
+        and writes nothing the game reads, so the sim and the bots are
+        untouched. The seed's frameTick above stays verbatim; this wraps it,
+        and without ?debug=1 the wrap only calls it. ---- */
+var PERF={on:urlParam('debug')==='1', t0:0, last:0, n:0, work:0, wmax:0, wb:0, fps:0, ms:0, worst:0, behind:0};
+function perfNote(now,work,behind){
+  var P=PERF;
+  if(!P.t0){ P.t0=now; P.last=now; return; }
+  var iv=now-P.last; P.last=now; P.n++; P.work+=work; if(iv>P.wmax)P.wmax=iv; if(behind)P.wb++;
+  if(now-P.t0>=500){ P.fps=P.n*1000/(now-P.t0); P.ms=P.work/P.n; P.worst=P.wmax; P.behind=P.wb;
+    P.t0=now; P.n=0; P.work=0; P.wmax=0; P.wb=0; }
+}
+function perfLine(){ var P=PERF;
+  return Math.round(P.fps)+' FPS  '+P.ms.toFixed(1)+' MS  WORST '+Math.round(P.worst)+' MS  '+DPR+'X'+(DEV_DPR>DPR?' OF '+(Math.round(DEV_DPR*100)/100)+'X':'')+(P.behind?'  CLOCK BEHIND':''); }
+function perfDraw(){ if(!ctx)return; alpha(0.75); rect(4,HUD_H+1,W-8,11,'#000'); alpha(1); txt(perfLine(),8,HUD_H+6,10,'#ffffff','left'); }
+var frameTickSeed=frameTick;
+frameTick=function(){
+  if(!PERF.on)return frameTickSeed();
+  var t0=performance.now(), prev=tick.last;
+  frameTickSeed();
+  perfNote(t0,performance.now()-t0,prev>0&&(t0-prev>200||t0-tick.last>=STEP_MS));
+};
+
+/* ---- 12. PAGE VISIBILITY: pause hidden; resync on a long return. The
+        handler covers EVERY mode (the v210 lesson): solo opens the pause
+        card, online collapses the SNAILNET backlog. Music stops while
+        hidden (the GRID GRUDGE v49 lesson) and resumes on return. ---- */
+var hiddenAt=0;
+if(typeof document!=='undefined'&&document.addEventListener){
+  document.addEventListener('visibilitychange',function(){
+    var now=(typeof performance!=='undefined')?performance.now():Date.now();
+    if(document.hidden){ hiddenAt=now; saveState(); try{ AKIT.music.stop(); }catch(e){}
+      if(STATE==='play'&&!NET.role)UI.pause=true; }
+    else { if(hiddenAt&&now-hiddenAt>1000){ tick.last=now; if(NET.net)NET.net.netResync(now); }
+           hiddenAt=0; kdown={}; HOLD.kb=false; HOLD.touch={}; }
+  });
+}
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('pagehide',function(){
+    saveState();
+    try{ if(NET.net)NET.net.send('bye',null); }catch(e){}
+    try{ var A=AKIT.ctx(); if(A&&A.close)A.close(); }catch(e){}
+  });
+}
+
+/* ==================== PORTAL ADAPTER FENCE : BEGIN ====================
+   Platform SDK wiring lives here ONLY. Every hook is feature-detected and a
+   silent no-op without a portal. gameplayStart fires when the first venue
+   opens, gameplayStop at LAST CALL or a quit; adBreak would sit between
+   venues (the SHAKE UP card) and is unused today. */
+var PORTAL={
+  init:function(){},
+  gameplayStart:function(){},
+  gameplayStop:function(){},
+  adBreak:function(resume){ if(resume)resume(); }
+};
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('blur',function(){ hiddenAt=(typeof performance!=='undefined')?performance.now():Date.now(); });
+}
+PORTAL.init();
+/* ==================== PORTAL ADAPTER FENCE : END   ==================== */
+
+/* ==================== SNAILNET SLOT : BEGIN ====================
+   snail-netcode-v1.00.js pasted verbatim below per SNAIL-NETCODE-PACK, then
+   this title's glue. TOPOLOGY: mode 'queue', shared-world HOST AUTHORITY
+   (the PATTY topology): the host runs the one sim with two input streams;
+   the guest sends cumulative input counters ('inp', latest-wins) and renders
+   host snapshots ('snap', latest-wins, every SNAP_EVERY frames) with dead
+   reckoning between them. The ONE prediction is the guest's own pour fill
+   (display only; its release carries the fill it saw, which the host honours
+   within NET_TRUST): no host-authoritative mutator runs on the guest, so
+   no predGuard fence is needed.
+   Control types never dropped by a resync: hello, welcome, start, bye, ini.
+   PeerJS loads lazily (only when someone picks ONLINE) from jsDelivr with a
+   cdnjs fallback; solo play never touches the network. A ?bc=1 URL swaps
+   PeerJS for a BroadcastChannel wire between two tabs (the studio's
+   two-tab device-free test path; gates use an in-memory wire). */
+/* ---- SNAIL-NETCODE v1.00 (core module, verbatim) ---- */
+/* ============================================================================
+   SNAIL-NETCODE v1.00 (core module) | Snail Attack Studios | 2026-07-06
+   ----------------------------------------------------------------------------
+   Provenance: extracted from proven, gate-verified production code.
+   - PATTY PANIC v217: PeerJS transport (host claims a room id, guest connects),
+     snapshot cadence knob (SNAP_EVERY, PATTY ships 1 = 60Hz since v146; 2 = 30Hz
+     is the bandwidth-friendly setting), and netResync (v210): a peer returning
+     from the background drops its stale backlog to the single newest message and
+     resets its derived clocks, so the sim never sprints to catch up.
+   - GRID GRUDGE v55: local-field-authority pattern: events apply immediately,
+     field snapshots overwrite latest-wins, no interpolation, no prediction, and
+     therefore no backlog machinery. Mode 'latest' encodes it.
+   Version lives here AND in the filename (studio law, 2026-07-06).
+   ----------------------------------------------------------------------------
+   TWO MODES (pick per title; see SNAIL-NETCODE-PACK-v1.00.md):
+   - 'queue'  : shared-world host authority (PATTY topology). Inbound messages
+                queue; the game drains them each frame; a background return
+                calls netResync() which collapses the backlog.
+   - 'latest' : local field authority with arbitrated events (GRID GRUDGE
+                topology). Types named in latestTypes overwrite per type (only
+                the newest matters); everything else queues and is drained next
+                frame. No backlog can build by construction.
+   WHAT THIS CORE DOES NOT DO: game-side prediction/reconcile. That is game
+   code by nature (PATTY's predicting/predGuard fence). The pack documents the
+   fence rule; do not fake it here.
+   ----------------------------------------------------------------------------
+   HEADLESS: with an injected wire ({send, onmessage}) this runs under Node with
+   zero dependencies; that is how the loopback gate template drives it. Without
+   a wire it looks for the global PeerJS Peer and degrades gracefully to
+   disabled when absent (solo play unaffected; send() returns false).
+   ============================================================================ */
+var SNAILNET = (function(){
+'use strict';
+var VERSION = '1.00';
+var RESYNC_GAP_MS = 1000;   // hidden longer than this triggers a resync on return
+
+function create(){
+  var net = {
+    enabled:false, open:false, role:null,
+    mode:'queue',
+    latestTypes:{snap:1, inp:1},     // collapse targets (newest wins)
+    controlTypes:{start:1, bye:1},   // never dropped by a resync
+    inbox:[], latest:{}, lastSeen:{},
+    seq:0, hiddenAt:0,
+    peer:null, conn:null, wire:null,
+    onOpen:null, onClose:null, onError:null, onResync:null
+  };
+
+  function init(opts){
+    opts = opts || {};
+    if(opts.mode) net.mode = opts.mode;
+    if(opts.latestTypes) net.latestTypes = opts.latestTypes;
+    if(opts.controlTypes) net.controlTypes = opts.controlTypes;
+    net.onOpen = opts.onOpen || null;  net.onClose = opts.onClose || null;
+    net.onError = opts.onError || null; net.onResync = opts.onResync || null;
+
+    if(opts.wire){                                   // injected transport (gates)
+      net.wire = opts.wire; net.role = opts.role || 'host';
+      net.wire.onmessage = function(raw){ recv(raw); };
+      net.enabled = true; net.open = true;
+      if(net.onOpen) net.onOpen(net.role);
+      return true;
+    }
+    if(typeof Peer === 'undefined'){                 // graceful offline degradation
+      net.enabled = false; return false;             // solo behaviour untouched
+    }
+    var room = String(opts.room || 'room');
+    var id = (opts.idPrefix || 'snail-') + room;
+    var popts = opts.peerOpts || undefined;
+    net.enabled = true;
+    if(opts.role === 'guest'){ becomeGuest(id, popts); }
+    else if(opts.role === 'host'){ becomeHost(id, popts); }
+    else {                                           // claim election: try the room id
+      try{
+        var p = new Peer(id, popts);
+        p.on('open', function(){ net.peer = p; hostWait(p); });
+        p.on('error', function(e){
+          if(e && e.type === 'unavailable-id'){ becomeGuest(id, popts); } // someone hosts already
+          else if(net.onError) net.onError(e);
+        });
+      }catch(e){ net.enabled = false; if(net.onError) net.onError(e); }
+    }
+    return true;
+  }
+  function becomeHost(id, popts){
+    try{
+      var p = new Peer(id, popts); net.peer = p;
+      p.on('open', function(){ hostWait(p); });
+      p.on('error', function(e){ if(net.onError) net.onError(e); });
+    }catch(e){ net.enabled = false; if(net.onError) net.onError(e); }
+  }
+  function hostWait(p){
+    net.role = 'host';
+    p.on('connection', function(c){
+      net.conn = c;
+      c.on('data', function(raw){ recv(raw); });
+      c.on('open', function(){ net.open = true; if(net.onOpen) net.onOpen('host'); });
+      c.on('close', function(){ net.open = false; if(net.onClose) net.onClose(); });
+    });
+  }
+  function becomeGuest(hostId, popts){
+    try{
+      var p = new Peer(undefined, popts); net.peer = p; net.role = 'guest';
+      p.on('open', function(){
+        var c = p.connect(hostId); net.conn = c;
+        c.on('data', function(raw){ recv(raw); });
+        c.on('open', function(){ net.open = true; if(net.onOpen) net.onOpen('guest'); });
+        c.on('close', function(){ net.open = false; if(net.onClose) net.onClose(); });
+      });
+      p.on('error', function(e){ if(net.onError) net.onError(e); });
+    }catch(e){ net.enabled = false; if(net.onError) net.onError(e); }
+  }
+
+  function send(t, p){
+    if(!net.enabled || !net.open) return false;
+    var m = {t:t, s:++net.seq, p:(p === undefined ? null : p)};
+    var raw = JSON.stringify(m);
+    if(net.wire) net.wire.send(raw);
+    else if(net.conn) net.conn.send(raw);
+    else return false;
+    return true;
+  }
+
+  function recv(raw){
+    var m; try{ m = (typeof raw === 'string') ? JSON.parse(raw) : raw; }catch(e){ return; }
+    if(!m || !m.t) return;
+    if(net.mode === 'latest' && net.latestTypes[m.t]){
+      var seen = net.lastSeen[m.t] || 0;
+      if(m.s && m.s <= seen) return;                 // never process a stale one when newer was seen
+      net.lastSeen[m.t] = m.s || seen;
+      net.latest[m.t] = m;                           // newest wins; no backlog by construction
+      return;
+    }
+    net.inbox.push(m);
+  }
+
+  function drain(fn){                                // the game calls this once per frame
+    if(net.mode === 'latest'){
+      for(var t in net.latest){ if(net.latest[t]){ var m = net.latest[t]; net.latest[t] = null; fn(m); } }
+    }
+    while(net.inbox.length) fn(net.inbox.shift());
+  }
+
+  /* netResync: the generalized PATTY v210 shape. Collect survivors in SIDE
+     LISTS, never re-push into the queue being drained (that is an infinite
+     loop). Controls survive in order; latestTypes collapse to their newest;
+     everything else is stale backlog and is dropped. The game's onResync
+     callback resets its derived clocks (interpolation, prediction, frame
+     clock); a half reset leaves a stale cadence. */
+  function netResync(nowMs){
+    var keep = [], newest = {};
+    while(net.inbox.length){
+      var m = net.inbox.shift();
+      if(!m) continue;
+      if(net.controlTypes[m.t]) keep.push(m);
+      else if(net.latestTypes[m.t]){
+        if(!newest[m.t] || (m.s || 0) >= (newest[m.t].s || 0)) newest[m.t] = m;
+      }
+      /* else: dropped */
+    }
+    for(var k = 0; k < keep.length; k++) net.inbox.push(keep[k]);
+    for(var t in newest) if(newest[t]) net.inbox.push(newest[t]);
+    for(var lt in net.latest) net.latest[lt] = null;
+    if(net.onResync) net.onResync(nowMs || 0);
+  }
+
+  function wireVisibility(doc, nowFn){               // call once at boot in the browser
+    if(!doc || !doc.addEventListener) return false;
+    doc.addEventListener('visibilitychange', function(){
+      var now = nowFn ? nowFn() : Date.now();
+      if(doc.hidden){ net.hiddenAt = now; }
+      else if(net.hiddenAt && (now - net.hiddenAt) > RESYNC_GAP_MS){ netResync(now); net.hiddenAt = 0; }
+      else { net.hiddenAt = 0; }
+    });
+    return true;
+  }
+
+  return { VERSION:VERSION, init:init, send:send, recv:recv, drain:drain,
+           netResync:netResync, wireVisibility:wireVisibility, state:net };
+}
+
+return { VERSION:VERSION, RESYNC_GAP_MS:RESYNC_GAP_MS, create:create };
+})();
+if(typeof module !== 'undefined') module.exports = SNAILNET;
+/* ---- this title's glue ---- */
+var NET={role:null,phase:'',code:'',net:null,live:false,err:'',status:'',partnerIni:null,
+  cnt:{u:0,d:0,l:0,r:0,p:0,k:-1,ks:0,rf:null,rs:0}, sent:'', sendT:0, rx:null, ap:{u:0,d:0,l:0,r:0,p:0,ks:0,rs:0}, frame:0, SNAP_EVERY:2, bc:null,
+  pred:{on:false,bar:-1,fill:0}};   // pred: the guest's own pour, predicted locally (the pack's fence rule: own avatar only, no host mutators)
+var PEER_SRC=['https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js','https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js'];
+var peerLoading=false;
+function loadPeer(cb){
+  if(typeof Peer!=='undefined')return cb(true);
+  if(typeof document==='undefined'||!document.createElement)return cb(false);
+  var i=0;
+  (function next(){ if(i>=PEER_SRC.length)return cb(false);
+    var s=document.createElement('script'); s.src=PEER_SRC[i++]; s.async=true;
+    s.onload=function(){ cb(typeof Peer!=='undefined'); }; s.onerror=next;
+    (document.head||document.body).appendChild(s); })();
+}
+function makeCode(){ var c=''; for(var i=0;i<4;i++)c+=LETTERS.charAt(Math.floor(Math.random()*LETTERS.length)); return c; }
+function urlParam(k){ try{ var m=new RegExp('[?&]'+k+'=([^&]*)').exec(location.search||''); return m?decodeURIComponent(m[1]):null; }catch(e){ return null; } }
+function devWire(){
+  if(urlParam('bc')!=='1'||typeof BroadcastChannel==='undefined')return null;
+  var ch=new BroadcastChannel('tapattack-'+NET.code), w={send:function(raw){ ch.postMessage(raw); },onmessage:null};
+  ch.onmessage=function(e){ if(w.onmessage)w.onmessage(e.data); };
+  NET.bc=ch; return w;
+}
+function netConnect(role,wire){
+  var opts={mode:'queue',room:NET.code,role:role,idPrefix:'tapattack-',
+    latestTypes:{snap:1,inp:1},controlTypes:{hello:1,welcome:1,start:1,bye:1,ini:1},
+    onOpen:function(r){ netOpened(r); },onClose:function(){ netClosed(); },onError:function(e){ netError(e); },
+    onResync:function(){ tick.last=0; }};
+  NET.net=SNAILNET.create();
+  var w=wire||devWire();
+  if(w){ opts.wire=w; NET.net.init(opts); return true; }
+  var mine=NET.net;
+  loadPeer(function(ok){ if(NET.net!==mine)return; if(!ok){ netError({type:'peerjs'}); return; } NET.net.init(opts); });
+  return true;
+}
+function startHost(wire){
+  netClose(); NET.role='host'; NET.phase='hosting'; NET.code=makeCode(); STATE='lobby'; UI.menu=0;
+  NET.status='WAITING FOR PLAYER 2...'; netConnect('host',wire);
+}
+function startJoin(code,wire){
+  netClose(); NET.role='guest'; NET.phase='connecting'; NET.code=code; STATE='lobby';
+  NET.status='KNOCKING ON '+code+'...'; netConnect('guest',wire);
+}
+function netOpened(r){
+  if(r==='guest'){ NET.status='CONNECTED. WAITING FOR THE HOST...'; NET.net.send('hello',{v:VER}); }
+  else NET.status=NET.bc?'WAITING FOR PLAYER 2...':'PLAYER 2 IS AT THE DOOR...';
+}
+function netClosed(){
+  if(!NET.role)return;
+  if(NET.role==='guest'){ var inMatch=SIM_STATES[STATE]&&NET.live; netClose(); if(inMatch||STATE==='lobby'){ goTitle(); } msg('THE HOST CLOSED THE BAR',3); return; }
+  if(G&&SIM_STATES[STATE]&&NET.live){
+    if(STATE==='select'){ netClose(); goTitle(); msg('PLAYER 2 LEFT',3); return; }
+    if(G.bts[1])G.bts[1].gone=true; NET.live=false; msg('PLAYER 2 LEFT. THE BAR STAYS OPEN',3); }
+  else if(STATE==='lobby'){ NET.status='WAITING FOR PLAYER 2...'; }
+}
+function netError(e){
+  var t=(e&&e.type)||'';
+  if(NET.role==='host'&&t==='unavailable-id'){ var w=null; netClose(); startHost(w); return; }
+  var why={'peer-unavailable':'NO BAR WITH THAT CODE. CHECK THE LETTERS.','peerjs':'COULD NOT LOAD THE NETWORK LIBRARY.',
+    'browser-incompatible':'THIS BROWSER CANNOT PLAY ONLINE.','network':'NETWORK TROUBLE. TRY AGAIN.','server-error':'THE MATCHMAKER IS DOWN. TRY AGAIN.',
+    'socket-error':'NETWORK TROUBLE. TRY AGAIN.','disconnected':'LOST THE MATCHMAKER. TRY AGAIN.'}[t]||('NETWORK ERROR '+t.toUpperCase());
+  if(SIM_STATES[STATE]&&NET.live){ netClosed(); return; }
+  NET.phase='error'; NET.err=why; STATE='lobby';
+}
+function netClose(){
+  try{ if(NET.net&&NET.net.state.peer&&NET.net.state.peer.destroy)NET.net.state.peer.destroy(); }catch(e){}
+  try{ if(NET.bc)NET.bc.close(); }catch(e){}
+  NET.role=null; NET.phase=''; NET.net=null; NET.live=false; NET.bc=null; NET.rx=null; NET.sent=''; NET.frame=0;
+  NET.cnt={u:0,d:0,l:0,r:0,p:0,k:-1,ks:0,rf:null,rs:0}; NET.ap={u:0,d:0,l:0,r:0,p:0,ks:0,rs:0}; NET.pred={on:false,bar:-1,fill:0};
+}
+function netPoll(){ if(NET.net)NET.net.drain(onNetMsg); }
+function onNetMsg(m){
+  var p=m.p||{};
+  if(m.t==='hello'&&NET.role==='host'){
+    if(p.v!==VER){ NET.net.send('bye',{why:'ver',v:VER}); NET.phase='error'; NET.err='VERSION MISMATCH: HOST v'+VER+', GUEST v'+p.v; return; }
+    NET.net.send('welcome',{v:VER}); newMatch('duo'); NET.live=true; NET.partnerIni=null; msg('PLAYER 2 JOINED'); playSfx('lock');
+  } else if(m.t==='welcome'&&NET.role==='guest'){
+    if(p.v!==VER){ NET.phase='error'; NET.err='VERSION MISMATCH: HOST v'+p.v+', YOU v'+VER; return; }
+    NET.status='IN THE BAR. WAITING FOR THE HOST...';
+  } else if(m.t==='inp'&&NET.role==='host'){ NET.rx=p; }
+  else if(m.t==='snap'&&NET.role==='guest'){ applySnap(p); }
+  else if(m.t==='ini'){ NET.partnerIni=p.n; boardPatchPartner(p.n); }
+  else if(m.t==='bye'){ if(p&&p.why==='ver'){ NET.phase='error'; NET.err='VERSION MISMATCH: HOST v'+p.v+', YOU v'+VER; STATE='lobby'; return; } netClosed(); }
+}
+function boardPatchPartner(n){
+  if(!UI.entry)return; var b=boardLoad();
+  for(var i=0;i<b.duo.length;i++)if(b.duo[i].t===UI.entry&&b.duo[i].p==='???'){ b.duo[i].p=n; lsSet(BOARD_KEY,JSON.stringify(b)); }
+}
+function hostFeed(){
+  var r=NET.rx; if(!r||!NET.live)return; var P=pin[1], a=NET.ap;
+  P.u+=Math.max(0,r.u-a.u); P.d+=Math.max(0,r.d-a.d); P.l+=Math.max(0,r.l-a.l); P.r+=Math.max(0,r.r-a.r); P.press+=Math.max(0,r.p-a.p);
+  P.btn=!!r.b; if(r.ks!==a.ks&&r.k>=0)P.pick=r.k;
+  if(r.rs!==a.rs&&typeof r.rf==='number')P.relFill=r.rf;
+  a.u=r.u; a.d=r.d; a.l=r.l; a.r=r.r; a.p=r.p; a.ks=r.ks; a.rs=r.rs;
+}
+function roundNum(k,v){ return (typeof v==='number'&&v%1!==0)?Math.round(v*100)/100:v; }
+function hostSend(){
+  if(!NET.live||!G||!NET.net)return;
+  NET.frame++; if(NET.frame%NET.SNAP_EVERY)return;
+  var g=JSON.parse(JSON.stringify(G,roundNum));
+  NET.net.send('snap',{st:STATE,g:g});
+  G.evq=[];
+}
+function applySnap(p){
+  if(!p||!p.g)return;
+  if(!(NET.live||STATE==='lobby'))return;          // after the match the guest keeps its own screens
+  G=p.g; STATE=p.st; NET.live=true; NET.phase='';
+  var q=G.evq||[]; for(var i=0;i<q.length;i++)playFx(q[i][0],q[i][1],q[i][2],q[i][3],q[i][4],q[i][5]);
+  G.evq=[];
+  if(NET.pred.on&&G.bars&&G.bars[NET.pred.bar])G.bars[NET.pred.bar].fill=NET.pred.fill;   // my own pour shows what I am pouring
+}
+function guestFeed(L,held){
+  var C=NET.cnt, pr=NET.pred, me=(G&&G.bts)?G.bts[1]:null;
+  C.u+=L.u; C.d+=L.d; C.l+=L.l; C.r+=L.r; C.p+=L.press;
+  if(STATE==='play'&&me&&!me.gone){
+    if(held&&me.md<=0&&(L.u+L.d)===0&&G.bars[me.bar].keg!==0){ if(!pr.on||pr.bar!==me.bar){ pr.on=true; pr.bar=me.bar; pr.fill=G.bars[me.bar].fill; } }
+    else if(pr.on&&!held){ C.rf=Math.round(pr.fill*1000)/1000; C.rs++; pr.on=false; }
+    else if(pr.on&&(me.md>0||(L.u+L.d)>0)){ pr.on=false; }
+  } else pr.on=false;
+  var pk=tapPick(L.tap); if(pk>=0){ C.k=pk; C.ks++; } else if(L.tap&&(STATE==='intro'||STATE==='select'))C.p++;
+  guestSendInput(null,held);
+}
+function guestSendInput(_,held){
+  if(!NET.net)return; var C=NET.cnt, pl={u:C.u,d:C.d,l:C.l,r:C.r,p:C.p,b:!!held,k:C.k,ks:C.ks,rf:C.rf,rs:C.rs}, s=JSON.stringify(pl);
+  NET.sendT++;
+  if(s!==NET.sent||NET.sendT>=10){ NET.net.send('inp',pl); NET.sent=s; NET.sendT=0; }
+}
+function guestTick(dt){                           // dead reckoning between snapshots, cosmetic only
+  if(!G)return;
+  var i;
+  if(G.mugs)for(i=0;i<G.mugs.length;i++){ var m=G.mugs[i]; m.x+=m.vx*mugFactor(m.b,m.x)*dt; if(m.k!=='full'&&m.x>MUG_END)m.x=MUG_END; }
+  if(G.pts)for(i=0;i<G.pts.length;i++){ var p=G.pts[i]; p.x+=(p.vx||0)*dt; p.wk=(p.wk||0)+dt; }
+  if(G.bts)for(i=0;i<G.bts.length;i++){ var t=G.bts[i]; if(t.md>0)t.mt=Math.min(t.md,t.mt+dt); }
+  if(G.bonus&&G.bonus.sw)G.bonus.sw.t=Math.min(G.bonus.dur,G.bonus.sw.t+dt);
+  if(typeof G.t==='number')G.t+=dt;
+  var pr=NET.pred, me=G.bts?G.bts[1]:null;
+  if(pr.on&&me&&G.bars&&G.bars[pr.bar]){ var rate=1/POUR_T[cstat(me.c,'pour')]; if(pr.fill>=1)rate*=FOAM_SLOW; pr.fill=Math.min(FILL_MAX,pr.fill+rate*dt); G.bars[pr.bar].fill=pr.fill; }
+  updCosmetic(dt);
+}
+/* ==================== SNAILNET SLOT : END   ==================== */
+
+/* ---- 13. BOOT ---- */
+loadPrefs();
+resetGame();
+if(!loadState()){
+  var jc=(urlParam('join')||'').toUpperCase();
+  if(/^[A-Z]{4}$/.test(jc)){ var ok=true; for(var ji=0;ji<4;ji++)if(LETTERS.indexOf(jc.charAt(ji))<0)ok=false;
+    if(ok){ for(ji=0;ji<4;ji++)UI.code[ji]=LETTERS.indexOf(jc.charAt(ji)); startJoin(jc); } }
+  else if(urlParam('host')==='1')startHost();
+}
+if(urlParam('debug')==='1'&&typeof window!=='undefined')window.__TAP={G:function(){ return G; },state:function(){ return STATE; },setState:function(s){ STATE=s; },
+  quickStart:quickStart,startBonus:startBonus,spawnPatron:spawnPatron,spawnMug:spawnMug,startShow:startShow,UI:UI,NET:function(){ return NET; }};   // dev handle for screenshot scenarios, only with ?debug=1
+if(typeof requestAnimationFrame==='function')requestAnimationFrame(frameTick);
+
+/*HOOK*/
+})();
+</script>
+</body>
+</html>

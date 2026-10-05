@@ -615,8 +615,38 @@ v83 REVIVE. In co-op, downing an interlude machine now brings a
     v83: the co-op novice pair reaches median wave 6 (was 5.5), score
     12,823 (was 9,373), and still never finishes; every other row of
     the report (50 of 51) is identical.
+v84 BACK AT THE START. In co-op the host took the guest's reported
+    place every 33 ms, even while its ship was down, so a report sent
+    just before the guest learned it was back (a respawn, or now a
+    revive) pulled the ship back to where it fell instead of to the
+    respawn point, on both screens. Each return now carries a count in
+    the snapshot; the guest echoes the last count it has taken in its
+    reports, and the host takes a reported place only when the echo
+    matches. Fire, beam, shield and deflector flags are taken as before.
+    SOLO is unchanged. Found by cooptest; cooptest v1.01 now checks
+    where the guest comes back, after a respawn and a revive. The bot
+    suite, same seeds, v83 to v84: the co-op skilled pair loses 2.25
+    ships a run (was 4) and scores a median 14,035 (was 19,355); the
+    novice pair scores 14,400 (was 12,823); the other 49 rows of the
+    report are identical.
+v85 ATTRACT. The arcade's attract loop now plays inside the game, as
+    the Director asked: on the SELECT MODE menu after 15s with no
+    input, four scenes run round (27.8s a loop): TITLE (the swarm
+    circles the logo, the fighter hovers on its exhaust), DEMO (a real
+    SOLO run, flown by the attract pilot: the bot suite's skilled
+    pilot, reading only what the screen shows), HIGH SCORES (the
+    cabinet's house table, with your best this session in its place)
+    and HOW TO PLAY (dodge, deflect, nova). Any tap, key or stick
+    returns to the menu and does nothing else. It never runs on the
+    HOST or JOIN screens or in play, never starts the sound or buzzes
+    the phone, and the demo writes no score and uses up none of the
+    first-play hints. With reduced motion on it shows only TITLE and
+    HIGH SCORES, held still. Held by a new gate, attracttest, in real
+    Chromium. The bot suite, same seeds, v84 to v85: every row of the
+    report is identical (the loop waits on the menu, and every run
+    starts from it at once).
 -->
-<title>NEON SWARM v83</title>
+<title>NEON SWARM v85</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -785,6 +815,7 @@ v83 REVIVE. In co-op, downing an interlude machine now brings a
   .srow b { font-size:7px; color:#7d92c8; width:24px; text-align:left; font-weight:normal; }
   .sbar { flex:1; height:4px; background:#152042; border-radius:2px; overflow:hidden; }
   .sbar i { display:block; height:100%; border-radius:2px; }
+  body.attract #stickHint, body.attract #actHint { display:none !important; }   /* v85: the attract loop shows the screen alone */
 </style>
 </head>
 <body>
@@ -917,6 +948,7 @@ document.addEventListener('webkitfullscreenchange', function(){ setTimeout(fit, 
 fit();
 
 function buzz(ms){
+  if (attract && attract.on) return;   // v85: the attract loop never buzzes
   try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){}
 }
 
@@ -1316,6 +1348,7 @@ function keyAxis(){
   return { x:x, y:y, mag:(x||y)?1:0 };
 }
 function localAxis(){
+  if (attract && attract.on && attract.axis) return attract.axis;   // v85: the demo's pilot holds the stick
   if (stick.active) return { x:stick.x, y:stick.y, mag:stick.mag };
   return keyAxis();
 }
@@ -1373,7 +1406,7 @@ function S(name){
 }
 
 // ---------- state ----------
-var BUILD = 83;
+var BUILD = 85;
 var STATE = 'title';
 var score = 0, hiScore = 0, wave = 0;
 var chain = 0, mult = 1, chainTimer = 0;
@@ -2837,6 +2870,7 @@ function killPlayer(p){
         if (STATE !== 'play') return;
         pp.alive = true;
         pp.x = W/2 + (pp.idx ? 36 : -36); pp.y = H - 70;
+        pp.spawnSeq = (pp.spawnSeq || 0) + 1;   // v84: a guest report from before this return is stale
         pp.inv = 2.6;
         if (hosting()) mp.evq.push(['rs', pp.idx]);
       }, 900);
@@ -2854,7 +2888,7 @@ function resetGame(){
   for (var i = 0; i < players.length; i++){
     var p = players[i];
     p.x = W/2 + (p.idx ? 36 : -36); p.y = H - 70;
-    p.alive = true; p.inv = 2; p.lives = 3;
+    p.alive = true; p.inv = 2; p.lives = 3; p.spawnSeq = (p.spawnSeq || 0) + 1;
     p.charge = 0; p.chargeTier = 0; p.beamT = 0; p.shieldMeter = 0; p.novaSlots = 0;
     p.heat = 0; p.overheated = false;
     p.kvx = 0; p.kvy = 0; p.colCd = 0;
@@ -4087,7 +4121,7 @@ function cbVictory(){
     var pv = players[pi];
     if (pv.lives < 0){
       // v83: the machine's fall brings a partner who is out back with one ship
-      pv.lives = 0; pv.alive = true; pv.inv = 2.6;
+      pv.lives = 0; pv.alive = true; pv.inv = 2.6; pv.spawnSeq = (pv.spawnSeq || 0) + 1;
       pv.x = W/2 + (pv.idx ? 36 : -36); pv.y = H - 70; pv.kvx = 0; pv.kvy = 0;
       rings.push({ x:pv.x, y:pv.y, r:4, vr:120, life:0.5, color:COL.green });
       popupLocal(pv.x, pv.y - 22, 'P' + (pv.idx + 1) + ' REVIVED', COL.green, true);
@@ -5354,7 +5388,7 @@ function buildSnap(){
       return [r1(p.x), r1(p.y), p.alive?1:0, r2(Math.max(0,p.inv)),
         r2(p.charge), r2(Math.max(0,p.beamT)), r1(p.beamW),
         r2(p.heat), p.overheated?1:0, r2(p.shieldMeter),
-        p.shieldOn?1:0, p.lives, p.charging?1:0, p.ship, p.novaSlots, p.beamTier||1, p.firing?1:0, r2(Math.max(0,p.beamCd||0)), r2(p.beamCdMax||1), p.deflOn?1:0, r1(p.beamEndY||0)];
+        p.shieldOn?1:0, p.lives, p.charging?1:0, p.ship, p.novaSlots, p.beamTier||1, p.firing?1:0, r2(Math.max(0,p.beamCd||0)), r2(p.beamCdMax||1), p.deflOn?1:0, r1(p.beamEndY||0), p.spawnSeq||0];
     }),
     e: enemies.map(function(e){
       return [e.id, TI[e.type], r1(e.x), r1(e.y),
@@ -5413,6 +5447,7 @@ function applySnap(sn){
       if (!wasAlive && p.alive){
         gShip.x = a[0]; gShip.y = a[1]; gShip.kvx = 0; gShip.kvy = 0;
       }
+      mp.seenSeq = a[21] || 0;   // v84: the return we have taken, echoed in our reports
       p.x = gShip.x; p.y = gShip.y;
     } else {
       p.tx = a[0]; p.ty = a[1];
@@ -5515,7 +5550,7 @@ function sendInputNow(){
   mp.lastInput = performance.now();
   var p = players[mp.localIdx];
   try {
-    mp.conn.send({ k:'in', x:r1(gShip.x), y:r1(gShip.y),
+    mp.conn.send({ k:'in', q:mp.seenSeq, x:r1(gShip.x), y:r1(gShip.y),
       b: p && p.beamHeld ? 1 : 0, s: p && p.shieldHeld ? 1 : 0,
       f: p && p.fireHeld ? 1 : 0, d: p && p.deflHeld ? 1 : 0 });
   } catch(e){}
@@ -5837,8 +5872,10 @@ function onHostData(msg){
   }
   if (msg.k === 'in' && players[1]){
     var p = players[1];
-    p.x = clamp(msg.x, 8, W-8);
-    p.y = clamp(msg.y, H*0.4, H-20);
+    if (msg.q === p.spawnSeq){   // v84: a place reported before the guest took its return is stale
+      p.x = clamp(msg.x, 8, W-8);
+      p.y = clamp(msg.y, H*0.4, H-20);
+    }
     p.beamHeld = !!msg.b;
     p.shieldHeld = !!msg.s;
     p.fireHeld = !!msg.f;
@@ -5908,8 +5945,343 @@ function goToLobby(){
   }
 })();
 
+// ---------- attract loop (v85) ----------
+// The arcade's attract loop, inside the game (the Director's ask, MEMO-SNAILCADE-TEASER-INTRO-NEON-v1.00): on the
+// SELECT MODE menu after 15 s with no input, TITLE, DEMO, HIGH SCORES and HOW TO PLAY run round (27.8 s a loop). The
+// DEMO is a real SOLO run flown by the attract pilot: the bot suite's skilled pilot (react 5 frames, look 0.6 s ahead,
+// lead the target, shield a shot it cannot slip, NOVA when cornered, parry a mirror part), reading only what the screen
+// shows. Any tap, key, stick or pad button returns to the title and does nothing else (the gesture is swallowed, its
+// click too). Never on a HOST or JOIN screen or in play; it never starts the sound and never buzzes; the demo writes no
+// score, spends no first-play hint and leaves the title as it found it. Reduced motion: TITLE and HIGH SCORES only,
+// held still. Gate: attracttest.js.
+var ATTRACT_IDLE = 15;
+var ATTRACT_LOOP = [['title', 3.8], ['demo', 15], ['scores', 4.4], ['howto', 4.6]];
+var ATTRACT_CALM = [['title', 3.8], ['scores', 4.4]];
+var ATTRACT_HOUSE = [['SNL', 50000], ['SWM', 40000], ['NOV', 30000], ['ROL', 20000], ['HOT', 10000]];   // the cabinet's table
+var ATTRACT_PILOT = { react:5, look:0.6, margin:14, homeY:60, shieldAt:4, heatCap:0.75, novaAt:1, shotV:240, speed:130 };
+var ATTRACT_DIRS = [[0, 0]];   // the stick leans the pilot chooses from: rest, eight ways at a full and a half lean
+[1, 0.5].forEach(function(m){ for (var k = 0; k < 8; k++) ATTRACT_DIRS.push([m*Math.cos(k*Math.PI/4), m*Math.sin(k*Math.PI/4)]); });
+var attract = { on:false, idle:0, i:0, t:0, scene:'', loops:0, until:0, saved:null, pilot:null, axis:null };
+
+function attractReady(){
+  return STATE === 'title' && !menu.classList.contains('hidden') && !panels.main.hidden &&
+         mp.role === 'solo' && !mp.peer && !mp.conn && !document.hidden;
+}
+function attractList(){ return reducedMotion ? ATTRACT_CALM : ATTRACT_LOOP; }
+function attractPad(){
+  try {
+    var pads = navigator.getGamepads ? navigator.getGamepads() : null;
+    for (var i = 0; pads && i < pads.length; i++){
+      var gp = pads[i]; if (!gp) continue;
+      for (var b = 0; b < gp.buttons.length; b++) if (gp.buttons[b] && gp.buttons[b].pressed) return true;
+      for (var a = 0; a < gp.axes.length; a++) if (Math.abs(gp.axes[a]) > 0.5) return true;
+    }
+  } catch(e){}
+  return false;
+}
+function attractTick(dt){
+  var pad = attractPad();
+  if (!attract.on){
+    if (pad || !attractReady()) attract.idle = 0;
+    else if ((attract.idle += dt) >= ATTRACT_IDLE) attractStart();
+    return;
+  }
+  if (pad){ attractStop(); return; }
+  attract.t += dt;
+  if (attract.scene === 'demo'){
+    if (STATE !== 'play'){ attractNext(); return; }   // a demo that ends early (GAME OVER) moves on
+    attractPilot(dt);
+  }
+  if (attract.t >= attractList()[attract.i][1]) attractNext();
+}
+function attractStart(){
+  attract.on = true; attract.i = 0; attract.idle = 0; attract.loops = 0;
+  menu.classList.add('hidden');
+  if (document.body) document.body.classList.add('attract');
+  attractEnter();
+}
+function attractEnter(){
+  attract.scene = attractList()[attract.i][0]; attract.t = 0;
+  if (attract.scene === 'demo') attractDemoStart();
+}
+function attractNext(){
+  if (attract.scene === 'demo') attractDemoEnd();
+  attract.i = (attract.i + 1) % attractList().length;
+  if (attract.i === 0) attract.loops++;
+  attractEnter();
+}
+function attractStop(){
+  if (attract.scene === 'demo') attractDemoEnd();
+  attract.on = false; attract.scene = ''; attract.idle = 0;
+  if (document.body) document.body.classList.remove('attract');
+  showPanel('main');
+}
+// the demo: a real SOLO run on a fresh field; everything it touches is put back when it ends
+function attractDemoStart(){
+  var J = {}, H0 = {}, k;
+  for (k in journey) J[k] = journey[k];
+  for (k in hints) H0[k] = hints[k];
+  attract.saved = { players:players, mode:gameMode, score:score, hi:hiScore, wave:wave, chain:chain, mult:mult,
+    chainTimer:chainTimer, journey:J, worldSpeed:worldSpeed, hints:H0 };
+  hints.start = hints.shield = hints.nova = hints.defl = hints.lance = hints.missile = true;   // no first-play coach in a show
+  players = [makePlayer(0)];
+  players[0].ship = attract.loops % SHIPS.length;
+  gameMode = 'classic';
+  resetGame();
+  attract.pilot = { q:[], last:new WeakMap(), speed:0, prev:null };
+}
+function attractDemoEnd(){
+  var S0 = attract.saved, k;
+  if (!S0) return;
+  attractWipe();
+  STATE = 'title';
+  players = S0.players; gameMode = S0.mode;
+  score = S0.score; hiScore = S0.hi; wave = S0.wave; chain = S0.chain; mult = S0.mult; chainTimer = S0.chainTimer;
+  for (k in S0.journey) journey[k] = S0.journey[k];
+  worldSpeed = S0.worldSpeed;
+  for (k in hints) if (!(k in S0.hints)) delete hints[k];
+  for (k in S0.hints) hints[k] = S0.hints[k];
+  attract.saved = null; attract.pilot = null; attract.axis = null;
+}
+function attractWipe(){
+  bullets.length = 0; ebullets.length = 0; enemies.length = 0; spawnQueue.length = 0;
+  particles.length = 0; rings.length = 0; popups.length = 0; novas.length = 0; bombAnims.length = 0;
+  terrain.length = 0; blasers.length = 0; coach.length = 0; mp.evq.length = 0;
+  bossRush.boss = null; bossRush.idx = 0; bossRush.interT = 0; bossRush.win = false;
+  cb.phase = 'none'; cb.t = 0; cb.booms.length = 0;
+  shake = 0; flash = 0; waveBanner = 0;
+}
+
+// the attract pilot: what a player sees this frame (each thing's place, and its motion against the last frame)
+function attractView(dt){
+  var P = attract.pilot, me = lp(), en = [], bu = [], parts = [], lasers = [], rocks = [], boss = bossRush.boss;
+  function track(o){
+    var q = P.last.get(o), v = { x:o.x, y:o.y, vx: q && dt > 0 ? (o.x - q.x)/dt : 0, vy: q && dt > 0 ? (o.y - q.y)/dt : 0, seen: !!q };
+    P.last.set(o, { x:o.x, y:o.y });
+    return v;
+  }
+  enemies.forEach(function(e){ var v = track(e); v.r = e.r; v.z = e.z || 1; en.push(v); });
+  ebullets.forEach(function(b){ var v = track(b); v.kind = b.kind || ''; bu.push(v); });
+  if (boss) boss.parts.forEach(function(q){
+    if (!q.hidden && !q.broken && q.x !== undefined) parts.push({ x:q.x, y:q.y, shielded: !!q.invul, mirror: !!q.reflOnly });
+  });
+  blasers.forEach(function(L){
+    if (L.type === 'col'){ lasers.push({ type:'col', x:L.x, w:L.w }); return; }
+    var pa = null, pb = null;
+    if (boss) boss.parts.forEach(function(q){ if (q.id === L.a) pa = q; if (q.id === L.b) pb = q; });
+    if (pa && pb) lasers.push({ type:'link', ax:pa.x, ay:pa.y, bx:pb.x, by:pb.y });
+  });
+  terrain.forEach(function(m){
+    var rows = [];
+    for (var y = 0; y <= H; y += 8){ var w = terrW(m, y); if (w > 0) rows.push({ y:y, x: m.side === 'L' ? w : W - w }); }
+    if (rows.length) rocks.push({ side:m.side, rows:rows });
+  });
+  return { playing: STATE === 'play', me: me ? { x:me.x, y:me.y, alive: !!me.alive, heat:me.heat, overheated: !!me.overheated,
+    novas:me.novaSlots } : null, enemies:en, bullets:bu, parts:parts, lasers:lasers, rocks:rocks };
+}
+function attractRock(v, side, y){   // the rock face's x at row y (the nearest sampled row), or null
+  var best = null;
+  v.rocks.forEach(function(m){ if (m.side !== side) return; m.rows.forEach(function(r){
+    if (Math.abs(r.y - y) <= 4) best = side === 'L' ? Math.max(best === null ? -1e9 : best, r.x) : Math.min(best === null ? 1e9 : best, r.x);
+  }); });
+  return best;
+}
+// a path's clearance: the nearest a shot, a body, a laser or a rock face comes to the ship over the look-ahead
+function attractClearance(seen, x0, y0, d, sp, look, parry){
+  var worst = 40, lanceNear = false;
+  for (var t = 0.1; t <= look + 1e-9; t += 0.1){
+    var x = clamp(x0 + d[0]*sp*t, 8, W - 8), y = clamp(y0 + d[1]*sp*t, H*0.4, H - 20), c, i;
+    for (i = 0; i < seen.bullets.length; i++){
+      var b = seen.bullets[i];
+      if (parry && b.kind !== 'lance' && b.seen && b.vy > 0 && b.y < y0) continue;   // held on the arc, it bounces
+      var vy = b.seen ? b.vy : 90, vx = b.seen ? b.vx : 0;
+      c = Math.hypot(b.x + vx*t - x, b.y + vy*t - y) - 6;
+      if (c < worst){ worst = c; lanceNear = b.kind === 'lance'; }
+    }
+    for (i = 0; i < seen.enemies.length; i++){
+      var e = seen.enemies[i];
+      if (e.z < 0.9) continue;
+      c = Math.hypot(e.x + e.vx*t - x, e.y + e.vy*t - y) - (e.r || 5) - 7;
+      if (c < worst){ worst = c; lanceNear = true; }   // a body cannot be shielded safely
+    }
+    for (i = 0; i < seen.lasers.length; i++){
+      var L = seen.lasers[i];
+      if (L.type === 'col') c = Math.abs(x - L.x) - L.w/2 - 7;
+      else {
+        var lx = L.bx - L.ax, ly = L.by - L.ay, l2 = lx*lx + ly*ly || 1, u = clamp(((x - L.ax)*lx + (y - L.ay)*ly)/l2, 0, 1);
+        c = Math.hypot(x - L.ax - lx*u, y - L.ay - ly*u) - 12;
+      }
+      if (c < worst){ worst = c; lanceNear = true; }
+    }
+    var eL = attractRock(seen, 'L', y), eR = attractRock(seen, 'R', y);
+    if (eL !== null && x - 9 < eL){ worst = Math.min(worst, x - 9 - eL); lanceNear = true; }
+    if (eR !== null && x + 9 > eR){ worst = Math.min(worst, eR - x - 9); lanceNear = true; }
+  }
+  return { c:worst, lance:lanceNear };
+}
+function attractPilot(dt){
+  var P = attract.pilot, C = ATTRACT_PILOT;
+  if (!P) return;
+  var v = attractView(dt);
+  P.q.push(v); if (P.q.length > C.react + 1) P.q.shift();
+  var seen = P.q[0], me = v.me, want = { mx:0, my:0, act:'none', nova:false };
+  if (v.playing && me && me.alive){
+    // its own speed, as felt: steady combat movement (fire and a full lean held two frames running)
+    if (P.prev && P.prev.run >= 2 && Math.abs(me.x - P.prev.x) + Math.abs(me.y - P.prev.y) > 0 && dt > 0){
+      var sp = Math.hypot(me.x - P.prev.x, me.y - P.prev.y) / dt;
+      if (sp > 40 && sp < 400) P.speed = P.speed ? P.speed*0.9 + sp*0.1 : sp;
+    }
+    var SP = P.speed || C.speed, tx = null, best = null, i;
+    // a target: the nearest hittable thing above, led by its drift
+    var cands = [];
+    seen.enemies.forEach(function(e){ if (e.z >= 0.9 && e.y < me.y - 16) cands.push({ x:e.x, y:e.y, vx:e.vx }); });
+    seen.parts.forEach(function(q){ if (!q.shielded && !q.mirror && q.y < me.y - 16) cands.push({ x:q.x, y:q.y, vx:0 }); });
+    for (i = 0; i < cands.length; i++){
+      var tt = (me.y - cands[i].y) / C.shotV, ax = clamp(cands[i].x + cands[i].vx*tt, 10, W - 10);
+      var cost = Math.abs(ax - me.x) + (me.y - cands[i].y)*0.15;
+      if (!best || cost < best.cost) best = { ax:ax, cost:cost };
+    }
+    if (best) tx = best.ax;
+    // a parry: a mirror part up and nothing else to hit: meet the soonest falling shot the arc can reach
+    var parry = null;
+    if (!cands.length && seen.parts.some(function(q){ return q.mirror; })){
+      seen.bullets.forEach(function(b){
+        if (b.kind === 'lance' || !b.seen || b.vy <= 10 || b.y >= me.y - 10) return;
+        var t = (me.y - 8 - b.y)/b.vy, x = clamp(b.x + b.vx*t, 10, W - 10);
+        if (Math.abs(x - me.x) <= SP*t + 6 && (!parry || t < parry.t)) parry = { x:x, t:t };
+      });
+      if (parry) tx = parry.x;
+      else seen.parts.some(function(q){ if (q.mirror){ tx = q.x; return true; } return false; });   // wait under the mirror
+    }
+    // the move: of seventeen stick leans, the safest over the look-ahead, then the one nearest the firing line
+    var homeY = H - C.homeY, pick = null;
+    ATTRACT_DIRS.forEach(function(d){
+      var cl = attractClearance(seen, me.x, me.y, d, SP, C.look, !!parry);
+      var px = clamp(me.x + d[0]*SP*0.3, 8, W - 8), py = clamp(me.y + d[1]*SP*0.3, H*0.4, H - 20);
+      var sc = Math.min(cl.c, C.margin)*10 - (tx === null ? 0 : Math.abs(px - tx)) - Math.abs(py - homeY)*0.4;
+      if (!pick || sc > pick.score) pick = { d:d, score:sc, cl:cl };
+    });
+    want = { mx:pick.d[0], my:pick.d[1], act:'fire', nova:false };
+    if (Math.hypot(want.mx, want.my) > 0 && Math.abs(tx === null ? 99 : tx - me.x) < 3 && pick.cl.c >= C.margin){ want.mx = 0; want.my = 0; }
+    // powers: the arc for a shot it is parrying, the shield for a shot it cannot slip, the NOVA when cornered
+    var arcNear = parry && seen.bullets.some(function(b){ return b.kind !== 'lance' && b.vy > 0 && Math.hypot(b.x - me.x, b.y - (me.y - 8)) < 30; });
+    if (arcNear && !me.overheated) want.act = 'deflect';
+    else if (pick.cl.c < C.shieldAt && !pick.cl.lance && !me.overheated && me.heat < C.heatCap) want.act = 'shield';
+    else if (me.novas > 0 && pick.cl.c < C.novaAt) want.nova = true;
+    var edge = me.x < 12 || me.x > W - 12 || me.y < H*0.4 + 4 || me.y > H - 24;
+    var full = Math.hypot(want.mx, want.my) > 0.99 && want.act === 'fire' && !want.nova && !edge;
+    P.prev = { x:me.x, y:me.y, run: full ? ((P.prev && P.prev.run) || 0) + 1 : 0 };
+  }
+  attract.axis = { x:want.mx, y:want.my, mag: Math.min(1, Math.hypot(want.mx, want.my)) };
+  setLocalBeam(want.act === 'beam');
+  setLocalShield(want.act === 'shield');
+  setLocalDeflect(want.act === 'deflect');
+  setLocalFire(want.act === 'fire');
+  if (want.nova) requestNova();
+}
+
+// any tap, key or stick leaves the loop and does nothing else: the gesture and its trailing events are swallowed
+function attractSwallow(e){ try { e.preventDefault(); } catch(err){} e.stopImmediatePropagation(); }
+function attractInput(e){
+  if (attract.on){ attractStop(); attract.until = performance.now() + 700; attractSwallow(e); return; }
+  if (performance.now() < attract.until){ attractSwallow(e); return; }
+  attract.idle = 0;
+}
+['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'keydown', 'keyup', 'wheel'].forEach(function(t){
+  window.addEventListener(t, attractInput, { capture:true, passive:false });
+});
+window.addEventListener('pointermove', function(){ if (!attract.on) attract.idle = 0; }, { capture:true, passive:true });
+
+// the scenes, drawn over the field in the game's own sprites and type
+function attractSpr(spr, x, y, k){
+  g.imageSmoothingEnabled = false;
+  g.drawImage(spr, Math.round(x - spr.width*k/2), Math.round(y - spr.height*k/2), spr.width*k, spr.height*k);
+}
+function attractStars(t){
+  for (var i = 0; i < 46; i++){
+    var sp = 10 + (i % 4)*9, x = (i*97 + 13) % W, y = (i*181 + 7 + t*sp) % H;
+    g.globalAlpha = 0.35 + (i % 4)*0.12;
+    g.fillStyle = i % 5 === 0 ? COL.cyan : (i % 3 === 0 ? '#8fb8ff' : COL.white);
+    g.fillRect(x, Math.floor(y), 1, i % 7 === 0 ? 2 : 1);
+  }
+  g.globalAlpha = 1;
+}
+function attractShip(){ return SHIPS[attract.loops % SHIPS.length]; }
+function attractRows(){
+  var rows = ATTRACT_HOUSE.slice();
+  if (hiScore > 0) rows.push(['YOU', hiScore]);
+  rows.sort(function(a, b){ return b[1] - a[1]; });
+  return rows.slice(0, 5);
+}
+function attractTitle(t, calm){
+  var a = calm ? 0.5 : t*1.3, swarm = [sprDrone, sprLancer, sprBomber], bob = calm ? 0 : Math.sin(t*2)*3;
+  for (var i = 0; i < 6; i++){ var an = a + i*1.047; attractSpr(swarm[i % 3], W/2 + Math.cos(an)*128, 72 + Math.sin(an)*50, 2); }
+  pixelText('NEON', W/2, 36 + bob, COL.cyan, 34, 'center');
+  pixelText('SWARM', W/2, 72 + bob, COL.pink, 34, 'center');
+  pixelText('GALAGA  x  GEOMETRY WARS', W/2, 136, '#7d92c8', 8, 'center');
+  var sh = attractShip(), hy = 245 + (calm ? 0 : Math.sin(t*2.4)*3), fl = calm ? 1 : 0.65 + 0.35*Math.sin(t*31);
+  g.globalAlpha = 0.6; g.fillStyle = sh.col; g.fillRect(W/2 - 4, Math.round(hy + 20), 8, Math.round(12*fl));
+  g.globalAlpha = 0.9; g.fillStyle = COL.white; g.fillRect(W/2 - 2, Math.round(hy + 20), 4, Math.round(6*fl));
+  g.globalAlpha = 1;
+  attractSpr(sh.spr, W/2, hy, 4);
+  pixelText(sh.name, W/2, 290, sh.col, 8, 'center');
+  pixelText('SNAIL ATTACK STUDIOS', W/2, H - 60, '#8f98bf', 8, 'center');
+}
+function attractScores(t, calm){
+  pixelText('HIGH SCORES', W/2, 24, COL.pink, 18, 'center');
+  attractSpr(attractShip().spr, W/2, 96 + (calm ? 0 : Math.sin(t*2.4)*3), 4);
+  var rows = attractRows(), ranks = ['1ST', '2ND', '3RD', '4TH', '5TH'], cols = [COL.cyan, COL.yellow, COL.green, COL.purple, COL.pink];
+  for (var i = 0; i < rows.length; i++){
+    if (!calm && t < 0.25 + i*0.22) continue;   // one row at a time
+    var y = 150 + i*30, c = cols[i % cols.length];
+    pixelText(ranks[i], 52, y, c, 10, 'left');
+    pixelText(String(rows[i][1]), W/2, y, COL.white, 10, 'center');
+    pixelText(rows[i][0], W - 52, y, c, 10, 'right');
+  }
+}
+function attractHowto(t, calm){
+  pixelText('HOW TO PLAY', W/2, 24, COL.yellow, 18, 'center');
+  var L = [['DODGE THE SWARM', 'LEFT SIDE STEERS · RIGHT SIDE FIRES', COL.pink],
+           ['DEFLECT THEIR SHOTS BACK', 'RIGHT SIDE, PUSH RIGHT = DEFLECT', COL.cyan],
+           ['A NOVA CLEARS THE SKY', 'RIGHT SIDE, DOUBLE TAP = NOVA', COL.yellow]];
+  for (var i = 0; i < 3; i++){
+    if (!calm && t < 0.3 + i*0.5) continue;
+    var y = 110 + i*90;
+    if (i === 0){ attractSpr(sprDrone, 30, y + 6, 2); attractSpr(sprLancer, 46, y + 20, 2); }
+    else if (i === 1){
+      attractSpr(attractShip().spr, 38, y + 22, 2);
+      g.strokeStyle = COL.cyan; g.lineWidth = 2;
+      g.beginPath(); g.arc(38, y + 22, 15, -2.6, -0.54); g.stroke();
+    } else {
+      var r = calm ? 13 : 8 + (t*14) % 10;
+      g.strokeStyle = COL.yellow; g.lineWidth = 2;
+      g.beginPath(); g.arc(38, y + 14, r, 0, 6.283); g.stroke();
+    }
+    g.lineWidth = 1;
+    pixelText(L[i][0], 176, y, L[i][2], 11, 'center');
+    pixelText(L[i][1], 176, y + 18, '#9fb0d0', 8, 'center');
+  }
+}
+function attractDraw(){
+  if (!attract.on) return;
+  g.setTransform(1,0,0,1,0,0);
+  var s = attract.scene, t = attract.t, calm = reducedMotion, blink = calm || Math.floor(t*2) % 2 === 0;
+  if (s === 'demo'){
+    pixelText('DEMO', W/2, H - 44, COL.pink, 12, 'center');
+  } else {
+    g.fillStyle = '#03030a'; g.fillRect(0, 0, W, H);
+    attractStars(calm ? 0 : t);
+    if (s === 'title') attractTitle(t, calm);
+    else if (s === 'scores') attractScores(t, calm);
+    else if (s === 'howto') attractHowto(t, calm);
+  }
+  if (blink) pixelText('TAP OR PRESS ANY KEY TO PLAY', W/2, H - 28, COL.white, 8, 'center');
+  if (!calm && t < 0.2){ g.fillStyle = 'rgba(3,3,10,' + (1 - t/0.2).toFixed(3) + ')'; g.fillRect(0, 0, W, H); }
+}
+
 // ---------- update dispatcher ----------
 function update(dt){
+  attractTick(dt);   // v85: the attract loop's clock, before the frame it shapes
   updateFXCommon(dt);
   if (mp.role === 'guest') guestUpdate(dt);
   else if (gameMode === 'tutorial'){
@@ -5917,6 +6289,7 @@ function update(dt){
     hostUpdate(tutPause.on ? 0 : dt); // frozen world still processes input edges
   }
   else hostUpdate(dt);
+  if (attract.on && attract.saved) hiScore = attract.saved.hi;   // v85: the demo writes no score
 }
 
 // ---------- draw ----------
@@ -6774,6 +7147,8 @@ function draw(){
       g.fillRect(W-th, 0, th, H);
     }
   }
+
+  attractDraw();   // v85: the attract loop's scenes, under the BUILD stamp
 
   if (flash > 0){
     g.setTransform(1,0,0,1,0,0);
