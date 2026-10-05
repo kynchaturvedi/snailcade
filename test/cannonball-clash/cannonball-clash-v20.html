@@ -1,0 +1,2426 @@
+<!DOCTYPE html>
+<!--
+CANNONBALL CLASH  |  SNAIL ATTACK STUDIOS  |  EMBEDDED CHANGELOG (append only)
+
+v1  FIRST LIGHT. SSE super scaler engine core: segment road, curve and hill
+    projection, exponential fog buckets, parallax mountain ranges, procedural
+    sprite scaler with crest clipping. Drive model: LO/HI gears (caps 7200 and
+    12000 units/s, displayed 176 and 293 kmh), approach accel (LO 5600, HI
+    3000), brake 16000, coast 2600, off road ceiling 3200 with pull 4.0,
+    centrifugal 0.33, steer rate 2.3. One looped stage cycling three palettes
+    (SUNRISE COAST, BIG BLUE BAY, VIOLET RIDGE). Checkpoint time economy:
+    start 65s, bonus 45s per lap. Roadside collisions keep 18 percent of
+    speed with 0.7s immunity. Title attract with auto drive, GO banner, TIME
+    UP flow. WebAudio behind first gesture: twin osc engine with lowpass,
+    skid noise, gear blip, crash noise, checkpoint jingle, and STATION 1
+    sequencer loop MAGENTA SUNSET at 128 bpm. On screen error reporter is the
+    first feature per studio law. Hook built by build-hook.js; gate chain:
+    node build-hook.js, node check on check.js and test-game.js, roadtest
+    (6 scenarios with control cases), harness (4 suites), codexcheck.
+
+v2  THE SPRITE PASS. Full art overhaul to studio pixel art fidelity: the car
+    rebuilt at 84x48 with 5 steer frames, 2 wheel spin phases, brake light
+    frames, a dark outline dilate pass, chrome bumper, glass glint, and the
+    driver and passenger duo with steer lean and hair flutter. Roadside set
+    redrawn: palm 48x80 with curved trunk, bush 36x22, billboard 64x52 with
+    a painted scene, faceted rock 30x18, plus a new non solid START arch
+    spanning the road every lap. Engine: sprites gain scale, solid and
+    nearCull fields; the collision loop skips non solid decor; the sprite
+    pass honors per sprite scale and near cull. Gate growth: roadtest gains
+    the non solid pass through scenario (S6) and renumbers collision to S7.
+    New tool: build-spritelab.js publishes the sprite lab from the ART block
+    verbatim, per studio art mockup law.
+
+v3  RIVAL SPLIT. The OutRunners signature lands: play is always split screen,
+    DIABLO's chase view on top, the player's below, title screen full canvas.
+    One shared stepCar physics routine drives two car structs; the renderer
+    becomes renderWorld with viewport parameters and per view scratch reuse;
+    each view projects the other car onto the road at its true position with
+    steer frame, spin phase and crest clipping. DIABLO drives an inside line
+    with 1800 unit lookahead, solid sprite avoidance, centrifugal feed
+    forward steering, a 94 percent shift point, and an arcade rubber band on
+    his speed cap (x0.9 leading, x1.12 chasing). Checkpoint bonus is rank
+    scaled: 45s leading, 40s trailing. Side contact shoves the cars apart
+    without stealing speed. Gate driven fix: the leading side rubber band
+    starved DIABLO's shift point (LO cap x0.9 sits below the raw 94 percent
+    threshold); the shift now keys to the effective cap. New gate rivaltest.js (5 scenarios) joins the
+    chain before harness; harness grows a race sanity suite. Named levers:
+    solo mode menu, car to car impact physics, passing whoosh sfx.
+
+v4  FULL WINDSHIELD. The forced split is retired after one build, the
+    Director's call with history on its side: the Genesis OutRunners forced
+    the same split on solo players and it became that port's most criticized
+    trait. Play returns to the full canvas; DIABLO's presence moves into a
+    rear view mirror widget (new 44x26 front view frame, MIRROR_RANGE 6000
+    units, scale and lateral offset from the true gap) and a gap timer
+    beside the rank badge (gap distance over MAX_HI, a constant divisor so
+    the readout is steady). renderWorld keeps its viewport parameters on
+    purpose: the mirror can become a true rendered viewport later, and
+    PeerJS one on one is the named next workstream, for which the rival
+    already runs entirely through the rinput channel. mirrorView() is pure
+    logic so gates can see it. Gates grow: rivaltest S3 gains gap sign
+    asserts, new S6 proves mirror logic (ahead empty, in range shown,
+    closer bigger, beyond range empty). Sprite lab republished as v2 with
+    the front view frame.
+
+v5  THE POLISH SET. DIABLO enters the mix: a proximity hum (sawtooth keyed
+    to his speed, gain by squared proximity inside HUM_RANGE 4000, panned by
+    lateral offset where StereoPanner exists, pitch bent by a doppler factor
+    from the closing rate) and a bandpass noise whoosh (1700 to 320 Hz) on
+    lead changes when the cars are laterally close. Lead changes are a real
+    tracked event now: passCount with PASS_HYST 120 unit hysteresis against
+    side by side flapping, and a TAKES THE LEAD banner both ways. Per stage
+    nature skins: palm, bush and rock painters are parameterized and baked
+    three ways (warm dawn, lush day, dusk violet), resolved by name at draw
+    time; skin dimensions are identical so hitboxes never move with the
+    palette. Gate growth: rivaltest S7 proves lead change detection and its
+    hysteresis. Sprite lab republished as v3 with per stage skin rows.
+
+v6  CANNONBALL LINK. PeerJS one on one duels. Model: symmetric state
+    exchange, no host authority. Each peer runs its own car with full local
+    physics and owns its own clock (the OutRunners contract); the remote
+    car is written from 15 Hz state packets (pos, x, speed, gear, steer,
+    brake, lap, crashes) and dead reckoned between them by its own speed.
+    The transport is injected (netStart(sendFn)), so the new loopback gate
+    nettest.js drives the exact shipping code with two vm instances joined
+    by an in memory channel: state tracking within tolerance, lap
+    propagation, AI takeover on link loss (DIABLO takes the remote wheel),
+    and garbage packet resilience. PeerJS itself is browser only glue: a
+    DUEL button on the title opens host or join by 4 letter code, and the
+    CDN script degrades to NET OFFLINE when absent. Side bump pushes only
+    the local car in net mode; the rubber band never applies to a human.
+    HUD shows RIVAL instead of DIABLO on a live link. Standing flag per
+    studio law: loopback proven only, real two device play unverified.
+
+v7  THE LOOKING GLASS. Two reality fixes from the Director's play. One: the
+    Director asked whether DIABLO exists. Instrumented answer: he existed
+    but was unwatchable. Against a mediocre 8500 u/s pace he finished three
+    minutes 400252 units ahead and was on screen 7.2 percent of frames,
+    because the leading side rubber band floor (0.9) left him a 10800 cap.
+    The band is now piecewise: gentle while chasing (RB_GAIN 0.000012 up to
+    x1.12), a steep leash while leading (RB_GAIN_LEAD 0.00003 down to
+    RB_MIN 0.6), so his lead reaches a pace scaled equilibrium and the race
+    stays on screen at any skill level. Permanent gate rivaltest S8 holds
+    the leash; S1 rewritten to pin the gap near zero so competence is
+    measured leash neutral. Two: the mirror is no longer a static cartoon.
+    It is a true rendered rear view: the same track segments projected
+    backward through wide mirror optics, curvature mirrored (MIR_CURVE is
+    the sign knob if the eye disagrees), roadside sprites in their stage
+    skins, and the rival drawn at his true depth on that road.
+
+v8  RUSH HOUR. Civilian traffic and Burnout rules. Ten cruisers loop the
+    track (two body styles, three tints, lane keeping with gentle wander,
+    deterministic fleet, zero traffic in net duels to keep peers in sync).
+    Contact rules: rear ending a slower car is YOUR crash and their shunt;
+    side contact imparts careening lateral momentum scaled by your speed,
+    lane seeking suppressed while recently touched; a car that leaves the
+    road or
+    meets a solid sprite crashes in full pixel ceremony (three frame
+    explosion, tumbling rotation frames, smoke ring). If it crashes within
+    0.8s of your touch it is a TAKEDOWN: +2s clock, +500 score, and a 1.5s
+    overboost surge (cap x1.22) with exhaust flames. DIABLO's brain scans
+    traffic into his avoidance line; he does not yet trade paint with them
+    (known limitation, recorded). The renderer's single other car pass
+    became a sorted world entity pass (rival, fleet, explosions); the
+    mirror shows following traffic. New gate trafftest.js (6 scenarios)
+    joins the chain; the race sanity harness bar held unchanged even with
+    traffic in play. Gate driven fixes: a position based shove capped out
+    at the 0.34 contact window edge (0.98) and could never reach the 1.15
+    crash line far from scenery, hence the imparted momentum model; and
+    respawn left a negative crash timer residual, now zeroed.
+
+v9  THE GAUNTLET. The route and the road learn new tricks. New layout: the
+    sacred clean straight is preserved for the gates, then four esses, a
+    5.6 curve hairpin pair, a triple chicane, and two fords, 2802 segments
+    (560400 units, up 26 percent). Road features: boost pads (2s surge on
+    the shared SURGE_MUL 1.22 cap, same channel takedowns feed), jump pads
+    (vy 900, gravity 2400, 0.75s airtime; airborne cars skip ALL collision,
+    offroad drag, and traffic contact, so you jump water, scenery and cars),
+    and water fords that drag grounded cars toward 4200 with spray. The
+    first ford has a jump pad 8 segments ahead (speed is the toll); the
+    second is bare and always costs. Flight is generic in stepCar, so
+    DIABLO jumps and boosts too, and surge moved from a player global into
+    the car struct. Net packets carry altitude (c[8]). Rendering: blinking
+    chevron pad strips, animated water bands, shadow separation and lift
+    for any airborne car, splash spray. Gate growth: roadtest S8 boost pad
+    with control, S9 jump clears the ford with drag control, S10 airborne
+    skips a planted collision with grounded control. Registered workstream
+    per the Director: LIFTOFF, brief plane flight; the alt/vy system built
+    this build is deliberately its foundation.
+
+v10 THE TAKEDOWN. Takedown feel pass on the Director's verdict (not fun
+    enough, too hard). Three changes. One, the contact model splits in two:
+    steering INTO a car or riding hard against it is a committed slam that
+    careens it off the road, while a looser brush is now a minor conflict
+    that only jostles and wobbles and can never careen a car off by
+    construction (gentle lateral impulse is capped below the width needed to
+    leave the road from any lane). So casual traffic bumping finally exists
+    as its own thing, distinct from a kill. Two, takedowns are more
+    forgiving: the credit window widened from 0.8s to 1.3s and the slam
+    impulse is much stronger, so a committed hit reliably completes. Three,
+    the impact: a landed takedown triggers real time slow motion (0.5s at
+    0.35x physics, clock stays real), a white impact flash, heavy
+    magnitude scaled screen shake now on both axes, radial speed lines, a
+    bigger flashing TAKEDOWN banner, and a triple vibration pulse. Rear
+    ending stays your own crash but is a touch less punishing (closing
+    threshold 300 to 400, tighter alignment). Gate growth: trafftest T7
+    proves a gentle rub is a minor conflict, not a takedown or a player
+    crash; T8 proves a takedown actually arms the slow motion.
+
+v11 THE REAR VIEW. Mirror fix on the Director's verdict (garbled, not
+    really road). Root cause: the v7 projector divided road width and center
+    offset by a stray 160 the forward renderer never used, and accumulated
+    curve in raw units while offsetting by world units, so the road became a
+    thin wandering sliver. The projector is rewritten to parallel the
+    forward renderer exactly: world x curve accumulation, road half width
+    s*ROAD_HW*scale, one shared boundary table (world centerline, screen
+    center, screen y, half width) that scenery and cars also project onto so
+    they sit on the actual road. The glass is larger (130x44, was 116x32)
+    and the view reaches further back (MIRROR_RANGE 6000 to 10000). MIR_CURVE
+    stays the bend sign knob. No gameplay or gate logic changed; mirrorView
+    (rivaltest S6) adapts to the new range through the shared constant.
+
+v12 CONTACT AND CROWD. A batch of Director asks. Takedowns now REQUIRE
+    deliberately angling into a car at speed (steer committed toward it),
+    so they take intent to pull off. Every other side touch is a minor
+    conflict: the sides shove each other, both cars feel it, and the push
+    is capped on the road so a rub can never careen a car off (that is the
+    takedown's job alone). Traffic cars also push each other side to side
+    now, gently and on-road, so the road jostles with life. Traffic is
+    faster (cruise 5000 to 7080, was 3600 to 5000) and denser (14 cars, was
+    10), so you no longer blow past instantly and they come by more often.
+    Route gained turns throughout (a five ess chain, extra sweepers and
+    link corners) while the clean straight stays sacred. Pads and water no
+    longer flash past unread: the pads are wider (6 segments, was 3), draw
+    from much further away, and every pad and ford now has a scrolling
+    colored approach cue painted on the road for 14 segments ahead so you
+    see it coming. Gate growth: trafftest T3 updated to steer into the
+    slam; T9 proves a non-angled side touch pushes both cars without a
+    takedown.
+
+v13 THE RAISED GLASS. Mirror framing fix on the Director's verdict (too
+    close to road level, nothing of value visible). The v11 rewrite fixed
+    the road being garbled but framed it edge-on: the vertical mapping
+    normalized the whole depth range across the glass, bunching almost all
+    the road into a thin band at the horizon and leaving a flat near wedge.
+    The mapping is now a real look-down projection (screen y = horizon +
+    s * MIR_VSPREAD), so the near road pushes off the bottom of the glass
+    and the road surface spreads down it, as if looking down at the road
+    behind. Backward field of view narrowed (MIR_FOV 1.7, was 2.2) for less
+    foreshortening, the glass is taller (MIR_H 54, was 44), and cars back
+    there draw larger (divisor 1.35, was 1.8) so opponents and traffic are
+    readable. All three are single knobs. No gameplay or gate logic changed.
+
+v14 THE DRIFT. Control overhaul on the Director's asks. Gears now shift
+    LO to HI and back automatically by speed (SHIFT_UP 6480, SHIFT_DOWN
+    3600, hysteresis between), so the gear button is gone. Brake moved to
+    the RIGHT pad (easier thumb). Holding brake at speed (over DRIFT_MIN
+    6000) now drifts: a gentler decel that carries speed, plus extra
+    steering authority to swing the car, shown by a full lean pose, tire
+    smoke, and a DRIFT indicator. Takedowns now REQUIRE a drift into the
+    target while angling in (drift + steer toward a car you are beside or
+    ahead of); a straight ram without a drift is still your own crash, and a
+    plain side touch is still a mutual shove. And the takedown impact (slow
+    motion, flash, shake, haptics) now fires AT the moment of contact while
+    the victim is on screen ahead, not later when it leaves the road behind,
+    which is why the animation was playing behind and after the fact. The
+    off-road credit (points, clock, surge, banner) still lands when the car
+    actually wrecks. Gate growth: roadtest S1 rewritten for auto shifting;
+    trafftest T3 and T8 now drift into the kill and assert it happens ahead
+    and arms slow motion at contact; T10 proves angling in WITHOUT a drift
+    is not a takedown.
+
+v15 THE LONG VIEW. Sight-line and turns pass. The forward road now reaches
+    much further to the horizon: draw depth up (DRAW_DIST 200, was 140) and
+    fog gentled (FOG_DENS 2.4, was 4.2) so distant road stays visible instead
+    of dissolving early, which also lets corners be read from far further
+    down the road. The route gained turns (a sixth ess, two more link
+    corners) with length held net-neutral by trimming straights, so a lap
+    still fits under the 65s clock (trackLen 583200, min lap 48.6s). The rear
+    mirror was raised: MIR_VSPREAD 8000 (was 11500) pulls the road up the
+    glass so it shows less foreground and sits higher, per the Director's
+    note that it sat too low showing too much road. All render tweaks plus
+    route; gates unaffected.
+
+v16 THE RIVAL. Combat and rival pass answering four Director asks. The
+    takedown wreck is now seen: instead of braking to a stop and dropping
+    behind the faster player, a wrecked car careens forward (speed eased
+    toward 2600, not 0), tumbles fast, slides out onto the shoulder and
+    sheds debris, so it busts up on screen ahead. Root cause of the old
+    problem: the wreck decelerated hard at 9000/s while the player kept
+    speed, so the ceremony played out behind. The rival DIABLO can now be
+    taken down: a drift into him spins him out to the side (spinT 1.5s,
+    speed bled to a crawl) and then he recovers and races on, so it costs
+    him time and position rather than removing him. It is single-player
+    only (netActive guard): in a duel the peer car is authoritative over
+    its own state, so a networked rival takedown is deliberately out of
+    scope. Rival takedown pays score and overboost but no clock time (the
+    reward is slowing him). And DIABLO now looks nothing like the player:
+    a dark, near-black car with ice-cyan accents, a smoked canopy, a big
+    rear wing and a lone helmeted driver, versus the red convertible duo.
+    Gate growth: rivaltest S9 drifts into the rival and proves he spins
+    out, bleeds speed and then recovers; trafftest T11 proves the wreck
+    careens forward and stays in view rather than braking to a stop.
+
+v17 FEEL FIXES. Four Director regressions, taken at his word over the
+    gates. (1) The wreck still went off screen: careening at only 2600 while
+    the player ran at 8000 to 12000, it fell behind within a few frames. Now
+    a wrecked car LURCHES forward to just faster than the player (P.speed +
+    1400) and eases down slowly, so it careens AHEAD and stays on screen,
+    tumbling and shedding debris; takedown slow motion also lengthened
+    (SLOWMO_T 0.8, was 0.5) to watch it. Gate: trafftest T11 now asserts the
+    wreck is ahead of the player for the whole window. (2) The rival felt
+    like clipping through: contact only pushed weakly and a takedown demanded
+    a full drift while strictly ahead, which is hard against a same-pace
+    rival. Now a rear ram shunts DIABLO forward and costs the player speed
+    (solid, no clip), and his takedown fires on a committed swerve (a drift
+    OR a hard steer) while alongside or just behind. (3) The turns were not
+    steep: curvatures were roughly doubled with a bold S right off the line,
+    segment counts unchanged so the lap and clock are untouched, and CENTRIF
+    softened (0.23, was 0.33) so the steeper bends stay drivable at speed
+    (the first pass over-shoved and dropped the field below lap pace, caught
+    by rivaltest and harness). (4) The mirror still showed mostly near road:
+    the backward FOV widened (MIR_FOV 1.1, was 1.7), the near clip pushed
+    back (MIR_NEAR 240, skipping the tarmac on the bumper), and the horizon
+    raised for more sky. A standalone mirror lab ships alongside for dialing
+    it on the phone.
+
+v18 LIFTOFF. The big one: a flight set piece. Crossing a marked stretch
+    on the ground at speed (liftZ) transforms the car into an After Burner
+    style craft: it rises, wings deploy, guns come out of the hood, and the
+    whole view becomes open sea and sky. The joystick now flies the craft up,
+    down, left and right (input.steerY was added, read from vertical drag);
+    the brake button is the vulcan. Enemy craft scale up out of the horizon
+    and either get shot down (line the craft under them and fire) or, if you
+    do not dodge, ram you: a hit flashes damage, drops the hull bar and
+    stalls control for a moment before you fly on. A few enemies loose a shot
+    at you too. The flight lasts a fixed duration (FLY_DUR) and then the craft
+    descends, retracts and lands, resuming the road race centred on the
+    tarmac. Design choices worth recording: the sub mode is single player
+    only (a net duel never enters it, since the peer car is authoritative
+    over its own state), and while flying, DIABLO advances by the same
+    distance as the player so the set piece never silently decides the race
+    (the gap is preserved and flight runs at top pace). Gate growth: a whole
+    new functional gate, flighttest, drives the trigger, the rise to fly
+    transition, a vulcan kill, a control case (an unaligned enemy is NOT a
+    kill), a collision that damages and stalls, the landing back to car, and
+    the net guard. The chaos harness gained frames to cover the slightly
+    longer lap. This is a first flyable slice; enemy variety, formations and
+    a proper boss pass are open follow ups.
+
+v19 SEAMLESS LIFTOFF. The Director flew v18 and it felt like being
+    teleported into another game: the whole scene cut to a separate sky and
+    sea renderer. Fixed by making flight an OVERLAY on the real game instead
+    of a replacement. Now the same super scaler track keeps rendering beneath
+    (renderWorld, with the road car hidden), and the actual car sprite you
+    drive lifts up off the road, grows wings and sprouts guns, then flies,
+    with a shrinking shadow on the surface selling the takeoff and a smooth
+    rise and descent. The takeoff stretch became a real sea causeway (a new
+    seg.sea flag: it renders as water but does NOT drag cars, so the AI is
+    never slowed on it), so you lift off over water exactly as described.
+    Enemy craft are now the actual rival car flying at you (SPR.rivalFront
+    with small wings), not an abstract shape. Nothing about the flight rules
+    changed (2D control, vulcan, dodge or shoot, damage and stall, timed
+    landing, net guard, gap preserved), so flighttest passes unchanged; a new
+    render smoke harness was used to prove the whole flight draws without
+    error since rendering is the Director's gate. The causeway shifted the
+    lap length slightly; all gates green.
+
+v20 (2026-10-05): THE FRAME LAW (doc 11 v1.04 section 5). The sim steps once
+    per drawn frame, and three things counted drawn frames: a flight foe's
+    5 percent fire roll (87 percent fired at 60 Hz, 98 at 120, 99 at 144),
+    the wreck smoke roll and the duel's every 4th frame send. The two rolls
+    now scale by frameDt, the frame's wall clock dt (slow motion never
+    slows it, as the old per-frame rolls ran in slow motion too), and the
+    duel sends 15 a second of wall clock (NET_HZ, netPace). At 60 Hz
+    nothing moved: the seeded harness report and the bots' fast suite match
+    v19. frame() draws at most 60 a second (the doc's deadline snippet,
+    capReady) and counts what it draws; ?debug on the address shows the FPS
+    readout (createFpsMeter, ported). Gate: frametest R1 to R4, red first on
+    the pre-fix build (24 FAIL lines); redproof v1.02, 21 of 21. The
+    Director's mirror numbers, LIFTOFF calls and clock ruling go to BUILD 21.
+    Before it, the clear prep cut while BUILD 20 waited. One error wrapper
+    (doc 08 v1.03 section 9): frame() and the test hook both step the sim
+    through stepSim(), so a fault inside update() lands in lastError in the
+    browser and in every gate alike (redproof v1.01: 16 of 16 caught). The
+    dead gear tap is gone (nothing read it since the v14 automatic box;
+    DIABLO's v3 94 percent rule and the Z key went with it). The mirror's
+    two hardcoded constants are tunables, MIR_HOR 14 and MIR_CAR 1.35,
+    beside MIR_FOV, MIR_VSPREAD, MIR_NEAR and MIR_H, so the six mirror lab
+    numbers land as six var lines. The lap's hills net zero again (the two
+    long descents give back 25 each): since v15 a one-segment 50 unit rise
+    at the start line jolted the camera 41 units in one frame at top speed;
+    now 0.3. Physics unchanged: the seeded harness report is byte-identical
+    to v19.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>CANNONBALL CLASH v20</title>
+<style>
+  html,body{margin:0;padding:0;background:#05060f;height:100%;overflow:hidden}
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;background:#000}
+  .sysbtn{position:fixed;z-index:9;font:bold 11px monospace;color:#9fd;background:rgba(10,20,40,.7);
+    border:1px solid #4af;border-radius:4px;padding:6px 9px}
+  #fsBtn{top:calc(6px + env(safe-area-inset-top));right:calc(6px + env(safe-area-inset-right))}
+  #muteBtn{top:calc(6px + env(safe-area-inset-top));left:calc(6px + env(safe-area-inset-left))}
+  #duelBtn{top:calc(44px + env(safe-area-inset-top));left:calc(6px + env(safe-area-inset-left))}
+  #duelPanel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#0d1226;
+   border:2px solid #4aa0ff;padding:14px;z-index:30;display:none;font-family:monospace;
+   color:#d8e2f4;text-align:center;min-width:212px}
+  #duelPanel button{display:block;width:100%;margin:6px 0;padding:8px;background:#1a2342;
+   color:#ffd23d;border:1px solid #4aa0ff;font-family:monospace;font-size:14px}
+  #duelPanel input{width:86px;padding:7px;background:#080c1a;color:#fff;border:1px solid #4aa0ff;
+   font-family:monospace;font-size:15px;text-transform:uppercase;text-align:center}
+  #duelJoin{display:inline-block !important;width:auto !important;margin-left:6px !important}
+  #duelMsg{margin:4px 0 8px;font-size:12px;color:#9fd8ff;min-height:15px}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv" width="320" height="440"></canvas></div>
+<button id="muteBtn" class="sysbtn">SND ON</button>
+<button id="fsBtn" class="sysbtn">FULLSCREEN</button>
+<button id="duelBtn" class="sysbtn">DUEL</button>
+<div id="duelPanel">
+ <div id="duelMsg">RACE A FRIEND, ONE ON ONE</div>
+ <button id="duelHost">HOST: MAKE A CODE</button>
+ <div><input id="duelCode" maxlength="4" placeholder="CODE"><button id="duelJoin">JOIN</button></div>
+ <button id="duelClose">CLOSE</button>
+</div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(function(){
+'use strict';
+var BUILD = 20;
+
+/* ================= TUNABLES (single knob doctrine: name plus intent) ================= */
+var W = 320, H = 440;            /* logical canvas, portrait, integer scaled            */
+var CY = 176;                    /* projection center Y: where the horizon sits         */
+var SEG_LEN = 200;               /* world units per road segment                        */
+var ROAD_HW = 1000;              /* road half width; road edges sit at playerX +-1      */
+var CAM_H = 520;                 /* camera height: lower feels closer to the tarmac     */
+var FOV = 100;                   /* degrees; wider exaggerates speed at screen edges    */
+var CAM_DEPTH = 1/Math.tan((FOV/2)*Math.PI/180);
+var DRAW_DIST = 200;             /* v15: was 140. segments drawn: reach further to horizon */
+var FOG_DENS = 2.4;              /* v15: was 4.2. gentler fog so the road stays visible far */
+var MAX_HI = 12000;              /* units/sec top speed in HI gear (shows 293 kmh)      */
+var MAX_LO = 7200;               /* LO gear cap: the launch gear                        */
+var ACCEL_LO = 5600;             /* approach rate accel in LO: hard launch              */
+var ACCEL_HI = 3000;             /* approach rate accel in HI: long pull to the top     */
+var BRAKE_DEC = 16000;           /* brake deceleration, units/s^2                       */
+var COAST_DEC = 2600;            /* engine braking when off throttle                    */
+var OFFROAD_MAX = 3200;          /* speed ceiling while off road: grass is slow, law    */
+var OFFROAD_PULL = 4.0;          /* how hard off road drags speed to its ceiling        */
+var STEER_RATE = 2.3;            /* playerX units/sec at full lock and full speed       */
+var SHIFT_UP = 6480;             /* auto upshift LO->HI above this speed (0.9 x MAX_LO)  */
+var SHIFT_DOWN = 3600;           /* auto downshift HI->LO below this (0.5 x MAX_LO)      */
+var DRIFT_MIN = 6000;            /* min speed for braking to become a drift             */
+var DRIFT_DEC = 5200;            /* gentle decel while drifting (vs BRAKE_DEC hard stop) */
+var DRIFT_STEER = 1.3;           /* extra steering authority while drifting (swing in)   */
+var DRIFT_RAMP = 7;              /* how fast the drift engages and releases             */
+var CENTRIF = 0.23;              /* v17: softened (was 0.33) so the steeper bends stay drivable at speed */
+var CRASH_KEEP = 0.18;           /* fraction of speed kept after a roadside crash       */
+var CRASH_COOLDOWN = 0.7;        /* seconds of collision immunity after a hit           */
+var PLAYER_Z = CAM_H*CAM_DEPTH;  /* car plane distance ahead of the camera              */
+var TIME_START = 65;             /* seconds on the clock at the green light             */
+var TIME_BONUS = 45;             /* checkpoint seconds when leading the rival           */
+var TIME_BONUS_TRAIL = 40;       /* checkpoint seconds when arriving behind DIABLO      */
+var RB_GAIN = 0.000012;          /* rubber band slope while DIABLO chases the player    */
+var RB_GAIN_LEAD = 0.00003;      /* leash slope while DIABLO leads: much steeper (v7)    */
+var RB_MIN = 0.6;                /* leading cap floor, was 0.9: at 0.9 he vanished over  */
+                                 /* the horizon (7.2% visibility vs a mediocre pace)     */
+var RB_MAX = 1.12;               /* chasing cap ceiling                                  */
+var KMH = 293/MAX_HI;            /* display conversion, units/sec to kmh                */
+var M_PER_UNIT = 0.007;          /* display conversion, world units to meters           */
+var SPR_UNIT = 6.5;              /* world units per sprite source pixel                 */
+var CAR_HW = 0.20;               /* player collision half width in playerX units        */
+var MIRROR_RANGE = 10000;        /* v11: was 6000. how far back the mirror sees          */
+var PASS_HYST = 120;             /* units past even before a lead change registers      */
+var HUM_RANGE = 4000;            /* gap units within which DIABLO's engine is audible   */
+var TRAFFIC_N = 14;              /* v12: was 10. denser road, they come by more often     */
+var TD_WINDOW = 1.3;             /* v10: was 0.8. wider credit window: a slam that takes  */
+                                 /* a beat to careen off still counts as yours           */
+var TD_BONUS = 2;                /* takedown reward: seconds on the clock                */
+var TD_SURGE = 1.5;              /* takedown reward: seconds of overboost (cap x1.22)    */
+var SURGE_MUL = 1.22;            /* speed cap multiplier while any surge is live         */
+var BOOST_T = 2.0;               /* seconds of surge granted by a boost pad              */
+var JUMP_VY = 900;               /* vertical launch speed off a jump pad                 */
+var GRAV = 2400;                 /* gravity on airborne cars (0.75s airtime at JUMP_VY)  */
+var WATER_MAX = 4200;            /* speed a ford drags you toward if you splash through  */
+/* v18 LIFTOFF: over a long water stretch the car transforms into an After
+   Burner style flight craft. These are its knobs. Pure sub-mode; the road
+   race is suspended while active and resumes on landing. */
+var FLY_DUR = 5.0;               /* seconds of actual flight (the FLY phase) before descent */
+var FLY_HP = 100;                /* craft hull                                          */
+var FLY_ACCEL = 1500;            /* craft screen acceleration from the joystick         */
+var FLY_DAMP = 0.86;             /* craft velocity damping per frame                    */
+var FLY_FIRE_CD = 0.08;          /* vulcan cadence (s)                                  */
+var FLY_BULLET_V = 560;          /* player bullet up-screen speed                       */
+var FLY_SPAWN = 1.0;             /* seconds between enemy craft spawns                  */
+var FLY_FOE_V = 0.34;            /* enemy approach rate (z units per second, 1 far->0)  */
+var FLY_HORIZON = 0.42;          /* sea horizon as a fraction of canvas height          */
+var FLY_STALL = 1.1;             /* control-loss time after a hit (s)                   */
+var FLY_HIT_DMG = 24;            /* hull damage per collision or enemy hit              */
+var FLY_RISE_T = 1.0;            /* rise/transform time (s)                             */
+var FLY_LAND_T = 0.9;            /* descent/retract time (s)                            */
+var SLOWMO_T = 0.8;              /* v17: real seconds of takedown slow motion (longer to watch the wreck) */
+var SLOWMO_SCALE = 0.35;         /* physics time scale while slow motion is live         */
+var CONSTS = {SEG_LEN:SEG_LEN, ROAD_HW:ROAD_HW, MAX_HI:MAX_HI, MAX_LO:MAX_LO,
+  TIME_START:TIME_START, TIME_BONUS:TIME_BONUS, TIME_BONUS_TRAIL:TIME_BONUS_TRAIL,
+  OFFROAD_MAX:OFFROAD_MAX, PLAYER_Z:PLAYER_Z, CAM_DEPTH:CAM_DEPTH,
+  RB_GAIN:RB_GAIN, RB_GAIN_LEAD:RB_GAIN_LEAD, RB_MIN:RB_MIN, RB_MAX:RB_MAX, MIRROR_RANGE:MIRROR_RANGE,
+  PASS_HYST:PASS_HYST, HUM_RANGE:HUM_RANGE, TRAFFIC_N:TRAFFIC_N,
+  TD_WINDOW:TD_WINDOW, TD_BONUS:TD_BONUS, TD_SURGE:TD_SURGE,
+  SURGE_MUL:SURGE_MUL, BOOST_T:BOOST_T, JUMP_VY:JUMP_VY, GRAV:GRAV, WATER_MAX:WATER_MAX,
+  SLOWMO_T:SLOWMO_T, SLOWMO_SCALE:SLOWMO_SCALE};
+
+/* ================= SSE: SUPER SCALER ENGINE v1 [SSE-START] =================
+   Portable module: everything between the SSE markers is engine, not game
+   content. Future titles lift this block verbatim.                          */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function clamp(v,a,b){return v<a?a:(v>b?b:v);}
+function lerp(a,b,t){return a+(b-a)*t;}
+function easeIn(a,b,t){return a+(b-a)*t*t;}
+function easeInOut(a,b,t){return a+(b-a)*((-Math.cos(t*Math.PI)/2)+0.5);}
+function hexRGB(h){return [parseInt(h.substr(1,2),16),parseInt(h.substr(3,2),16),parseInt(h.substr(5,2),16)];}
+function mix(h1,h2,t){var a=hexRGB(h1),b=hexRGB(h2);return 'rgb('+Math.round(lerp(a[0],b[0],t))+','+Math.round(lerp(a[1],b[1],t))+','+Math.round(lerp(a[2],b[2],t))+')';}
+
+var segments=[], trackLen=0;
+function segY(i){var n=segments.length;return segments[((i%n)+n)%n].y;}
+function lastY(){return segments.length?segments[segments.length-1].y:0;}
+function addSeg(curve,y){segments.push({i:segments.length,curve:curve,y:y,sprites:[],clip:0,
+ x1:0,y1:0,w1:0,s1:0,z1:0,x2:0,y2:0,w2:0});}
+function addStraight(n){var y=lastY(),k;for(k=0;k<n;k++)addSeg(0,y);}
+function addRoad(enter,hold,leave,curve,dy){
+ var startY=lastY(), endY=startY+dy, total=enter+hold+leave, n;
+ for(n=0;n<enter;n++) addSeg(easeIn(0,curve,n/enter), easeInOut(startY,endY,n/total));
+ for(n=0;n<hold;n++)  addSeg(curve, easeInOut(startY,endY,(enter+n)/total));
+ for(n=0;n<leave;n++) addSeg(easeInOut(curve,0,n/leave), easeInOut(startY,endY,(enter+hold+n)/total));
+}
+function addSprite(i,name,off,opts){
+ opts=opts||{};
+ var img=SPR[name],sc=opts.scale||1;
+ segments[i].sprites.push({img:img,off:off,name:name,scale:sc,
+  solid:(opts.solid===undefined)?true:opts.solid,
+  nearCull:opts.nearCull||0,
+  hw:(img.width*SPR_UNIT*sc)/(2*ROAD_HW)});
+}
+var FOGPAL=[];
+function buildFog(p){
+ FOGPAL.length=0;
+ var b,t,f;
+ for(b=0;b<32;b++){
+  t=b/31; f=1-Math.exp(-t*t*FOG_DENS);
+  FOGPAL.push({
+   gl:mix(p.grassL,p.fog,f), gd:mix(p.grassD,p.fog,f),
+   rl:mix(p.roadL,p.fog,f),  rd:mix(p.roadD,p.fog,f),
+   ml:mix(p.rumL,p.fog,f),   md:mix(p.rumD,p.fog,f),
+   ln:mix(p.lane,p.fog,f)
+  });
+ }
+}
+function trap(g,x1,y1,w1,x2,y2,w2,col){
+ g.fillStyle=col; g.beginPath();
+ g.moveTo(x1-w1,y1); g.lineTo(x2-w2,y2); g.lineTo(x2+w2,y2); g.lineTo(x1+w1,y1);
+ g.closePath(); g.fill();
+}
+function baseSegOf(p){var n=segments.length;return segments[((Math.floor(p/SEG_LEN))%n+n)%n];}
+/* ================= [SSE-END] ================= */
+
+/* ================= SPRITES (procedural pixel art, baked at boot) ================= */
+/* [ART-START] Self-contained art module: the sprite lab extracts this block
+   verbatim, so everything the painters need lives between the ART markers.  */
+var SPR={};
+function mkCanvas(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function px(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(x,y,w,h);}
+function dith(g,x,y,w,h,a,b){
+ var i,j;
+ for(j=0;j<h;j++)for(i=0;i<w;i++){g.fillStyle=((i+j)%2)?a:b;g.fillRect(x+i,y+j,1,1);}
+}
+function disc(g,cx,cy,r,c){
+ g.fillStyle=c;var x,y;
+ for(y=-r;y<=r;y++)for(x=-r;x<=r;x++)if(x*x+y*y<=r*r+0.3)g.fillRect(cx+x,cy+y,1,1);
+}
+function outline(src,col){
+ var o=mkCanvas(src.width,src.height),g=o.getContext('2d');
+ g.drawImage(src,1,0);g.drawImage(src,-1,0);g.drawImage(src,0,1);g.drawImage(src,0,-1);
+ g.globalCompositeOperation='source-in';
+ g.fillStyle=col;g.fillRect(0,0,o.width,o.height);
+ var f=mkCanvas(src.width,src.height),fg=f.getContext('2d');
+ fg.drawImage(o,0,0);fg.drawImage(src,0,0);
+ return f;
+}
+
+/* THE CAR: rear view convertible, 84x48 source, drawn per frame.
+   st: steer -2..2 (hard left..hard right), ph: wheel/flutter phase 0..1,
+   br: brake lights 0..1. Upper body shears with st; occupants lean with it. */
+function paintCarFrame(st,ph,br){
+ var c=mkCanvas(84,48),fg=c.getContext('2d');
+ var bc=mkCanvas(84,48),g=bc.getContext('2d');
+ var d=st*3, dm=Math.round(st*1.5), lean=Math.round(st*1.5);
+ /* rear tires with spinning rims */
+ px(g,9,27,14,15,'#15161c');px(g,61,27,14,15,'#15161c');
+ px(g,10,28,2,13,'#232530');px(g,72,28,2,13,'#232530');
+ var wc=[[16,35],[68,35]],wi;
+ for(wi=0;wi<2;wi++){
+  disc(g,wc[wi][0],wc[wi][1],4,'#c9ced8');
+  if(ph===0){px(g,wc[wi][0]-4,wc[wi][1],9,1,'#3a3f4a');px(g,wc[wi][0],wc[wi][1]-4,1,9,'#3a3f4a');}
+  else{var q;for(q=-3;q<=3;q++){px(g,wc[wi][0]+q,wc[wi][1]+q,1,1,'#3a3f4a');px(g,wc[wi][0]+q,wc[wi][1]-q,1,1,'#3a3f4a');}}
+  disc(g,wc[wi][0],wc[wi][1],1,'#565c68');
+ }
+ /* hard-steer side sliver: opposite side swings into view */
+ if(st<=-1){px(g,74,22,2*(-st),11,'#c8271e');px(g,74+2*(-st)-1,23,1,9,'#8e1612');}
+ if(st>=1){px(g,10-2*st,22,2*st,11,'#c8271e');px(g,10-2*st,23,1,9,'#8e1612');}
+ /* tail panel */
+ px(g,12,26,60,7,'#8e1612');
+ /* fender bulges */
+ px(g,7,24,5,8,'#c8271e');px(g,72,24,5,8,'#c8271e');
+ px(g,7,24,5,1,'#e04a34');px(g,72,24,5,1,'#e04a34');
+ /* trunk deck bands, sheared by steer */
+ px(g,14+d,18,56,2,'#ff7a5c');
+ px(g,12+Math.round(d*0.8),20,60,2,'#f04836');
+ dith(g,11+dm,22,62,1,'#f04836','#d63024');
+ px(g,11+dm,23,62,2,'#d63024');
+ px(g,10+Math.round(d*0.3),25,64,2,'#b01e18');
+ /* cabin cowl and interior */
+ px(g,20+d,16,44,3,'#c8271e');
+ px(g,21+d,18,42,1,'#5e0e0c');
+ px(g,22+d,17,40,5,'#4a2412');
+ /* windshield strip beyond the cabin, with glint */
+ px(g,24+d,12,36,4,'#5aa8e0');
+ px(g,24+d,12,36,1,'#bfe8ff');
+ px(g,23+d,12,1,4,'#20242c');px(g,60+d,12,1,4,'#20242c');
+ px(g,46+d,12,3,1,'#d8f4ff');px(g,44+d,13,3,1,'#d8f4ff');px(g,42+d,14,3,1,'#d8f4ff');
+ /* seats */
+ px(g,26+d,15,10,6,'#8a4a24');px(g,26+d,15,10,1,'#b06a34');
+ px(g,47+d,15,10,6,'#8a4a24');px(g,47+d,15,10,1,'#b06a34');
+ /* driver: white jacket, blue cap */
+ var dx=26+d+lean;
+ px(g,dx,16,11,6,'#f2f3f6');px(g,dx+8,16,3,6,'#c4c8d2');px(g,dx,16,11,1,'#8a8f9c');
+ px(g,dx+2,8,7,7,'#f2b088');px(g,dx+7,8,2,7,'#cf865e');px(g,dx+3,14,5,1,'#cf865e');
+ px(g,dx+1,6,9,3,'#2b6df0');px(g,dx+1,6,9,1,'#5a94ff');
+ px(g,dx,8,1,1,'#1c4ab0');px(g,dx+10,8,1,1,'#1c4ab0');
+ /* passenger: gold dress, pink hair with flutter */
+ var pxc=47+d+Math.round(lean*0.6);
+ px(g,pxc,16,11,6,'#ffd23d');px(g,pxc+8,16,3,6,'#d0a428');
+ px(g,pxc+2,9,7,6,'#f2b088');px(g,pxc+7,9,2,6,'#cf865e');
+ px(g,pxc+1,6,9,4,'#f26bb8');px(g,pxc+1,6,9,1,'#ff9ad4');
+ if(ph===0){px(g,pxc-1,8,1,2,'#f26bb8');px(g,pxc-2,9,1,1,'#f26bb8');px(g,pxc-1,11,1,1,'#f26bb8');}
+ else{px(g,pxc-1,7,1,1,'#f26bb8');px(g,pxc-3,9,2,1,'#f26bb8');px(g,pxc-2,10,1,2,'#f26bb8');}
+ /* mirrors and antenna */
+ px(g,18+d,14,3,2,'#d8dde6');px(g,63+d,14,3,2,'#d8dde6');
+ px(g,13,8,1,12,'#2a2d36');px(g,13,7,1,1,'#e8ecf2');
+ /* taillights (unlit) */
+ disc(g,17,29,2,'#7e1414');disc(g,22,29,2,'#7e1414');
+ disc(g,62,29,2,'#7e1414');disc(g,67,29,2,'#7e1414');
+ /* license plate */
+ px(g,37,27,10,6,'#e9e5cf');px(g,37,27,10,1,'#b8b09a');
+ px(g,39,29,2,2,'#3a3f4a');px(g,43,29,2,2,'#3a3f4a');
+ /* third brake light, unlit */
+ px(g,39+d,17,6,1,'#701010');
+ /* chrome bumper and exhausts */
+ px(g,11,33,62,5,'#8f97a4');
+ px(g,11,33,62,1,'#e8ecf2');
+ px(g,11,37,62,1,'#525a66');
+ px(g,14,38,56,2,'#1a1b22');
+ px(g,26,38,5,3,'#d8dde6');px(g,27,39,3,1,'#2a2d36');
+ px(g,53,38,5,3,'#d8dde6');px(g,54,39,3,1,'#2a2d36');
+ /* brake state */
+ if(br){
+  disc(g,17,29,3,'#a02818');disc(g,22,29,3,'#a02818');
+  disc(g,62,29,3,'#a02818');disc(g,67,29,3,'#a02818');
+  disc(g,17,29,2,'#ff5040');disc(g,22,29,2,'#ff5040');
+  disc(g,62,29,2,'#ff5040');disc(g,67,29,2,'#ff5040');
+  px(g,17,29,1,1,'#ffe0d0');px(g,22,29,1,1,'#ffe0d0');
+  px(g,62,29,1,1,'#ffe0d0');px(g,67,29,1,1,'#ffe0d0');
+  px(g,39+d,17,6,1,'#ff6a50');
+ }
+ /* composite: soft shadow under, outlined body over */
+ px(fg,14,42,56,4,'rgba(0,0,0,0.35)');
+ px(fg,11,43,62,2,'rgba(0,0,0,0.25)');
+ fg.drawImage(outline(bc,'#141018'),0,0);
+ return c;
+}
+
+/* Front view of the car for the rear mirror: what DIABLO's face looks like
+   when he is on your tail. 44x26, same palette and outline language. */
+function paintCarFront(){
+ var c=mkCanvas(44,26),fg=c.getContext('2d');
+ var bc=mkCanvas(44,26),g=bc.getContext('2d');
+ px(g,1,15,6,10,'#15161c');px(g,37,15,6,10,'#15161c');
+ px(g,2,16,1,8,'#232530');px(g,41,16,1,8,'#232530');
+ px(g,5,12,34,10,'#b01e18');
+ px(g,7,11,30,5,'#e63c2e');
+ px(g,7,11,30,1,'#ff7a5c');
+ px(g,21,11,2,5,'#c8271e');
+ px(g,9,5,26,6,'#20242c');
+ px(g,10,6,24,4,'#5aa8e0');
+ px(g,10,6,24,1,'#bfe8ff');
+ px(g,27,6,3,1,'#d8f4ff');px(g,25,7,3,1,'#d8f4ff');
+ px(g,13,1,6,5,'#f2b088');
+ px(g,12,1,7,2,'#f26bb8');px(g,11,2,1,2,'#f26bb8');
+ px(g,25,1,6,5,'#f2b088');
+ px(g,24,0,8,2,'#2b6df0');px(g,24,2,1,1,'#1c4ab0');px(g,31,2,1,1,'#1c4ab0');
+ px(g,6,7,3,2,'#d8dde6');px(g,35,7,3,2,'#d8dde6');
+ px(g,8,16,28,5,'#8e1612');
+ px(g,15,17,14,3,'#1a1b22');
+ px(g,16,18,12,1,'#3a3f4a');
+ disc(g,10,18,2,'#ffe9a0');disc(g,34,18,2,'#ffe9a0');
+ px(g,9,17,1,1,'#fff7d8');px(g,33,17,1,1,'#fff7d8');
+ px(g,13,20,2,1,'#ff9a3d');px(g,29,20,2,1,'#ff9a3d');
+ px(g,6,21,32,3,'#8f97a4');
+ px(g,6,21,32,1,'#e8ecf2');
+ px(g,6,23,32,1,'#525a66');
+ fg.drawImage(outline(bc,'#141018'),0,0);
+ return c;
+}
+function paintPalm(tn){
+ var c=mkCanvas(48,80),fg=c.getContext('2d');
+ var bc=mkCanvas(48,80),g=bc.getContext('2d');
+ var lean=[0,0,1,1,2,2,3,4,4,5,6,6,7],k;
+ for(k=0;k<13;k++){
+  var ty=78-(k+1)*5, tx=20+lean[k], tw=(k>8?4:5);
+  px(g,tx,ty,tw,5,(k%2)?tn.tr1:tn.tr2);
+  px(g,tx+tw-1,ty,1,5,tn.tr3);
+ }
+ px(g,17,74,11,4,tn.g1);px(g,15,76,15,2,tn.g2);
+ var fr=[[-17,-3],[-13,6],[-6,11],[3,12],[10,8],[15,2],[9,-6]],f;
+ for(f=0;f<fr.length;f++){
+  var cx=29,cy=15,sx=fr[f][0]/4,sy=fr[f][1]/4,s;
+  for(s=0;s<4;s++){
+   var fx=Math.round(cx+sx*(s+1)),fy=Math.round(cy+sy*(s+1)+s*(fr[f][1]<0?0:1));
+   px(g,fx-2,fy,5,2,tn.f1);
+   px(g,fx-2,fy+2,5,1,tn.f2);
+   if(s===3)px(g,fx-1,fy+3,3,1,tn.f3);
+  }
+ }
+ disc(g,27,17,2,'#5e3a1c');disc(g,31,19,2,'#5e3a1c');disc(g,29,21,2,'#4a2c12');
+ px(g,26,16,1,1,'#8a5a2c');px(g,30,18,1,1,'#8a5a2c');
+ fg.drawImage(outline(bc,'#101216'),0,0);
+ return c;
+}
+function paintBush(tn){
+ var c=mkCanvas(36,22),fg=c.getContext('2d');
+ var bc=mkCanvas(36,22),g=bc.getContext('2d');
+ px(g,2,10,32,9,tn.b0);
+ disc(g,10,10,6,tn.b1);disc(g,20,8,7,tn.b1);disc(g,28,11,5,tn.b2);
+ var sp=[[7,8],[12,6],[17,5],[22,6],[26,9],[14,10],[24,12],[9,12]],i;
+ for(i=0;i<sp.length;i++)px(g,sp[i][0],sp[i][1],1,1,tn.sp);
+ px(g,15,4,1,1,'#ff8ab0');px(g,25,7,1,1,'#ffd23d');px(g,6,9,1,1,'#ff8ab0');
+ px(g,2,17,32,2,tn.sh);
+ fg.drawImage(outline(bc,'#101216'),0,0);
+ return c;
+}
+function paintBill(){
+ var c=mkCanvas(64,52),fg=c.getContext('2d');
+ var bc=mkCanvas(64,52),g=bc.getContext('2d');
+ px(g,10,30,4,22,'#5a5f6a');px(g,50,30,4,22,'#5a5f6a');
+ px(g,10,30,1,22,'#8f97a4');px(g,50,30,1,22,'#8f97a4');
+ var b;
+ for(b=0;b<6;b++){px(g,14+b*2,44-b*2,2,2,'#454a55');px(g,48-b*2,44-b*2,2,2,'#454a55');}
+ px(g,2,2,60,30,'#23262e');
+ px(g,2,2,60,1,'#3a3f4a');
+ px(g,5,5,54,24,'#f2eedd');
+ px(g,6,6,52,8,'#e05aa0');
+ disc(g,46,10,4,'#ffd23d');px(g,44,8,2,1,'#ffe9a0');
+ px(g,6,14,52,6,'#2a9ab0');px(g,6,14,52,1,'#5ac0d4');
+ px(g,14,15,10,5,'#20242c');px(g,16,13,6,2,'#20242c');px(g,18,11,2,2,'#20242c');
+ px(g,30,22,22,2,'#1c3f8f');px(g,30,26,16,2,'#1c3f8f');
+ px(g,4,4,1,1,'#8a8f9a');px(g,59,4,1,1,'#8a8f9a');px(g,4,27,1,1,'#8a8f9a');px(g,59,27,1,1,'#8a8f9a');
+ fg.drawImage(outline(bc,'#101216'),0,0);
+ return c;
+}
+function paintRock(tn){
+ var c=mkCanvas(30,18),fg=c.getContext('2d');
+ var bc=mkCanvas(30,18),g=bc.getContext('2d');
+ px(g,3,8,24,8,tn.r1);
+ px(g,7,3,12,6,tn.r2);px(g,6,6,3,3,tn.r3);
+ px(g,19,6,8,9,tn.r4);
+ px(g,12,7,1,4,tn.cr);px(g,16,10,3,1,tn.cr);px(g,10,12,1,2,tn.cr);
+ px(g,5,13,7,3,tn.mo);px(g,4,12,3,1,tn.mo);
+ px(g,3,14,24,2,tn.bs);
+ fg.drawImage(outline(bc,'#101216'),0,0);
+ return c;
+}
+/* Start and checkpoint arch: non-solid decor spanning the road. */
+function paintArch(){
+ var c=mkCanvas(132,44),fg=c.getContext('2d');
+ var bc=mkCanvas(132,44),g=bc.getContext('2d');
+ px(g,5,8,8,36,'#8f97a4');px(g,5,8,2,36,'#d8dde6');px(g,11,8,2,36,'#525a66');
+ px(g,119,8,8,36,'#8f97a4');px(g,119,8,2,36,'#d8dde6');px(g,125,8,2,36,'#525a66');
+ px(g,6,26,6,3,'#e03434');px(g,120,26,6,3,'#e03434');
+ var i;
+ for(i=0;i<32;i++)px(g,2+i*4,6,4,4,(i%2)?'#f2f3f6':'#16171d');
+ px(g,2,10,128,8,'#e03434');
+ for(i=0;i<9;i++){
+  var bx=17+i*11;
+  px(g,bx,11,3,6,'#f2f3f6');
+  px(g,bx+4,11,3,(i%2)?3:6,'#f2f3f6');
+  if(i%3===0)px(g,bx+4,15,3,2,'#f2f3f6');
+ }
+ disc(g,66,14,4,'#ffd23d');px(g,64,12,2,1,'#ffe9a0');
+ px(g,14,18,104,2,'#8e1612');
+ px(g,4,2,5,2,'#ffd23d');px(g,4,4,3,2,'#ffd23d');px(g,4,6,1,1,'#ffd23d');
+ px(g,123,2,5,2,'#ffd23d');px(g,125,4,3,2,'#ffd23d');px(g,127,6,1,1,'#ffd23d');
+ fg.drawImage(outline(bc,'#101216'),0,0);
+ return c;
+}
+/* Per-stage nature tints, indexed (stage-1)%3: warm dawn, lush day (the
+   reference set), dusk violet. Dimensions are identical across skins, so
+   collision half-widths never move with the palette. */
+var NATURE=[
+ {tr1:'#96622e',tr2:'#7a4c22',tr3:'#553414',g1:'#6f8a34',g2:'#4e661f',
+  f1:'#7ec25a',f2:'#4a8a34',f3:'#2f5c1e',
+  b0:'#4a6a24',b1:'#6f9a38',b2:'#587c2a',sp:'#a4d06a',sh:'#37501a',
+  r1:'#b8a888',r2:'#dccfae',r3:'#c4b494',r4:'#7c6e54',cr:'#5a4e3a',mo:'#7a8a3c',bs:'#6a5e48'},
+ {tr1:'#8a5a2c',tr2:'#6e4420',tr3:'#4e2f14',g1:'#2a7a3c',g2:'#1b5a2c',
+  f1:'#3fc06a',f2:'#1b7a3e',f3:'#11512a',
+  b0:'#175f2e',b1:'#238a44',b2:'#1c7038',sp:'#48c06e',sh:'#0f4722',
+  r1:'#8d8f96',r2:'#c2c4ca',r3:'#a8abb2',r4:'#565860',cr:'#3c3e44',mo:'#3f7a48',bs:'#4a4c52'},
+ {tr1:'#6a4630',tr2:'#523422',tr3:'#3a2416',g1:'#2e6a52',g2:'#1e4a38',
+  f1:'#4aa07c',f2:'#2a6a52',f3:'#1a4636',
+  b0:'#1e4a44',b1:'#2a6a5a',b2:'#225448',sp:'#5ab894',sh:'#142f2a',
+  r1:'#9a9ab2',r2:'#c6c6dc',r3:'#aeaec6',r4:'#5c5c74',cr:'#42425a',mo:'#2e6a5e',bs:'#4e4e64'}
+];
+/* Civilian traffic: two body styles, three tints, plus tumble rotations
+   and a three frame explosion for takedowns. */
+var TRAF_TINTS=[
+ {b1:'#7ee0d8',b2:'#2fa8a0',b3:'#1a6a64'},
+ {b1:'#f4ead0',b2:'#cfc0a0',b3:'#8a7e64'},
+ {b1:'#d0a0e0',b2:'#8a4aa8',b3:'#5a2a74'}
+];
+function paintTraffic(type,tn){
+ var w=type?66:64,hh=type?40:34;
+ var c=mkCanvas(w,hh),fg=c.getContext('2d');
+ var bc=mkCanvas(w,hh),g=bc.getContext('2d');
+ px(g,6,hh-13,10,12,'#15161c');px(g,w-16,hh-13,10,12,'#15161c');
+ px(g,8,hh-20,w-16,10,tn.b2);
+ px(g,8,hh-20,w-16,2,tn.b1);
+ px(g,10,hh-26,w-20,6,tn.b2);
+ px(g,10,hh-26,w-20,1,tn.b1);
+ if(type){
+  px(g,12,7,w-24,hh-33,tn.b3);
+  px(g,14,9,w-28,hh-37,'#4a7aa8');
+  px(g,14,9,w-28,1,'#a8d0e8');
+ }else{
+  px(g,16,8,w-32,8,tn.b3);
+  px(g,18,10,w-36,5,'#4a7aa8');
+  px(g,18,10,w-36,1,'#a8d0e8');
+ }
+ px(g,10,hh-18,5,3,'#c03028');px(g,w-15,hh-18,5,3,'#c03028');
+ px(g,8,hh-12,w-16,3,'#8f97a4');px(g,8,hh-12,w-16,1,'#d8dde6');
+ px(g,Math.round(w/2)-5,hh-17,10,4,'#e9e5cf');
+ fg.drawImage(outline(bc,'#141018'),0,0);
+ return c;
+}
+function rotFrame(img,ang){
+ var d=Math.max(img.width,img.height)+14;
+ var c=mkCanvas(d,d),g=c.getContext('2d');
+ g.translate(d/2,d/2);g.rotate(ang);g.drawImage(img,-img.width/2,-img.height/2);
+ return c;
+}
+function paintBoom(fr){
+ var c=mkCanvas(44,44),g=c.getContext('2d'),i,a;
+ if(fr===0){
+  px(g,20,2,4,40,'#fff2c0');px(g,2,20,40,4,'#fff2c0');
+  disc(g,22,22,9,'#ffffff');disc(g,22,22,5,'#fff8e0');
+ }else if(fr===1){
+  disc(g,22,22,13,'#ff8a2a');disc(g,20,20,9,'#ffd23d');disc(g,25,18,4,'#fff6d0');
+  px(g,8,10,4,4,'#3a3a42');px(g,32,30,5,4,'#3a3a42');px(g,30,8,4,3,'#2a2a30');
+ }else{
+  for(i=0;i<24;i++){a=i/24*6.283;px(g,22+Math.round(Math.cos(a)*13),22+Math.round(Math.sin(a)*13),3,3,'#9aa0ac');}
+  disc(g,12,14,4,'#6a707c');disc(g,32,28,5,'#6a707c');disc(g,28,12,3,'#7a808c');
+ }
+ return c;
+}
+function paintRivalFront(){
+ var c=mkCanvas(44,26),fg=c.getContext('2d');
+ var bc=mkCanvas(44,26),g=bc.getContext('2d');
+ /* rear wing */
+ px(g,7,3,30,2,'#2a2d3a');px(g,7,3,30,1,'#3ce0ff');
+ px(g,10,5,2,3,'#20242c');px(g,32,5,2,3,'#20242c');
+ /* tyres */
+ px(g,1,15,6,10,'#141519');px(g,37,15,6,10,'#141519');
+ /* body */
+ px(g,5,12,34,10,'#20232e');
+ px(g,7,11,30,5,'#2d3140');
+ px(g,7,11,30,1,'#18b0d0');
+ px(g,21,11,2,5,'#0e6a80');
+ /* smoked canopy */
+ px(g,9,6,26,6,'#171a22');
+ px(g,10,7,24,3,'#2a3340');
+ px(g,10,7,24,1,'#5a7a90');
+ /* lone driver, cyan visor */
+ px(g,19,2,6,5,'#14161c');
+ px(g,20,4,4,1,'#3ce0ff');
+ /* rear */
+ px(g,8,16,28,5,'#171a20');
+ px(g,15,17,14,3,'#0c0d12');
+ disc(g,10,18,2,'#3ce0ff');disc(g,34,18,2,'#3ce0ff');
+ px(g,13,20,2,1,'#18b0d0');px(g,29,20,2,1,'#18b0d0');
+ px(g,6,21,32,3,'#5a6270');
+ px(g,6,21,32,1,'#aeb8c8');
+ px(g,6,23,32,1,'#3a414c');
+ fg.drawImage(outline(bc,'#0a0c12'),0,0);
+ return c;
+}
+function paintRivalFrame(st,ph,br){
+ var c=mkCanvas(84,48),fg=c.getContext('2d');
+ var bc=mkCanvas(84,48),g=bc.getContext('2d');
+ var d=st*3, dm=Math.round(st*1.5), lean=Math.round(st*1.5);
+ /* rear tyres */
+ px(g,9,27,14,15,'#141519');px(g,61,27,14,15,'#141519');
+ px(g,10,28,2,13,'#20242c');px(g,72,28,2,13,'#20242c');
+ var wc=[[16,35],[68,35]],wi;
+ for(wi=0;wi<2;wi++){
+  disc(g,wc[wi][0],wc[wi][1],4,'#9aa2b0');
+  if(ph===0){px(g,wc[wi][0]-4,wc[wi][1],9,1,'#2a2f3a');px(g,wc[wi][0],wc[wi][1]-4,1,9,'#2a2f3a');}
+  else{var q;for(q=-3;q<=3;q++){px(g,wc[wi][0]+q,wc[wi][1]+q,1,1,'#2a2f3a');px(g,wc[wi][0]+q,wc[wi][1]-q,1,1,'#2a2f3a');}}
+  disc(g,wc[wi][0],wc[wi][1],1,'#3ce0ff');
+ }
+ /* hard-steer side sliver in the cyan accent */
+ if(st<=-1){px(g,74,22,2*(-st),11,'#18b0d0');px(g,74+2*(-st)-1,23,1,9,'#0e6a80');}
+ if(st>=1){px(g,10-2*st,22,2*st,11,'#18b0d0');px(g,10-2*st,23,1,9,'#0e6a80');}
+ /* big rear wing on posts (the silhouette tell) */
+ px(g,20,10,44,2,'#20242c');
+ px(g,14+dm,8,56,3,'#2a2d3a');
+ px(g,14+dm,8,56,1,'#3ce0ff');
+ /* tail panel and fenders, charcoal */
+ px(g,12,26,60,7,'#171a20');
+ px(g,7,24,5,8,'#20242c');px(g,72,24,5,8,'#20242c');
+ px(g,7,24,5,1,'#2d3342');px(g,72,24,5,1,'#2d3342');
+ /* deck bands, cyan edged, sheared by steer */
+ px(g,14+d,18,56,2,'#3ce0ff');
+ px(g,12+Math.round(d*0.8),20,60,2,'#18b0d0');
+ dith(g,11+dm,22,62,1,'#18b0d0','#12313a');
+ px(g,11+dm,23,62,2,'#141a22');
+ px(g,10+Math.round(d*0.3),25,64,2,'#0f1218');
+ /* cowl and smoked interior */
+ px(g,20+d,16,44,3,'#20242c');
+ px(g,21+d,18,42,1,'#0c0d12');
+ px(g,22+d,17,40,5,'#14161c');
+ /* smoked windshield */
+ px(g,24+d,12,36,4,'#2a3340');
+ px(g,24+d,12,36,1,'#5a7a90');
+ px(g,23+d,12,1,4,'#12151b');px(g,60+d,12,1,4,'#12151b');
+ px(g,46+d,12,3,1,'#7fbfd8');px(g,44+d,13,3,1,'#7fbfd8');
+ /* two dark bucket seats, no passengers but the driver */
+ px(g,26+d,15,10,6,'#1a1d24');px(g,26+d,15,10,1,'#2a2f3a');
+ px(g,47+d,15,10,6,'#1a1d24');px(g,47+d,15,10,1,'#2a2f3a');
+ /* lone driver: dark suit, black helmet, cyan visor */
+ var dx=26+d+lean;
+ px(g,dx,16,11,6,'#20242c');px(g,dx+8,16,3,6,'#14161c');px(g,dx,16,11,1,'#3a414c');
+ px(g,dx+2,7,7,8,'#14161c');
+ px(g,dx+2,10,7,2,'#3ce0ff');
+ px(g,dx+2,7,7,1,'#3a414c');
+ /* mirrors, antenna */
+ px(g,18+d,14,3,2,'#3a414c');px(g,63+d,14,3,2,'#3a414c');
+ px(g,13,8,1,12,'#2a2d36');px(g,13,7,1,1,'#3ce0ff');
+ /* taillights unlit (cyan when lit) */
+ disc(g,17,29,2,'#0e5a68');disc(g,22,29,2,'#0e5a68');
+ disc(g,62,29,2,'#0e5a68');disc(g,67,29,2,'#0e5a68');
+ /* plate */
+ px(g,37,27,10,6,'#c9ccd4');px(g,37,27,10,1,'#8a909c');
+ px(g,39,29,2,2,'#2a2f3a');px(g,43,29,2,2,'#2a2f3a');
+ /* chrome-dark bumper and exhausts */
+ px(g,11,33,62,5,'#5a6270');
+ px(g,11,33,62,1,'#aeb8c8');
+ px(g,11,37,62,1,'#2a2f3a');
+ px(g,14,38,56,2,'#0f1218');
+ px(g,26,38,5,3,'#7a828e');px(g,27,39,3,1,'#141519');
+ px(g,53,38,5,3,'#7a828e');px(g,54,39,3,1,'#141519');
+ if(br){
+  disc(g,17,29,3,'#0e6a80');disc(g,22,29,3,'#0e6a80');
+  disc(g,62,29,3,'#0e6a80');disc(g,67,29,3,'#0e6a80');
+  disc(g,17,29,2,'#3ce0ff');disc(g,22,29,2,'#3ce0ff');
+  disc(g,62,29,2,'#3ce0ff');disc(g,67,29,2,'#3ce0ff');
+ }
+ px(fg,14,42,56,4,'rgba(0,0,0,0.35)');
+ px(fg,11,43,62,2,'rgba(0,0,0,0.25)');
+ fg.drawImage(outline(bc,'#0a0c12'),0,0);
+ return c;
+}
+function buildSprites(){
+ SPR.skins=[];
+ var k;
+ for(k=0;k<3;k++)SPR.skins.push({palm:paintPalm(NATURE[k]),bush:paintBush(NATURE[k]),rock:paintRock(NATURE[k])});
+ SPR.palm=SPR.skins[1].palm;SPR.bush=SPR.skins[1].bush;SPR.rock=SPR.skins[1].rock;
+ SPR.bill=paintBill();
+ SPR.arch=paintArch();
+ SPR.carFront=paintCarFront();
+ SPR.boom=[paintBoom(0),paintBoom(1),paintBoom(2)];
+ SPR.traffic=[];
+ var ty,ti,tb;
+ for(ty=0;ty<2;ty++){
+  SPR.traffic[ty]=[];
+  for(ti=0;ti<3;ti++){
+   tb=paintTraffic(ty,TRAF_TINTS[ti]);
+   SPR.traffic[ty][ti]={rear:tb,spin:[rotFrame(tb,0),rotFrame(tb,1.57),rotFrame(tb,3.14),rotFrame(tb,4.71)]};
+  }
+ }
+ SPR.car=[];SPR.rival=[];
+ var si,st;
+ for(si=0;si<5;si++){
+  st=si-2;
+  SPR.car[si]=[
+   [paintCarFrame(st,0,0),paintCarFrame(st,1,0)],
+   [paintCarFrame(st,0,1),paintCarFrame(st,1,1)]
+  ];
+  SPR.rival[si]=[
+   [paintRivalFrame(st,0,0),paintRivalFrame(st,1,0)],
+   [paintRivalFrame(st,0,1),paintRivalFrame(st,1,1)]
+  ];
+ }
+ SPR.rivalFront=paintRivalFront();
+ var rc=SPR.rival[2][0][0];
+ SPR.rivalSpin=[rotFrame(rc,0),rotFrame(rc,1.57),rotFrame(rc,3.14),rotFrame(rc,4.71)];
+}
+/* [ART-END] */
+/* ================= TRACK ================= */
+var marks={straightZ:0,curveZ:0,boostZ:0,boost2Z:0,jumpZ:0,jump2Z:0,waterZ:0,waterEndZ:0};
+function padSpan(s0,len,kind){var i;for(i=0;i<len;i++)if(segments[s0+i])segments[s0+i].pad=kind;}
+function waterSpan(s0,len){var i;for(i=0;i<len;i++)if(segments[s0+i])segments[s0+i].water=true;}
+function causewaySpan(s0,len){var i;for(i=0;i<len;i++)if(segments[s0+i])segments[s0+i].sea=true;}  /* v19: visual sea, no drag */
+function padCueLead(s0,kind){var i;for(i=1;i<=14;i++)if(segments[s0-i])segments[s0-i].padCue=kind;}
+function waterCueLead(s0){var i;for(i=1;i<=14;i++)if(segments[s0-i])segments[s0-i].padCue='water';}
+function buildTrack(){
+ segments.length=0;
+ var R=mulberry32(1337);
+ /* THE GAUNTLET (v9): the clean straight stays sacred (no pads, no water,
+    no curves: gates plant there), then esses, a hairpin pair, chicanes,
+    two fords and two flights. marks.* are gate anchors; keep them honest. */
+ /* v12: more and sharper turns, but net length held near the old track so a
+    lap still fits under the 65s clock. Straights converted to curves where
+    possible; the clean straight stays sacred; marks and pads/fords honest. */
+ /* v15: more turns, net length still held near the old track (lap under the
+    65s clock). Extra esses and link corners; straights trimmed to pay for
+    them. Clean straight sacred; marks and pads/fords honest. */
+ /* v17: curvatures roughly doubled so turns read as steep, with a bold S
+    right off the line. Segment counts unchanged so lap length (and the 65s
+    clock) is untouched; only the bend strength moved. */
+ addStraight(30);
+ addRoad(40,60,40,-6,0);
+ addRoad(40,60,40,6,0);
+ addRoad(20,10,20,-8,25);
+ var cleanA=segments.length;
+ marks.straightZ=(segments.length+12)*SEG_LEN;
+ addStraight(140);
+ var cleanB=segments.length;
+ marks.curveZ=(segments.length+80)*SEG_LEN;
+ addRoad(70,110,70,7,0);
+ addRoad(30,40,30,-9,40);
+ addRoad(30,40,30,9,-40);
+ var k;
+ for(k=0;k<6;k++) addRoad(20,20,20,(k%2?-8.5:8.5),(k%2?-42:42));
+ var fb=segments.length+6;
+ addStraight(40);
+ marks.boostZ=fb*SEG_LEN;padSpan(fb,6,'boost');padCueLead(fb,'boost');
+ addRoad(20,10,20,6,-28);
+ addRoad(26,20,26,11,-30);
+ addRoad(20,16,20,-4,0);
+ addRoad(26,20,26,-11,30);
+ addRoad(16,14,16,-6,20);
+ addRoad(18,14,18,7,-22);
+ var fj=segments.length+8,fw=segments.length+16;
+ addStraight(58);
+ marks.jumpZ=fj*SEG_LEN;padSpan(fj,6,'jump');padCueLead(fj,'jump');
+ marks.waterZ=fw*SEG_LEN;waterSpan(fw,22);
+ marks.waterEndZ=(fw+22)*SEG_LEN;waterCueLead(fw);
+ for(k=0;k<4;k++) addRoad(14,10,14,(k%2?-8:8),0);
+ addRoad(60,80,60,-7,60);
+ addRoad(10,10,10,7,-20);
+ var ff=segments.length+8;
+ addStraight(48);
+ waterSpan(ff,18);waterCueLead(ff);
+ /* v18: the LIFTOFF stretch. A long marked run the player flies over as open
+    sea; the AI just drives it. liftZ..liftEndZ bound the flight. */
+ /* v19: the LIFTOFF causeway, a long sea bridge (visual water, no drag so
+    the AI is never slowed) that the player lifts OFF of into flight. */
+ var flz=segments.length;
+ addStraight(60);
+ causewaySpan(flz,60);
+ marks.liftZ=(flz+8)*SEG_LEN;
+ marks.liftEndZ=(flz+52)*SEG_LEN;
+ /* v20: the two long descents give back 25 each (-85 to -60 here, -60 to -35 on the run home) so the
+    lap's hills net 0 again: since v15 they netted -50, a one-segment 50 unit rise at the start line that
+    jolted the camera 41 units in one frame at top speed (the wrap seam law, codex STAGE AND TIME ECONOMY). */
+ addRoad(40,70,40,5,-60);
+ addRoad(24,18,24,-9,30);
+ var fb2=segments.length+8;
+ addStraight(40);
+ marks.boost2Z=fb2*SEG_LEN;padSpan(fb2,6,'boost');padCueLead(fb2,'boost');
+ addRoad(30,36,30,-7,45);
+ addRoad(30,36,30,7,-45);
+ var fj2=segments.length+8;
+ addStraight(52);
+ marks.jump2Z=fj2*SEG_LEN;padSpan(fj2,6,'jump');padCueLead(fj2,'jump');
+ addRoad(50,80,50,-6,-35);   /* v20: was -60 (the hill ledger, above) */
+ addStraight(12);
+ addRoad(15,10,15,6,30);
+ trackLen=segments.length*SEG_LEN;
+ var i,side,off;
+ for(i=20;i<segments.length-4;i+=3){
+  if(i>=cleanA&&i<cleanB) continue;
+  if(R()<0.5){side=R()<0.5?-1:1;off=1.15+R()*1.0;addSprite(i,R()<0.3?'bush':'palm',side*off);}
+ }
+ for(i=110;i<segments.length-4;i+=110){
+  if(i>=cleanA&&i<cleanB) continue;
+  addSprite(i,'bill',((i/110)%2?1:-1)*1.35);
+ }
+ for(i=0;i<8;i++) addSprite(cleanB+90+i*22,'rock',(i%2?-1:1)*(1.6+R()*0.5));
+ addSprite(2,'arch',0,{scale:7,solid:false,nearCull:1100});
+}
+
+/* ================= GAME STATE ================= */
+var state='TITLE';
+var time=TIME_START, stage=1, score=0, distance=0;
+var crashFlash=0, overT=0, tGlobal=0, shake=0, slowmoT=0, tdFlash=0;
+var frameDt=1/60;                /* v20, THE FRAME LAW: this step's wall clock dt (never slowed); a roll that ran once a
+                                    drawn frame at 60 Hz, slow motion included, scales by it to keep its 60 Hz odds */
+var banner={text:'',t:0};
+var input={steer:0,steerY:0,throttle:false,brake:false,startTap:false};
+var fly={active:false,phase:'RISE',t:0,cx:160,cy:290,vx:0,vy:0,hp:100,stall:0,gun:0,fireCd:0,spawnCd:0,foes:[],bul:[],ebul:[],boom:[],banner:0,kills:0};
+var rinput={steer:0,throttle:true,brake:false,startTap:false,capMul:1};
+var lastError=null;
+var RIVAL_NAME='DIABLO';
+var passCount=0, lastLeader=1, prevAdz=0;
+var traffic=[], takedowns=0, fx=[];
+function buildTrafficFleet(){
+ traffic=[];takedowns=0;fx=[];
+ if(netActive)return;
+ var i,lanes=[-0.55,0,0.55];
+ for(i=0;i<TRAFFIC_N;i++){
+  traffic.push({pos:(i+1)*Math.floor(trackLen/(TRAFFIC_N+1)),lane:lanes[i%3],x:lanes[i%3],
+   speed:5000+(i%5)*520,cruise:5000+(i%5)*520,type:i%2,tint:i%3,
+   crashed:0,spin:0,touchT:99,seed:i,vx:0});
+ }
+}
+function mkCar(x0){
+ return {pos:0,x:x0||0,speed:0,gear:0,collideT:0,crashes:0,lap:0,bgShift:0,vsteer:0,vbrake:false,alt:0,vy:0,surgeT:0,onBoost:false,drift:0,spinT:0,spin:0,spinVx:0};
+}
+var P=mkCar(0), V=mkCar(0.55);
+function progress(c){return c.lap*trackLen+c.pos;}
+function rank(){return progress(P)>=progress(V)?1:2;}
+var PALS=[
+ {name:'SUNRISE COAST',skyT:'#2c1a58',skyB:'#ff9a3d',sun:'#ffe9a8',mtn:'#5a2e6e',hill:'#8a4a3a',
+  grassL:'#c98f3f',grassD:'#b97f34',roadL:'#6d6d76',roadD:'#64646d',rumL:'#e8e8e8',rumD:'#c23a3a',
+  lane:'#f4f4e8',fog:'#f5a24e',cloud:'rgba(255,225,190,0.85)'},
+ {name:'BIG BLUE BAY',skyT:'#2f8fef',skyB:'#a8dcff',sun:'#fff2b0',mtn:'#2e5f8a',hill:'#3c7a4c',
+  grassL:'#3fae4a',grassD:'#37a041',roadL:'#70707a',roadD:'#67676f',rumL:'#f0f0f0',rumD:'#d84040',
+  lane:'#ffffff',fog:'#a8dcff',cloud:'rgba(255,255,255,0.9)'},
+ {name:'VIOLET RIDGE',skyT:'#33105c',skyB:'#e05aa0',sun:'#ffd8ee',mtn:'#4a2a80',hill:'#6a3a6a',
+  grassL:'#4f8a52',grassD:'#468048',roadL:'#5e5e68',roadD:'#565660',rumL:'#dcdce4',rumD:'#b83a52',
+  lane:'#eaeaf2',fog:'#d8569a',cloud:'rgba(255,205,235,0.8)'}
+];
+function pal(){return PALS[(stage-1)%PALS.length];}
+function show(t,d){banner.text=t;banner.t=d||1.4;}
+
+/* ================= AUDIO (WebAudio, behind first gesture) ================= */
+var AC=null,audio={ok:false},master=null,engA=null,engB=null,engGain=null,engLP=null,skGain=null,noiseBuf=null,muted=false,musicOn=false,vOsc=null,vGain=null,vPan=null;
+var mus={next:0,step:0,timer:null};
+var BASSP=[36,0,36,0,43,0,36,0,41,0,36,0,43,0,46,43,36,0,36,0,43,0,36,0,41,0,48,0,46,0,43,41];
+var LEADP=[0,0,60,0,63,0,65,0,67,0,0,65,63,0,60,0,0,0,60,0,63,0,67,0,70,0,67,65,63,0,65,0];
+var HATP=[1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,1,1,0,1,0];
+function mf(m){return 440*Math.pow(2,(m-69)/12);}
+function initAudio(){
+ if(audio.ok)return;
+ var C=(typeof window!=='undefined')&&(window.AudioContext||window.webkitAudioContext);
+ if(!C)return;
+ try{
+  AC=new C();
+  master=AC.createGain();master.gain.value=muted?0:0.8;master.connect(AC.destination);
+  engA=AC.createOscillator();engA.type='sawtooth';
+  engB=AC.createOscillator();engB.type='square';
+  engGain=AC.createGain();engGain.gain.value=0;
+  engLP=AC.createBiquadFilter();engLP.type='lowpass';engLP.frequency.value=400;
+  engA.connect(engGain);engB.connect(engGain);engGain.connect(engLP);engLP.connect(master);
+  engA.start();engB.start();
+  var nb=AC.createBuffer(1,AC.sampleRate,AC.sampleRate),dd=nb.getChannelData(0),i;
+  for(i=0;i<dd.length;i++)dd[i]=Math.random()*2-1;
+  noiseBuf=nb;
+  var sk=AC.createBufferSource();sk.buffer=nb;sk.loop=true;
+  var bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=900;bp.Q.value=1.2;
+  skGain=AC.createGain();skGain.gain.value=0;
+  sk.connect(bp);bp.connect(skGain);skGain.connect(master);sk.start();
+  vOsc=AC.createOscillator();vOsc.type='sawtooth';vOsc.frequency.value=70;
+  vGain=AC.createGain();vGain.gain.value=0;
+  vOsc.connect(vGain);
+  if(typeof AC.createStereoPanner==='function'){vPan=AC.createStereoPanner();vGain.connect(vPan);vPan.connect(master);}
+  else{vGain.connect(master);}
+  vOsc.start();
+  audio.ok=true;
+  startMusic();
+ }catch(e){audio.ok=false;}
+}
+function sfxTone(f,dur,type,vol,slide){
+ if(!audio.ok)return;
+ var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;
+ o.type=type||'square';o.frequency.setValueAtTime(f,t);
+ if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+ g.gain.setValueAtTime(vol||0.12,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+ o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+0.02);
+}
+function sfxShift(){sfxTone(220,0.07,'square',0.09,160);}
+function sfxJingle(){
+ if(!audio.ok)return;
+ var t=AC.currentTime,notes=[660,880,1320],i,o,g;
+ for(i=0;i<3;i++){
+  o=AC.createOscillator();g=AC.createGain();
+  o.type='square';o.frequency.value=notes[i];
+  g.gain.setValueAtTime(0.11,t+i*0.09);
+  g.gain.exponentialRampToValueAtTime(0.001,t+i*0.09+0.12);
+  o.connect(g);g.connect(master);o.start(t+i*0.09);o.stop(t+i*0.09+0.14);
+ }
+}
+function sfxCrash(){
+ if(!audio.ok)return;
+ var t=AC.currentTime,s=AC.createBufferSource();s.buffer=noiseBuf;
+ var lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=520;
+ var g=AC.createGain();g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+ s.connect(lp);lp.connect(g);g.connect(master);s.start(t);s.stop(t+0.32);
+}
+function sfxWhoosh(){
+ if(!audio.ok)return;
+ var t=AC.currentTime,s=AC.createBufferSource();s.buffer=noiseBuf;
+ var bp=AC.createBiquadFilter();bp.type='bandpass';bp.Q.value=2.2;
+ bp.frequency.setValueAtTime(1700,t);bp.frequency.exponentialRampToValueAtTime(320,t+0.28);
+ var g=AC.createGain();g.gain.setValueAtTime(0.001,t);
+ g.gain.exponentialRampToValueAtTime(0.34,t+0.07);g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+ s.connect(bp);bp.connect(g);g.connect(master);s.start(t);s.stop(t+0.32);
+}
+function startMusic(){
+ if(!audio.ok||musicOn)return;
+ musicOn=true;mus.next=AC.currentTime+0.1;mus.step=0;
+ mus.timer=setInterval(schedMusic,40);
+}
+function schedMusic(){
+ if(!audio.ok)return;
+ var SPB=60/128/4,s,t,o,g,hs,hp,hg,bo,bg2,lo,lpp,lg;
+ while(mus.next<AC.currentTime+0.14){
+  s=mus.step%32;t=mus.next;
+  if(s%4===0){
+   o=AC.createOscillator();g=AC.createGain();
+   o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(42,t+0.1);
+   g.gain.setValueAtTime(0.5,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+   o.connect(g);g.connect(master);o.start(t);o.stop(t+0.13);
+  }
+  if(HATP[s]){
+   hs=AC.createBufferSource();hs.buffer=noiseBuf;
+   hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=6500;
+   hg=AC.createGain();hg.gain.setValueAtTime(0.07,t);hg.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+   hs.connect(hp);hp.connect(hg);hg.connect(master);hs.start(t);hs.stop(t+0.05);
+  }
+  if(BASSP[s]){
+   bo=AC.createOscillator();bg2=AC.createGain();
+   bo.type='square';bo.frequency.value=mf(BASSP[s]);
+   bg2.gain.setValueAtTime(0.12,t);bg2.gain.exponentialRampToValueAtTime(0.001,t+SPB*0.9);
+   bo.connect(bg2);bg2.connect(master);bo.start(t);bo.stop(t+SPB);
+  }
+  if(LEADP[s]){
+   lo=AC.createOscillator();lg=AC.createGain();
+   lo.type='square';lo.frequency.value=mf(LEADP[s]);
+   lpp=AC.createBiquadFilter();lpp.type='lowpass';lpp.frequency.value=3200;
+   lg.gain.setValueAtTime(0.085,t);lg.gain.exponentialRampToValueAtTime(0.001,t+SPB*1.8);
+   lo.connect(lpp);lpp.connect(lg);lg.connect(master);lo.start(t);lo.stop(t+SPB*2);
+  }
+  mus.next+=SPB;mus.step++;
+ }
+}
+function updateAudio(){
+ if(!audio.ok)return;
+ var cap=P.gear?MAX_HI:MAX_LO, r=clamp(P.speed/cap,0,1.15), now=AC.currentTime;
+ engA.frequency.setTargetAtTime(36+195*r,now,0.05);
+ engB.frequency.setTargetAtTime(54+290*r,now,0.05);
+ engLP.frequency.setTargetAtTime(280+2800*r,now,0.08);
+ var target=(state==='GAME'||state==='OVER')&&P.speed>60?0.045+0.05*r:0;
+ engGain.gain.setTargetAtTime(target,now,0.08);
+ var sk=(state==='GAME'&&Math.abs(input.steer)>0.7&&P.speed>0.5*MAX_HI)?0.08:0;
+ skGain.gain.setTargetAtTime(sk,now,0.05);
+ /* DIABLO in the mix: proximity hum, doppler bend, lateral pan (v5) */
+ var adz=Math.abs(progress(V)-progress(P));
+ var prox=Math.max(0,1-adz/HUM_RANGE);
+ var closing=(prevAdz-adz)*60;prevAdz=adz;
+ var dop=1+clamp(closing/24000,-0.25,0.25);
+ var vr=clamp(V.speed/MAX_HI,0,1.15);
+ vOsc.frequency.setTargetAtTime((55+165*vr)*dop,now,0.06);
+ var vt=(state==='GAME'||state==='OVER')?0.06*prox*prox:0;
+ vGain.gain.setTargetAtTime(vt,now,0.09);
+ if(vPan)vPan.pan.setTargetAtTime(clamp((V.x-P.x)*0.6,-1,1),now,0.08);
+}
+
+/* ================= NET LINK (v6): symmetric state exchange ================= */
+/* Both peers run their own car with full local physics and OWN their clock;
+   the remote car is written from received state and dead-reckoned between
+   packets. The transport is INJECTED (netStart(sendFn)), so the loopback
+   gate drives this exact code with an in-memory channel and PeerJS is glue.
+   On link loss, DIABLO's brain takes the wheel of the remote car. */
+var netActive=false,netSendFn=null,netSendT=0,netUISync=null;
+var NET_HZ=15;                   /* v20, THE FRAME LAW (doc 11 section 5): DUEL sends its state 15 times a second of wall clock, at any refresh rate */
+function netPace(dt){
+ netSendT+=dt;
+ if(netSendT>=1/NET_HZ-1e-6){netSendT=Math.min(netSendT-1/NET_HZ,1/NET_HZ);netSendState();}
+}
+function vName(){return netActive?'RIVAL':RIVAL_NAME;}
+function netStart(sendFn){netSendFn=sendFn;netActive=true;netSendT=0;}
+function netStop(msg){
+ if(!netActive)return;
+ netActive=false;netSendFn=null;
+ if(msg)show(msg,2.0);
+}
+function netRaceBegin(){if(state!=='GAME')startGame();}
+function netSendState(){
+ if(!netSendFn)return;
+ try{netSendFn({c:[P.pos,P.x,P.speed,P.gear,P.vsteer,P.vbrake?1:0,P.lap,P.crashes,P.alt]});}catch(e){}
+}
+function netReceive(m){
+ if(!netActive)return;
+ if(!m||typeof m!=='object')return;
+ if(m.go&&state==='TITLE'){startGame();return;}
+ var c=m.c;
+ if(c&&c.length>=8){
+  V.pos=+c[0]||0;V.x=+c[1]||0;V.speed=+c[2]||0;V.gear=c[3]?1:0;
+  V.vsteer=+c[4]||0;V.vbrake=!!c[5];V.lap=(+c[6])|0;V.crashes=(+c[7])|0;V.alt=+c[8]||0;
+ }
+}
+function netDrift(dt){
+ V.pos+=V.speed*dt;
+ if(V.pos>=trackLen){V.pos-=trackLen;V.lap++;}
+}
+
+/* ================= UPDATE (pure logic, DOM free) ================= */
+function startGame(){
+ time=TIME_START;stage=1;score=0;distance=0;
+ crashFlash=0;overT=0;slowmoT=0;tdFlash=0;state='GAME';buildFog(pal());
+ P=mkCar(-0.35);V=mkCar(0.55);
+ rinput.steer=0;rinput.capMul=1;
+ passCount=0;lastLeader=1;
+ buildTrafficFleet();
+ show('GO!',1.1);
+ if(audio.ok){sfxJingle();startMusic();}
+}
+function resetGame(){
+ state='TITLE';time=TIME_START;stage=1;score=0;distance=0;
+ crashFlash=0;overT=0;slowmoT=0;tdFlash=0;buildFog(pal());
+ P=mkCar(0);V=mkCar(0.55);
+ rinput.steer=0;rinput.capMul=1;
+ passCount=0;lastLeader=1;
+ buildTrafficFleet();
+ fly={active:false,phase:'RISE',t:0,cx:W/2,cy:H*0.66,vx:0,vy:0,hp:FLY_HP,stall:0,
+      gun:0,fireCd:0,spawnCd:0,foes:[],bul:[],ebul:[],boom:[],banner:0,kills:0};
+}
+/* One physics routine, two cars. Identical to the v1 player model, operating
+   on a car struct; player-only side effects (sfx, flash, shake, vibration)
+   are gated on isP. Returns true on a lap wrap. */
+function stepCar(c,inp,dt,isP){
+ if(c.spinT>0){
+  c.spinT-=dt;
+  c.spin+=dt*13;
+  c.speed+=(1300-c.speed)*Math.min(1,dt*1.1);          /* bleed speed: he loses ground */
+  c.x+=(c.spinVx||0)*dt;c.spinVx=(c.spinVx||0)*(1-Math.min(1,dt*1.0));
+  c.x=clamp(c.x,-1.35,1.35);        /* spins out to the shoulder, not deep grass */
+  c.pos+=c.speed*dt;if(c.pos>=trackLen){c.pos-=trackLen;c.lap++;}
+  if(c.spinT<=0)c.spin=0;
+  return false;
+ }
+ var ng=c.speed>SHIFT_UP?1:(c.speed<SHIFT_DOWN?0:c.gear);
+ if(ng!==c.gear){c.gear=ng;if(isP)sfxShift();}
+ var bs=baseSegOf(c.pos);
+ var wantDrift=inp.brake&&c.speed>DRIFT_MIN;
+ c.drift+=((wantDrift?1:0)-c.drift)*Math.min(1,dt*DRIFT_RAMP);
+ if(c.surgeT>0)c.surgeT-=dt;
+ var cap=(c.gear?MAX_HI:MAX_LO)*(inp.capMul||1)*(c.surgeT>0?SURGE_MUL:1),acc=c.gear?ACCEL_HI:ACCEL_LO;
+ var offFast=c.alt<=0&&Math.abs(c.x)>1.02&&c.speed>OFFROAD_MAX;
+ if(inp.throttle&&!offFast)c.speed+=acc*(1-c.speed/cap)*dt;
+ else if(inp.brake)c.speed-=((c.drift>0.15&&c.speed>DRIFT_MIN)?DRIFT_DEC:BRAKE_DEC)*dt;
+ else if(!inp.throttle)c.speed-=COAST_DEC*dt;
+ if(c.speed<0)c.speed=0;
+ if(offFast){
+  c.speed+=(OFFROAD_MAX-c.speed)*Math.min(1,dt*OFFROAD_PULL);
+  if(isP)shake=0.1;
+ }
+ var sp=c.speed/MAX_HI;
+ c.x+=inp.steer*dt*STEER_RATE*(0.35+0.65*sp)*(1+c.drift*DRIFT_STEER);
+ c.x-=dt*sp*bs.curve*CENTRIF;
+ c.x=clamp(c.x,-2.4,2.4);
+ c.pos+=c.speed*dt;
+ var wrapped=false;
+ if(c.pos>=trackLen){c.pos-=trackLen;c.lap++;wrapped=true;}
+ if(c.alt>0||c.vy>0){
+  c.vy-=GRAV*dt;
+  c.alt+=c.vy*dt;
+  if(c.alt<=0){c.alt=0;c.vy=0;if(isP&&c.speed>1200)shake=Math.max(shake,0.12);}
+ }else{
+  var fseg=baseSegOf(c.pos+PLAYER_Z);
+  if(fseg.pad!=='boost')c.onBoost=false;
+  if(fseg.pad==='jump'&&c.speed>1500){
+   c.vy=JUMP_VY;c.alt=0.001;
+   if(isP)sfxTone(300,0.3,'square',0.12,900);
+  }else if(fseg.pad==='boost'){
+   if(!c.onBoost){
+    c.onBoost=true;
+    c.speed=Math.min((c.gear?MAX_HI:MAX_LO)*SURGE_MUL,c.speed+1800);
+    if(isP)sfxTone(520,0.25,'sawtooth',0.12,1200);
+   }
+   c.surgeT=BOOST_T;
+  }else if(fseg.water){
+   if(c.speed>WATER_MAX)c.speed+=(WATER_MAX-c.speed)*Math.min(1,dt*2.5);
+   if(isP)shake=Math.max(shake,0.05);
+  }
+ }
+ if(c.collideT>0)c.collideT-=dt;
+ else if(c.alt<=0){
+  var pseg=baseSegOf(c.pos+PLAYER_Z),j,spr;
+  for(j=0;j<pseg.sprites.length;j++){
+   spr=pseg.sprites[j];
+   if(!spr.solid)continue;
+   if(Math.abs(c.x-spr.off)<spr.hw+CAR_HW){
+    if(c.speed>900){
+     c.speed=Math.max(700,c.speed*CRASH_KEEP);c.crashes++;c.collideT=CRASH_COOLDOWN;
+     c.x+=(c.x<spr.off?-0.07:0.07);
+     if(isP){
+      crashFlash=0.55;shake=0.3;sfxCrash();
+      if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(60);
+     }
+    }
+    break;
+   }
+  }
+ }
+ c.bgShift+=bs.curve*sp*dt*30;
+ c.vsteer=inp.steer;c.vbrake=!!inp.brake;
+ return wrapped;
+}
+/* DIABLO's brain: inside racing line via lookahead, solid-sprite avoidance,
+   centrifugal feed-forward steering, one upshift near the LO cap, and an
+   arcade rubber band on the speed cap keyed to the gap to the player. */
+function rivalAI(){
+ var here=baseSegOf(V.pos+PLAYER_Z);
+ var look=baseSegOf(V.pos+PLAYER_Z+1800);
+ var sp=V.speed/MAX_HI;
+ var target=clamp(-look.curve*0.16,-0.75,0.75);
+ var ci=Math.floor((((V.pos+PLAYER_Z)%trackLen)+trackLen)%trackLen/SEG_LEN),n=segments.length,k,sgm,j,spr;
+ for(k=2;k<=14;k++){
+  sgm=segments[(ci+k)%n];
+  for(j=0;j<sgm.sprites.length;j++){
+   spr=sgm.sprites[j];
+   if(!spr.solid)continue;
+   if(Math.abs(spr.off-target)<spr.hw+0.35){
+    target=clamp(spr.off+(target<=spr.off?-1:1)*(spr.hw+0.5),-0.9,0.9);
+   }
+  }
+ }
+ var ti,tt,td;
+ for(ti=0;ti<traffic.length;ti++){
+  tt=traffic[ti];if(tt.crashed>0)continue;
+  td=((tt.pos-V.pos)%trackLen+trackLen)%trackLen;
+  if(td>300&&td<2600&&Math.abs(tt.x-target)<0.45){
+   target=clamp(tt.x+(target<=tt.x?-0.75:0.75),-0.9,0.9);
+  }
+ }
+ var ff=here.curve*sp*CENTRIF/(STEER_RATE*(0.35+0.65*sp));
+ rinput.steer=clamp(ff+(target-V.x)*2.5,-1,1);
+ var dz=progress(P)-progress(V);
+ /* piecewise band (v7): gentle slope while chasing, steep leash while
+    leading, so the race stays on the player's screen at any skill level */
+ rinput.capMul=dz>=0?clamp(1+dz*RB_GAIN,1,RB_MAX):clamp(1+dz*RB_GAIN_LEAD,RB_MIN,1);
+ /* v20: the v3 gear tap (94 percent of his effective LO cap) is gone. Since v14
+    every car shifts itself in stepCar (SHIFT_UP / SHIFT_DOWN) and nothing read it. */
+}
+function update(dt){
+ tGlobal+=dt;frameDt=dt;
+ if(banner.t>0)banner.t-=dt;
+ if(crashFlash>0)crashFlash-=dt;
+ if(slowmoT>0)slowmoT-=dt;
+ if(tdFlash>0)tdFlash-=dt;
+ if(shake>0)shake-=dt;
+ if(state==='TITLE'){
+  var bs=baseSegOf(P.pos),sp;
+  P.speed+=(0.5*MAX_HI-P.speed)*Math.min(1,dt*0.8);
+  sp=P.speed/MAX_HI;
+  P.x+=(Math.sin(tGlobal*0.5)*0.25-P.x)*Math.min(1,dt*1.5);
+  P.x-=dt*sp*bs.curve*CENTRIF*0.5;
+  P.pos+=P.speed*dt;if(P.pos>=trackLen)P.pos-=trackLen;
+  P.bgShift+=bs.curve*sp*dt*30;
+  if(input.startTap){input.startTap=false;startGame();}
+ } else if(state==='GAME'){
+  input.startTap=false;
+  var sdt=(slowmoT>0)?dt*SLOWMO_SCALE:dt;
+  if(!fly.active&&!netActive&&P.alt<=0&&P.speed>4000&&marks.liftZ&&P.pos>=marks.liftZ&&P.pos<marks.liftZ+4000) startFlight();
+  if(fly.active){ stepFlight(sdt); }
+  else {
+  var wrapped=stepCar(P,input,sdt,true);
+  distance+=P.speed*sdt;score+=P.speed*sdt*0.005;
+  if(wrapped){
+   stage++;buildFog(pal());
+   var bon=(rank()===1)?TIME_BONUS:TIME_BONUS_TRAIL;
+   time+=bon;
+   show('CHECKPOINT  +'+bon+'s',1.8);sfxJingle();
+  }
+  if(netActive){
+   netPace(dt);
+   netDrift(sdt);
+  }else{
+   rivalAI();
+   stepCar(V,rinput,sdt,false);
+  }
+  stepTraffic(sdt);
+  playerVsTraffic(sdt);
+  playerVsRival(sdt);
+  if(V.spinT<=0&&Math.abs(progress(P)-progress(V))<300&&Math.abs(P.x-V.x)<0.42){
+   var pd=(P.x<=V.x)?-1:1;
+   P.x=clamp(P.x+pd*3.0*sdt,-2.4,2.4);
+   if(!netActive)V.x=clamp(V.x-pd*3.0*sdt,-2.4,2.4);
+  }
+  var gp=progress(P)-progress(V),ldr=gp>=0?1:2;
+  if(ldr!==lastLeader&&Math.abs(gp)>PASS_HYST){
+   lastLeader=ldr;passCount++;
+   if(Math.abs(P.x-V.x)<1.2)sfxWhoosh();
+   show(ldr===1?'YOU TAKE THE LEAD':vName()+' TAKES THE LEAD',1.2);
+  }
+  }
+  time-=dt;
+  if(time<=0){time=0;state='OVER';overT=0;}
+ } else if(state==='OVER'){
+  P.speed+=(0-P.speed)*Math.min(1,dt*1.2);
+  P.pos+=P.speed*dt;if(P.pos>=trackLen){P.pos-=trackLen;P.lap++;}
+  if(netActive){
+   netPace(dt);
+   netDrift(dt);
+  }else{
+   rivalAI();
+   stepCar(V,rinput,dt,false);
+  }
+  stepTraffic(dt);
+  overT+=dt;
+  if(overT>0.8&&input.startTap){input.startTap=false;resetGame();}
+  else input.startTap=false;
+ }
+ updateAudio();
+}
+function crashTraffic(t){
+ t.crashed=2.4;t.spin=0;
+ t.wreckVx=(t.x>=0?1:-1)*2.4;                           /* keep sliding off to that side */
+ t.speed=Math.max(t.speed,P.speed+1400);               /* v17: lurch forward, careen AHEAD of the player (stay on screen) */
+ fx.push({pos:t.pos,x:t.x,t:0});
+ fx.push({pos:t.pos+30,x:t.x+(t.x>=0?0.18:-0.18),t:0});
+ if(t.touchT<TD_WINDOW){
+  takedowns++;time+=TD_BONUS;score+=500;P.surgeT=Math.max(P.surgeT,TD_SURGE);
+  show('TAKEDOWN!  +'+TD_BONUS+'s',1.5);
+  sfxCrash();sfxWhoosh();
+ }
+}
+function stepTraffic(dt){
+ var i,t,pseg,j,spr;
+ for(i=0;i<fx.length;i++)fx[i].t+=dt;
+ fx=fx.filter(function(b){return b.t<0.6;});
+ for(i=0;i<traffic.length;i++){
+  t=traffic[i];
+  t.touchT+=dt;
+  if(t.crashed>0){
+   t.crashed-=dt;
+   t.spin+=dt*15;                                       /* fast tumble */
+   t.speed+=(2200-t.speed)*Math.min(1,dt*0.5);          /* ease down slowly so it holds ahead while it tumbles */
+   t.x+=(t.wreckVx||0)*dt;t.wreckVx=(t.wreckVx||0)*(1-Math.min(1,dt*0.9));
+   t.x=clamp(t.x,-2.6,2.6);                              /* spun out on the shoulder */
+   t.pos+=t.speed*dt;if(t.pos>=trackLen)t.pos-=trackLen;
+   if(Math.random()<0.18*frameDt*60)fx.push({pos:t.pos,x:t.x+(Math.random()-0.5)*0.25,t:0});  /* v20: 10.8 puffs a second at any refresh rate */
+   if(t.crashed<=0){
+    t.pos=(P.pos+30000+i*900)%trackLen;if(t.pos<0)t.pos+=trackLen;
+    t.lane=clamp(t.lane,-0.55,0.55);
+    t.x=t.lane;t.speed=t.cruise;t.touchT=99;t.crashed=0;t.vx=0;t.wreckVx=0;
+   }
+   continue;
+  }
+  if(t.touchT<0.5){
+   t.x+=t.vx*dt;
+   t.vx*=Math.max(0,1-dt*1.6);
+  }else{
+   t.vx=0;
+   t.x+=(t.lane+Math.sin(tGlobal*0.5+t.seed*2.1)*0.06-t.x)*Math.min(1,dt*2.0);
+  }
+  if(Math.abs(t.x)>1.02)t.speed+=(1500-t.speed)*Math.min(1,dt*3);
+  else t.speed+=(t.cruise-t.speed)*Math.min(1,dt*0.8);
+  t.pos+=t.speed*dt;if(t.pos>=trackLen)t.pos-=trackLen;
+  if(Math.abs(t.x)>1.15){crashTraffic(t);continue;}
+  var q,o,od,odx,op;
+  for(q=i+1;q<traffic.length;q++){
+   o=traffic[q];if(o.crashed>0)continue;
+   od=((o.pos-t.pos)%trackLen+trackLen)%trackLen;if(od>trackLen/2)od-=trackLen;
+   if(Math.abs(od)>=240)continue;
+   odx=t.x-o.x;if(Math.abs(odx)>=0.34)continue;
+   op=(odx>=0?1:-1)*(0.34-Math.abs(odx))*2.4*dt;
+   t.x=clamp(t.x+op,-0.95,0.95);
+   o.x=clamp(o.x-op,-0.95,0.95);
+  }
+  pseg=baseSegOf(t.pos+PLAYER_Z);
+  for(j=0;j<pseg.sprites.length;j++){
+   spr=pseg.sprites[j];
+   if(!spr.solid)continue;
+   if(Math.abs(t.x-spr.off)<spr.hw+CAR_HW){crashTraffic(t);break;}
+  }
+ }
+}
+function playerVsTraffic(dt){
+ var i,t,d,dx,dir,rel,into,drifting,ahead,pushT,pushP;
+ if(P.alt>0)return;
+ for(i=0;i<traffic.length;i++){
+  t=traffic[i];
+  if(t.crashed>0)continue;
+  d=((t.pos-P.pos)%trackLen+trackLen)%trackLen;
+  if(d>trackLen/2)d-=trackLen;
+  dx=P.x-t.x;
+  if(Math.abs(d)>=270||Math.abs(dx)>=0.46)continue;
+  dir=(t.x>=P.x)?1:-1;
+  rel=P.speed/MAX_HI;
+  into=(input.steer*dir)>0.35;
+  drifting=P.drift>0.35;
+  ahead=d>-20;
+  /* v14: a takedown REQUIRES a drift into a car you are beside or ahead of
+     (drift + angle in). The impact fires HERE, at contact, while the victim
+     is on screen ahead, not later when it finally leaves the road behind. */
+  if(drifting&&into&&ahead&&rel>0.3){
+   t.vx=dir*(4.2+3.6*rel);
+   t.x+=dir*3.4*dt*(rel+0.3);
+   P.x=clamp(P.x-dir*0.4*dt,-2.4,2.4);
+   t.touchT=0;
+   slowmoT=SLOWMO_T;tdFlash=0.35;shake=0.7;
+   if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate([40,30,90]);
+  }else if(d>50&&P.speed>t.speed+400&&Math.abs(dx)<0.20&&P.collideT<=0){
+   /* straight ram into a slower car with no drift: your crash. drift, do not ram. */
+   P.speed=Math.max(700,P.speed*CRASH_KEEP);P.collideT=CRASH_COOLDOWN;P.crashes++;
+   crashFlash=0.55;shake=0.3;sfxCrash();
+   if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(60);
+   t.speed+=1500;t.touchT=0;
+  }else{
+   /* any other side touch: mutual shove, capped on the road, never a kill. */
+   pushT=1.7+1.5*rel;pushP=1.0+0.7*rel;
+   t.vx=0;
+   t.x=clamp(t.x+dir*pushT*dt,-0.85,0.85);
+   P.x=clamp(P.x-dir*pushP*dt,-2.4,2.4);
+   t.touchT=0;
+   if(shake<0.07)shake=0.07;
+  }
+ }
+}
+function playerVsRival(dt){
+ /* single-player only: the AI rival can be taken down. In a duel the peer car
+    is authoritative over its own state, so this stays off (netActive guard). */
+ if(netActive||P.alt>0||V.spinT>0)return;
+ var d=((V.pos-P.pos)%trackLen+trackLen)%trackLen;if(d>trackLen/2)d-=trackLen;
+ var dx=P.x-V.x;
+ if(Math.abs(d)>=270||Math.abs(dx)>=0.5)return;
+ var dir=(V.x>=P.x)?1:-1,rel=P.speed/MAX_HI;
+ /* a takedown of the rival needs a committed swerve into him (a drift, or a
+    hard steer) while alongside or just behind, at speed. He is your pace, so
+    the strict "must be ahead" rule is relaxed to catch him. */
+ var into=(input.steer*dir)>0.35,committed=P.drift>0.3||Math.abs(input.steer)>0.6,alongside=d>-160;
+ if(into&&committed&&alongside&&rel>0.4){
+  V.spinT=1.5;V.spin=0;V.spinVx=dir*2.2;
+  V.x=clamp(V.x+dir*0.12,-2.4,2.4);
+  P.x=clamp(P.x-dir*0.4*dt,-2.4,2.4);
+  slowmoT=SLOWMO_T;tdFlash=0.35;shake=0.7;
+  takedowns++;score+=500;P.surgeT=Math.max(P.surgeT,TD_SURGE);
+  show('RIVAL WRECKED!',1.6);sfxCrash();sfxWhoosh();
+  if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate([40,30,90]);
+ }else if(d>40&&P.speed>V.speed+300&&Math.abs(dx)<0.24){
+  /* solid rear contact: you shunt him forward and lose some speed (no clip-through) */
+  V.speed+=900;V.x=clamp(V.x+dir*0.4*dt,-2.4,2.4);
+  P.speed=Math.max(700,P.speed*0.78);
+  if(shake<0.2)shake=0.2;sfxCrash();
+  if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(40);
+ }else{
+  V.x=clamp(V.x+dir*(1.6+1.3*rel)*dt,-1.05,1.05);
+  P.x=clamp(P.x-dir*(1.1+0.7*rel)*dt,-2.4,2.4);
+  if(shake<0.08)shake=0.08;
+ }
+}
+/* Rear mirror model: pure logic so the gate chain can see it. Returns null
+   when DIABLO is not visible behind the player, else his mirror placement:
+   t (0 on the bumper, 1 at range edge), scale, and signed lateral offset. */
+function mirrorView(){
+ if(state!=='GAME'&&state!=='OVER')return null;
+ var dz=progress(V)-progress(P);
+ if(dz>=0||dz<-MIRROR_RANGE)return null;
+ var t=-dz/MIRROR_RANGE;
+ return {t:t,scale:1-0.82*t,dx:V.x-P.x};
+}
+
+/* ================= RENDER ================= */
+var cv=null,ctx=null,scale=1;
+var centerXs=new Array(DRAW_DIST+1);
+function drawRange(g,yBase,amp,col,off,wl){
+ g.fillStyle=col;g.beginPath();g.moveTo(-8,yBase);
+ var x,hgt;
+ for(x=-8;x<=W+8;x+=wl){
+  hgt=amp*(0.45+0.55*Math.abs(Math.sin((x+off)*0.011)*Math.cos((x+off)*0.005)));
+  g.lineTo(x+wl/2,yBase-hgt);g.lineTo(x+wl,yBase);
+ }
+ g.lineTo(W+8,yBase+40);g.lineTo(-8,yBase+40);g.closePath();g.fill();
+}
+function txt(g,s,x,y,size,col,align){
+ g.font='700 '+size+'px monospace';g.textAlign=align||'center';g.textBaseline='middle';
+ g.lineWidth=Math.max(2,Math.round(size/7));g.strokeStyle='#0a0c14';g.strokeText(s,x,y);
+ g.fillStyle=col;g.fillText(s,x,y);
+}
+function drawTitle(g){
+ g.fillStyle='rgba(6,8,22,0.55)';g.fillRect(0,0,W,H);
+ var lg=g.createLinearGradient(0,86,0,178);
+ lg.addColorStop(0,'#ffffff');lg.addColorStop(0.35,'#ffd23d');lg.addColorStop(0.7,'#ff7a3d');lg.addColorStop(1,'#c03bd8');
+ g.font='800 34px monospace';g.textAlign='center';g.textBaseline='middle';
+ g.lineWidth=5;g.strokeStyle='#141024';
+ g.strokeText('CANNONBALL',W/2,110);g.fillStyle=lg;g.fillText('CANNONBALL',W/2,110);
+ g.font='800 46px monospace';
+ g.strokeText('CLASH',W/2,152);g.fillText('CLASH',W/2,152);
+ txt(g,'COAST TO COAST SUPER SCALER GP',W/2,182,9,'#9fd8ff');
+ if(Math.floor(tGlobal*2)%2)txt(g,'TOUCH TO START',W/2,236,15,'#ffffff');
+ txt(g,'BEAT '+RIVAL_NAME+' TO EVERY CHECKPOINT',W/2,262,10,'#ff9ad4');
+ txt(g,'DRAG = STEER   HOLD = GAS',W/2,286,10,'#cfe6ff');
+ txt(g,'RIGHT PAD BRAKE (HOLD AT SPEED = DRIFT)',W/2,302,9,'#cfe6ff');
+ txt(g,'DRIFT INTO A CAR TO WRECK IT   GEARS AUTO',W/2,316,9,'#ff9ad4');
+ txt(g,'SNAIL ATTACK STUDIOS',W/2,H-40,10,'#7a86a8');
+ txt(g,'BUILD '+BUILD,W/2,H-24,11,'#ffd23d');
+}
+/* Draw one complete world view into the rect (ox,oy,vw,vh) from cam's seat.
+   cam = {pos,x,bgShift,prog}. own is the car fixed at the bottom of this
+   view; other (may be null) is projected onto the road at its true position.
+   ownSteer/ownBrake pick the fixed car's frame; ownBlink is crash blink. */
+function renderWorld(g,ox,oy,vw,vh,cam,own,other,ownSteer,ownBrake,ownBlink){
+ var PL=pal(),n=segments.length;
+ g.save();
+ g.beginPath();g.rect(ox,oy,vw,vh);g.clip();
+ g.translate(ox,oy);
+ var vcy=Math.round(vh*0.4);
+ var base=Math.floor(cam.pos/SEG_LEN);
+ var frac=(cam.pos%SEG_LEN)/SEG_LEN;
+ var camY=CAM_H+lerp(segY(base-1),segY(base),frac);
+ var camX=cam.x*ROAD_HW;
+ var sg=g.createLinearGradient(0,0,0,vcy+60);
+ sg.addColorStop(0,PL.skyT);sg.addColorStop(1,PL.skyB);
+ g.fillStyle=sg;g.fillRect(-4,0,vw+8,vcy+60);
+ var sunX=(vw*0.68-cam.bgShift*0.06)%(vw+160);if(sunX<-80)sunX+=vw+160;
+ var sunY=vcy-Math.round(vh*0.118);
+ g.fillStyle='rgba(255,255,255,0.22)';g.beginPath();g.arc(sunX,sunY,Math.round(vh*0.073),0,Math.PI*2);g.fill();
+ g.fillStyle=PL.sun;g.beginPath();g.arc(sunX,sunY,Math.round(vh*0.059),0,Math.PI*2);g.fill();
+ g.fillStyle=PL.cloud;
+ var ci,cx;
+ for(ci=0;ci<5;ci++){
+  cx=((ci*97+40-cam.bgShift*0.12)%(vw+120)+(vw+120))%(vw+120)-60;
+  g.fillRect(cx,10+ci*Math.round(vh*0.038),44+ci*6,7);g.fillRect(cx+8,5+ci*Math.round(vh*0.038),26,7);
+ }
+ drawRange(g,vcy+2,Math.round(42*vh/H),PL.mtn,cam.bgShift*0.22,64);
+ drawRange(g,vcy+2,Math.round(24*vh/H),PL.hill,cam.bgShift*0.4,44);
+ var maxy=vh,x=0,dx=-(baseSegOf(cam.pos).curve*frac);
+ var i,seg,z1,z2,s1,s2,sx1,sy1,w1,sx2,sy2,w2,y1w,y2w,b,alt,lw1,lw2;
+ for(i=0;i<DRAW_DIST;i++){
+  seg=segments[(base+i)%n];
+  z1=(base+i)*SEG_LEN-cam.pos;
+  z2=z1+SEG_LEN;
+  s1=CAM_DEPTH/Math.max(z1,1);
+  s2=CAM_DEPTH/Math.max(z2,1);
+  y1w=segY(base+i-1);y2w=segY(base+i);
+  sx1=Math.round(vw/2+s1*(x-camX)*(vw/2));
+  sy1=Math.round(vcy-s1*(y1w-camY)*(vh/2));
+  w1=Math.round(s1*ROAD_HW*(vw/2));
+  sx2=Math.round(vw/2+s2*((x+dx)-camX)*(vw/2));
+  sy2=Math.round(vcy-s2*(y2w-camY)*(vh/2));
+  w2=Math.round(s2*ROAD_HW*(vw/2));
+  seg.x1=sx1;seg.y1=sy1;seg.w1=w1;seg.s1=s1;seg.z1=z1;
+  seg.x2=sx2;seg.y2=sy2;seg.w2=w2;
+  seg.clip=maxy;
+  centerXs[i]=x;
+  x+=dx;dx+=seg.curve;
+  if(z1<=CAM_DEPTH*8||sy2>=maxy)continue;
+  b=FOGPAL[Math.min(31,Math.floor(i/DRAW_DIST*32))];
+  alt=(seg.i%8)<4;
+  g.fillStyle=alt?b.gl:b.gd;
+  g.fillRect(-4,sy2,vw+8,sy1-sy2+1);
+  trap(g,sx1,sy1,Math.round(w1*1.16),sx2,sy2,Math.round(w2*1.16),alt?b.ml:b.md);
+  trap(g,sx1,sy1,w1,sx2,sy2,w2,alt?b.rl:b.rd);
+  if(alt&&w1>6){
+   lw1=Math.max(1,Math.round(w1*0.02));lw2=Math.max(1,Math.round(w2*0.02));
+   trap(g,sx1-Math.round(w1/3),sy1,lw1,sx2-Math.round(w2/3),sy2,lw2,b.ln);
+   trap(g,sx1+Math.round(w1/3),sy1,lw1,sx2+Math.round(w2/3),sy2,lw2,b.ln);
+  }
+  if(seg.padCue&&w1>3&&!seg.pad){
+   if((Math.floor(tGlobal*7-i*0.5)%2)===0){
+    var ccol=seg.padCue==='boost'?'#37e0ff':(seg.padCue==='jump'?'#ffd23d':'#7fc4ff');
+    trap(g,sx1,sy1,Math.round(w1*0.28),sx2,sy2,Math.round(w2*0.28),ccol);
+   }
+  }
+  if(seg.pad&&w1>1.5){
+   var pfl=Math.floor(tGlobal*8+i*0.5)%2;
+   trap(g,sx1,sy1,Math.round(w1*0.72),sx2,sy2,Math.round(w2*0.72),
+    seg.pad==='boost'?(pfl?'#37e0ff':'#1899c0'):(pfl?'#ffd23d':'#d09a10'));
+   trap(g,sx1,sy1,Math.max(1,Math.round(w1*0.2)),sx2,sy2,Math.max(1,Math.round(w2*0.2)),
+    seg.pad==='boost'?'#bff4ff':'#fff2c0');
+  }
+  if((seg.water||seg.sea)&&w1>1.5){
+   trap(g,sx1,sy1,w1,sx2,sy2,w2,(seg.i%2)?'#2a6ac8':'#2e78dc');
+   if(Math.floor(tGlobal*6+seg.i)%4===0)
+    trap(g,sx1,sy1,Math.round(w1*0.86),sx2,sy2,Math.round(w2*0.86),'#7fc4ff');
+  }
+  if(sy2<maxy)maxy=sy2;
+ }
+ centerXs[DRAW_DIST]=x;
+ var sj,spr,ss,dw,dh,dxp,top,vis;
+ for(i=DRAW_DIST-1;i>0;i--){
+  seg=segments[(base+i)%n];
+  if(!seg.sprites.length)continue;
+  for(sj=0;sj<seg.sprites.length;sj++){
+   spr=seg.sprites[sj];ss=seg.s1;
+   if(seg.z1<=(spr.nearCull||CAM_DEPTH*8))continue;
+   var im=spr.img,skn=SPR.skins[(stage-1)%SPR.skins.length];
+   if(skn&&skn[spr.name])im=skn[spr.name];
+   dw=im.width*SPR_UNIT*(spr.scale||1)*ss*(vw/2);
+   if(dw<1.5)continue;
+   dh=im.height*SPR_UNIT*(spr.scale||1)*ss*(vw/2);
+   dxp=seg.x1+ss*(spr.off*ROAD_HW)*(vw/2)-dw/2;
+   top=seg.y1-dh;
+   if(top>=seg.clip)continue;
+   vis=Math.min(dh,seg.clip-top);
+   g.drawImage(im,0,0,im.width,im.height*(vis/dh),dxp,top,dw,vis);
+  }
+ }
+ if(other&&other.length){
+  var eArr=[],ei,oc,dz;
+  for(ei=0;ei<other.length;ei++){
+   oc=other[ei];
+   dz=oc.prog-cam.prog;
+   if(dz>PLAYER_Z*0.6&&dz<(DRAW_DIST-2)*SEG_LEN){oc.dz=dz;eArr.push(oc);}
+  }
+  eArr.sort(function(a,b){return b.dz-a.dz;});
+  for(ei=0;ei<eArr.length;ei++){
+   oc=eArr[ei];dz=oc.dz;
+   var u=(dz+frac*SEG_LEN)/SEG_LEN,oi=Math.floor(u),ot=u-oi;
+   if(oi<1||oi>=DRAW_DIST-1)continue;
+   var os=CAM_DEPTH/dz;
+   var ocx=lerp(centerXs[oi],centerXs[oi+1],ot);
+   var oyw=lerp(segY(base+oi-1),segY(base+oi),ot);
+   var osx=vw/2+os*(ocx+oc.x*ROAD_HW-camX)*(vw/2);
+   var osy=vcy-os*(oyw-camY)*(vh/2);
+   if(oc.alt)osy-=oc.alt*3*os*(vh/2);
+   var oimg=oc.img;
+   var odw=oimg.width*SPR_UNIT*os*(vw/2)*(oc.sc||1);
+   var odh=oimg.height*SPR_UNIT*os*(vw/2)*(oc.sc||1);
+   var oseg=segments[(base+oi)%n];
+   var otop=osy-odh;
+   if(odw>2&&otop<oseg.clip){
+    var ovis=Math.min(odh,oseg.clip-otop);
+    g.drawImage(oimg,0,0,oimg.width,oimg.height*(ovis/odh),
+     Math.round(osx-odw/2),Math.round(otop),Math.round(odw),Math.round(ovis));
+   }
+  }
+ }
+ var sIdx=(state==='OVER'&&own===P)?2:(ownSteer<-0.65?0:(ownSteer<-0.2?1:(ownSteer>0.65?4:(ownSteer>0.2?3:2))));
+ if(own.drift>0.4)sIdx=ownSteer<0?0:(ownSteer>0?4:sIdx);
+ var ph=own.speed>80?Math.floor(own.pos/240)%2:0;
+ var carImg=SPR.car[sIdx][ownBrake?1:0][ph];
+ var CS=2.0,cw=carImg.width*CS,ch=carImg.height*CS;
+ var bounce=own.speed>200?Math.round(Math.sin(own.pos*0.02)*2):0;
+ var carY=vh-100-bounce;
+ if(own.alt>0){
+  var shw=Math.max(10,Math.round(cw*0.7*(1-own.alt/260)));
+  g.fillStyle='rgba(10,10,18,0.45)';
+  g.fillRect(Math.round(vw/2-shw/2),carY+ch-8,shw,5);
+  carY-=Math.round(own.alt*0.14);
+ }else if(baseSegOf(own.pos+PLAYER_Z).water&&own.speed>1200){
+  g.fillStyle='rgba(190,225,255,0.85)';
+  var spf=Math.floor(tGlobal*30)%2;
+  g.fillRect(Math.round(vw/2-cw/2)-10,carY+ch-16-(spf?4:0),8,10);
+  g.fillRect(Math.round(vw/2+cw/2)+2,carY+ch-16-(spf?0:4),8,10);
+ }
+ if(own.drift>0.4&&own.speed>1200&&own.alt<=0){
+  var smf=Math.floor(tGlobal*26)%2;
+  g.fillStyle='rgba(220,220,228,0.7)';
+  g.fillRect(Math.round(vw/2-cw/2)-8,carY+ch-12-(smf?3:0),9,8);
+  g.fillRect(Math.round(vw/2+cw/2)-1,carY+ch-12-(smf?0:3),9,8);
+ }
+ if(!ownBlink){
+  g.drawImage(carImg,Math.round(vw/2-cw/2),carY,Math.round(cw),Math.round(ch));
+  if(own===P&&P.surgeT>0){
+   var fl=Math.floor(tGlobal*24)%2;
+   g.fillStyle=fl?'#ffd23d':'#ff7a2a';
+   g.fillRect(Math.round(vw/2-26),carY+ch-14,8,6+(fl?3:0));
+   g.fillRect(Math.round(vw/2+18),carY+ch-14,8,6+(fl?0:3));
+  }
+ }
+ g.restore();
+}
+/* True rendered rear view (v11 rewrite): a compact backward projector that
+   parallels the forward renderer EXACTLY (world x curve accumulation, road
+   half width s*ROAD_HW*scale, no stray divisors), so the strip reads as real
+   road. MIR_CURVE flips the perceived bend direction if the eye disagrees. */
+var MIR_CURVE=-1;      /* bend sign knob */
+var MIR_FOV=1.1;       /* v17: wider backward FOV so it shows distance, not a magnified near slab */
+var MIR_VSPREAD=11500; /* look-down / foreground amount */
+var MIR_NEAR=240;      /* v17: nearest road shown, units behind (skips the tarmac on your bumper) */
+var MIR_H=54;          /* mirror glass height */
+var MIR_HOR=14;        /* v20: horizon drop inside the glass, px below its top (was the hardcoded MY+14) */
+var MIR_CAR=1.35;      /* v20: car size divisor in the glass (was the hardcoded /1.35) */
+function drawMirror(g){
+ var MW=130,MH=MIR_H,MX=Math.round(W/2-MW/2),MY=4,PL=pal();
+ g.fillStyle='#8f97a4';g.fillRect(MX-2,MY-2,MW+4,MH+4);
+ g.fillStyle='#10121a';g.fillRect(MX-1,MY-1,MW+2,MH+2);
+ g.save();g.beginPath();g.rect(MX,MY,MW,MH);g.clip();
+ var n=segments.length;
+ var mbase=Math.floor(P.pos/SEG_LEN),mfrac=(P.pos%SEG_LEN)/SEG_LEN;
+ var camXm=P.x*ROAD_HW,MD=CAM_DEPTH*MIR_FOV,MSC=MW/2;
+ var horizonY=MY+MIR_HOR,bottomY=MY+MH,MSEG=Math.floor(MIRROR_RANGE/SEG_LEN);
+ var skn=SPR.skins[(stage-1)%SPR.skins.length];
+ /* sky and a distant ridge behind the horizon line */
+ var sg=g.createLinearGradient(0,MY,0,horizonY+6);
+ sg.addColorStop(0,PL.skyT);sg.addColorStop(1,PL.skyB);
+ g.fillStyle=sg;g.fillRect(MX,MY,MW,horizonY-MY+6);
+ g.fillStyle=PL.mtn;g.fillRect(MX,horizonY-2,MW,3);
+ /* boundary tables: world centerline (xw), screen center (cx), screen y
+    (cy), road half width (cw), built once, far tables reused for objects */
+ var k,seg,z,s,xw=[],cx=[],cy=[],cw=[],xacc=0,dxacc=0;
+ for(k=0;k<=MSEG;k++){
+  z=(k+mfrac)*SEG_LEN+MIR_NEAR;s=MD/z;
+  xw[k]=xacc;
+  cx[k]=MX+MW/2+s*(xacc-camXm)*MSC;
+  cy[k]=horizonY+s*MIR_VSPREAD;
+  cw[k]=s*ROAD_HW*MSC;
+  seg=segments[((mbase-k-1)%n+n)%n];
+  dxacc+=seg.curve*MIR_CURVE;xacc+=dxacc;
+ }
+ /* ground and road, far to near */
+ for(k=MSEG;k>=1;k--){
+  seg=segments[((mbase-k)%n+n)%n];
+  if(cy[k-1]<=cy[k])continue;
+  g.fillStyle=(seg.i%8)<4?PL.grassL:PL.grassD;
+  g.fillRect(MX,Math.round(cy[k]),MW,Math.max(1,Math.round(cy[k-1]-cy[k])+1));
+  trap(g,cx[k],cy[k],cw[k],cx[k-1],cy[k-1],cw[k-1],(seg.i%8)<4?PL.roadL:PL.roadD);
+  if((seg.i%8)<4&&cw[k]>3){
+   trap(g,cx[k],cy[k],Math.max(1,cw[k]*0.03),cx[k-1],cy[k-1],Math.max(1,cw[k-1]*0.03),PL.lane);
+  }
+  if(seg.pad){
+   trap(g,cx[k],cy[k],cw[k]*0.7,cx[k-1],cy[k-1],cw[k-1]*0.7,seg.pad==='boost'?'#37e0ff':'#ffd23d');
+  }else if(seg.water){
+   trap(g,cx[k],cy[k],cw[k],cx[k-1],cy[k-1],cw[k-1],'#2e78dc');
+  }
+ }
+ /* project an object at distance zb behind, lateral ox, onto the road */
+ function proj(zb,ox){
+  if(zb<=MIR_NEAR||zb>=MIRROR_RANGE)return null;
+  var kf=clamp((zb-MIR_NEAR)/SEG_LEN-mfrac,0,MSEG-0.001);
+  var k0=Math.floor(kf),tf=kf-k0,ss=MD/zb;
+  var xwAt=lerp(xw[k0],xw[k0+1],tf);
+  return {sx:MX+MW/2+ss*(xwAt+ox*ROAD_HW-camXm)*MSC,sy:lerp(cy[k0],cy[k0+1],tf),s:ss};
+ }
+ /* roadside scenery behind, mid range only to keep the strip legible */
+ var i,j,spr,im,pr,dw,dh;
+ for(k=MSEG;k>=2;k--){
+  seg=segments[((mbase-k)%n+n)%n];
+  if(!seg.sprites.length)continue;
+  pr=proj((k+mfrac)*SEG_LEN+40,0);
+  if(!pr)continue;
+  for(j=0;j<seg.sprites.length;j++){
+   spr=seg.sprites[j];
+   im=(skn&&skn[spr.name])?skn[spr.name]:spr.img;
+   dw=im.width*SPR_UNIT*(spr.scale||1)*pr.s*MSC/1.8;
+   if(dw<2||dw>MW*0.6)continue;
+   dh=im.height*SPR_UNIT*(spr.scale||1)*pr.s*MSC/1.8;
+   var spx=cx[k]+pr.s*(spr.off*ROAD_HW)*MSC;
+   g.drawImage(im,Math.round(spx-dw/2),Math.round(pr.sy-dh),Math.round(dw),Math.round(dh));
+  }
+ }
+ /* traffic behind, then the rival, on the road at true depth */
+ var t,tmd,tp,tim,tw,th;
+ for(i=0;i<traffic.length;i++){
+  t=traffic[i];
+  tmd=((P.pos-t.pos)%trackLen+trackLen)%trackLen;if(tmd>trackLen/2)tmd-=trackLen;
+  tp=proj(tmd,t.x);if(!tp)continue;
+  tim=SPR.traffic[t.type][t.tint].rear;
+  tw=tim.width*SPR_UNIT*tp.s*MSC/MIR_CAR;th=tim.height*SPR_UNIT*tp.s*MSC/MIR_CAR;
+  if(tw>2)g.drawImage(tim,Math.round(tp.sx-tw/2),Math.round(tp.sy-th),Math.round(tw),Math.round(th));
+ }
+ var mv=mirrorView();
+ if(mv){
+  var rp=proj(progress(P)-progress(V),V.x);
+  if(rp){
+   var rf=SPR.rivalFront,rw2=rf.width*SPR_UNIT*rp.s*MSC/MIR_CAR,rh2=rf.height*SPR_UNIT*rp.s*MSC/MIR_CAR;
+   if(rw2>2)g.drawImage(rf,Math.round(rp.sx-rw2/2),Math.round(rp.sy-rh2),Math.round(rw2),Math.round(rh2));
+  }
+ }
+ g.restore();
+ g.fillStyle='rgba(255,255,255,0.10)';g.fillRect(MX,MY,MW,3);
+}
+function drawHUD(g){
+ if(fly.active)return;
+ var PL=pal();
+ if(state==='GAME'||state==='OVER'){
+  var rk=rank();
+  var gapS=(progress(P)-progress(V))/MAX_HI;
+  drawMirror(g);
+  txt(g,rk===1?'1ST':'2ND',W-10,14,14,rk===1?'#ffd23d':'#cfe6ff','right');
+  txt(g,vName()+' '+(gapS>=0?'+':'')+gapS.toFixed(1)+'s',W-10,30,10,gapS>=0?'#9fd8a8':'#ff9ad4','right');
+  if(takedowns>0)txt(g,'TD x'+takedowns,10,14,11,'#ff8a2a','left');
+  var tcol=time<10?((Math.floor(tGlobal*4)%2)?'#ff4040':'#ffd23d'):'#ffffff';
+  txt(g,''+Math.ceil(time),W/2,58,26,tcol);
+  txt(g,'ST '+stage+'  '+PL.name,W/2,78,9,'#cfe6ff');
+  txt(g,'SCORE '+Math.floor(score),W/2,91,9,'#9fd8a8');
+  txt(g,''+Math.round(P.speed*KMH),64,H-84,24,'#ffffff','left');
+  txt(g,'km/h',64,H-66,10,'#cfe6ff','left');
+  g.fillStyle='rgba(10,16,32,0.55)';
+  g.fillRect(6,H-58,86,52);g.fillRect(W-92,H-58,86,52);
+  g.strokeStyle='#4aa0ff';g.lineWidth=2;
+  g.strokeRect(6,H-58,86,52);g.strokeRect(W-92,H-58,86,52);
+  txt(g,'AUTO',49,H-40,10,'#8fb0d8');
+  txt(g,P.gear?'HI':'LO',49,H-22,16,P.gear?'#ffd23d':'#7fe08a');
+  txt(g,'BRAKE',W-49,H-40,13,input.brake?'#ff6a5a':'#cfe6ff');
+  if(P.drift>0.35&&Math.floor(tGlobal*12)%2)txt(g,'DRIFT!',W-49,H-19,13,'#ff8a2a');
+  else txt(g,'HOLD = DRIFT',W-49,H-19,8,'#8fb0d8');
+ }
+ if(banner.t>0&&state==='GAME'){
+  var big=slowmoT>0&&banner.text.charAt(0)==='T';
+  var bcol=big?((Math.floor(tGlobal*16)%2)?'#ffffff':'#ff8a2a'):'#ffd23d';
+  txt(g,banner.text,W/2,150,big?30:22,bcol);
+ }
+ if(state==='TITLE')drawTitle(g);
+ if(state==='OVER'){
+  txt(g,'TIME UP',W/2,150,34,'#ff5540');
+  txt(g,'SCORE '+Math.floor(score),W/2,186,16,'#ffffff');
+  txt(g,(distance*M_PER_UNIT/1000).toFixed(1)+' km   FINISHED '+(rank()===1?'1ST':'2ND'),W/2,208,13,'#cfe6ff');
+  if(overT>0.8&&Math.floor(tGlobal*2)%2)txt(g,'TOUCH FOR TITLE',W/2,250,12,'#ffd23d');
+ }
+ if(lastError)txt(g,('ERR: '+lastError).slice(0,52),W/2,H-6,9,'#ff5050');
+}
+function worldEnts(){
+ var e=[],i,t,d,pp=progress(P);
+ var osi=V.vsteer<-0.65?0:(V.vsteer<-0.2?1:(V.vsteer>0.65?4:(V.vsteer>0.2?3:2)));
+ var oph=V.speed>80?Math.floor(V.pos/240)%2:0;
+ e.push({prog:progress(V),x:V.x,alt:V.alt,img:V.spinT>0?SPR.rivalSpin[Math.floor(V.spin)%4]:SPR.rival[osi][V.vbrake?1:0][oph]});
+ for(i=0;i<traffic.length;i++){
+  t=traffic[i];
+  d=((t.pos-P.pos)%trackLen+trackLen)%trackLen;
+  if(d>trackLen/2)d-=trackLen;
+  var st=SPR.traffic[t.type][t.tint];
+  e.push({prog:pp+d,x:t.x,img:t.crashed>0?st.spin[Math.floor(t.spin)%4]:st.rear});
+ }
+ for(i=0;i<fx.length;i++){
+  d=((fx[i].pos-P.pos)%trackLen+trackLen)%trackLen;
+  if(d>trackLen/2)d-=trackLen;
+  e.push({prog:pp+d,x:fx[i].x,img:SPR.boom[Math.min(2,Math.floor(fx[i].t/0.2))],sc:2.2});
+ }
+ return e;
+}
+/* ============================================================
+   v18 LIFTOFF: the flight sub-mode (After Burner style). It
+   suspends the road race and resumes on landing. Single player
+   focus; net duels never enter it. Pure additive block. */
+function sfxLift(){ sfxTone(170,0.55,'sawtooth',0.14,1000); }
+function sfxLand(){ sfxTone(760,0.4,'sawtooth',0.12,-420); }
+function sfxShot(){ if(!audio.ok)return; var t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
+  o.type='square';o.frequency.setValueAtTime(920,t);o.frequency.exponentialRampToValueAtTime(300,t+0.05);
+  g.gain.setValueAtTime(0.05,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+  o.connect(g);g.connect(master);o.start(t);o.stop(t+0.07); }
+function sfxEShot(){ if(!audio.ok)return; var t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
+  o.type='sawtooth';o.frequency.setValueAtTime(520,t);o.frequency.exponentialRampToValueAtTime(180,t+0.08);
+  g.gain.setValueAtTime(0.045,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+  o.connect(g);g.connect(master);o.start(t);o.stop(t+0.11); }
+function sfxBoom(){ if(!audio.ok)return; var t=AC.currentTime,s=AC.createBufferSource();s.buffer=noiseBuf;
+  var lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(1200,t);lp.frequency.exponentialRampToValueAtTime(200,t+0.25);
+  var g=AC.createGain();g.gain.setValueAtTime(0.26,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+  s.connect(lp);lp.connect(g);g.connect(master);s.start(t);s.stop(t+0.3); }
+
+function startFlight(){
+  fly.active=true;fly.phase='RISE';fly.t=0;
+  fly.cx=W/2;fly.cy=H*0.55;fly.vx=0;fly.vy=0;
+  fly.hp=FLY_HP;fly.stall=0;fly.gun=0;fly.fireCd=0;fly.spawnCd=0.7;
+  fly.foes.length=0;fly.bul.length=0;fly.ebul.length=0;fly.boom.length=0;
+  fly.kills=0;fly.banner=2.2;
+  fly.posRate=MAX_HI;                    /* fly at top pace so the set piece is never a pace penalty (gap preserved) */
+  P.alt=0;P.vy=0;shake=0.5;sfxLift();
+}
+function foeScale(fo){ return lerp(0.25,2.7,1-fo.z); }
+function spawnFoe(){ fly.foes.push({z:1,lane:(Math.random()*2-1)*0.85,hp:2,fired:false,sx:W/2,sy:H*FLY_HORIZON,dead:false}); }
+function fireVulcan(){
+  fly.bul.push({x:fly.cx-9,y:fly.cy-8,vx:fly.vx*0.25,vy:-FLY_BULLET_V});
+  fly.bul.push({x:fly.cx+9,y:fly.cy-8,vx:fly.vx*0.25,vy:-FLY_BULLET_V});
+  sfxShot();
+}
+function hitCraft(){
+  if(fly.stall>0)return;
+  fly.hp=Math.max(1,fly.hp-FLY_HIT_DMG);
+  fly.stall=FLY_STALL;tdFlash=0.4;shake=0.7;fly.vx*=0.3;fly.vy*=0.3;sfxCrash();
+  if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate([60,40,60]);
+}
+function flightBullets(dt){
+  var i,b,jj,fo;
+  for(i=fly.bul.length-1;i>=0;i--){ b=fly.bul[i];b.x+=b.vx*dt;b.y+=b.vy*dt;
+    if(b.y<-12){ fly.bul.splice(i,1);continue; }
+    for(jj=fly.foes.length-1;jj>=0;jj--){ fo=fly.foes[jj];if(fo.dead)continue;
+      var rw=22*foeScale(fo);
+      if(Math.abs(b.x-fo.sx)<rw*0.6&&Math.abs(b.y-fo.sy)<rw*0.6){
+        fo.hp--;fly.bul.splice(i,1);
+        if(fo.hp<=0){ fo.dead=true;fly.boom.push({x:fo.sx,y:fo.sy,t:0,s:foeScale(fo)});fly.kills++;sfxBoom(); }
+        break;
+      }
+    }
+  }
+  for(i=fly.ebul.length-1;i>=0;i--){ b=fly.ebul[i];b.x+=b.vx*dt;b.y+=b.vy*dt;
+    if(b.y>H+12||b.x<-12||b.x>W+12){ fly.ebul.splice(i,1);continue; }
+    if(Math.abs(b.x-fly.cx)<12&&Math.abs(b.y-fly.cy)<12){ hitCraft();fly.ebul.splice(i,1); }
+  }
+  for(i=fly.boom.length-1;i>=0;i--){ fly.boom[i].t+=dt;if(fly.boom[i].t>0.5)fly.boom.splice(i,1); }
+}
+function flightFoes(dt,landing){
+  var HZ=H*FLY_HORIZON;
+  for(var i=fly.foes.length-1;i>=0;i--){ var fo=fly.foes[i];
+    if(fo.dead){ fly.foes.splice(i,1);continue; }
+    fo.z-=FLY_FOE_V*dt*(landing?1.8:1);
+    var t=1-fo.z;
+    fo.sx=W/2+fo.lane*(W*0.52)*t;
+    fo.sy=HZ-6+t*(H*0.58);
+    var sc=foeScale(fo);
+    if(!landing&&!fo.fired&&fo.z<0.55&&fo.z>0.32&&Math.random()<1-Math.pow(0.95,frameDt*60)){  /* v20: the 60 Hz odds (5% a 60th) at any refresh rate */
+      fo.fired=true;var ang=Math.atan2(fly.cy-fo.sy,fly.cx-fo.sx);
+      fly.ebul.push({x:fo.sx,y:fo.sy,vx:Math.cos(ang)*270,vy:Math.sin(ang)*270});sfxEShot();
+    }
+    if(!landing&&sc>1.15&&Math.abs(fo.sx-fly.cx)<18*sc&&Math.abs(fo.sy-fly.cy)<14*sc){
+      hitCraft();fo.dead=true;fly.boom.push({x:fo.sx,y:fo.sy,t:0,s:sc});continue;
+    }
+    if(fo.z<=0){ fly.foes.splice(i,1); }
+  }
+}
+function stepFlight(dt){
+  fly.t+=dt;
+  var dpos=(fly.posRate||6000)*dt;
+  P.pos+=dpos;if(P.pos>=trackLen){P.pos-=trackLen;P.lap++;}
+  V.pos+=dpos;if(V.pos>=trackLen){V.pos-=trackLen;V.lap++;}  /* DIABLO flies alongside: the set piece stays fair */
+  distance+=dpos;score+=dpos*0.005;
+  if(fly.banner>0)fly.banner-=dt;
+  var HZ=H*FLY_HORIZON;
+  if(fly.phase==='RISE'){
+    fly.gun=Math.min(1,fly.gun+dt/FLY_RISE_T);
+    if(fly.t>=FLY_RISE_T){ fly.phase='FLY';fly.t=0; }
+    return;
+  }
+  if(fly.phase==='LAND'){
+    fly.gun=Math.max(0,fly.gun-dt/FLY_LAND_T);
+    flightBullets(dt);flightFoes(dt,true);
+    if(fly.t>=FLY_LAND_T){ fly.active=false;P.x=0;P.speed=Math.max(P.speed,MAX_LO);sfxLand(); }
+    return;
+  }
+  if(fly.t>=FLY_DUR){ fly.phase='LAND';fly.t=0; return; }
+  if(fly.stall>0){ fly.stall-=dt; }
+  else {
+    fly.vx+=(input.steer||0)*FLY_ACCEL*dt;
+    fly.vy+=(input.steerY||0)*FLY_ACCEL*dt;
+    if(input.brake&&fly.fireCd<=0){ fireVulcan();fly.fireCd=FLY_FIRE_CD; }
+  }
+  fly.fireCd-=dt;
+  var damp=Math.pow(FLY_DAMP,dt*60);
+  fly.vx*=damp;fly.vy*=damp;
+  fly.cx+=fly.vx*dt;fly.cy+=fly.vy*dt;
+  fly.cx=clamp(fly.cx,20,W-20);fly.cy=clamp(fly.cy,H*0.40,H-46);
+  fly.spawnCd-=dt;
+  if(fly.spawnCd<=0){ spawnFoe();fly.spawnCd=FLY_SPAWN*(0.7+Math.random()*0.7); }
+  flightBullets(dt);flightFoes(dt,false);
+}
+function drawBoom(g,x,y,t,s){
+  var r=(6+t*44)*s;g.globalAlpha=Math.max(0,1-t*2);
+  g.fillStyle='#ff6a2a';g.beginPath();g.arc(x,y,r,0,6.283);g.fill();
+  g.fillStyle='#ffd23d';g.beginPath();g.arc(x,y,r*0.55,0,6.283);g.fill();
+  g.globalAlpha=1;
+}
+function drawFoe(g,x,y,sc){
+  /* an enemy craft is the actual rival car (front view) flying at you, with
+     small swept wings so it reads as airborne. Same world, not a new one. */
+  var img=SPR.rivalFront;
+  if(!img){ g.fillStyle='#2a2f38';g.fillRect(x-8*sc,y-6*sc,16*sc,12*sc);return; }
+  var w=img.width*sc, hh=img.height*sc;
+  g.fillStyle='#141b24';
+  g.fillRect(Math.round(x-w*0.72),Math.round(y-hh*0.02),Math.round(w*0.30),Math.round(hh*0.16));
+  g.fillRect(Math.round(x+w*0.42),Math.round(y-hh*0.02),Math.round(w*0.30),Math.round(hh*0.16));
+  g.drawImage(img,Math.round(x-w/2),Math.round(y-hh/2),Math.round(w),Math.round(hh));
+}
+function drawCraft(g,x,y,gun,stalled){
+  /* the actual player car (the same rear view sprite you drive) with wings
+     that grow as it lifts off, guns from the hood, and a thruster. */
+  var ph=Math.floor(tGlobal*12)%2;
+  var img=(SPR.car&&SPR.car[2]&&SPR.car[2][0])?SPR.car[2][0][ph]:null;
+  var CS=2.0, cw=img?img.width*CS:26, ch=img?img.height*CS:20;
+  var wl=gun*cw*0.85;
+  g.fillStyle='#c22a30';
+  g.beginPath();g.moveTo(x-cw*0.34,y-ch*0.05);g.lineTo(x-cw*0.34-wl,y+ch*0.18);g.lineTo(x-cw*0.34-wl*0.55,y+ch*0.40);g.lineTo(x-cw*0.30,y+ch*0.22);g.closePath();g.fill();
+  g.beginPath();g.moveTo(x+cw*0.34,y-ch*0.05);g.lineTo(x+cw*0.34+wl,y+ch*0.18);g.lineTo(x+cw*0.34+wl*0.55,y+ch*0.40);g.lineTo(x+cw*0.30,y+ch*0.22);g.closePath();g.fill();
+  g.fillStyle='#ffb020';
+  var tf=(Math.floor(tGlobal*30)%2)?4:1;
+  g.fillRect(Math.round(x-4),Math.round(y+ch*0.5-2),8,3+tf);
+  if(gun>0.3){
+    g.fillStyle='#3a3f48';
+    g.fillRect(Math.round(x-cw*0.30),Math.round(y-ch*0.5-4),3,7);
+    g.fillRect(Math.round(x+cw*0.30-3),Math.round(y-ch*0.5-4),3,7);
+    if(input.brake&&fly.stall<=0&&(Math.floor(tGlobal*30)%2===0)){
+      g.fillStyle='#ffe24a';
+      g.fillRect(Math.round(x-cw*0.30),Math.round(y-ch*0.5-9),3,5);
+      g.fillRect(Math.round(x+cw*0.30-3),Math.round(y-ch*0.5-9),3,5);
+    }
+  }
+  if(img) g.drawImage(img,Math.round(x-cw/2),Math.round(y-ch/2),Math.round(cw),Math.round(ch));
+  else { g.fillStyle='#e42a2a';g.fillRect(Math.round(x-11),Math.round(y-9),22,18); }
+  if(stalled&&(Math.floor(tGlobal*20)%2===0)){ g.fillStyle='rgba(255,120,120,0.5)';g.fillRect(Math.round(x-cw/2),Math.round(y-ch/2),Math.round(cw),Math.round(ch)); }
+}
+function renderFlight(g){
+  /* OVERLAY only: renderWorld has already drawn the real track (the sea
+     causeway) beneath with the player hidden. Here we lift the actual car
+     off it, fly it, and draw the enemies and HUD on top. No separate scene. */
+  var j;
+  var roadX=W/2, roadY=H-100;                 /* where the car sits on the road */
+  var cx=fly.cx, cy=fly.cy, wing=fly.gun;
+  var dx=cx, dy=cy;
+  if(fly.phase==='RISE'){ var tr=Math.max(0,Math.min(1,fly.t/FLY_RISE_T)); var e=tr*tr*(3-2*tr);
+    dx=roadX+(cx-roadX)*e; dy=roadY+(cy-roadY)*e; }
+  else if(fly.phase==='LAND'){ var tl=Math.max(0,Math.min(1,fly.t/FLY_LAND_T)); var e2=tl*tl*(3-2*tl);
+    dx=cx+(roadX-cx)*e2; dy=cy+(roadY-cy)*e2; }
+  var lift=Math.max(0,Math.min(1,(roadY-dy)/150));
+  if(lift>0.03){                              /* a shrinking shadow on the water sells the takeoff */
+    g.save();g.globalAlpha=0.30*(1-lift*0.5);g.fillStyle='#04060c';
+    var shw=Math.max(6,20*(1-lift*0.55));
+    g.beginPath();g.ellipse(roadX+(dx-roadX)*0.35, roadY+16, shw, shw*0.34, 0,0,6.283);g.fill();g.restore();
+  }
+  for(j=0;j<fly.foes.length;j++){ drawFoe(g,fly.foes[j].sx,fly.foes[j].sy,foeScale(fly.foes[j])); }
+  g.fillStyle='#ff5a4a';
+  for(j=0;j<fly.ebul.length;j++){ g.fillRect(fly.ebul[j].x-2,fly.ebul[j].y-2,4,4); }
+  g.fillStyle='#ffe24a';
+  for(j=0;j<fly.bul.length;j++){ g.fillRect(fly.bul[j].x-1,fly.bul[j].y-6,3,8); }
+  drawCraft(g,dx,dy,wing,fly.stall>0);
+  for(j=0;j<fly.boom.length;j++){ drawBoom(g,fly.boom[j].x,fly.boom[j].y,fly.boom[j].t,fly.boom[j].s); }
+  /* flight HUD */
+  g.fillStyle='#20242c';g.fillRect(8,H-16,92,8);
+  g.fillStyle=fly.hp>40?'#4aff7a':'#ff5a4a';g.fillRect(8,H-16,92*(fly.hp/FLY_HP),8);
+  g.fillStyle='#cfe0f5';g.font='7px monospace';g.textAlign='left';g.fillText('HULL',10,H-20);
+  g.textAlign='right';g.fillStyle='#ffd23d';g.font='bold 10px monospace';g.fillText('SHOT DOWN '+fly.kills,W-8,16);
+  g.textAlign='center';g.fillStyle=time<10?'#ff5a4a':'#ffffff';g.font='bold 16px monospace';g.fillText(Math.ceil(time),W/2,18);
+  var msgY=H*0.30;
+  if(fly.banner>0){ g.fillStyle='#3ce0ff';g.font='bold 22px monospace';g.globalAlpha=Math.min(1,fly.banner);g.fillText('LIFTOFF',W/2,msgY);g.globalAlpha=1; }
+  else if(fly.phase==='LAND'){ g.fillStyle='#ffd23d';g.font='bold 14px monospace';g.fillText('LANDING',W/2,msgY); }
+  else if(fly.stall>0){ g.fillStyle='#ff5a4a';g.font='bold 14px monospace';g.fillText('HIT!  STALLING',W/2,msgY); }
+}
+
+function render(){
+ if(!ctx)return;
+ var g=ctx;
+ var samp=Math.min(1,shake*2.4);
+ var shx=shake>0?Math.round((Math.random()*2-1)*6*samp):0;
+ var shy=shake>0?Math.round((Math.random()*2-1)*4*samp):0;
+ g.save();g.translate(shx,shy);
+ var pBlink=crashFlash>0&&(Math.floor(tGlobal*18)%2===0);
+ if(state==='TITLE'){
+  renderWorld(g,0,0,W,H,{pos:P.pos,x:P.x,bgShift:P.bgShift,prog:progress(P)},P,null,input.steer,false,false);
+ } else if(fly.active){
+  renderWorld(g,0,0,W,H,{pos:P.pos,x:P.x,bgShift:P.bgShift,prog:progress(P)},P,null,0,false,true);
+  renderFlight(g);
+ } else {
+  renderWorld(g,0,0,W,H,{pos:P.pos,x:P.x,bgShift:P.bgShift,prog:progress(P)},P,worldEnts(),input.steer,input.brake&&state==='GAME',pBlink);
+ }
+ g.restore();
+ if(slowmoT>0){
+  var sa=Math.min(0.6,slowmoT*1.3),cx=W/2,cy=H*0.52,k,ang,r0,r1;
+  g.strokeStyle='rgba(255,255,255,'+(sa*0.6)+')';g.lineWidth=2;
+  for(k=0;k<18;k++){
+   ang=k/18*6.283+tGlobal*0.6;
+   r0=70+((tGlobal*260+k*47)%150);
+   r1=r0+46;
+   g.beginPath();
+   g.moveTo(cx+Math.cos(ang)*r0,cy+Math.sin(ang)*r0);
+   g.lineTo(cx+Math.cos(ang)*r1,cy+Math.sin(ang)*r1);
+   g.stroke();
+  }
+  g.fillStyle='rgba(6,8,18,'+(sa*0.35)+')';
+  g.fillRect(0,0,W,26);g.fillRect(0,H-26,W,26);
+ }
+ if(tdFlash>0){
+  g.fillStyle='rgba(255,255,255,'+Math.min(0.85,tdFlash*2.4)+')';
+  g.fillRect(0,0,W,H);
+ }
+ drawHUD(g);
+}
+
+/* ================= DOM, INPUT, BOOT ================= */
+function fit(){
+ if(typeof window==='undefined'||!cv)return;
+ var iw=window.innerWidth,ih=window.innerHeight;
+ var s=Math.min(iw/W,ih/H);
+ if(s>=1)s=Math.max(1,Math.floor(s*4)/4);
+ scale=s;
+ cv.style.width=Math.floor(W*s)+'px';
+ cv.style.height=Math.floor(H*s)+'px';
+}
+function inRect(x,y,rx,ry,rw,rh){return x>=rx&&x<=rx+rw&&y>=ry&&y<=ry+rh;}
+var steerId=-1,steerX0=0,steerY0=0,brakeId=-1;
+function ptXY(e){
+ var r=cv.getBoundingClientRect();
+ return {x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H};
+}
+function onDown(e){
+ initAudio();
+ var p=ptXY(e);
+ if(state!=='GAME'){input.startTap=true;return;}
+ if(inRect(p.x,p.y,W-92,H-58,86,52)){brakeId=e.pointerId;input.brake=true;return;}
+ steerId=e.pointerId;steerX0=p.x;steerY0=p.y;input.throttle=true;input.steer=0;input.steerY=0;
+}
+function onMove(e){
+ if(e.pointerId===steerId){var p=ptXY(e);input.steer=clamp((p.x-steerX0)/38,-1,1);input.steerY=clamp((p.y-steerY0)/38,-1,1);}
+}
+function onUp(e){
+ if(e.pointerId===steerId){steerId=-1;input.steer=0;input.steerY=0;input.throttle=false;}
+ if(e.pointerId===brakeId){brakeId=-1;input.brake=false;}
+}
+/* PeerJS duel glue: browser only, never touched by gates (the transport is
+   injected into the NET layer; gates inject an in-memory loopback channel). */
+var peer=null,conn=null,netCode='';
+function netLetters(){var s='',i;for(i=0;i<4;i++)s+=String.fromCharCode(65+Math.floor(Math.random()*26));return s;}
+function wireConn(isHost,dmsg){
+ conn.on('open',function(){
+  netStart(function(m){try{conn.send(m);}catch(e){}});
+  dmsg('LINKED');
+  if(isHost){try{conn.send({go:1});}catch(e){}}
+  netRaceBegin();
+ });
+ conn.on('data',function(m){netReceive(m);});
+ conn.on('close',function(){netStop('LINK LOST');});
+ conn.on('error',function(){netStop('LINK ERROR');});
+}
+function netHost(dmsg){
+ if(typeof Peer==='undefined'){dmsg('NET OFFLINE');return;}
+ netCode=netLetters();
+ try{peer=new Peer('cbclash-'+netCode);}catch(e){dmsg('NET ERROR');return;}
+ dmsg('OPENING...');
+ peer.on('open',function(){dmsg('CODE: '+netCode+'  (share it, keep this open)');});
+ peer.on('connection',function(c){conn=c;wireConn(true,dmsg);});
+ peer.on('error',function(e){dmsg('NET ERR: '+((e&&e.type)||''));});
+}
+function netJoin(code,dmsg){
+ code=(code||'').trim().toUpperCase();
+ if(typeof Peer==='undefined'){dmsg('NET OFFLINE');return;}
+ if(code.length!==4){dmsg('ENTER THE 4 LETTER CODE');return;}
+ try{peer=new Peer();}catch(e){dmsg('NET ERROR');return;}
+ dmsg('OPENING...');
+ peer.on('open',function(){conn=peer.connect('cbclash-'+code);wireConn(false,dmsg);dmsg('JOINING '+code+'...');});
+ peer.on('error',function(e){dmsg('NET ERR: '+((e&&e.type)||''));});
+}
+function boot(){
+ buildSprites();buildTrack();buildFog(pal());
+ if(typeof document!=='undefined'){
+  cv=document.getElementById('cv');
+  if(cv&&cv.getContext)ctx=cv.getContext('2d');
+  if(ctx)ctx.imageSmoothingEnabled=false;
+  var fsb=document.getElementById('fsBtn'),mb=document.getElementById('muteBtn'),wrap=document.getElementById('wrap');
+  if(fsb)fsb.onclick=function(){
+   initAudio();
+   var el=wrap||document.documentElement;
+   if(document.fullscreenElement){if(document.exitFullscreen)document.exitFullscreen();}
+   else if(el.requestFullscreen)el.requestFullscreen();
+   setTimeout(fit,300);
+  };
+  if(mb)mb.onclick=function(){
+   initAudio();muted=!muted;
+   if(master)master.gain.value=muted?0:0.8;
+   mb.textContent=muted?'SND OFF':'SND ON';
+  };
+  var db=document.getElementById('duelBtn'),dp=document.getElementById('duelPanel'),
+      dhb=document.getElementById('duelHost'),djb=document.getElementById('duelJoin'),
+      dci=document.getElementById('duelCode'),dxb=document.getElementById('duelClose'),
+      dmge=document.getElementById('duelMsg');
+  function dmsg(s){if(dmge)dmge.textContent=s;}
+  netUISync=function(){
+   if(db)db.style.display=(state==='TITLE')?'block':'none';
+   if(dp&&state!=='TITLE')dp.style.display='none';
+  };
+  if(db)db.onclick=function(){
+   initAudio();
+   if(dp)dp.style.display='block';
+   dmsg(typeof Peer==='undefined'?'NET OFFLINE (PeerJS not loaded)':'RACE A FRIEND, ONE ON ONE');
+  };
+  if(dxb)dxb.onclick=function(){if(dp)dp.style.display='none';};
+  if(dhb)dhb.onclick=function(){netHost(dmsg);};
+  if(djb)djb.onclick=function(){netJoin(dci?dci.value:'',dmsg);};
+  if(cv){
+   cv.addEventListener('pointerdown',function(e){e.preventDefault();onDown(e);});
+   cv.addEventListener('pointermove',function(e){e.preventDefault();onMove(e);});
+   cv.addEventListener('pointerup',function(e){e.preventDefault();onUp(e);});
+   cv.addEventListener('pointercancel',function(e){onUp(e);});
+  }
+ }
+ if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('resize',fit);
+  window.addEventListener('orientationchange',function(){setTimeout(fit,250);});
+  window.addEventListener('keydown',function(e){
+   if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].indexOf(e.key)>=0)e.preventDefault();
+   initAudio();
+   if(e.key==='ArrowLeft')input.steer=-1;
+   if(e.key==='ArrowRight')input.steer=1;
+   if(e.key==='ArrowUp')input.throttle=true;
+   if(e.key==='ArrowDown')input.brake=true;
+   if(e.key==='Enter'||e.key===' ')input.startTap=true;
+  });
+  window.addEventListener('keyup',function(e){
+   if(e.key==='ArrowLeft'&&input.steer<0)input.steer=0;
+   if(e.key==='ArrowRight'&&input.steer>0)input.steer=0;
+   if(e.key==='ArrowUp')input.throttle=false;
+   if(e.key==='ArrowDown')input.brake=false;
+  });
+ }
+ fit();
+}
+var lastTs=0,uiState='';
+/* v20: the one error wrapper (doc 08 v1.03 section 9). frame() steps the sim through stepSim(), and so does the
+   test hook, so a fault inside update() lands in lastError the same way in the browser and in every gate. */
+function catchError(e){
+  lastError=(e&&e.message?e.message:''+e);
+  try{if(e&&e.stack)lastError=lastError+' @'+(e.stack.split('\n')[1]||'').trim().slice(0,26);}catch(e2){}
+}
+function stepSim(dt){
+ try{update(dt);return true;}catch(e){catchError(e);return false;}
+}
+/* v20, THE FRAME LAW (doc 11 v1.04 section 5): the frame cap draws at most 60 a second on any screen (the doc's
+   deadline snippet, on the rAF timestamp), drawnFrames counts what it draws (frametest R4), and the FPS meter (the port
+   runtime's createFpsMeter) feeds the debug readout, shown with ?debug on the page's address. No FRAME RATE setting
+   yet: SCREEN is offered only once the full refresh test passes. */
+var CAP_MS=1000/60,capNext=-1,drawnFrames=0;
+function capReady(ts){
+ if(capNext<0)capNext=ts;
+ if(ts<capNext-2)return false;
+ capNext+=CAP_MS;
+ if(capNext<ts-CAP_MS)capNext=ts;
+ return true;
+}
+var fpsM={t0:0,frames:0,worst:0,prev:0,text:''},SHOW_FPS=false;
+try{SHOW_FPS=/[?&]debug\b/.test(location.search);}catch(e){}
+function fpsFrame(now){
+ if(!fpsM.t0){fpsM.t0=fpsM.prev=now;fpsM.frames=fpsM.worst=0;return;}
+ fpsM.frames++;fpsM.worst=Math.max(fpsM.worst,now-fpsM.prev);fpsM.prev=now;
+ var span=now-fpsM.t0;
+ if(span<500)return;
+ fpsM.text=(fpsM.frames*1000/span).toFixed(1)+' FPS  '+(span/fpsM.frames).toFixed(1)+' ms (worst '+fpsM.worst.toFixed(1)+')';
+ fpsM.t0=now;fpsM.frames=fpsM.worst=0;
+}
+function drawFps(g){
+ if(!SHOW_FPS||!fpsM.text)return;
+ g.fillStyle='rgba(6,8,22,0.7)';g.fillRect(W/2-74,0,148,12);
+ g.fillStyle='#9fffa8';g.font='8px monospace';g.textAlign='center';g.textBaseline='middle';
+ g.fillText(fpsM.text,W/2,6);
+}
+function frame(ts){
+ if(typeof requestAnimationFrame==='function')requestAnimationFrame(frame);
+ if(!capReady(ts))return;
+ try{
+  var dt=lastTs?Math.min(0.05,(ts-lastTs)/1000):1/60;
+  lastTs=ts;
+  drawnFrames++;fpsFrame(ts);
+  if(stepSim(dt)){render();drawFps(ctx);
+  if(state!==uiState){uiState=state;if(netUISync)netUISync();}}
+ }catch(e){catchError(e);}
+}
+boot();
+if(typeof requestAnimationFrame==='function')requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
