@@ -1044,7 +1044,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v7.2</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v7.3</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1151,7 +1151,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V7.2 */
+/* HAIL TO THE CLOUT V7.3 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -2877,20 +2877,79 @@ var HTTC = (function (D) {
   var FACE_N = { sk: 6, hc: 9, hs: 12, m: 4, t: 4 }, OKAFOR_KEY = '4.0.1.0.0';
   var CAST_KEYS = ['0.4.0.0.0', '0.5.3.3.0', '0.5.7.3.0', '1.1.7.3.0', '1.2.2.2.1', '1.3.8.1.0', '1.4.2.0.1', '1.8.11.1.0', '1.8.8.0.1', '2.0.7.3.0',
     '2.7.4.1.0', '3.0.3.2.0', '3.0.5.3.0', '3.6.1.2.0', '4.0.1.0.0', '5.0.1.1.0', '5.0.10.0.1'];
+  /* ---------- v7.3: the president's face, second pass ----------
+     The Director's answer B on issue 703 ("We want variety of characters from all ethnicity and sexes. The face geometry
+     should also be different"), settled in the faces lab (labs/src/faces2.js v1.02, locked 2026-10-05). This is the lab's
+     deal verbatim: a skin band first (light, medium, deep: a third each), a woman or a man (half each), then every part
+     from its own step of one mix() chain, never the dice. Its lists are ART.FACE2's, read by index and by name (the
+     looks suite holds the two equal, and holds this deal to the lab's record for record). A v7.2 record (kind 'face')
+     is redealt from the same seed and slot at load. */
+  var SHAPES = ['oval', 'round', 'long', 'square', 'heart', 'diamond', 'pear'], EYES = ['round', 'almond', 'hooded', 'soft'];
+  var NOSES = ['button', 'straight', 'broad', 'long', 'hook'], BROWS = ['thin', 'thick', 'arched', 'straight'], MOUTHS = ['smile', 'grin', 'flat', 'smirk'];
+  var HS_F = ['bob', 'long', 'pony', 'bun', 'pixie', 'waves', 'updo', 'sidepart', 'afro', 'curlylong', 'locs', 'braids'];
+  var HS_M = ['short', 'crop', 'slick', 'sidepart', 'messy', 'quiff', 'buzz', 'bald', 'balding', 'curly', 'afro', 'locs', 'twists'];
+  var COILY = { afro: 1, curlylong: 1, locs: 1, braids: 1, twists: 1, curly: 1 };
+  var FH = ['none', 'mustache', 'beard', 'goatee', 'stubble', 'full'], AGES = ['young', 'mid', 'senior'];
+  var HAIR = { length: 11 }, TIE = { length: 4 }, FRAMES = { length: 4 };
+  var FACE2_N = { sk: 9, hc: HAIR.length, sh: SHAPES.length, ey: EYES.length, no: NOSES.length, br: BROWS.length, mo: MOUTHS.length, hsF: HS_F.length, hsM: HS_M.length, fh: FH.length, t: TIE.length, gc: FRAMES.length };
+  function pick(r, list, w) {
+    if (!w) return r % list.length;
+    var tot = 0, i; for (i = 0; i < w.length; i++) tot += w[i];
+    var x = r % tot; for (i = 0; i < w.length; i++) { if (x < w[i]) return i; x -= w[i]; }
+    return 0;
+  }
+  function deal(n) {
+    var x = n >>> 0, r = function (k) { x = mix(x, k); return x; };
+    var f = { k: 'face2' };
+    f.sx = r(1) % 2;                                   /* 0 a woman, 1 a man: half each */
+    var band = r(2) % 3;                               /* a third each */
+    f.sk = band * 3 + r(3) % 3;
+    f.ag = pick(r(4), AGES, [3, 5, 3]);
+    f.sh = r(5) % SHAPES.length;
+    f.ey = r(6) % EYES.length;
+    f.es = r(7) % 3 === 0 ? 1 : 0;                     /* wide set eyes, a third */
+    f.no = r(8) % NOSES.length;
+    f.br = r(9) % BROWS.length;
+    f.mo = pick(r(10), MOUTHS, [4, 2, 3, 3]);
+    f.wd = pick(r(24), [0, 1, 2], [1, 2, 1]);           /* a narrow, a usual or a broad face */
+    /* hair: coily styles more often on deeper tones, never only there */
+    var styles = f.sx ? HS_M : HS_F, coilyW = [1, 3, 8][band];
+    f.hs = pick(r(11), styles, styles.map(function (s) { return COILY[s] ? coilyW : 4; }));
+    /* hair color: weighted by the band, greyer with age */
+    var hw = [[5, 5, 6, 5, 3, 3, 5, 2, 1, 1, 1], [9, 7, 6, 4, 2, 1, 1, 0, 1, 1, 1], [12, 6, 3, 1, 0, 0, 0, 0, 1, 1, 1]][band].slice();
+    if (f.ag === 2) { hw[8] += 4; hw[9] += 5; hw[10] += 3; }
+    f.hc = pick(r(12), HAIR, hw);
+    f.fh = f.sx ? pick(r(13), FH, [11, 2, 2, 2, 2, 1]) : 0;
+    f.gl = r(14) % 5 === 0 ? 1 + r(15) % 2 : 0;        /* 1 square frames, 2 round */
+    f.ea = r(16) % 4 === 0 ? 1 : 0;                    /* ears that stand out */
+    f.fr = band === 0 && r(17) % 4 === 0 ? 1 : 0;      /* freckles */
+    f.bl = !f.sx && r(18) % 2 === 0 ? 1 : 0;           /* blush */
+    f.li = f.sx ? 0 : 1 + r(19) % 3;                   /* lip tint */
+    f.la = !f.sx && r(20) % 10 < 7 ? 1 : 0;            /* lashes */
+    f.ml = r(21) % 9 === 0 ? 1 + r(22) % 2 : 0;        /* a mole, left or right */
+    f.t = r(23) % TIE.length;
+    f.gc = r(25) % FRAMES.length;                      /* v1.02: the frame colour, last in the chain */
+    f.ex = 0;
+    return f;
+  }
+  function key2(f) { return [f.sx, f.sk, f.ag, f.sh, f.wd, f.ey, f.es, f.no, f.br, f.mo, f.hs, f.hc, f.fh, f.gl].join('.'); }
+
   var LOOKALIKES = D.LOOKALIKES || [], LOOK_BY = {};
   LOOKALIKES.forEach(function (x) { LOOK_BY[x.id] = x; });
-  function faceKey(f) { return !f ? '' : f.k === 'face' ? [f.sk, f.hc, f.hs, f.m, f.g].join('.') : f.k === 'lk' ? 'lk.' + f.id : f.k === 'okafor' ? OKAFOR_KEY : f.k; }
+  function faceKey(f) { return !f ? '' : f.k === 'face2' ? 'f2.' + key2(f) : f.k === 'face' ? [f.sk, f.hc, f.hs, f.m, f.g].join('.') : f.k === 'lk' ? 'lk.' + f.id : f.k === 'okafor' ? OKAFOR_KEY : f.k; }
   function faceOf(n) {
     var x = n >>> 0, r = function (k) { x = mix(x, k); return x; };
     return { k: 'face', sk: r(1) % FACE_N.sk, hc: r(2) % FACE_N.hc, hs: r(3) % FACE_N.hs, m: r(4) % FACE_N.m, g: r(5) % 5 === 0 ? 1 : 0, t: r(6) % FACE_N.t };
   }
-  /* a new face for slot i (1, 2 ... a president; 100 and up a VP), unlike every face the run has dealt */
+  /* a new face for slot i (1, 2 ... a president; 100 and up a VP), unlike every face the run has dealt. v7.3: the
+     second-pass deal on the same salts as v7.2's, so the faces lab's run k is the game's (its dealFor). The cast's keys
+     are no longer refused: the cast is drawn by the old portrait and a second-pass face cannot be one of them. */
   function newFace(g, i) {
-    var taken = {}; taken[OKAFOR_KEY] = 1; CAST_KEYS.forEach(function (k) { taken[k] = 1; });
+    var taken = {};
     (g.faces || []).concat(g.vp ? [g.vp.face] : []).forEach(function (f) { taken[faceKey(f)] = 1; });
     var f = null;
-    for (var k = 0; k < 64 && !f; k++) { var c = faceOf(mix(g.seed, 7200 + i * 31 + k)); if (!taken[faceKey(c)]) f = c; }
-    return f || faceOf(mix(g.seed, 7200 + i * 31 + 64));
+    for (var k = 0; k < 64 && !f; k++) { var c = deal(mix(g.seed, 7200 + i * 31 + k)); if (!taken[faceKey(c)]) f = c; }
+    return f || deal(mix(g.seed, 7200 + i * 31 + 64));
   }
   function vpName(g) {
     var used = g.vps || ['OKAFOR'], names = (D.VP_NAMES || []).filter(function (n) { return used.indexOf(n) < 0; });
@@ -2901,11 +2960,22 @@ var HTTC = (function (D) {
     var lk = opts && opts.look;
     return lk && LOOK_BY[lk] ? { k: 'lk', id: lk } : newFace(g, 1);
   }
-  /* a save from before v7.2 has no faces: give it the ones its seed deals (the VP is Okafor: no save says who took the oath) */
+  /* a save from before v7.2 has no faces: give it the ones its seed deals (the VP is Okafor: no save says who took the oath).
+     v7.3: a v7.2 face (kind 'face') is redealt by the new deal, each in its own slot, the VP in slot 100 + the president */
   function faceFill(g) {
-    if (!g || g.faces) return g;
-    g.vp = { name: 'OKAFOR', face: { k: 'okafor' } }; g.vps = ['OKAFOR']; g.faces = [];
-    for (var i = 1; i <= (g.pres || 1); i++) g.faces.push(i === 1 ? firstFace(g, null) : newFace(g, i));
+    if (!g) return g;
+    if (!g.faces) {
+      g.vp = { name: 'OKAFOR', face: { k: 'okafor' } }; g.vps = ['OKAFOR']; g.faces = [];
+      for (var i = 1; i <= (g.pres || 1); i++) g.faces.push(i === 1 ? firstFace(g, null) : newFace(g, i));
+      return g;
+    }
+    var oldVp = !!(g.vp && g.vp.face && g.vp.face.k === 'face');
+    if (oldVp || g.faces.some(function (f) { return f && f.k === 'face'; })) {
+      var was = g.faces; g.faces = [];
+      if (oldVp) g.vp.face = { k: 'redeal' };
+      was.forEach(function (f, j) { g.faces.push(f && f.k === 'face' ? newFace(g, j + 1) : f); });
+      if (oldVp) g.vp.face = newFace(g, 100 + (g.pres || 1));
+    }
     return g;
   }
   /* the face a Fresh Face would bring (the successor folder shows it), and the first face a seed deals (the origin screen) */
@@ -4649,7 +4719,7 @@ var HTTC = (function (D) {
   return {
     SCHEMA: SCHEMA, D: D, ALL: ALL, BUILD: BUILD, ORIG: ORIG, ADS: ADS, SEASONS: SEASONS,
     newGame: newGame, current: current, preview: preview, choose: choose,
-    LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, faceFill: faceFill, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
+    LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
     endQuarter: endQuarter, nextQuarter: nextQuarter,
     projection: projection, campaign: campaign, election: election, houseTier: houseTier, PTY: PTY, partyState: partyState, fundParty: fundParty, leaseLeft: leaseLeft, leaseOut: leaseOut, ARC: ARC, arcMult: arcMult, arcRun: arcRun, arcEnding: arcEnding, econMult: econMult, mktOn: mktOn, HOUSE_LV: HOUSE_LV, houseLevel: houseLevel, houseLevelOf: houseLevelOf, houseNext: houseNext, houseSeats: houseSeats, houseMove: houseMove, MKT_LV: MKT_LV, MKT_X: MKT_X, mktLevel: mktLevel, mktLevelOf: mktLevelOf, mktNext: mktNext, crashChance: crashChance, optCost: optCost, dismissChance: dismissChance, suitOpen: suitOpen,
     build: build, buildState: buildState, settle: settle, settleCost: settleCost, suitDrain: suitDrain,
@@ -4970,6 +5040,7 @@ var ART = (function () {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
   function portrait(canvas, id, blink, t) {
+    if (CAST[id] && CAST[id].f2) { FACE2.draw(canvas, CAST[id].f2, { dress: CAST[id].dress, blink: blink }); return; }   /* v7.3 */
     var s = CAST[id] || CAST.chief, c = canvas.getContext('2d'), has = function (a) { return s.acc.indexOf(a) >= 0; };
     c.imageSmoothingEnabled = false;
     px(c, 0, 0, 24, 24, s.bg);
@@ -5102,6 +5173,16 @@ var ART = (function () {
   var DEFAULT_FACE = { skin: SK[2], hair: '#9aa0aa', hs: 'slick', mouth: 'smile', acc: [] };
   function president(f, dress) {
     f = f || { k: 'default' }; dress = DRESS[dress] ? dress : 'pol';
+    /* v7.3: a second-pass face is drawn by FACE2; its CAST entry names what the checks read (tie, hair style, mouth) */
+    if (f.k === 'face2') {
+      var id2 = 'p2-' + FACE2.key(f) + '.' + [f.ea, f.fr, f.bl, f.li, f.la, f.ml, f.t, f.gc].join('.') + '-' + dress;
+      if (!CAST[id2]) {
+        var d2 = CAST[president({ k: 'default' }, dress)];
+        CAST[id2] = { f2: f, dress: dress, bg: d2.bg, jacket: d2.jacket, tie: dress === 'celeb' || dress === 'gen' || dress === 'tycoon' ? d2.tie : FACE2.TIE[f.t],
+          skin: FACE2.SKIN[f.sk], hair: FACE2.HAIR[f.hc], hs: (f.sx ? FACE2.HS_M : FACE2.HS_F)[f.hs], mouth: FACE2.MOUTHS[f.mo], acc: f.gl ? ['glasses'] : [] };
+      }
+      return id2;
+    }
     var id = 'pr-' + (f.k === 'face' ? [f.sk, f.hc, f.hs, f.m, f.g, f.t].join('') : f.k === 'lk' ? 'lk-' + f.id : f.k) + '-' + dress;
     if (CAST[id]) return id;
     var spec;
@@ -5114,6 +5195,341 @@ var ART = (function () {
     CAST[id] = spec;
     return id;
   }
+
+  /* ---------- v7.3: the president's face, second pass ----------
+     The Director's answer B on issue 703, settled in the faces lab (labs/hail-to-the-clout-faces-lab-v1.02.html, locked on
+     his word 2026-10-05) and drawn here verbatim from labs/src/faces2.js v1.02 on the cast's 24 grid (approach A): nine
+     skin tones in three lightness bands, women and men, seven head shapes in three widths, eyes, noses, brows, mouths,
+     25 hairstyles, beards, glasses in four frame colours, and the big win and big loss faces (expr 1 and 2). The engine
+     deals the record (E.faceOf, kind 'face2', from the seed through mix(), never the dice); this only draws it. The one
+     change from the lab: the desk's blink. The looks suite holds this draw to the lab's pixel for pixel. */
+  var FACE2 = (function () {
+    'use strict';
+  function blend(a, b, t) {
+    var x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16), o = 0;
+    for (var s = 16; s >= 0; s -= 8) o |= Math.round(((x >> s) & 255) * (1 - t) + ((y >> s) & 255) * t) << s;
+    return '#' + ((1 << 24) + o).toString(16).slice(1);
+  }
+  var SKIN = ['#fde4cf', '#f6d2b0', '#ecc49a',   /* light: porcelain, fair, light olive */
+              '#d1a072', '#bf8a5c', '#a8774c',   /* medium: golden, tan, bronze */
+              '#8e5c38', '#70462a', '#52311d'];  /* deep: brown, deep brown, ebony */
+  function lightness(hex) {
+    var n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(function (v) { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    var Y = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    return Y > 0.008856 ? 116 * Math.cbrt(Y) - 16 : 903.3 * Y;
+  }
+  function bandOf(hex) { var l = lightness(hex); return l >= 70 ? 0 : l >= 50 ? 1 : 2; }
+  var BAND = ['light', 'medium', 'deep'];
+  var HAIR = ['#161616', '#33231a', '#5a3620', '#8a5a2a', '#8a2e1a', '#c4622d', '#dcbc6a', '#efe0b4', '#9aa0aa', '#cfcfcf', '#ececec'];
+  var HAIR_NAME = ['black', 'espresso', 'brown', 'chestnut', 'auburn', 'copper', 'blond', 'platinum', 'pewter', 'silver', 'white'];
+  var SHAPES = ['oval', 'round', 'long', 'square', 'heart', 'diamond', 'pear'];
+  var EYES = ['round', 'almond', 'hooded', 'soft'];
+  var NOSES = ['button', 'straight', 'broad', 'long', 'hook'];
+  var BROWS = ['thin', 'thick', 'arched', 'straight'];
+  var MOUTHS = ['smile', 'grin', 'flat', 'smirk'];
+  var HS_F = ['bob', 'long', 'pony', 'bun', 'pixie', 'waves', 'updo', 'sidepart', 'afro', 'curlylong', 'locs', 'braids'];
+  var HS_M = ['short', 'crop', 'slick', 'sidepart', 'messy', 'quiff', 'buzz', 'bald', 'balding', 'curly', 'afro', 'locs', 'twists'];
+  var COILY = { afro: 1, curlylong: 1, locs: 1, braids: 1, twists: 1, curly: 1 };
+  var FH = ['none', 'mustache', 'beard', 'goatee', 'stubble', 'full'];
+  var AGES = ['young', 'mid', 'senior'];
+  var LIPS = ['#b8464f', '#93344a', '#c96a6a'];
+  var TIE = ['#f0b429', '#37a85a', '#8a3fd0', '#8a8fa8'];     /* the game's PRES_TIE: never red or blue */
+  var EXPR = ['neutral', 'joy', 'worry'];
+  var FRAMES = ['#22252f', '#7a4a26', '#c9a24a', '#aab0bc'];   /* black, tortoise, gold, silver */
+  var FRAME_NAME = ['black', 'tortoise', 'gold', 'silver'];
+
+  function key(f) { return [f.sx, f.sk, f.ag, f.sh, f.wd, f.ey, f.es, f.no, f.br, f.mo, f.hs, f.hc, f.fh, f.gl].join('.'); }
+  /* ---------- the head ----------
+     v1.01: every shape keeps the eye band wide (the features need the room: 10 px or more on 24, 14 on 32) and
+     changes the brow, the jaw and the chin. A profile is the half width as a share of W at five heights, crown to
+     chin; the width of a face adds to W. */
+  var GRID = {
+    24: { cx: 12, T: 4, C: 15, W: [4.8, 5.3, 5.8], ew: 2, sh: 19 },
+    32: { cx: 16, T: 5, C: 21, W: [7.0, 7.7, 8.4], ew: 3, sh: 25 }
+  };
+  var PROFILE = {
+    oval:    { p: [0.74, 0.96, 1.00, 0.90, 0.56], dT: 0, dC: 0 },
+    round:   { p: [0.86, 1.00, 1.05, 1.00, 0.80], dT: 0, dC: -1 },
+    long:    { p: [0.80, 0.93, 0.96, 0.88, 0.60], dT: -1, dC: 1 },
+    square:  { p: [0.90, 0.98, 1.00, 1.00, 0.88], dT: 0, dC: 0 },
+    heart:   { p: [1.00, 1.08, 1.00, 0.80, 0.46], dT: 0, dC: 0 },
+    diamond: { p: [0.66, 0.92, 1.08, 0.92, 0.52], dT: 0, dC: 0 },
+    pear:    { p: [0.72, 0.88, 0.98, 1.08, 0.84], dT: 0, dC: 0 }
+  };
+  function headSpec(f, G) {
+    var g = GRID[G], pr = PROFILE[SHAPES[f.sh]] || PROFILE.oval, T = g.T + pr.dT, C = g.C + pr.dC, W = g.W[f.wd == null ? 1 : f.wd];
+    var rows = {};
+    for (var y = T; y <= C; y++) {
+      var v = (y - T) / (C - T), k = Math.min(3, Math.floor(v * 4)), t = v * 4 - k;
+      var hw = Math.max(2, Math.round(W * (pr.p[k] * (1 - t) + pr.p[k + 1] * t)));
+      rows[y] = [g.cx - hw, g.cx + hw];                 /* [x0, x1): symmetric about cx */
+    }
+    var wide = 0; for (y = T; y <= C; y++) wide = Math.max(wide, rows[y][1] - g.cx);
+    return { T: T, C: C, rows: rows, cx: g.cx, half: wide, g: g };
+  }
+  function ellHalf(v, c, r) { var d = (v - c) / r; return Math.sqrt(Math.max(0, 1 - d * d)); }
+
+  /* ---------- drawing ---------- */
+  function draw(canvas, f, opt) {
+    opt = opt || {};
+    var G = opt.grid === 32 ? 32 : 24, s = G / 24, c = canvas.getContext('2d');
+    if (canvas.width !== G) { canvas.width = G; canvas.height = G; }
+    c.imageSmoothingEnabled = false;
+    var P = function (x, y, w, h, col) { var x0 = Math.round(x * s), y0 = Math.round(y * s); px(c, x0, y0, Math.round((x + w) * s) - x0, Math.round((y + h) * s) - y0, col); };
+    var dress = opt.dress || 'pol';
+    var D = CAST[president({ k: 'default' }, dress)];      /* the game's own clothes for this origin */
+    var acc = D.acc || [], has = function (a) { return acc.indexOf(a) >= 0; };
+    var tie = dress === 'celeb' || dress === 'gen' || dress === 'tycoon' ? D.tie : TIE[f.t];
+    var jacket = D.jacket, ink = '#10131f';
+    if (dress === 'celeb') jacket = ['#8a3fd0', '#ff6fae', '#2bb3a3', '#e0782a'][f.t];
+    var sk = SKIN[f.sk], deep = f.sk >= 6, skd = shade(sk, deep ? 0.74 : 0.84), skl = shade(sk, deep ? 1.2 : 1.06);
+    var hair = HAIR[f.hc], hd = shade(hair, f.hc >= 6 ? 0.82 : 0.7), hl = f.hc <= 1 ? '#4a4a5a' : shade(hair, 1.22);
+    var H = headSpec(f, G), g = H.g, cx = H.cx, T = H.T, C = H.C, R = H.rows;
+    var ex = opt.expr != null ? opt.expr : f.ex;
+
+    px(c, 0, 0, G, G, D.bg);
+    var hsName = (f.sx ? HS_M : HS_F)[f.hs];
+    var span = function (y) { return R[Math.max(T, Math.min(C, y))]; };
+    var hRow = function (x0, x1, y, col) { if (x1 > x0) px(c, x0, y, x1 - x0, 1, col); };
+    var eyeY = T + Math.round((C - T) * 0.42), mouthY = T + Math.round((C - T) * 0.8);
+
+    /* hair behind the head: every mass touches the head or the mass above it (v1.01: nothing floats) */
+    var hairBack = function () {
+      var w = H.half, bot, y, x;
+      switch (hsName) {
+        case 'long': case 'waves': bot = Math.round(G * 0.86);
+          for (y = T + 1; y < bot; y++) { var o = hsName === 'waves' && (y >> 1) % 2 ? 1 : 0; hRow(cx - w - 2 + o, cx + w + 2 - o, y, hair); }
+          break;
+        case 'bob': bot = C - 1;
+          for (y = T + 1; y <= bot; y++) hRow(cx - w - 2, cx + w + 2, y, hair);
+          hRow(cx - w - 1, cx + w + 1, bot + 1, hd);
+          break;
+        case 'curlylong': bot = Math.round(G * 0.85);
+          /* a scalloped edge: the width steps in and out every two rows, each step inside the one above */
+          for (y = T; y < bot; y++) { var sc = ((y - T) >> 1) % 2; hRow(cx - w - 3 + sc, cx + w + 3 - sc, y, hair); if (sc) { px(c, cx - w - 2, y, 1, 1, hd); px(c, cx + w + 1, y, 1, 1, hd); } }
+          break;
+        case 'afro': {
+          /* one solid ellipse; its texture dots sit well inside it */
+          var ry = Math.round((C - T) * 0.62), cy = T + Math.round((C - T) * 0.35), rx = w + Math.round(3 * s);
+          for (y = cy - ry; y <= cy + ry; y++) { var hh = Math.round(rx * ellHalf(y, cy, ry + 0.5)); hRow(cx - hh, cx + hh, y, hair); }
+          for (y = cy - ry + 2; y < cy + ry - 1; y += 3) { var hh2 = Math.round(rx * ellHalf(y, cy, ry + 0.5)) - 2; if (hh2 > w + 1) { px(c, cx - hh2, y, 1, 1, hd); px(c, cx + hh2 - 1, y, 1, 1, hd); } }
+          break;
+        }
+        case 'locs': bot = f.sx ? C + 1 : Math.round(G * 0.86);
+          /* strands: vertical stripes two shades apart */
+          for (x = cx - w - 2; x < cx + w + 2; x++) for (y = T; y < bot; y++) px(c, x, y, 1, 1, ((x - cx) & 1) ? hair : hd);
+          break;
+        case 'braids': bot = Math.round(G * 0.9);
+          for (y = T + 2; y < bot; y++) { var bc = y % 2 ? hair : hd; px(c, cx - w - 2, y, Math.round(2 * s), 1, bc); px(c, cx + w, y, Math.round(2 * s), 1, bc); }
+          break;
+        case 'pony': bot = Math.round(G * 0.72);
+          for (y = T + 2; y < bot; y++) px(c, cx + w, y, Math.round(2 * s), 1, y % 3 ? hair : hd);
+          break;
+      }
+    };
+    hairBack();
+
+    /* shoulders and clothes: the game's portrait() lines, in its 24 units */
+    P(3, 20, 18, 4, jacket); P(4, 19, 16, 1, jacket); P(2, 21, 20, 3, jacket);
+    P(10, 19, 4, 4, D.shirt);
+    if (tie) { P(11, 19, 2, 1, shade(tie, 0.8)); P(11, 20, 2, 4, tie); }
+    if (!D.open && !tie) P(10, 19, 4, 2, D.shirt);
+    if (dress === 'celeb') { P(10, 19, 4, 4, jacket); P(11, 19, 2, 2, sk); }
+    P(9, 19, 1, 3, shade(jacket, 0.7)); P(14, 19, 1, 3, shade(jacket, 0.7));
+    if (has('pin')) { P(6, 21, 2, 1, '#d23a3a'); P(6, 22, 2, 1, '#2f5bd3'); }
+    if (has('square')) { P(16, 21, 2, 1, '#f0b429'); P(16, 22, 1, 1, '#ffe08a'); }
+    if (has('medals')) { P(5, 21, 1, 2, '#d23a3a'); P(7, 21, 1, 2, '#f0b429'); P(16, 21, 1, 2, '#2f5bd3'); P(18, 21, 1, 2, '#f0b429'); }
+    if (!f.sx && (dress === 'pol' || dress === 'vp')) { /* a pearl or a brooch, now and then */ if (f.t % 2) for (var p = 9; p < 15; p += 2) P(p, 19, 1, 1, '#ffffff'); }
+
+    /* neck */
+    var nw = (G === 24 ? 2 : 3) + (f.sx && f.wd === 2 ? 1 : 0), nTop = C - 1, nBot = g.sh + 1;
+    px(c, cx - nw, nTop, nw * 2, nBot - nTop, skd);
+
+    /* the head */
+    for (var y2 = T; y2 <= C; y2++) hRow(R[y2][0], R[y2][1], y2, sk);
+    /* jaw and cheek shadow: the outer pixel of the lower rows, and the chin's own row */
+    for (y2 = mouthY - 1; y2 <= C; y2++) { px(c, R[y2][0], y2, 1, 1, skd); px(c, R[y2][1] - 1, y2, 1, 1, skd); }
+    hRow(R[C][0] + 1, R[C][1] - 1, C, skd);
+    if (G === 32) { px(c, R[eyeY + 2][0] + 1, eyeY + 2, 2, 1, skl); px(c, R[eyeY + 2][1] - 3, eyeY + 2, 2, 1, skl); }
+
+    /* ears: one pixel wide on 24, two on 32; ears that stand out are one wider */
+    var ew = g.ew, eW = (G === 24 ? 1 : 2) + f.ea, eh = 2 + (G === 32 ? 1 : 0);
+    var eL = R[eyeY][0], eR = R[eyeY][1];
+    if (hsName !== 'long' && hsName !== 'bob' && hsName !== 'waves' && hsName !== 'curlylong' && hsName !== 'afro' && hsName !== 'locs') {
+      px(c, eL - eW, eyeY, eW, eh, sk); px(c, eR, eyeY, eW, eh, sk);
+      px(c, eL - 1, eyeY + 1, 1, 1, skd); px(c, eR + eW - 1, eyeY + 1, 1, 1, skd);
+    }
+
+    /* hair over the head: every mass starts on the cap or the head */
+    var hairline = T + Math.max(1, Math.round((C - T) * (f.ag === 2 && f.sx ? 0.16 : 0.2)));
+    var cap = function (top, line, out, col) {
+      for (var y = top; y <= line; y++) { var sp = span(y), o = y < T ? -1 : out; hRow(sp[0] - o, sp[1] + o, y, col || hair); }
+    };
+    var temples = function (rows, out) { for (var y = hairline + 1; y <= hairline + rows; y++) { var sp = span(y); px(c, sp[0] - out, y, 1 + out, 1, hair); px(c, sp[1] - 1, y, 1 + out, 1, hair); } };
+    var crownL = span(T)[0], crownR = span(T)[1], mx;
+    switch (hsName) {
+      case 'short': cap(T - 1, hairline, 1); temples(2, 0); break;
+      case 'crop': cap(T, hairline, 0); temples(1, 0); break;
+      case 'buzz': cap(T, hairline, 0, blend(hair, sk, 0.3)); px(c, span(hairline)[0], hairline + 1, 1, 1, blend(hair, sk, 0.3)); px(c, span(hairline)[1] - 1, hairline + 1, 1, 1, blend(hair, sk, 0.3)); break;
+      case 'slick': cap(T - 1, hairline, 1); temples(2, 0); hRow(cx - 2 * s, cx + 3 * s, T, hl); break;
+      case 'sidepart': cap(T - 1, hairline, 1); temples(2, 0); px(c, cx - Math.round(2 * s), T - 1, 1, Math.max(2, hairline - T), skl);
+        hRow(cx - Math.round(1 * s), span(hairline + 1)[1], hairline + 1, hair); break;
+      case 'messy': cap(T - 1, hairline, 1); temples(2, 1);
+        /* tufts: two rows tall, so each stands on the cap's top row */
+        for (mx = crownL; mx < crownR; mx += 2) px(c, mx, T - 3 + ((mx * 7 + f.hc) % 3 === 0 ? 0 : 1), 1, 2, hair);
+        px(c, cx - 2, hairline + 1, 2, 1, hair); break;
+      case 'quiff': cap(T - 1, hairline, 1); temples(1, 0); hRow(cx - Math.round(3 * s), cx + Math.round(3 * s), T - 2, hair); hRow(cx - Math.round(2 * s), cx + Math.round(3 * s), T - 3, hair); px(c, cx, T - 3, Math.round(2 * s), 1, hl); break;
+      case 'bald': { var by = eyeY - 1; px(c, R[by][0], by, 1, 3, hair); px(c, R[by][1] - 1, by, 1, 3, hair); px(c, cx - 1, T + 1, Math.round(3 * s), 1, skl); } break;
+      case 'balding': { var by2 = eyeY - 2; px(c, R[by2][0], by2, 1, 4, hair); px(c, R[by2][1] - 1, by2, 1, 4, hair); hRow(cx - 1, cx + 1, T, hair); px(c, cx + 1, T + 1, Math.round(2 * s), 1, skl); } break;
+      case 'curly': cap(T - 1, hairline, 1); temples(3, 1);
+        /* a crown of curls, each two wide and standing on the cap */
+        for (mx = crownL - 1; mx < crownR + 1; mx += 2) px(c, mx, T - 2, 2, 1, (mx >> 1) % 2 ? hair : hd); break;
+      case 'twists': cap(T - 1, hairline, 1);
+        /* short twists: two wide, alternating heights, each on the cap */
+        for (mx = crownL; mx < crownR; mx += 2) { var th = ((mx >> 1) % 2) ? 2 : 1; px(c, mx, T - 1 - th, 2, th, hair); px(c, mx + 1, T - 1 - th, 1, 1, hd); } break;
+      case 'afro': cap(T - 1, hairline, 1); break;
+      case 'locs': cap(T - 1, hairline, 1); for (mx = crownL; mx < crownR; mx += 2) px(c, mx, T - 1, 1, hairline - T + 2, hd); break;
+      case 'braids': cap(T - 1, hairline, 1); px(c, cx - 1, T - 1, 1, hairline - T + 1, hd); temples(2, 0); break;
+      case 'bob': cap(T - 1, hairline, 1); hRow(span(hairline + 1)[0], cx + Math.round(1 * s), hairline + 1, hair); break;
+      case 'long': cap(T - 1, hairline, 1); temples(3, 0); px(c, cx, T, 1, hairline - T + 1, hd); break;
+      case 'waves': cap(T - 1, hairline, 1); temples(3, 0); hRow(span(hairline + 1)[0], span(hairline + 1)[0] + Math.round(3 * s), hairline + 1, hair); break;
+      case 'curlylong': cap(T - 1, hairline, 1); temples(3, 1); for (mx = crownL - 1; mx < crownR + 1; mx += 2) px(c, mx, T - 2, 2, 1, (mx >> 1) % 2 ? hair : hd); break;
+      case 'pony': cap(T - 1, hairline, 1); temples(1, 0); hRow(span(T)[0], cx - Math.round(1 * s), T, hl); break;
+      case 'bun': cap(T - 1, hairline, 1); temples(1, 0); { var bw = Math.round(2 * s); px(c, cx - bw, T - 1 - Math.round(3 * s), bw * 2, Math.round(3 * s), hair); px(c, cx - bw + 1, T - 1 - Math.round(3 * s), 1, 1, hl); } break;
+      case 'pixie': cap(T - 1, hairline, 1); hRow(span(hairline + 1)[0], cx + Math.round(2 * s), hairline + 1, hair); hRow(span(hairline + 2)[0], span(hairline + 2)[0] + Math.round(2 * s), hairline + 2, hair); break;
+      case 'updo': cap(T - 1, hairline, 1); temples(1, 0); hRow(cx - Math.round(3 * s), cx + Math.round(3 * s), T - 2, hair); hRow(cx - Math.round(2 * s), cx + Math.round(2 * s), T - 3, hd); break;
+    }
+
+    /* brows: a big win lifts them, a big loss knits them (the inner ends up, the outer ends down) */
+    var bcol = f.hc >= 6 || hsName === 'bald' ? shade(f.hc >= 6 ? hair : '#3a3a3a', 0.72) : hd;
+    if (deep && f.hc <= 1) bcol = '#161616';
+    var gap = 1 + f.es, lx = cx - gap - ew, rx2 = cx + gap;
+    /* v1.02: on 24 the brow and a frame's top rim would share a row, so glasses lift the brows one (32 has the room) */
+    var browY = eyeY - (G === 32 ? 2 : 1) - (ex === 1 ? 1 : 0) - (G === 24 && f.gl && dress !== 'celeb' && ex !== 1 ? 1 : 0);
+    var brow = function (x, outer) {
+      var bt = BROWS[f.br], w = ew + (bt === 'thick' || bt === 'straight' ? 1 : 0), bx = outer < 0 ? x - (w - ew) : x;
+      var inner = outer < 0 ? bx + w - 1 : bx, outerX = outer < 0 ? bx : bx + w - 1;
+      if (ex === 2) {
+        /* knit: a slope from the outer end (one down) to the inner end (one up), two deep on 32 */
+        px(c, bx, browY, w, 1, bcol); px(c, inner, browY - 1, 1, 1, bcol); px(c, outerX, browY, 1, 1, sk); px(c, outerX, browY + 1, 1, 1, bcol);
+        if (G === 32) { px(c, inner, browY - 2, 1, 1, bcol); px(c, inner + (outer < 0 ? -1 : 1), browY - 1, 1, 1, bcol); }
+        return;
+      }
+      px(c, bx, browY, w, 1, bcol);
+      if (bt === 'thick' && G === 32) px(c, bx, browY - 1, w, 1, bcol);
+      if (bt === 'arched') { px(c, outerX, browY - 1, 1, 1, bcol); px(c, outerX, browY, 1, 1, sk); }
+    };
+    brow(lx, -1); brow(rx2, 1);
+
+    /* eyes: a big loss half closes them (a lid row over the top) */
+    var white = '#ffffff', et = EYES[f.ey];
+    var eye = function (x, outer) {
+      var pupil = x + 1, lid = ex === 2 ? skd : null;
+      if (opt.blink) { px(c, x, eyeY + 1, ew, 1, ink); return; }   /* the game's desk blink (not in the lab) */
+      switch (et) {
+        case 'round': px(c, x, eyeY, ew, 2, white); px(c, pupil, eyeY, 1, 2, ink); break;
+        case 'almond': px(c, x, eyeY, ew, 1, ink); px(c, x, eyeY + 1, ew, 1, white); px(c, pupil, eyeY + 1, 1, 1, ink); break;
+        case 'hooded': px(c, x, eyeY, ew, 1, skd); px(c, x, eyeY + 1, ew, 1, white); px(c, pupil, eyeY + 1, 1, 1, ink); break;
+        case 'soft': px(c, x, eyeY + 1, ew, 1, white); px(c, pupil, eyeY + 1, 1, 1, ink); px(c, x, eyeY, ew, 1, skl); break;
+      }
+      if (lid) { px(c, x, eyeY, ew, 1, lid); if (et === 'round') px(c, pupil, eyeY + 1, 1, 1, ink); }
+      if (ex === 1) { px(c, x, eyeY + 1, ew, 1, blend(sk, '#ff9a7a', deep ? 0.25 : 0.35)); if (et !== 'round') { px(c, x, eyeY, ew, 1, white); px(c, pupil, eyeY, 1, 1, ink); } }   /* a big win: the cheeks push the eyes to a squint */
+      if (f.la) px(c, outer < 0 ? x - 1 : x + ew, eyeY, 1, 1, ink);
+    };
+    eye(lx, -1); eye(rx2, 1);
+    if (ex === 2) { px(c, rx2 + ew - 1, eyeY + 2, 1, G === 32 ? 3 : 2, '#8fc1ff'); px(c, rx2 + ew - 1, eyeY + 2, 1, 1, '#d8ecff'); }   /* a tear */
+
+    /* nose: between the eyes and the mouth; deeper skin takes a darker shade so it reads at 48 px */
+    var nTopY = eyeY + 2, nTip = mouthY - 2, nt = NOSES[f.no], ndk = shade(sk, deep ? 0.62 : 0.76), nsh = deep ? ndk : skd;
+    switch (nt) {
+      case 'button': px(c, cx - 1, nTip, 2, 1, nsh); break;
+      case 'straight': px(c, cx, nTopY, 1, Math.max(1, nTip - nTopY), nsh); px(c, cx - 1, nTip, 2, 1, nsh); break;
+      case 'broad': px(c, cx - 2, nTip, 4, 1, nsh); px(c, cx - 2, nTip, 1, 1, ndk); px(c, cx + 1, nTip, 1, 1, ndk); if (G === 32) px(c, cx - 1, nTip - 1, 2, 1, nsh); break;
+      case 'long': px(c, cx - 1, nTopY - 1, 1, Math.max(1, nTip - nTopY + 1), nsh); px(c, cx - 1, nTip, 3, 1, nsh); break;
+      case 'hook': px(c, cx, nTopY, 1, 1, skl); px(c, cx, nTopY + 1, 1, Math.max(0, nTip - nTopY - 1), nsh); px(c, cx - 1, nTip, 3, 1, nsh); px(c, cx + 1, nTip - 1, 1, 1, nsh); break;
+    }
+
+    /* cheeks: freckles, blush, a big win's glow, age lines, a mole */
+    if (f.fr) { px(c, lx, nTopY, 1, 1, skd); px(c, lx + 2, nTopY + 1, 1, 1, skd); px(c, rx2 + 1, nTopY, 1, 1, skd); px(c, rx2 + ew - 1, nTopY + 1, 1, 1, skd); }
+    if (f.bl) { var bl = blend(sk, '#e86a6a', deep ? 0.22 : 0.3); px(c, R[nTip][0] + 1, nTip, Math.round(2 * s), 1, bl); px(c, R[nTip][1] - 1 - Math.round(2 * s), nTip, Math.round(2 * s), 1, bl); }
+    if (ex === 1) { var glow = blend(sk, '#ff9a7a', deep ? 0.25 : 0.35), gy = eyeY + 2 + (f.gl && dress !== 'celeb' ? 1 : 0); px(c, lx, gy, ew, 1, glow); px(c, rx2, gy, ew, 1, glow); }   /* under the lower rim when glasses are on */
+    else if (f.ag === 2) { px(c, lx, eyeY + 2, ew, 1, skd); px(c, rx2, eyeY + 2, ew, 1, skd); px(c, cx - Math.round(3 * s), mouthY - 1, 1, 2, skd); px(c, cx + Math.round(3 * s) - 1, mouthY - 1, 1, 2, skd); }
+    if (f.ml) px(c, f.ml === 1 ? lx : rx2 + ew - 1, mouthY - 1, 1, 1, shade(sk, 0.55));
+
+    /* mouth: the line is darker on deeper skin (v1.01), the lips tinted for most women */
+    var mw = G === 24 ? 4 : 5, mx0 = cx - (mw >> 1), lipD = deep ? shade(sk, 0.5) : '#7a2a2a';
+    var lipT = f.li ? (deep ? blend(LIPS[f.li - 1], sk, 0.2) : LIPS[f.li - 1]) : null;
+    var lc = lipT || lipD;
+    var mo = ex === 1 ? 'beam' : ex === 2 ? 'worry' : MOUTHS[f.mo];
+    switch (mo) {
+      case 'smile': px(c, mx0, mouthY + 1, mw, 1, lc); px(c, mx0 - 1, mouthY, 1, 1, lc); px(c, mx0 + mw, mouthY, 1, 1, lc); if (lipT) px(c, mx0, mouthY, mw, 1, shade(lipT, 0.75)); break;
+      case 'grin': px(c, mx0 - 1, mouthY, mw + 2, 2, lc); px(c, mx0, mouthY, mw, 1, white); break;
+      case 'flat': px(c, mx0, mouthY, mw, 1, lipD); if (lipT) px(c, mx0, mouthY + 1, mw, 1, lipT); break;
+      case 'smirk': px(c, mx0, mouthY + 1, mw - 1, 1, lc); px(c, mx0 + mw - 1, mouthY, 2, 1, lc); break;
+      case 'beam':
+        /* a big win: a grin two wider than the dealt one, its corners up a row, teeth, and on 32 the mouth open under them */
+        px(c, mx0 - 1, mouthY, mw + 2, 2, lc); px(c, mx0, mouthY, mw, 1, white); px(c, mx0 - 2, mouthY - 1, 1, 1, lc); px(c, mx0 + mw + 1, mouthY - 1, 1, 1, lc);
+        if (G === 32) { px(c, mx0 - 1, mouthY + 2, mw + 2, 1, lipD); px(c, mx0, mouthY + 1, mw, 1, '#5a1a1a'); }
+        break;
+      case 'worry':
+        /* a frown: the middle row up, both corners two rows down, the lip under it */
+        px(c, mx0, mouthY, mw, 1, lipD); px(c, mx0 - 1, mouthY + 1, 1, 1, lipD); px(c, mx0 + mw, mouthY + 1, 1, 1, lipD);
+        if (G === 32) { px(c, mx0 - 2, mouthY + 2, 1, 1, lipD); px(c, mx0 + mw + 1, mouthY + 2, 1, 1, lipD); }
+        px(c, mx0, mouthY + 1, mw, 1, lipT ? shade(lipT, 0.8) : blend(sk, lipD, 0.4));
+        break;
+    }
+
+    /* facial hair */
+    var fc = f.ag === 2 && f.hc < 8 ? '#cfcfcf' : hair, fhn = FH[f.fh], yb;
+    if (fhn === 'mustache' || fhn === 'full') px(c, mx0 - 1, mouthY - 1, mw + 2, 1, fc);
+    if (fhn === 'beard' || fhn === 'full') {
+      for (yb = mouthY - 1; yb <= C; yb++) { px(c, R[yb][0], yb, 1, 1, fc); px(c, R[yb][1] - 1, yb, 1, 1, fc); }
+      for (yb = mouthY + 2; yb <= C + 1; yb++) { var sp2 = span(yb); hRow(sp2[0] + (yb > C ? 1 : 0), sp2[1] - (yb > C ? 1 : 0), yb, fc); }
+    }
+    if (fhn === 'goatee') { px(c, mx0, mouthY + 2, mw, C - mouthY - 1, fc); px(c, mx0 - 1, mouthY - 1, 1, 2, fc); px(c, mx0 + mw, mouthY - 1, 1, 2, fc); }
+    if (fhn === 'stubble') {
+      /* a shadow over the jaw, the mouth left clear */
+      var st = blend(sk, hair, 0.28);
+      for (yb = mouthY - 1; yb <= C; yb++) for (var xb = R[yb][0]; xb < R[yb][1]; xb++) if (yb > mouthY + 1 || xb < mx0 - 1 || xb > mx0 + mw) px(c, xb, yb, 1, 1, st);
+    }
+
+    /* glasses, and the Celebrity's shades */
+    if (dress === 'celeb') { px(c, lx - 1, eyeY, rx2 + ew + 1 - lx + 1, 2, '#10131f'); px(c, lx, eyeY, 1, 1, '#5a6080'); px(c, rx2, eyeY, 1, 1, '#5a6080'); }
+    else if (f.gl) {
+      /* v1.02: two lenses, never one band. A lens is its eye's two rows inside a rim: the top rim over the eye, the
+         bottom rim under it, the outer side, and the inner side only where the eyes are set wide enough to leave skin
+         between the lenses; a bridge joins them one row down; the arms run out to the ears. Square: corners on the
+         outer side, a dark top rim and a light lower one (browline). Round: no corners, one thin ring all round. */
+      /* a frame too close to the skin's lightness (CIE L* within 30) takes the first darker or lighter step of its own
+         colour that stands 30 off (darker first on lighter skin, lighter first on deeper), else the step that stands most */
+      var gc = FRAMES[f.gc || 0], ls = lightness(sk);
+      if (Math.abs(ls - lightness(gc)) < 30) {
+        var dk = [shade(gc, 0.45), shade(gc, 0.25)], lt = [blend(gc, '#ffffff', 0.5), blend(gc, '#ffffff', 0.75)];
+        var steps = ls >= 50 ? dk.concat(lt) : lt.concat(dk), best = gc;
+        for (var si = 0; si < steps.length; si++) { if (Math.abs(ls - lightness(steps[si])) >= 30) { best = steps[si]; break; } if (Math.abs(ls - lightness(steps[si])) > Math.abs(ls - lightness(best))) best = steps[si]; }
+        gc = best;
+      }
+      var rimTop = gc;
+      var rimLow = f.gl === 1 ? blend(gc, sk, 0.55) : gc;
+      var lens = function (x, outer) {
+        var xo = outer < 0 ? x - 1 : x + ew, xi = outer < 0 ? x + ew : x - 1, room = rx2 - (lx + ew) >= 3;
+        px(c, x, eyeY - 1, ew, 1, rimTop);
+        px(c, x, eyeY + 2, ew, 1, rimLow);
+        px(c, xo, eyeY, 1, 2, gc);
+        if (room) px(c, xi, eyeY, 1, 2, f.gl === 1 ? rimLow : gc);
+        if (f.gl === 1) { px(c, xo, eyeY - 1, 1, 1, rimTop); if (room) px(c, xi, eyeY - 1, 1, 1, rimTop); }
+        px(c, outer < 0 ? xo - 1 : xo + 1, eyeY, 1, 1, gc);   /* the arm, toward the ear */
+      };
+      lens(lx, -1); lens(rx2, 1);
+      var b0 = lx + ew + (rx2 - (lx + ew) >= 3 ? 1 : 0), b1 = rx2 - (rx2 - (lx + ew) >= 3 ? 1 : 0);
+      if (b1 > b0) px(c, b0, eyeY, b1 - b0, 1, f.gl === 1 ? rimTop : gc);   /* the bridge */
+    }
+  }
+
+    return { SKIN: SKIN, HAIR: HAIR, SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M,
+      FH: FH, AGES: AGES, LIPS: LIPS, TIE: TIE, FRAMES: FRAMES, EXPR: EXPR, GRID: GRID, PROFILE: PROFILE, lightness: lightness, key: key,
+      headSpec: headSpec, draw: draw };
+  })();
 
   /* ---------- icons (8x8, currentColor) ---------- */
   var ICONS = {
@@ -5204,7 +5620,8 @@ var ART = (function () {
     return id;
   }
   return { PAL: PAL, drawScene: drawScene, portrait: portrait, icon: icon, face: face, SCENES: SCENES, CAST: CAST, text: text, px: px, ell: ell, applicant: applicant,
-    president: president, silhouette: silhouette, LOOKS: LOOKS, PRES_HAIR: PRES_HAIR, PRES_HS: PRES_HS, PRES_MOUTH: PRES_MOUTH, PRES_TIE: PRES_TIE, SK: SK, DRESS: DRESS };
+    president: president, silhouette: silhouette, LOOKS: LOOKS, PRES_HAIR: PRES_HAIR, PRES_HS: PRES_HS, PRES_MOUTH: PRES_MOUTH, PRES_TIE: PRES_TIE, SK: SK, DRESS: DRESS,
+    FACE2: FACE2, face2: function (canvas, f, opt) { FACE2.draw(canvas, f, opt); } };
 })();
 /* ===== ART END ===== */
 
@@ -5338,9 +5755,11 @@ var ART = (function () {
   const looksGot = () => (prefs.looks && prefs.looks.got) || {};
   let lookPick = null, nextSeed = null;
   const presDress = (g) => (g && E.ORIG[g.origin] ? g.origin : 'pol');
-  /* the art id of president i of a run (the one in office when i is left out); a save from before v7.2 is filled first */
+  /* the art id of president i of a run (the one in office when i is left out); a save from before v7.2 is filled first,
+     and from v7.3 a v7.2 save's faces are redealt the way loading it would (a slot's preview shows the face it loads) */
   function presArt(g, i) {
-    const gg = g.faces ? g : E.faceFill(JSON.parse(JSON.stringify(g)));
+    const old = !g.faces || g.faces.some((f) => f && f.k === 'face') || (g.vp && g.vp.face && g.vp.face.k === 'face');
+    const gg = old ? E.faceFill(JSON.parse(JSON.stringify(g))) : g;
     return A.president(gg.faces[i === undefined ? gg.faces.length - 1 : i], presDress(gg));
   }
   /* a folder's speaker: the VP is VP Okafor until Okafor takes the oath as the Loyal Heir; then the new VP speaks */
