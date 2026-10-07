@@ -645,8 +645,56 @@ v85 ATTRACT. The arcade's attract loop now plays inside the game, as
     Chromium. The bot suite, same seeds, v84 to v85: every row of the
     report is identical (the loop waits on the menu, and every run
     starts from it at once).
+v86 GAUNTLET, FIXED. The Director picked B on issue #643 and asked
+    for a tweaked version, so the player can switch weapons and
+    tactics as each phase asks. Three changes, GAUNTLET only:
+    (1) the deflector arc holds a lance (the anchored ship cannot
+    dodge one), for 0.12 heat each (the B lab paid 0.2: there the
+    beam's heat lost the column to the lances' bill); the first
+    lance in GAUNTLET says LANCES: ONLY THE ARC HOLDS THEM.
+    (2) the ARMORED COLUMN sends a hull every 0.8s (was 0.55) and
+    none after 6s of its 9, so ORBS begins clear; banner ARMORED
+    COLUMN - GUNS ON IT (was BEAM IT); the guns keep pace and the
+    drill beam (unchanged) is a burst for the hull that gets close.
+    (3) THE ORBS ARRIVE: they spawned at y -6, past the shot cull's
+    edge (-5), so every orb falling under 60 px a second died on
+    its first frame. At 60 Hz the ABSORB THE ORBS phase had no
+    orbs until DEPTH 5, the shield banked no NOVA, and the SWARM
+    had none to answer it. They spawn at -4 now. Held by the bot
+    suite v1.02 (three new GAUNTLET bands, each red on BUILD 85,
+    and one that keeps the beam a real choice: the beamer loses at
+    most one ship a run more than the skilled pilot).
+    Bots, same 8 seeds, BUILD 85 to 86: the skilled pilot finishes
+    DEPTH 3 in 1.00 of runs (was 0.25), loses 0.63 ships (was
+    3.50), none to a lance (was 2.50 a run), banks a NOVA in every
+    run (was none); the beamer finishes 1.00 (was 0.13); the novice
+    still 0. One credit, 16 seeds: the skilled pilot falls at a
+    median DEPTH 5 (was 2), the beamer 4.5 (was 2).
+v87 THE FRAME LAW (doc 11 v1.05 section 5, the Director's word,
+    MEMO-STUDIO-HEAD-FRAME-LAW-v1.00): the same game at any refresh
+    rate, drawn at most 60 times a second. (1) A fixed 60 Hz step on
+    the timestamp the browser hands each frame (was one update a
+    drawn frame, its dt clamped to 0.04), so a 120 or 144 Hz phone
+    plays the game the bots and the gates measured at 60; a stall
+    over 200 ms drops the backlog and runs one step, and a frame
+    runs at most 5 (doc 11 section 1). (2) The draw has its own
+    dice: its flicker, the shake and the arc's crackle rolled the
+    game's own Math.random, so a faster screen spent the game's
+    dice faster; and the deflector arc's sparks were spawned per
+    drawn frame (twice as many at 120 Hz), now per step. (3) THE
+    FRAME CAP, the snippet of doc 11 section 5 exactly, with the
+    setting FRAME RATE: 60 or SCREEN under the SELECT FIGHTER cards
+    (60 by default, kept under neon-swarm-framerate). (4) The FPS readout,
+    frames a second with the mean and worst frame time: the
+    backquote key, or ?debug in the address. Held by two new gates:
+    refreshtest (the game's loop at 30, 60, 90, 120 and 144 Hz for
+    24 s in five modes, the same state before every step; red on
+    BUILD 86 at step 2, the draw's dice) and captest (60,
+    75, 90, 120, 144 and 165 Hz, steady and jittered: 59.5 to 60.5
+    drawn a second). The bots and the harnesses step update() at
+    1/60 as before: every bot report row is identical to v86.
 -->
-<title>NEON SWARM v85</title>
+<title>NEON SWARM v87</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -784,6 +832,13 @@ v85 ATTRACT. The arcade's attract loop now plays inside the game, as
   .mbtn:active { background:rgba(70,243,255,0.18); }
   .mnote { color:#56648f; font-size:11px; line-height:1.5; margin-top:10px; }
   .mstatus { color:#ffe34d; font-size:12px; margin-top:12px; min-height:16px; }
+  .mfr { display:block; margin:8px auto 0; padding:5px 10px; font-family:monospace; font-size:11px; letter-spacing:1px;
+    color:#8fa3d9; background:transparent; border:1px solid rgba(143,163,217,0.45); border-radius:6px;
+    touch-action:manipulation; cursor:pointer; }   /* v87: FRAME RATE: 60 or SCREEN (doc 11 section 5) */
+  #dbg { position:fixed; left:4px; top:calc(env(safe-area-inset-top, 0px) + 4px); z-index:60; pointer-events:none;
+    font-family:monospace; font-size:10px; line-height:1.2; color:#51ff7e; background:rgba(0,0,0,0.72);
+    padding:3px 6px; border-radius:4px; white-space:pre; }   /* v87: the FPS readout (backquote, or ?debug) */
+  #dbg[hidden] { display:none; }
   #roomCode {
     font-size:34px; letter-spacing:8px; color:#ffe34d;
     text-shadow:0 0 14px #ffe34d; margin:12px 0; user-select:text; -webkit-user-select:text;
@@ -832,6 +887,7 @@ v85 ATTRACT. The arcade's attract loop now plays inside the game, as
 <div id="actNub"></div>
 <div id="actHint"><span>RIGHT SIDE</span><br><span>HOLD = FIRE</span>&nbsp;&middot; <span>UP = BEAM</span>&nbsp;&middot; <span>DOWN = SHIELD</span><br><span>RIGHT = DEFLECT</span>&nbsp;&middot; <span>DOUBLE TAP = NOVA</span></div>
 
+<div id="dbg" hidden></div>
 <div id="menu">
   <div class="panel" id="panelMain">
     <h2>SELECT MODE</h2>
@@ -856,6 +912,7 @@ v85 ATTRACT. The arcade's attract loop now plays inside the game, as
     <h2>SELECT FIGHTER</h2>
     <div id="shipRow"></div>
     <div class="backrow"><button class="mbtn cy" id="btnShipBack">BACK</button></div>
+    <button class="mfr" id="btnFrameRate">FRAME RATE: 60</button>
   </div>
 
   <div class="panel" id="panelHost" hidden>
@@ -1333,6 +1390,7 @@ window.addEventListener('keydown', function(e){
   if (e.code === 'ShiftLeft' || e.code === 'KeyL'){ setLocalShield(true); e.preventDefault(); }
   if (e.code === 'KeyJ'){ setLocalDeflect(true); e.preventDefault(); }
   if (e.code === 'KeyN'){ requestNova(); e.preventDefault(); }
+  if (e.code === 'Backquote' && !e.repeat) dbgShow(!dbg.on);   // v87: the FPS readout
 });
 window.addEventListener('keyup', function(e){
   keys[e.code] = 0;
@@ -1406,7 +1464,7 @@ function S(name){
 }
 
 // ---------- state ----------
-var BUILD = 85;
+var BUILD = 87;
 var STATE = 'title';
 var score = 0, hiScore = 0, wave = 0;
 var chain = 0, mult = 1, chainTimer = 0;
@@ -1422,6 +1480,7 @@ var DEFL_ARC = 1.0;     // half-angle in radians (~57 deg each side, ~115 total)
 var DEFL_CY = 6;        // arc center low so the apex sits just off the nose
 var VENT_PER_ABSORB = 0.03; // full-arsenal absorbs vent heat
 var DEFL_RAM_HEAT = 0.07;   // heat per enemy repelled off the arc
+var LANCE_ARC_HEAT = 0.12; // v86: heat per lance the arc holds (GAUNTLET only)
 var SHIELD_R = 13;
 var ABSORB_GAIN = 0.17;
 var NOVA_R = 168;          // midpoint of original 134 and big 201
@@ -2582,6 +2641,19 @@ function bez(t, a, b, c, d){
   return u*u*u*a + 3*u*u*t*b + 3*u*t*t*c + t*t*t*d;
 }
 function rnd(a, b){ return a + Math.random()*(b-a); }
+// v87: the cosmetic dice, apart from the game's own (Math.random, which the bots seed): fxRand for what draw()
+// rolls (a drawn frame may come at any rate), stepFx for a cosmetic spawn in the step (the arc's sparks)
+function makeFxDice(seed){
+  var a = seed | 0;
+  return function(){
+    a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+var fxRand = makeFxDice(0x4E454F4E), stepFx = makeFxDice(0x53574152);
+function frnd(a, b){ return a + fxRand()*(b-a); }
 function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
 
 function boomLocal(x, y, color, n, big){
@@ -2943,6 +3015,21 @@ function updateFXCommon(dt){
     if (!p.noDrag){ p.vx *= Math.pow(0.08, dt); p.vy *= Math.pow(0.08, dt); }
     p.x += p.vx*dt; p.y += p.vy*dt;
   }
+  // v87: the deflector arc's sparks, one roll a step (draw() spawned them once a drawn frame: twice as many at 120 Hz),
+  // on the step's own cosmetic dice, never the game's
+  if (STATE === 'play' || STATE === 'over'){
+    for (var dpi = 0; dpi < players.length; dpi++){
+      var dp = players[dpi];
+      if (dp.lives < 0 || !dp.alive || !dp.deflOn) continue;
+      if (stepFx() < 0.35){
+        var da0 = -Math.PI/2 - DEFL_ARC, da1 = -Math.PI/2 + DEFL_ARC;
+        var ma = da0 + stepFx() * (da1 - da0);
+        particles.push({ x:dp.x + Math.cos(ma)*DEFL_R, y:dp.y + DEFL_CY + Math.sin(ma)*DEFL_R,
+          vx:Math.cos(ma)*12, vy:Math.sin(ma)*12 - 6,
+          life:0.2, max:1, color:COL.yellow, size:1, noDrag:true });
+      }
+    }
+  }
   for (var i = rings.length-1; i >= 0; i--){
     var r = rings[i];
     r.life -= dt; r.r += r.vr*dt;
@@ -3064,6 +3151,12 @@ function bossAim(x, y, sp, n, spreadA, kind){
   if (kind === 'missile') missileHint();
 }
 function lanceHint(){
+  if (gameMode === 'tunnel'){   // v86: GAUNTLET's anchored ship holds a lance on the arc, for heat
+    if (hints.lanceArc) return;
+    hints.lanceArc = true;
+    popupLocal(W/2, H*0.5, 'LANCES: ONLY THE ARC HOLDS THEM', COL.pink, true);
+    return;
+  }
   if (hints.lance || gameMode === 'tutorial') return;
   hints.lance = true;
   popupLocal(W/2, H*0.5, 'LANCES PIERCE EVERYTHING - DODGE!', COL.pink, true);
@@ -3924,10 +4017,12 @@ var TN_PHASES = [
         useT ? { type:'turret', lsp: 34 + c*4, fire:true, fireI: 2.4, hp:2, pts:25 }
              : { lsp: 52 + c*7 }); } } },
   { cue:'VENT HEAT - HOLD FIRE', col:'#46f3ff', dur:3.5, sp: function(){} },
-  { cue:'ARMORED COLUMN - BEAM IT', col:'#ff3df0', dur:9,
-    sp: function(c){ if (tn.spT <= 0){ tn.spT = 0.55;
-      // armor makes guns a losing race: 4+ hits each, arriving faster
-      // than the trigger can clear them - one MIN beam erases the column
+  { cue:'ARMORED COLUMN - GUNS ON IT', col:'#ff3df0', dur:9,
+    sp: function(c){ if (tn.t < 6 && tn.spT <= 0){ tn.spT = 0.8;
+      // v86: a hull every 0.8s and none after 6s, so ORBS begins clear.
+      // The guns (about 5 hits a second) keep pace; the drill beam pours
+      // into one hull at a time (a MAX beam about 21 hits in 1.5s), a
+      // burst for the hull that gets close, never an eraser of the column
       tnSpawn(2, { hp: 4 + Math.min(3, c), lsp: 58 + c*6, pts: 30 });
       if (Math.random() < 0.35) tnSpawn(Math.random() < 0.5 ? 1 : 3,
         { hp: 4 + Math.min(3, c), lsp: 52 + c*6, pts: 30 }); } } },
@@ -3938,7 +4033,7 @@ var TN_PHASES = [
       // aim each orb down the funnel so it passes within magnet reach
       var tx = tnFunnelX(l, TN_SHIP_Y);
       var vx = (tx - sx) / ((TN_SHIP_Y + 6) / vy);
-      ebullets.push({ x:sx, y:-6, vx:vx, vy:vy, r:3 });
+      ebullets.push({ x:sx, y:-4, vx:vx, vy:vy, r:3 });   // v86: inside the cull's edge (-5); at -6 every orb slower than 60 px/s died on its first frame
       if (Math.random() < 0.35) tnSpawn(Math.floor(rnd(0,5)), { lsp: 50 + c*6 }); } } },
   { cue:'KNIGHTS - PARRY THEIR SHOTS', col:'#ffe34d', dur:10,
     sp: function(c){ if (tn.spT <= 0){ tn.spT = 2.4;
@@ -4694,7 +4789,7 @@ function hostUpdate(dt){
       var dcx = p.x, dcy = p.y + DEFL_CY;
       for (var j = ebullets.length-1; j >= 0; j--){
         var b = ebullets[j];
-        if (b.kind === 'lance') continue; // lances pierce the arc - dodge
+        if (b.kind === 'lance' && gameMode !== 'tunnel') continue; // lances pierce the arc - dodge (v86: GAUNTLET's anchored ship cannot, so its arc holds one, for heat)
         if (b.vy <= 0) continue;
         var ddx = b.x - dcx, ddy = b.y - dcy;
         var dd = Math.sqrt(ddx*ddx + ddy*ddy);
@@ -4702,6 +4797,7 @@ function hostUpdate(dt){
         var ang = Math.atan2(ddx, -ddy);  // 0 = straight up
         if (Math.abs(ang) > DEFL_ARC) continue;
         ebullets.splice(j,1);
+        if (b.kind === 'lance') p.heat = Math.min(1, p.heat + LANCE_ARC_HEAT);   // v86: GAUNTLET only (above)
         var nx = ddx / (dd || 1), ny = ddy / (dd || 1);
         if (ny > -0.3) ny = -0.3;          // never launch downward
         var nm = Math.sqrt(nx*nx + ny*ny);
@@ -6394,7 +6490,7 @@ function draw(){
 
   var shx = 0, shy = 0;
   if (shake > 0 && !reducedMotion){
-    shx = rnd(-shake, shake); shy = rnd(-shake, shake);
+    shx = frnd(-shake, shake); shy = frnd(-shake, shake);
   }
   g.translate(Math.round(shx), Math.round(shy));
 
@@ -6471,7 +6567,7 @@ function draw(){
           g.fillRect(bx - bw*0.22, bTop, bw*0.44, p.y - 4 - bTop);
         } else {
           // MAX: a gold-white annihilation column with crackling edges
-          var jx = Math.round(rnd(-2, 2));
+          var jx = Math.round(frnd(-2, 2));
           g.globalAlpha = 0.3 * fade;
           g.fillStyle = COL.yellow;
           g.fillRect(bx - bw/2 - 8 + jx, bTop, bw + 16, p.y - 4 - bTop);
@@ -6488,9 +6584,9 @@ function draw(){
           g.globalAlpha = 0.7 * fade;
           g.fillStyle = COL.yellow;
           for (var ck = 0; ck < 4; ck++){
-            var cy2 = rnd(0, p.y - 8);
-            var side2 = Math.random() < 0.5 ? -1 : 1;
-            g.fillRect(Math.round(bx + side2*(bw/2 + rnd(1,6))), Math.round(cy2), 2, rnd(2,5));
+            var cy2 = frnd(0, p.y - 8);
+            var side2 = fxRand() < 0.5 ? -1 : 1;
+            g.fillRect(Math.round(bx + side2*(bw/2 + frnd(1,6))), Math.round(cy2), 2, frnd(2,5));
           }
         }
         if (bTop > 0){
@@ -6787,21 +6883,21 @@ function draw(){
           // crackle pass: jittered, with random flicker gaps
           g.lineWidth = 1.5;
           for (var si3 = 0; si3 < segs2; si3++){
-            if (Math.random() < 0.12) continue; // flicker gap
+            if (fxRand() < 0.12) continue; // flicker gap
             var aA = a0 + (a1 - a0) * si3/segs2;
             var aB = a0 + (a1 - a0) * (si3+1)/segs2;
-            var rA = DEFL_R + rnd(-1.1, 1.1);
-            var rB = DEFL_R + rnd(-1.1, 1.1);
-            g.globalAlpha = rnd(0.5, 0.95);
-            g.strokeStyle = Math.random() < 0.35 ? COL.white : COL.yellow;
+            var rA = DEFL_R + frnd(-1.1, 1.1);
+            var rB = DEFL_R + frnd(-1.1, 1.1);
+            g.globalAlpha = frnd(0.5, 0.95);
+            g.strokeStyle = fxRand() < 0.35 ? COL.white : COL.yellow;
             g.beginPath();
             g.moveTo(dcx2 + Math.cos(aA)*rA, dcy2 + Math.sin(aA)*rA);
             g.lineTo(dcx2 + Math.cos(aB)*rB, dcy2 + Math.sin(aB)*rB);
             g.stroke();
           }
           // occasional surface micro-arc (a lightning lick along the curve)
-          if (Math.random() < 0.2){
-            var la = a0 + Math.random() * (a1 - a0 - 0.5);
+          if (fxRand() < 0.2){
+            var la = a0 + fxRand() * (a1 - a0 - 0.5);
             g.globalAlpha = 0.8;
             g.strokeStyle = COL.white;
             g.beginPath();
@@ -6811,12 +6907,7 @@ function draw(){
             g.stroke();
           }
           g.restore();
-          if (Math.random() < 0.35){
-            var ma = a0 + Math.random() * (a1 - a0);
-            particles.push({ x:dcx2 + Math.cos(ma)*DEFL_R, y:dcy2 + Math.sin(ma)*DEFL_R,
-              vx:Math.cos(ma)*12, vy:Math.sin(ma)*12 - 6,
-              life:0.2, max:1, color:COL.yellow, size:1, noDrag:true });
-          }
+          // v87: the arc's sparks spawn in the step (updateFXCommon), never per drawn frame
           g.globalAlpha = 1;
         }
         if (players.length > 1 && pi !== mp.localIdx){
@@ -7208,13 +7299,66 @@ function draw(){
 }
 
 // ---------- loop ----------
-var last = performance.now();
-function loop(now){
-  var dt = Math.min(0.04, (now - last) / 1000);
-  last = now;
-  try { update(dt); } catch(e){ lastError = 'upd: ' + e.message; }
-  try { draw(); } catch(e){ lastError = 'drw: ' + e.message; }
+// v87 THE FRAME LAW (doc 11 v1.05 section 5): a fixed 60 Hz step on the rAF timestamp, so the game plays the same at
+// 30, 60, 90, 120 and 144 Hz (refreshtest.js); drawn at most 60 times a second unless FRAME RATE is SCREEN
+// (captest.js); a stall over 200 ms drops the backlog and runs one step, and a frame runs at most 5 (doc 11 section 1)
+var STEP_MS = 1000 / 60, STEP_CAP = 5, STALL_MS = 200;
+var CAP_MS = 1000 / 60, capNext = -1;          // THE FRAME CAP (doc 11 section 5)
+function capReady(ts) {                        // ts: the rAF timestamp
+  if (capNext < 0) capNext = ts;
+  if (ts < capNext - 2) return false;          // too soon on a fast screen: skip this refresh
+  capNext += CAP_MS;
+  if (capNext < ts - CAP_MS) capNext = ts;     // after a stall, count again from now
+  return true;
+}
+var FR_KEY = 'neon-swarm-framerate', frameRate = '60';   // FRAME RATE: 60 (the default) or SCREEN, kept for the next visit
+try { if (localStorage.getItem(FR_KEY) === 'screen') frameRate = 'screen'; } catch(e){}
+var btnFrameRate = document.getElementById('btnFrameRate');
+function paintFrameRate(){ if (btnFrameRate) btnFrameRate.textContent = 'FRAME RATE: ' + (frameRate === 'screen' ? 'SCREEN' : '60'); }
+function setFrameRate(v){
+  frameRate = v === 'screen' ? 'screen' : '60'; capNext = -1;
+  try { localStorage.setItem(FR_KEY, frameRate); } catch(e){}
+  paintFrameRate();
+}
+paintFrameRate();
+if (btnFrameRate) btnFrameRate.addEventListener('click', function(){ setFrameRate(frameRate === 'screen' ? '60' : 'screen'); });
+var fps = { last:-1, t0:-1, n:0, sum:0, worst:0, fps:0, mean:0, max:0 };   // the FPS readout: drawn frames only
+function fpsMark(ts){
+  if (fps.last >= 0){ var d = ts - fps.last; fps.n++; fps.sum += d; if (d > fps.worst) fps.worst = d; }
+  fps.last = ts; if (fps.t0 < 0) fps.t0 = ts;
+  if (ts - fps.t0 >= 1000){
+    fps.fps = fps.n * 1000 / (ts - fps.t0); fps.mean = fps.n ? fps.sum / fps.n : 0; fps.max = fps.worst;
+    fps.t0 = ts; fps.n = 0; fps.sum = 0; fps.worst = 0;
+  }
+}
+var dbg = { on:false, el:document.getElementById('dbg'), at:-1 };   // the debug readout: the backquote key, or ?debug
+try { dbg.on = /[?&]debug\b/.test(location.search || ''); } catch(e){}
+function dbgShow(on){ dbg.on = !!on; dbg.at = -1; if (dbg.el) dbg.el.hidden = !dbg.on; }
+dbgShow(dbg.on);
+function dbgPaint(ts){
+  if (!dbg.on || !dbg.el || (dbg.at >= 0 && ts - dbg.at < 250)) return;
+  dbg.at = ts;
+  dbg.el.textContent = 'FPS ' + fps.fps.toFixed(1) + '\nmean ' + fps.mean.toFixed(1) + ' ms\nworst ' + fps.max.toFixed(1) +
+    ' ms\nFRAME RATE ' + (frameRate === 'screen' ? 'SCREEN' : '60') + '\nv' + BUILD;   // a narrow column, clear of FULLSCREEN
+}
+var tick = { on:false, last:0 };
+function resetLoop(){
+  tick.on = false; tick.last = 0; capNext = -1;
+  fps.last = -1; fps.t0 = -1; fps.n = 0; fps.sum = 0; fps.worst = 0; fps.fps = 0; fps.mean = 0; fps.max = 0;
+}
+function loop(ts){
   requestAnimationFrame(loop);
+  if (frameRate !== 'screen' && !capReady(ts)) return;
+  fpsMark(ts);
+  if (!tick.on){ tick.on = true; tick.last = ts - STEP_MS / 2; }   // half a step in: one step a frame on a steady screen
+  var steps, acc = ts - tick.last;
+  if (acc > STALL_MS){ steps = 1; tick.last = ts - STEP_MS / 2; }   // a stall or a hidden tab: drop the backlog, never sprint
+  else { steps = Math.min(STEP_CAP, Math.floor(acc / STEP_MS)); tick.last += steps * STEP_MS; }
+  for (var i = 0; i < steps; i++){
+    try { update(1 / 60); } catch(e){ lastError = 'upd: ' + e.message; }
+  }
+  try { draw(); } catch(e){ lastError = 'drw: ' + e.message; }
+  dbgPaint(ts);
 }
 requestAnimationFrame(loop);
 
