@@ -325,7 +325,7 @@ footer p { margin: 0; max-width: 70ch; }
   <div class="wrap">
     <span class="paid">PAID FOR BY THE COMMITTEE TO KEEP CLOUT ABOVE ZERO</span>
     <p>Hail to the Clout is a Snail Attack Studios game. It is a parody and party neutral: the president is you, every character, outlet and country in it is invented, and the lookalikes you can unlock are caricatures of presidents past. Its numbers are tuned to real presidential history anyway.</p>
-    <p class="lbl" id="site-ver">SITE V1.03 · GAME BUILD V7.3</p>
+    <p class="lbl" id="site-ver">SITE V1.04 · GAME BUILD V7.5</p>
   </div>
 </footer>
 
@@ -333,7 +333,7 @@ footer p { margin: 0; max-width: 70ch; }
 
 <script>
 /* ===== ART BEGIN ===== */
-/* Flat chunky pixel art, drawn in code. Scenes are 160x90, portraits 24x24, icons 8x8. */
+/* Flat chunky pixel art, drawn in code. Scenes are 160x90, portraits 24x24, presidents 32x32 (v7.5), icons 8x8. */
 var ART = (function () {
   var PAL = {
     ink: '#10131f', navy: '#1a2350', navy2: '#232e66', blue: '#2f5bd3', sky: '#8fc1ff', sky2: '#b9d8ff',
@@ -374,7 +374,7 @@ var ART = (function () {
 
   /* ---------- scenes ---------- */
   var SCENES = {
-    oval: function (c, t) {
+    oval: function (c, t, p) {
       px(c, 0, 0, 160, 62, '#e6d9a8');
       for (var x = 0; x < 160; x += 10) px(c, x, 0, 1, 50, '#dccd97');
       px(c, 0, 49, 160, 1, '#b8a66a'); px(c, 0, 50, 160, 12, '#d3c38a');
@@ -390,16 +390,19 @@ var ART = (function () {
       px(c, 0, 62, 160, 28, '#1f2f6b');
       ell(c, 80, 76, 62, 12, '#2c3f86'); ell(c, 80, 76, 15, 5, PAL.gold); ell(c, 80, 76, 12, 4, '#1f2f6b'); px(c, 78, 75, 5, 2, PAL.gold);
       px(c, 72, 32, 16, 20, '#3a2415'); px(c, 73, 30, 14, 2, '#3a2415'); px(c, 74, 33, 3, 12, '#4d321f');
+      var at = p && figure(c, p, t, 'oval');   /* v7.4: the president in the chair, behind the Resolute desk */
       px(c, 50, 50, 60, 3, PAL.woodl); px(c, 52, 53, 56, 19, PAL.wood); px(c, 70, 56, 20, 14, PAL.woodd);
       ell(c, 80, 63, 3, 3, PAL.gold); px(c, 52, 70, 4, 4, PAL.woodd); px(c, 104, 70, 4, 4, PAL.woodd);
       px(c, 56, 47, 6, 3, '#222431'); px(c, 60, 46, 1, 1, (t % 12) < 6 ? '#ff3b3b' : '#6a1a1a');
       px(c, 94, 48, 9, 2, PAL.white); px(c, 96, 47, 9, 1, '#dcd6c6');
+      if (at) { px(c, 71, 49, 3, 2, PRES.skin); px(c, 86, 49, 3, 2, PRES.skin); }   /* hands on the desk */
     },
-    press: function (c, t) {
+    press: function (c, t, p) {
       px(c, 0, 0, 160, 70, '#2a4aa8');
       for (var x = 0; x < 160; x += 8) px(c, x, 0, 2, 70, '#23409a');
       ell(c, 80, 20, 12, 12, PAL.gold); ell(c, 80, 20, 10, 10, '#1d2a57'); px(c, 77, 17, 7, 6, PAL.gold); px(c, 79, 19, 3, 2, '#1d2a57');
       px(c, 0, 70, 160, 20, '#171c38');
+      if (p) figure(c, p, t, 'press');   /* v7.4: the president at the podium */
       px(c, 64, 41, 32, 3, PAL.woodl); px(c, 66, 44, 28, 30, PAL.wood);
       ell(c, 80, 56, 5, 5, PAL.gold); ell(c, 80, 56, 4, 4, '#1d2a57');
       px(c, 76, 34, 3, 2, '#333'); px(c, 77, 36, 1, 6, '#333'); px(c, 82, 34, 3, 2, '#333'); px(c, 83, 36, 1, 6, '#333');
@@ -411,8 +414,8 @@ var ART = (function () {
         if (hash(t, i) < 0.12 && i % 4 === 2) { px(c, hx + 2, 66, 7, 1, PAL.white); px(c, hx + 5, 63, 1, 7, PAL.white); px(c, hx + 3, 65, 5, 3, PAL.white); }
       }
     },
-    rally: function (c, t) {
-      px(c, 0, 0, 160, 58, '#0f1433');
+    rally: function (c, t, p) {
+      px(c, 0, 0, 160, 90, '#0f1433');   /* v7.4: the whole room, so nothing of the last room shows between the crowd's heads */
       for (var s = 0; s < 18; s++) px(c, (s * 37) % 160, (s * 11) % 16, 1, 1, '#8a8fb8');
       for (var r = 0; r < 58; r++) { var w = Math.floor(r * 0.5); px(c, 14 + r * 0.4, r, 6 + w * 0.2, 1, '#1b2350'); px(c, 140 - r * 0.4 - w * 0.2, r, 6 + w * 0.2, 1, '#1b2350'); }
       px(c, 18, 16, 124, 26, PAL.red); px(c, 18, 22, 124, 3, PAL.white); px(c, 18, 29, 124, 3, PAL.white); px(c, 18, 36, 124, 3, PAL.white);
@@ -420,6 +423,7 @@ var ART = (function () {
       for (var st = 0; st < 5; st++) { px(c, 22 + st * 6, 19, 3, 1, PAL.white); px(c, 23 + st * 6, 18, 1, 3, PAL.white); px(c, 25 + st * 6, 23, 1, 1, PAL.white); }
       px(c, 8, 44, 144, 9, '#3a2a1a'); px(c, 8, 44, 144, 2, '#50392a');
       for (var b = 0; b < 18; b++) { var bc = [PAL.red, PAL.white, PAL.blue][b % 3]; px(c, 9 + b * 8, 53, 7, 2, bc); px(c, 11 + b * 8, 55, 3, 2, bc); }
+      if (p && figure(c, p, t, 'rally')) { if (PRES.w === 32) px(c, 68, 34, 24, 10, PRES.jacket); else px(c, 71, 34, 18, 10, PRES.jacket); }   /* v7.4: the president at the lectern, the coat to the stage (v7.5: as wide as the figure's coat) */
       px(c, 74, 32, 12, 12, PAL.wood); px(c, 72, 31, 16, 2, PAL.woodl); px(c, 79, 27, 1, 5, '#333');
       var skins = ['#f6d1b0', '#e8b98f', '#c98d62', '#9b6a45', '#6e4a31'], hairs = ['#2a1a10', '#5a3620', '#d9a441', '#161616', '#8a2e1a', '#bdbdbd'];
       for (var row = 0; row < 3; row++) for (var i = 0; i < 20; i++) {
@@ -430,7 +434,7 @@ var ART = (function () {
         if ((i + row * 2) % 7 === 3) { var sc = [PAL.gold, PAL.white, PAL.sky][(i + row) % 3]; px(c, hx + 3, hy - 9, 1, 8, '#9a8a6a'); px(c, hx - 1, hy - 14, 10, 6, sc); px(c, hx + 1, hy - 12, 6, 1, PAL.ink); }
       }
     },
-    pod: function (c, t) {
+    pod: function (c, t, p) {
       px(c, 0, 0, 160, 90, '#161a2e');
       for (var y = 0; y < 60; y += 8) for (var x = 0; x < 160; x += 8) {
         px(c, x, y, 8, 8, ((x + y) / 8) % 2 ? '#1f2440' : '#1a1f38');
@@ -447,6 +451,10 @@ var ART = (function () {
       });
       ell(c, 80, 40, 14, 14, '#2a2d40'); ell(c, 80, 40, 11, 11, '#161a2e'); ell(c, 80, 40, 14, 14, '#2a2d40');
       ell(c, 80, 40, 11, 11, '#161a2e');
+      if (p && figure(c, p, t, 'pod')) {   /* v7.4: the president in the ring light, on the guest's mic */
+        if (PRES.w === 32) px(c, 67, 54, 26, 4, PRES.jacket); else px(c, 70, 54, 20, 4, PRES.jacket);   /* v7.5: as wide as the figure's shoulders */
+        px(c, 86, 45, 4, 7, '#4b4f66'); for (var gm = 0; gm < 3; gm++) px(c, 87, 46 + gm * 2, 2, 1, '#7a7f99'); px(c, 87, 52, 2, 6, '#2a2d40');
+      }
       px(c, 60, 52, 6, 6, '#c9d2e8'); px(c, 66, 53, 2, 3, '#c9d2e8'); px(c, 96, 52, 5, 6, PAL.red);
       px(c, 20, 66, 30, 3, '#141726'); px(c, 110, 66, 30, 3, '#141726');
     },
@@ -579,10 +587,41 @@ var ART = (function () {
       px(c, 48, 60, 12, 30, '#e0a878'); px(c, 100, 56, 10, 34, '#e0a878'); px(c, 96, 64, 8, 5, '#e0a878');
     }
   };
-  function drawScene(canvas, loc, t) {
+  /* v7.4: the president in the scenes (the Director's create a president idea, codex section 28). drawScene's fourth
+     argument, pres { id, expr }, is the president in office: id is ART.president's id for the run's face record (the
+     second-pass face on the cast's 24 grid, or the default face, a lookalike, Okafor), expr 1 the big win face and 2
+     the big loss face. Four places have one: in the Oval's chair behind the Resolute desk, at the press room's podium,
+     at the rally's lectern and on the podcast's guest mic. The figure is the portrait itself, one pixel to one, drawn on
+     a clear ground (FACE2's opt.bg) between the room and what stands in front of it; nothing stands over its head rows.
+     A cast face (the default, a lookalike, Okafor) takes the cast's beam with a glow, and its frown. Without pres, or in any other place, a scene draws as before.
+     v7.5 (the Director's answer B on issue 899): a dealt face stands on the lab's 32 grid, one pixel to one, and a cast
+     face on the cast's 24. SPOT is where a 32 figure's top left sits; a 24 figure stands on the same line under the same
+     middle (SPOT plus 4 across and 8 down: v7.4's place, pixel for pixel), so either stands at the desk, the podium, the
+     lectern and the mic. FOCUS (percent down the scene) is the 32 face's middle, which the desk keeps in view when the
+     scene is cropped short. */
+  var SPOT = { oval: [64, 19], press: [64, 11], rally: [64, 2], pod: [64, 22] };
+  var PRES = { cv: null, key: '', w: 32, jacket: '#232e66', skin: '#c98d62' };
+  function presSprite(p, t) {
+    var s = CAST[p.id]; if (!s || typeof document === 'undefined') return null;
+    var ex = p.expr === 1 || p.expr === 2 ? p.expr : 0, blink = (t % 48) >= 46, key = p.id + '|' + ex + '|' + (blink ? 1 : 0);
+    if (!PRES.cv) PRES.cv = document.createElement('canvas');
+    if (PRES.key !== key) {
+      var w = s.f2 ? 32 : 24;
+      PRES.cv.width = w; PRES.cv.height = w;   /* a dealt face on 32, a cast face on 24; setting the size clears it */
+      var c = PRES.cv.getContext('2d'); c.clearRect(0, 0, w, w);
+      if (s.f2) FACE2.draw(PRES.cv, s.f2, { grid: 32, dress: s.dress, expr: ex, blink: blink, bg: 'rgba(0,0,0,0)' });
+      else portrait(PRES.cv, p.id, blink, t, { bg: 'rgba(0,0,0,0)', mouth: ex === 1 ? 'beam' : ex === 2 ? 'frown' : s.mouth, acc: ex === 1 ? (s.acc || []).concat(['burn']) : s.acc });   /* the cast's big win: the beam and a glow */
+      var d = w === 32 ? c.getImageData(10, 31, 1, 1).data : c.getImageData(8, 23, 1, 1).data;   /* the coat's own colour, under the lapel: the scene's torso wears it */
+      PRES.jacket = 'rgb(' + d[0] + ',' + d[1] + ',' + d[2] + ')'; PRES.skin = s.skin; PRES.w = w; PRES.key = key;
+    }
+    return PRES.cv;
+  }
+  function figure(c, p, t, loc) { var sp = presSprite(p, t); if (sp) { var o = sp.width === 32 ? 0 : 4; c.drawImage(sp, SPOT[loc][0] + o, SPOT[loc][1] + o * 2); } return !!sp; }
+  function presFocus(loc) { return SPOT[loc] ? Math.round((SPOT[loc][1] + 13) / 90 * 100) : 50; }
+  function drawScene(canvas, loc, t, pres) {
     var c = canvas.getContext('2d');
     c.imageSmoothingEnabled = false;
-    (SCENES[loc] || SCENES.oval)(c, t || 0);
+    (SCENES[loc] || SCENES.oval)(c, t || 0, pres && pres.id ? pres : null);
   }
 
   /* ---------- portraits ---------- */
@@ -627,9 +666,11 @@ var ART = (function () {
     r = Math.max(0, Math.min(255, Math.round(r * f))); g = Math.max(0, Math.min(255, Math.round(g * f))); b = Math.max(0, Math.min(255, Math.round(b * f)));
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
-  function portrait(canvas, id, blink, t) {
-    if (CAST[id] && CAST[id].f2) { FACE2.draw(canvas, CAST[id].f2, { dress: CAST[id].dress, blink: blink }); return; }   /* v7.3 */
+  function portrait(canvas, id, blink, t, over) {
+    if (CAST[id] && CAST[id].f2) { FACE2.draw(canvas, CAST[id].f2, { grid: 32, dress: CAST[id].dress, blink: blink }); return; }   /* v7.3; v7.5 on the lab's 32 grid (issue 899 B) */
+    if (canvas.width !== 24) { canvas.width = 24; canvas.height = 24; }   /* v7.5: a canvas that last showed a 32 face (the desk's VP) */
     var s = CAST[id] || CAST.chief, c = canvas.getContext('2d'), has = function (a) { return s.acc.indexOf(a) >= 0; };
+    if (over) { s = Object.assign({}, s, over); }   /* v7.4: the scenes' clear ground and the president's beam and frown */
     c.imageSmoothingEnabled = false;
     px(c, 0, 0, 24, 24, s.bg);
     var sk = s.skin, skd = shade(sk, 0.82), hr = s.hair, ink = '#10131f';
@@ -720,6 +761,20 @@ var ART = (function () {
     if (has('stars')) { [3, 5, 18, 20].forEach(function (x) { px(c, x, 20, 1, 1, '#f0b429'); }); px(c, 4, 21, 1, 1, '#f0b429'); px(c, 19, 21, 1, 1, '#f0b429'); }
     if (has('square')) { px(c, 16, 21, 2, 1, '#f0b429'); px(c, 16, 22, 1, 1, '#ffe08a'); }
   }
+  /* v7.5: a president card (the Director's answer B on issue 899): 32 wide, shown at 64 px, so every pixel is two by two.
+     A dealt face fills it on the lab's 32 grid; a cast face (the default, a lookalike, Okafor) keeps the cast's 24 grid,
+     one pixel to one under the card's middle, on its own ground, two by two as well. The origin cards, the successor
+     folder, the notices, the save slots and the final edition draw with it. */
+  var CARD = { cv: null };
+  function card(canvas, id, blink, t) {
+    var s = CAST[id];
+    if (canvas.width !== 32) { canvas.width = 32; canvas.height = 32; }
+    if (s && s.f2) { FACE2.draw(canvas, s.f2, { grid: 32, dress: s.dress, blink: blink }); return; }
+    if (!CARD.cv) { CARD.cv = document.createElement('canvas'); CARD.cv.width = 24; CARD.cv.height = 24; }
+    portrait(CARD.cv, id, blink, t);
+    var c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
+    px(c, 0, 0, 32, 32, (s || CAST.chief).bg); c.drawImage(CARD.cv, 4, 8);
+  }
   /* v7.2: a lookalike still to be earned draws as a shadow */
   function silhouette(canvas) {
     var c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
@@ -786,7 +841,8 @@ var ART = (function () {
 
   /* ---------- v7.3: the president's face, second pass ----------
      The Director's answer B on issue 703, settled in the faces lab (labs/hail-to-the-clout-faces-lab-v1.02.html, locked on
-     his word 2026-10-05) and drawn here verbatim from labs/src/faces2.js v1.02 on the cast's 24 grid (approach A): nine
+     his word 2026-10-05) and drawn here verbatim from labs/src/faces2.js v1.02 (either grid; from v7.5 the game draws on
+     the lab's 32 grid, approach B, the Director's answer on issue 899, where v7.3 and v7.4 drew on the cast's 24): nine
      skin tones in three lightness bands, women and men, seven head shapes in three widths, eyes, noses, brows, mouths,
      25 hairstyles, beards, glasses in four frame colours, and the big win and big loss faces (expr 1 and 2). The engine
      deals the record (E.faceOf, kind 'face2', from the seed through mix(), never the dice); this only draws it. The one
@@ -875,7 +931,7 @@ var ART = (function () {
     var H = headSpec(f, G), g = H.g, cx = H.cx, T = H.T, C = H.C, R = H.rows;
     var ex = opt.expr != null ? opt.expr : f.ex;
 
-    px(c, 0, 0, G, G, D.bg);
+    px(c, 0, 0, G, G, opt.bg || D.bg);   /* v7.4: the scenes draw the figure on a clear ground (opt.bg); the lab's ground otherwise */
     var hsName = (f.sx ? HS_M : HS_F)[f.hs];
     var span = function (y) { return R[Math.max(T, Math.min(C, y))]; };
     var hRow = function (x0, x1, y, col) { if (x1 > x0) px(c, x0, y, x1 - x0, 1, col); };
@@ -1209,7 +1265,7 @@ var ART = (function () {
   }
   return { PAL: PAL, drawScene: drawScene, portrait: portrait, icon: icon, face: face, SCENES: SCENES, CAST: CAST, text: text, px: px, ell: ell, applicant: applicant,
     president: president, silhouette: silhouette, LOOKS: LOOKS, PRES_HAIR: PRES_HAIR, PRES_HS: PRES_HS, PRES_MOUTH: PRES_MOUTH, PRES_TIE: PRES_TIE, SK: SK, DRESS: DRESS,
-    FACE2: FACE2, face2: function (canvas, f, opt) { FACE2.draw(canvas, f, opt); } };
+    FACE2: FACE2, face2: function (canvas, f, opt) { FACE2.draw(canvas, f, Object.assign({ grid: 32 }, opt)); }, SPOT: SPOT, presFocus: presFocus, card: card };
 })();
 /* ===== ART END ===== */
 
