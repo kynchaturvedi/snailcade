@@ -706,8 +706,36 @@ v88 THE WAVE COUNTER WHERE WAVES COUNT: the HUD drew W and the wave
     and the desk (red on BUILD 87 in the other five modes, 10 of
     10 runs; SOLO's W1 is its control). Nothing that plays moved:
     every bot report row is identical to v87.
+v89 THE CODEX'S DEMOS AT 60: a codex build. The codex's own two
+    loops (the page's grid, stars, sprite spinners and path demo;
+    the LIVE DEMOS and the boss machines) ran once a refresh with
+    no cap, so a 120 Hz screen drew them 120 times a second; both
+    now take the doc 11 cap snippet exactly (the frame law covers
+    labs and demos too). Held by codexframetest v1.00 (real
+    Chromium, a virtual screen at 60, 120 and 144 Hz: 59.5 to 60.5
+    drawn a second; red on BUILD 88's codex, 120 and 144). This
+    file changes only its stamps: the game plays as v88, and every
+    bot report row is identical.
+v90 SMOOTH STEPS (doc 11 section 5 rule 4): the draw between the
+    last two steps. v87 to v89 drew the newest step, so at FRAME
+    RATE: SCREEN a 120 Hz screen drew every step twice (the ship
+    stood still on every other refresh) and a 144 Hz screen held
+    it on 7 refreshes in 12. Now each moving thing (the ships,
+    foes, shots, sparks, stars, the grid, the rock, the boss
+    machines, RAIL RUN's world) and the game clock are blended
+    between their last two steps by the unspent fraction of a step
+    as the frame draws, and put back the moment it has drawn:
+    drawing only, never fed back. A place moved outside a step (a
+    respawn, a reset, a guest's snapshot) or a jump of 40 px or
+    more draws where it is. Held by smoothtest v1.00 (real
+    Chromium, a virtual screen at 60, 120 and 144 Hz: the drawn
+    hull moves on every refresh and lies between the last two
+    steps; red on BUILD 89, every refresh with no step held it)
+    and refreshtest (the same state before every step at every
+    rate). Nothing that plays moved: every bot report row is
+    identical to v89.
 -->
-<title>NEON SWARM v88</title>
+<title>NEON SWARM v90</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -1477,7 +1505,7 @@ function S(name){
 }
 
 // ---------- state ----------
-var BUILD = 88;
+var BUILD = 90;
 var STATE = 'title';
 var score = 0, hiScore = 0, wave = 0;
 var chain = 0, mult = 1, chainTimer = 0;
@@ -7355,6 +7383,74 @@ function dbgPaint(ts){
   dbg.el.textContent = 'FPS ' + fps.fps.toFixed(1) + '\nmean ' + fps.mean.toFixed(1) + ' ms\nworst ' + fps.max.toFixed(1) +
     ' ms\nFRAME RATE ' + (frameRate === 'screen' ? 'SCREEN' : '60') + '\nv' + BUILD;   // a narrow column, clear of FULLSCREEN
 }
+// v90 SMOOTH STEPS (doc 11 v1.05 section 5 rule 4): the draw between the last two steps. Before the last step of a
+// frame each moving thing's place is kept (`smoothSnap`), after it the place the step left (`smoothSeal`); the draw
+// then blends the two by the unspent fraction of a step and puts every value back the moment it has drawn
+// (`smoothApply`, `smoothUndo`): drawing only, never fed back (refreshtest: the same state before every step at every
+// rate). A place moved outside a step (a respawn timer, a reset, a guest's snapshot), a jump past SMOOTH_JUMP (a star
+// or a grid row wrapping, a far respawn) or a thing born in the last step draws where it is. So a 120 Hz screen at
+// SCREEN draws each step once and half a step on, instead of every step twice (smoothtest.js); the game clock
+// (`time`) blends the same way, so its pulses, ribs and backdrops glide too.
+var SMOOTH_XY = ['x', 'y'], SMOOTH_RAIL = ['x', 'y', 'wx', 'wy', 'z'], SMOOTH_JUMP = 40, SMOOTH_JUMP_Z = 60;
+var smooth = { n:0, sealed:-1, keep:new WeakMap(), undo:[], t0:0, t1:0 };
+function smoothLists(fn){
+  var L = [players, enemies, bullets, ebullets, particles, rings, novas, popups, stars, bgObjs, gpts, terrain, blasers, [gShip]];
+  for (var i = 0; i < L.length; i++) fn(L[i], SMOOTH_XY);
+  var bb = bossRush.boss;
+  if (bb){ fn([bb], SMOOTH_XY); if (bb.parts) fn(bb.parts, SMOOTH_XY); }
+  fn(sf.shots, SMOOTH_RAIL); fn(sf.es, SMOOTH_RAIL); fn(sf.foes, SMOOTH_RAIL); fn(sf.stars, SMOOTH_RAIL);
+  if (sf.boss){ fn([sf.boss], SMOOTH_RAIL); if (sf.boss.parts) fn(sf.boss.parts, SMOOTH_RAIL); }
+}
+function smoothSnap(){                          // before the frame's last step: where each thing was
+  smooth.n++; smooth.t0 = time;
+  smoothLists(function(list, F){
+    for (var i = 0; i < list.length; i++){
+      var o = list[i]; if (!o || typeof o !== 'object') continue;
+      var k = smooth.keep.get(o);
+      if (!k){ k = { n:-1, s:-1, a:[], b:[] }; smooth.keep.set(o, k); }
+      k.n = smooth.n;
+      for (var f = 0; f < F.length; f++) k.a[f] = o[F[f]];
+    }
+  });
+}
+function smoothSeal(){                          // after it: where the step left each thing
+  smooth.t1 = time; smooth.sealed = smooth.n;
+  smoothLists(function(list, F){
+    for (var i = 0; i < list.length; i++){
+      var o = list[i]; if (!o || typeof o !== 'object') continue;
+      var k = smooth.keep.get(o);
+      if (!k || k.n !== smooth.n) continue;     // born in the last step: drawn where it is
+      k.s = smooth.n;
+      for (var f = 0; f < F.length; f++) k.b[f] = o[F[f]];
+    }
+  });
+}
+function smoothApply(a){                        // a: the unspent fraction of a step, 0 to 1
+  smooth.undo.length = 0;
+  if (smooth.sealed !== smooth.n || !(a < 1)) return;
+  if (a < 0) a = 0;
+  var u = smooth.undo;
+  smoothLists(function(list, F){
+    for (var i = 0; i < list.length; i++){
+      var o = list[i]; if (!o || typeof o !== 'object') continue;
+      var k = smooth.keep.get(o);
+      if (!k || k.s !== smooth.n) continue;
+      for (var f = 0; f < F.length; f++){
+        var v = o[F[f]], p = k.a[f], c = k.b[f];
+        if (typeof v !== 'number' || v !== c || typeof p !== 'number' || p === c) continue;
+        if (Math.abs(c - p) > (F[f] === 'z' ? SMOOTH_JUMP_Z : SMOOTH_JUMP)) continue;
+        u.push(o, F[f], v);
+        o[F[f]] = p + (c - p) * a;
+      }
+    }
+  });
+  if (time === smooth.t1 && smooth.t1 > smooth.t0){ u.push(null, 'time', time); time = smooth.t0 + (smooth.t1 - smooth.t0) * a; }
+}
+function smoothUndo(){                          // every value back, exactly, before anything else runs
+  var u = smooth.undo;
+  for (var i = u.length - 3; i >= 0; i -= 3){ if (u[i] === null) time = u[i + 2]; else u[i][u[i + 1]] = u[i + 2]; }
+  u.length = 0;
+}
 var tick = { on:false, last:0 };
 function resetLoop(){
   tick.on = false; tick.last = 0; capNext = -1;
@@ -7369,9 +7465,13 @@ function loop(ts){
   if (acc > STALL_MS){ steps = 1; tick.last = ts - STEP_MS / 2; }   // a stall or a hidden tab: drop the backlog, never sprint
   else { steps = Math.min(STEP_CAP, Math.floor(acc / STEP_MS)); tick.last += steps * STEP_MS; }
   for (var i = 0; i < steps; i++){
+    if (i === steps - 1) smoothSnap();
     try { update(1 / 60); } catch(e){ lastError = 'upd: ' + e.message; }
   }
+  if (steps) smoothSeal();
+  smoothApply((ts - tick.last) / STEP_MS);      // v90: drawn between the last two steps
   try { draw(); } catch(e){ lastError = 'drw: ' + e.message; }
+  smoothUndo();
   dbgPaint(ts);
 }
 requestAnimationFrame(loop);

@@ -194,6 +194,58 @@
      scale with cell size. Applies everywhere blocks draw. Visuals only;
      full ten-gate chain green.
 ---------------------------------------------------------------------
+ v66  SHARK THINK TIME  (SHARK, the Hard CPU, thinks 1.2 s a piece)
+   - Director (issue #1058, "B"): SHARK thinks 1200 ms a piece, not
+     1500 (each think still varies from 0.65 to 1.35 of it). Aiming
+     for its special rows (v65) barely moved it: the skilled bot won
+     0.92 against it. At 1.2 s the skilled bot wins 0.79 and SHARK
+     fires a median 12.5 specials a match (6.5 on v65, 12 on v63).
+     Only SHARK changed: SPUD, ROOKIE and ACE play as on v65. Before
+     and after bot reports on the same seeds: bots/reports/v66.
+   - GATES: redproof v1.27 (102: the two tampers that read SHARK's
+     preset follow it, and one more on the ai lab's copy of it).
+---------------------------------------------------------------------
+ v65  FRAME LAW  (the same game at any refresh rate; a 60 cap; SHARK aims)
+   - THE FRAME LAW (doc 11 section 5, the Director's word, 2026-10-05;
+     MEMO-STUDIO-HEAD-FRAME-LAW-v1.00): the gravity well eases by the
+     time since it last drew (1 - 0.84^(dt*60): 0.16 a frame at 60 Hz)
+     and the special's name callout counts by elapsed time from its
+     birth (0.96 a second: 0.016 a frame at 60 Hz). Both counted drawn
+     frames, so at 120 Hz the well eased and the callout ran out twice
+     as fast (SNAILCADE's finding, MEMO-SNAILCADE-GRID-FRAME-LAW-v1.00).
+     The shake's jitter draws dice of its own, so the effects' dice no
+     longer move with the refresh rate.
+   - The 60 cap: at most 60 drawn frames a second by default (the
+     doc's deadline snippet); FRAME RATE in the menu, 60 or SCREEN.
+     The menu's FPS readout: frames a second, mean and worst frame
+     time over the last whole second of play.
+   - Bug: in Vs. CPU the menu froze your field and the match clock but
+     the CPU played on under it (since v54); now it freezes too.
+   - Director (issue #1019, "B"): ACE and SHARK aim for the rows that
+     hold their own special blocks (wSpec 4 for each special a
+     placement banks). Before and after bot reports on the same seeds:
+     bots/reports/v65.
+   - GATES: refreshtest (60, 120 and 144 Hz: the same play state),
+     captest (59.5 to 60.5 drawn a second from 60 to 165 Hz),
+     pausetest v1.02, vscputest v1.08, mobile-layout-test v1.02.
+---------------------------------------------------------------------
+ v64  PLANTED  (the CPU's clears plant special blocks on its field)
+   - Director (issue #509, "B"): the CPU's clears of two or more plant
+     special blocks on its own field, as yours do (one per line
+     cleared, the faithful rule), and it banks a special only when it
+     clears the row that holds it. Until v63 its specials went
+     straight into its queue, so its field held none and your Block
+     Bomb and Clear Specials found nothing against it (the bot suite
+     v1.03: 2 of 307 Bombs and 9 of 176 Clear Specials found any).
+   - The CPU's special markers move with its rows when it clears
+     (until v63 its clear moved the cells and left the markers behind,
+     which showed only after a Switch carried your specials across).
+   - A rule you feel: the CPU reaches its specials later. Before and
+     after bot reports on the same seeds: bots/reports/v64.
+   - GATE: vscputest v1.07: the CPU's single plants none and its
+     double plants two on its field, banking none; a cleared marker
+     banks; your Clear Specials and Block Bomb find what it planted.
+---------------------------------------------------------------------
  v63  GLOW  (the juice layer's light colours paint light, not black)
    - Bug (SNAILCADE's finding, reading the game in its cabinet): hexA
      read only '#rrggbb', but the hard-drop trail's glow and every
@@ -1002,7 +1054,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e14">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
-<title>GRID GRUDGE - BUILD 63</title>
+<title>GRID GRUDGE - BUILD 66</title>
 <style>
   :root { --safe: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
   html, body {
@@ -1027,7 +1079,7 @@
 /* =====================================================================
    BUILD STAMP
 ===================================================================== */
-var BUILD = 63;
+var BUILD = 66;
 
 /* =====================================================================
    TUNABLES  (single-knob, intent-commented; codex SYSTEMS mirrors these)
@@ -1144,6 +1196,7 @@ function mulberry32(a){
   };
 }
 var rng = mulberry32(1);
+var shakeRand = mulberry32(65);   // v65 THE FRAME LAW: the shake's jitter, re-rolled each drawn frame (cosmetic, and the cap holds it at 60), draws its own dice; on fxRand it moved the dice of every later burst and cell animation by the refresh rate
 var fxRand = mulberry32(59);   // v59: the presentation dice (particles, shake, cell animations, the music pick, the noise
                                // buffer). Math.random stays the CPU's and the netcode's, so a visual change never moves a CPU roll.
 
@@ -1794,8 +1847,8 @@ var lastT = 0, lastError = null;
 /* layout rects in logical coords (set in computeLayout) */
 var L = {};
 function computePauseRects(){                              // v30: the pause menu, centred over the field (both layouts)
-  var f = L.field, pw2 = 232, rh = 48, gp2 = 10;
-  var ph2 = 44 + 5*(rh + gp2);                             // v32: five rows now (SOUND added)
+  var f = L.field, pw2 = 232, rh = 46, gp2 = 8;            // v65: six rows (FRAME RATE) and the FPS readout, a little tighter
+  var ph2 = 44 + 6*(rh + gp2) + 30;                        // v32: SOUND; v65: FRAME RATE and the readout's 30 px
   var px2, py2;
   if (HAS_OPPONENT){ px2 = Math.round((LOGW - pw2)/2); py2 = Math.round((LOGH - ph2)/2); }   // v51 versus: centre on screen (player field is off-centre)
   else { px2 = Math.round(f.x + (f.w - pw2)/2); py2 = Math.round(f.y + (f.h - ph2)/2); }      // solo: unchanged, centred over the field
@@ -1805,7 +1858,9 @@ function computePauseRects(){                              // v30: the pause men
   L.pmRestart = { x:px2+12, y:ry2 + (rh+gp2),      w:pw2-24, h:rh };
   L.pmFull    = { x:px2+12, y:ry2 + 2*(rh+gp2),    w:pw2-24, h:rh };
   L.pmSound   = { x:px2+12, y:ry2 + 3*(rh+gp2),    w:pw2-24, h:rh };   // v32
-  L.pmExit    = { x:px2+12, y:ry2 + 4*(rh+gp2),    w:pw2-24, h:rh };
+  L.pmRate    = { x:px2+12, y:ry2 + 4*(rh+gp2),    w:pw2-24, h:rh };   // v65 THE FRAME LAW: FRAME RATE, 60 or SCREEN
+  L.pmExit    = { x:px2+12, y:ry2 + 5*(rh+gp2),    w:pw2-24, h:rh };
+  L.pmFps     = { x:px2+12, y:ry2 + 6*(rh+gp2) - 2,  w:pw2-24, h:28 };   // v65: the FPS readout
 }
 function computeLayoutWide(){
   // v31 UNFOLDED restructure (Director): the centre rail is GONE and the field
@@ -1919,8 +1974,8 @@ var SWITCH_EDGE = 3;   // v59 SMART SWITCH: Switch fires only from a stack at le
 var AI_PRESETS = {
   PEASY: { name:'SPUD',   label:'PEASY', color:'#9ad94b', thinkMs:4000, errorRate:0.30, wLines:1.2, wHoles:4.0, wHeight:0.40, wBump:0.30, wWell:0,    offense:false, taunts:['oops','my bad','uh oh'] },
   EASY:  { name:'ROOKIE', label:'EASY',  color:'#5aa9ff', thinkMs:3500, errorRate:0.28, wLines:1.3, wHoles:4.5, wHeight:0.45, wBump:0.35, wWell:0,    offense:false, taunts:['not bad','getting there'] },
-  MED:   { name:'ACE',    label:'MED',   color:'#b58bff', thinkMs:2500, errorRate:0.10, wLines:1.6, wHoles:6.0, wHeight:0.50, wBump:0.40, wWell:0.35, offense:true,  lookahead:true, hold:true, finesse:true, taunts:['take that','keep up'] },
-  HARD:  { name:'SHARK',  label:'HARD',  color:'#ff5a5a', thinkMs:1500, errorRate:0.02, wLines:2.0, wHoles:8.0, wHeight:0.60, wBump:0.50, wWell:0.8,  offense:true,  lookahead:true, hold:true, finesse:true, taunts:['too slow','game over'] }
+  MED:   { name:'ACE',    label:'MED',   color:'#b58bff', thinkMs:2500, errorRate:0.10, wLines:1.6, wHoles:6.0, wHeight:0.50, wBump:0.40, wWell:0.35, wSpec:4, offense:true,  lookahead:true, hold:true, finesse:true, taunts:['take that','keep up'] },
+  HARD:  { name:'SHARK',  label:'HARD',  color:'#ff5a5a', thinkMs:1200, errorRate:0.02, wLines:2.0, wHoles:8.0, wHeight:0.60, wBump:0.50, wWell:0.8,  wSpec:4, offense:true,  lookahead:true, hold:true, finesse:true, taunts:['too slow','game over'] }   // v66 (Director, issue #1058 B): SHARK thinks 1200 ms, was 1500 (v54 to v65)
 };
 function botFits(m, x, y, fld){
   for (var r=0;r<m.length;r++) for (var c=0;c<m.length;c++){ if(!m[r][c]) continue;
@@ -1969,23 +2024,31 @@ function botReachable(fld, type){
     var cc=botClear(botPlace(fld, uniq[rr[0]], rr[1], rr[2], col)); out.push({ m:uniq[rr[0]], x:rr[1], y:rr[2], field:cc.f, lines:cc.lines }); }
   return out;
 }
-function botLineScore(cands, nextType, P){
+function botSpecGain(fld, spec, m, x, y){   // v65 (Director, issue #1019 B): the specials a placement banks, the markers on the rows it completes (botClear stays the planner's pure helper)
+  var g=0;
+  for (var a=0;a<m.length;a++){ var fy=y+a, hit=false; if (fy<0||fy>=FIELD_H) continue;
+    for (var b=0;b<m.length;b++){ if (m[a][b]) hit=true; } if (!hit) continue;
+    var full=true; for (var fx=0;fx<FIELD_W;fx++){ var px=fx-x; if (!fld[fy][fx] && !(px>=0 && px<m.length && m[a][px])){ full=false; break; } }
+    if (full){ for (fx=0;fx<FIELD_W;fx++){ if (spec[fy][fx]) g++; } } }
+  return g;
+}
+function botLineScore(cands, nextType, P, fld, spec){   // v65: fld and spec, the field the candidates were placed on and its special markers (ACE and SHARK, wSpec)
   var best=null, bestS=-1e9;
-  for (var i=0;i<cands.length;i++){ var c=cands[i], s1=scoreBoard(c.field,c.lines,P), la=0;
+  for (var i=0;i<cands.length;i++){ var c=cands[i], s1=scoreBoard(c.field,c.lines,P)+((spec && P.wSpec && c.lines) ? P.wSpec*botSpecGain(fld,spec,c.m,c.x,c.y) : 0), la=0;   // v65: wSpec for each special the placement banks
     if (P.lookahead && nextType){ var nc=botCandidates(c.field,nextType), b2=-1e9; for (var j=0;j<nc.length;j++){ var s2=scoreBoard(nc[j].field,nc[j].lines,P); if(s2>b2)b2=s2; } la=(b2>-1e9?b2:0); }
     var comb=s1+(P.lookahead?0.6*la:0); if (comb>bestS){ bestS=comb; best=c; }
   }
   return { c:best, s:bestS };
 }
-function botPlan(fld, curType, nextType, holdType, P){
+function botPlan(fld, curType, nextType, holdType, P, spec){   // v65: spec, the planner's own special markers (the CPU's); without it the plan is v64's
   var cur = P.finesse ? botReachable(fld, curType) : botCandidates(fld, curType);
   if (!cur.length) return null;
   if (Math.random() < P.errorRate){ cur.sort(function(a,b){ return scoreBoard(b.field,b.lines,P)-scoreBoard(a.field,a.lines,P); });
     var lo=Math.floor(cur.length*0.4), pk=cur[lo+Math.floor(Math.random()*(cur.length-lo))]; return { m:pk.m, x:pk.x, y:pk.y, hold:false }; }
-  var A = botLineScore(cur, nextType, P);
+  var A = botLineScore(cur, nextType, P, fld, spec);
   if (P.hold){ var swapType = holdType || nextType;
     if (swapType){ var sc = P.finesse ? botReachable(fld, swapType) : botCandidates(fld, swapType);
-      if (sc.length){ var B = botLineScore(sc, nextType, P); if (B.s > A.s + 0.5) return { m:B.c.m, x:B.c.x, y:B.c.y, hold:true }; } } }
+      if (sc.length){ var B = botLineScore(sc, nextType, P, fld, spec); if (B.s > A.s + 0.5) return { m:B.c.m, x:B.c.x, y:B.c.y, hold:true }; } } }
   return { m:A.c.m, x:A.c.x, y:A.c.y, hold:false };
 }
 function specMaxH(fld){ var mx=0; for(var x=0;x<FIELD_W;x++){ for(var y=0;y<FIELD_H;y++){ if(fld[y][x]){ var hh=FIELD_H-y; if(hh>mx)mx=hh; break; } } } return mx; }
@@ -2011,7 +2074,8 @@ function cpuBagPop(){ if(!cpu.bag.length){ cpu.bag=TYPES.slice(); for(var i=cpu.
 function cpuPeek(){ if(!cpu.bag.length){ cpu.bag=TYPES.slice(); for(var i=cpu.bag.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0,t=cpu.bag[i]; cpu.bag[i]=cpu.bag[j]; cpu.bag[j]=t; } } return cpu.bag[cpu.bag.length-1]; }
 function cpuNextPiece(){ cpu.type=cpuBagPop(); cpu.target=null; cpu.timer=0; }
 function cpuAddGarbage(n, gap){ if(!cpu) return false; var over=false; for(var i=0;i<n;i++){ if (cpu.field[0].some(function(v){ return v; })) over=true; cpu.field.shift(); cpu.spec.shift(); var row=new Array(FIELD_W).fill(GARBAGE_COLOR); row[gap]=0; cpu.field.push(row); cpu.spec.push(new Array(FIELD_W).fill(0)); } return over; }   // v60: returns the overflow, as applyGarbage does for the player (until v59 a block pushed past the top just vanished, so garbage could never top the CPU out)
-function cpuSeedSpecials(nl){ var off=AI_PRESETS[cpu.preset].offense; for(var i=0;i<nl;i++){ if(cpu.inv.length>=INVENTORY_CAP) break; cpu.inv.push(off ? weightedSpecial() : ['C','C','C','G','G','N'][Math.floor(Math.random()*6)]); } }
+function cpuSeedSpecials(nl){ var off=AI_PRESETS[cpu.preset].offense, spots=[], x, y; for(y=0;y<FIELD_H;y++) for(x=0;x<FIELD_W;x++){ if(cpu.field[y][x] && !cpu.spec[y][x]) spots.push([x,y]); } for(var i=0;i<nl && spots.length;i++){ var p=spots.splice(Math.floor(Math.random()*spots.length),1)[0]; cpu.spec[p[1]][p[0]] = off ? weightedSpecial() : ['C','C','C','G','G','N'][Math.floor(Math.random()*6)]; } }   // v64 (Director, issue #509): the CPU's clears plant special blocks on its own field, as seedSpecials does yours, on the CPU's dice; until v63 they went straight into its queue, so its field held none and your Block Bomb and Clear Specials found nothing
+function cpuClearRows(){ var kf=[], ks=[], x, y; for(y=0;y<FIELD_H;y++){ var full=true; for(x=0;x<FIELD_W;x++){ if(!cpu.field[y][x]){ full=false; break; } } if(full){ for(x=0;x<FIELD_W;x++){ if(cpu.spec[y][x] && cpu.inv.length<INVENTORY_CAP) cpu.inv.push(cpu.spec[y][x]); } } else { kf.push(cpu.field[y]); ks.push(cpu.spec[y]); } } var n=FIELD_H-kf.length; while(kf.length<FIELD_H){ kf.unshift(new Array(FIELD_W).fill(0)); ks.unshift(new Array(FIELD_W).fill(0)); } cpu.field=kf; cpu.spec=ks; return { lines:n }; }   // v64: the CPU's clear banks the specials on its cleared rows, as clearLines does yours, and its markers move with its rows (until v63 botClear moved the cells and left cpu.spec behind)
 function cpuSelfEffect(letter){ applyEffect(letter, cpu); }
 function cpuUseSpecial(){
   if (!cpu || !cpu.inv.length) return;
@@ -2022,10 +2086,10 @@ function cpuUseSpecial(){
 }
 function topOutCpu(){ if (STATE.mode==='over') return; STATE.result='win'; STATE.mode='over'; STATE.active=null; if(typeof sfxWin==='function') sfxWin(); }
 function cpuDrive(dt){
-  if (!cpu || STATE.mode !== 'play') return;
+  if (!cpu || STATE.mode !== 'play' || STATE.paused) return;   // v65: the menu freezes the CPU too, as the v30/v54 pause promises (since v54 it played on, and could attack, under the menu while the match clock stood still)
   var P = AI_PRESETS[cpu.preset];
   if (!cpu.target){
-    var plan = botPlan(cpu.field, cpu.type, cpuPeek(), cpu.hold, P);
+    var plan = botPlan(cpu.field, cpu.type, cpuPeek(), cpu.hold, P, cpu.spec);   // v65 (issue #1019 B): it aims for the rows that hold its specials
     if (!plan){ topOutCpu(); return; }
     if (plan.hold){ if (cpu.hold === null){ cpu.hold = cpu.type; cpu.type = cpuBagPop(); } else { var hh=cpu.hold; cpu.hold=cpu.type; cpu.type=hh; } }
     cpu.target = plan; cpu.timer = 0; cpu.thinkTarget = P.thinkMs * (0.65 + Math.random() * 0.7);
@@ -2034,7 +2098,7 @@ function cpuDrive(dt){
   if (cpu.timer >= cpu.thinkTarget){
     var m = cpu.target.m, x = cpu.target.x;
     var y = (cpu.target.y != null && botFits(m, x, cpu.target.y, cpu.field)) ? cpu.target.y : botDropY(m, x, cpu.field);
-    if (y >= 0){ cpu.field = botPlace(cpu.field, m, x, y, SHAPES[cpu.type].c); var cc = botClear(cpu.field); cpu.field = cc.f; cpu.lines += cc.lines;
+    if (y >= 0){ cpu.field = botPlace(cpu.field, m, x, y, SHAPES[cpu.type].c); var cc = cpuClearRows(); cpu.lines += cc.lines;
       if (cc.lines > 0){ var g = computeSend(cc.lines); if (g > 0){ if (applyGarbage(STATE, g, (Math.random()*FIELD_W)|0)) topOut(); } if (SEED_PRESET === 'arcade' ? cc.lines >= 1 : cc.lines >= 2) cpuSeedSpecials(cc.lines); } }
     cpuUseSpecial();
     cpuNextPiece();
@@ -2056,10 +2120,11 @@ function suddenDeath(){
   FX.surgeT = 1; FX.gflash = 1; FX.gn = n; FX.shake = Math.max(FX.shake, 0.35); FX.wellT = Math.max(FX.wellT, 0.8);
   if (applyGarbage(STATE, n, gap)) topOut();
 }
-function announce(text, col){ FX.spName = { text: text, col: col || '#e8eef7', t: 1.3 }; }   // v54: flash a special / line-clear name over the field
+function announce(text, col){ FX.spName = { text: text, col: col || '#e8eef7', t: 1.3, lt: FX.t }; }   // v65: lt, its birth on the FX clock (drawAnnounce counts from it)   // v54: flash a special / line-clear name over the field
 function drawAnnounce(){
   var a = FX.spName; if (!a || a.t <= 0) return;
-  a.t -= 0.016;
+  var aDt = Math.max(0, FX.t - (a.lt == null ? FX.t : a.lt)); a.lt = FX.t;   // v65 THE FRAME LAW (doc 11 section 5): counted by elapsed time (FX.t, which step() advances) from its birth (announce stamps it), not 0.016 a drawn frame, which ran the callout 2x fast at 120 Hz (SNAILCADE's finding)
+  a.t -= aDt * 0.96;                                    // 0.016 a frame at 60 Hz is 0.96 a second: at 60 Hz the callout is as it was
   var f = L.field, cx = f.x + f.w/2, cy = f.y + f.h*0.34 - (1.3 - a.t)*22, al = Math.max(0, Math.min(1, a.t*1.7));
   ctx.save(); ctx.globalAlpha = al; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.font = '900 ' + Math.max(14, Math.round(f.w*0.11)) + 'px Impact, "Arial Narrow", sans-serif';
@@ -2243,7 +2308,9 @@ function drawField(){
   // bow around the piece as it moves; locks, hard drops, and garbage deepen the
   // well for a beat (FX.wellT). FX.gx/gy are render-side smoothing, never logic.
   var wSpd = Math.abs(pcx - FX.gx) + Math.abs(pcy - FX.gy);
-  FX.gx += (pcx - FX.gx) * 0.16; FX.gy += (pcy - FX.gy) * 0.16;
+  var wDt = Math.max(0, FX.t - (FX.gwT || 0)); FX.gwT = FX.t;   // v65 THE FRAME LAW (doc 11 section 5): eased by the time since it last drew (FX.t, which step() advances; from the start when it never has), not 0.16 of the way a drawn frame, which eased 2x fast at 120 Hz
+  var wK = 1 - Math.pow(1 - 0.16, wDt * 60);           // 0.16 a frame at 60 Hz, the same pace at any refresh rate
+  FX.gx += (pcx - FX.gx) * wK; FX.gy += (pcy - FX.gy) * wK;
   var gAmp = Math.min(0.45, 0.16 + wSpd * 0.35 + FX.wellT * 0.30);   // cells of pull at the well centre
   function grav(px2, py2){
     var dx2 = FX.gx - px2, dy2 = FX.gy - py2, d2 = dx2*dx2 + dy2*dy2;
@@ -2594,7 +2661,18 @@ function drawPauseMenu(){                                  // v30 (Director: lik
   pmRow(L.pmRestart, (HAS_OPPONENT && !VSCPU) ? 'RESTART (SOLO ONLY)' : 'RESTART', STEEL, !!(HAS_OPPONENT && !VSCPU));
   pmRow(L.pmFull, fsActive() ? 'EXIT FULL SCREEN' : 'FULL SCREEN', EMBER, false);
   pmRow(L.pmSound, SND.muted ? 'SOUND: OFF' : 'SOUND: ON', STEEL, false);   // v32
+  pmRow(L.pmRate, frameRate === 'screen' ? 'FRAME RATE: SCREEN' : 'FRAME RATE: 60', STEEL, false);   // v65
   pmRow(L.pmExit, (HAS_OPPONENT && !VSCPU) ? 'EXIT (SOLO ONLY)' : 'EXIT TO TITLE', EMBER, !!(HAS_OPPONENT && !VSCPU));
+  drawFpsReadout(L.pmFps);                                 // v65
+}
+function drawFpsReadout(r){                               // v65 THE FRAME LAW (doc 11 section 5, the 60 floor): frames a second, mean and worst frame time
+  var w = FPS.inPlay || FPS.now, cx = r.x + r.w/2;
+  var line = w ? (Math.round(w.fps) + ' FPS  MEAN ' + w.mean.toFixed(1) + '  WORST ' + w.worst.toFixed(1) + ' MS') : 'FPS: MEASURING';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  var fPx = 11; do { ctx.font = '800 ' + fPx + 'px ui-monospace, monospace'; } while (ctx.measureText(line).width > r.w - 4 && --fPx > 7);
+  ctx.fillStyle = (w && w.fps < 59.5) ? DANGER : TEXT; ctx.fillText(line, cx, r.y + 8);
+  ctx.font = '700 9px ui-monospace, monospace'; ctx.fillStyle = MUTE;
+  ctx.fillText(w ? (FPS.inPlay ? 'THE LAST WHOLE SECOND OF PLAY' : 'THE LAST SECOND') : '', cx, r.y + 22);
 }
 
 /* movement pad (v21 spec, v22 geometry): one rectangle split in the middle for
@@ -3058,7 +3136,7 @@ function drawPlayScene(){
   var fxs = (FX.shake > 0.01) ? FX.shake * 3 : 0;       // v24: only the framed field shakes; controls stay planted
   ctx.save();
   try {
-    if (fxs) ctx.translate(Math.round((fxRand()*2-1)*fxs), Math.round((fxRand()*2-1)*fxs));
+    if (fxs) ctx.translate(Math.round((shakeRand()*2-1)*fxs), Math.round((shakeRand()*2-1)*fxs));   // v65: its own dice
     drawField();
     drawFx();
     drawAnnounce();
@@ -3323,6 +3401,7 @@ function handleStart(id, p){
     if (inRect(p, L.pmResume)) STATE.paused = false;
     else if (inRect(p, L.pmFull)) toggleFs();
     else if (inRect(p, L.pmSound)) setMuted(!SND.muted);
+    else if (inRect(p, L.pmRate)) setFrameRate(frameRate === 'screen' ? '60' : 'screen');   // v65 THE FRAME LAW
     else if ((!HAS_OPPONENT || VSCPU) && inRect(p, L.pmRestart)){ if (VSCPU) cpuInit(cpuLevel); resetGame(); }
     else if ((!HAS_OPPONENT || VSCPU) && inRect(p, L.pmExit)){ STATE.paused = false; STATE.mode = 'title'; clearSolo(); endVsCpu(); menuScreen=null; }
     return;
@@ -3418,8 +3497,37 @@ function toggleFs(){
   } catch(_){}
 }
 
+/* v65 THE FRAME LAW (doc 11 section 5; MEMO-STUDIO-HEAD-FRAME-LAW-v1.00): at most 60 drawn frames a second by default,
+   on the doc's deadline snippet exactly (never "skip under 1/60 s since the last draw", which draws 45 a second at 90 Hz);
+   FRAME RATE in the pause menu lifts it (SCREEN: every refresh, offered because refreshtest holds the game the same at
+   60, 120 and 144 Hz); the FPS readout (frames a second, mean and worst frame time) shows in the pause menu. */
+var CAP_MS = 1000 / 60, capNext = -1;          // THE FRAME CAP (doc 11 section 5)
+function capReady(ts) {                        // ts: the rAF timestamp
+  if (capNext < 0) capNext = ts;
+  if (ts < capNext - 2) return false;          // too soon on a fast screen: skip this refresh
+  capNext += CAP_MS;
+  if (capNext < ts - CAP_MS) capNext = ts;     // after a stall, count again from now
+  return true;
+}
+var FRAME_KEY = 'gg_framerate_v1', frameRate = '60';   // '60' (the default) or 'screen'
+try { if (localStorage.getItem(FRAME_KEY) === 'screen') frameRate = 'screen'; } catch(e){}
+function setFrameRate(v){ frameRate = (v === 'screen') ? 'screen' : '60'; capNext = -1; try { localStorage.setItem(FRAME_KEY, frameRate); } catch(e){} }
+var FPS = { last: -1, t0: -1, n: 0, sum: 0, worst: 0, play: true, now: null, inPlay: null };   // the readout: each whole second's frames, mean and worst frame time
+function fpsTick(t){
+  if (FPS.last >= 0){ var ft = t - FPS.last; FPS.n++; FPS.sum += ft; if (ft > FPS.worst) FPS.worst = ft; }
+  FPS.last = t; if (STATE.mode !== 'play' || STATE.paused) FPS.play = false;
+  if (FPS.t0 < 0){ FPS.t0 = t; return; }
+  if (t - FPS.t0 >= 1000){
+    var w = { fps: FPS.n * 1000 / (t - FPS.t0), mean: FPS.n ? FPS.sum / FPS.n : 0, worst: FPS.worst };
+    FPS.now = w; if (FPS.play) FPS.inPlay = w;     // a second spent wholly in play is the one the pause menu shows first
+    FPS.t0 = t; FPS.n = 0; FPS.sum = 0; FPS.worst = 0; FPS.play = (STATE.mode === 'play' && !STATE.paused);
+  }
+}
 function frame(t){
+  requestAnimationFrame(frame);
+  if (frameRate !== 'screen' && !capReady(t)) return;   // v65: the cap, on the rAF timestamp
   try {
+    fpsTick(t);
     var dt = lastT ? (t - lastT) : 16; lastT = t;
     if (dt > 100) dt = 100;                 // clamp after tab-away
     step(dt);
@@ -3428,7 +3536,6 @@ function frame(t){
     lastError = e;
     try { drawErr(e); } catch(_){}
   }
-  requestAnimationFrame(frame);
 }
 
 if (HAS_DOM){
