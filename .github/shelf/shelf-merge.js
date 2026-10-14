@@ -1,11 +1,15 @@
-// shelf-merge.js v1.00 | THE SHELF MERGE BOT (snailcade's half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's answer
+// shelf-merge.js v1.01 | THE SHELF MERGE BOT (snailcade's half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's answer
 // "A" on studio issue 321, 2026-10-03; studio doc 13 section 15.2). With `shelfmerge: on` in .github/shelf/AUTOPILOT.md it
-// merges a seat's shelf pull request without waiting for the Director when it ONLY ADDS versioned builds under test/<slug>/:
+// merges a seat's shelf pull request without waiting for the Director when it ONLY ADDS versioned builds under test/<slug>/,
+// or (v1.01, the Director's answer "A" on studio issue 1437, 2026-10-14) ONLY ADDS versioned device labs under <slug>/labs/;
+// one kind per pull request, as tools/snailcade.js v1.07 makes them (a pull request mixing builds and labs is his):
 //   1. a claude/ branch of this repository, into main, not a draft;
-//   2. every change adds a new file test/<slug>/<name>-vX(.YZ).html: nothing changed, moved or deleted, nothing outside
+//   2. every change adds a new file test/<slug>/<name>-vX(.YZ).html, or every change adds a new file
+//      <slug>/labs/<name>-vX(.YZ).html (a lab: public but unlisted, a byte copy of the studio's titles/<slug>/labs/): nothing
+//      changed, moved or deleted, nothing outside
 //      test/, never test/index.html (the shelf bot's: no version, no title folder, so the build pattern refuses it), never
 //      the front end at the root or a title's folder (their seats');
-//   3. no build holds a login, key or token (only the kind is said, never the value; Metered's public Open Relay Project
+//   3. no build or lab holds a login, key or token (only the kind is said, never the value; Metered's public Open Relay Project
 //      login is not a secret);
 //   4. GitHub reads it as mergeable.
 // The studio-first order (a shelf build is a byte copy of a build already published on the studio's main) is the seat's to
@@ -18,11 +22,12 @@
 //   reads each pull request with git. SHELFMERGE_ROOT=<dir> reads another checkout (the studio's test uses it).
 'use strict';
 const fs = require('fs'), path = require('path'), cp = require('child_process');
-const VERSION = 'v1.00';
+const VERSION = 'v1.01';
 const ROOT = path.resolve(process.env.SHELFMERGE_ROOT || path.join(__dirname, '..', '..'));
 const git = (a) => { const r = cp.spawnSync('git', a, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 }); return r.status === 0 ? r.stdout : null; };
 const switchOn = (text) => /^shelfmerge: on\s*$/m.test(text || '');
 const BUILD = /^test\/[a-z0-9][a-z0-9-]*\/[^/]+[-_]v\d+(?:[._]\d+)*\.html$/i;
+const LAB = /^(?!test\/)[a-z0-9][a-z0-9-]*\/labs\/[^/]+[-_]v\d+(?:[._]\d+)*\.html$/i;   /* v1.01: a title's device lab, never under test/ */
 const SECRETS = [[/\bcredential\s*:\s*["'](?!openrelayproject["'])[^"']{4,}["']/i, 'a relay or ICE login'],
   [/\b(?:api[_-]?key|apikey|client[_-]?secret|secret[_-]?key|access[_-]?token|auth[_-]?token|bearer)\s*[:=]\s*["'][A-Za-z0-9_\-\/+=.]{16,}["']/i, 'a key or token']];
 
@@ -45,12 +50,15 @@ function decide(f) {
   if (f.mergeable === false) wait.push('it conflicts with main'); else if (f.mergeable === null) wait.push('GitHub has not yet read whether it merges cleanly');
   const changes = f.changes || [];
   if (!changes.length) wait.push('it changes nothing');
-  const bad = changes.filter((c) => !(c.st === 'A' && BUILD.test(c.to))).map((c) => c.st[0] + ' ' + (c.st[0] === 'R' ? c.from + ' -> ' + c.to : c.to));
-  if (bad.length) refuse.push('it does more than add versioned builds under test/<slug>/: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; and ' + (bad.length - 4) + ' more' : ''));
+  const added = (re) => changes.filter((c) => c.st === 'A' && re.test(c.to)).length;
+  const kind = changes.length && added(BUILD) === changes.length ? 'builds' : changes.length && added(LAB) === changes.length ? 'labs' : ''; /* v1.01: one kind only */
+  const bad = kind ? [] : changes.filter((c) => !(c.st === 'A' && (BUILD.test(c.to) || LAB.test(c.to)))).map((c) => c.st[0] + ' ' + (c.st[0] === 'R' ? c.from + ' -> ' + c.to : c.to));
+  if (!kind && changes.length && !bad.length) refuse.push('it adds both builds and labs: one kind per pull request (tools/snailcade.js v1.07), so this one is the Director\'s');
+  if (bad.length) refuse.push('it does more than add versioned builds under test/<slug>/ or versioned labs under <slug>/labs/: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; and ' + (bad.length - 4) + ' more' : ''));
   const held = [];
   for (const c of changes.filter((x) => x.st === 'A' && /\.html$/i.test(x.to))) { const src = f.content(c.to) || ''; const k = SECRETS.filter(([re]) => re.test(src)).map(([, n]) => n); if (k.length) held.push(c.to + ' (' + k.join(', ') + ')'); }
-  if (held.length) refuse.push('a build holds a secret: ' + held.join('; ') + ': never publish it without the Director\'s word for that page');
-  return { verdict: refuse.length ? 'DIRECTOR' : wait.length ? 'WAIT' : 'MERGE', reasons: refuse.concat(wait), fork: f.sameRepo === false };
+  if (held.length) refuse.push('a page holds a secret: ' + held.join('; ') + ': never publish it without the Director\'s word for that page');
+  return { verdict: refuse.length ? 'DIRECTOR' : wait.length ? 'WAIT' : 'MERGE', reasons: refuse.concat(wait), fork: f.sameRepo === false, kind };
 }
 
 async function sweep(env) {
@@ -79,7 +87,7 @@ async function sweep(env) {
     }
     const r = await env.api('PUT', '/repos/' + env.repo + '/pulls/' + pr.number + '/merge', { merge_method: 'merge', sha,
       commit_title: 'Merge pull request #' + pr.number + ' from ' + env.repo.split('/')[0] + '/' + pr.head.ref,
-      commit_message: pr.title + '\n\nMerged by the shelf merge bot (.github/shelf/shelf-merge.js ' + VERSION + '): new versioned builds under test/ only.' });
+      commit_message: pr.title + '\n\nMerged by the shelf merge bot (.github/shelf/shelf-merge.js ' + VERSION + '): ' + (d.kind === 'labs' ? 'new versioned device labs under <slug>/labs/ only.' : 'new versioned builds under test/ only.') });
     if (r.status === 200 && r.json && r.json.merged) { merged.push(pr.number); say('MERGED ' + head); }
     else say('WAITS ' + head + ': GitHub refused the merge (HTTP ' + r.status + (r.json && r.json.message ? ', ' + r.json.message : '') + ')');
   }
