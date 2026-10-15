@@ -130,6 +130,42 @@ html.scaled .app { position: absolute; top: 0; margin: 0; max-width: none; trans
 .look-pick .lk-name { text-align: center; color: var(--white); font-size: 15px; letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; min-width: 0; }
 .look-pick .lk-sub { text-align: center; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; color: var(--sky); }
 .look-pick .lk-all { position: relative; justify-self: start; background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 5px 10px; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.06em; }
+/* v7.7: EDIT, the president creator, beside the lookalikes */
+.look-pick .lk-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.look-pick .lk-edit { background: var(--gold); color: var(--ink); border: 2px solid var(--ink); padding: 5px 14px; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.06em; }
+/* v7.7: the president creator, a modal: the strip of faces on top (64 px president cards, 32 pixels each), the face
+   and name, a menu of arrows per part, as the creator lab v1.01 lays it out */
+.cr { display: grid; gap: 10px; background: var(--navy); color: var(--sky); border: 3px solid var(--ink); padding: 10px; min-width: 0; }
+.cr .lbl { color: var(--gold); font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.06em; }
+.cr-gal { display: grid; gap: 6px; min-width: 0; }
+.cr-gh { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.cr-at { font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; color: var(--sky); white-space: nowrap; }
+.cr-at .ed { color: var(--gold); }
+.cr-grow { display: grid; grid-template-columns: 28px minmax(0, 1fr) 28px; gap: 6px; align-items: center; min-width: 0; }
+.cr-step { height: 32px; min-width: 28px; padding: 0; background: transparent; color: var(--white); border: 2px solid var(--sky); display: grid; place-items: center; }
+.cr-step .ico { width: 12px; height: 12px; }
+.cr-step:disabled { opacity: 0.35; }
+.cr-grow .cr-step { height: 84px; }
+.cr-strip { position: relative; display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 4px 4px 6px; min-width: 0; }
+.cr-tile { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0; background: none; border: 0; scroll-snap-align: center; color: var(--sky); font-family: var(--f-lbl); font-size: 8px; letter-spacing: 0.06em; }
+.cr-tile canvas { width: 64px; height: 64px; box-sizing: content-box; border: 2px solid var(--ink); }
+.cr-tile[aria-pressed="true"] canvas { outline: 3px solid var(--gold); outline-offset: 1px; }
+.cr-tile[aria-pressed="true"] span { color: var(--gold); }
+.cr-me { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.cr-big { width: 128px; height: 128px; box-sizing: content-box; border: 3px solid var(--ink); touch-action: pan-y; flex: 0 0 auto; cursor: grab; }
+.cr-name { color: var(--white); font-size: 17px; line-height: 1.15; letter-spacing: 0.04em; min-width: 0; overflow-wrap: anywhere; }
+.cr-names, .cr-grp { display: grid; gap: 6px; padding: 8px; background: var(--navy2); border: 2px solid var(--ink); min-width: 0; }
+.cr-part { display: grid; grid-template-columns: 72px 28px minmax(0, 1fr) 28px; align-items: center; gap: 6px; min-width: 0; }
+.cr-part .pl { font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; color: var(--sky); white-space: nowrap; overflow: hidden; }
+.cr-part .pv { text-align: center; color: var(--white); font-size: 14px; letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; min-width: 0; }
+.cr-part.off .pv { color: var(--gray); font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; white-space: normal; }
+.cr-deal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.cr-b { padding: 8px 4px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 2px 0 var(--ink); font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.04em; }
+.cr-dress { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cr-dress button { padding: 5px 8px; background: transparent; color: var(--sky); border: 2px solid var(--sky); font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.04em; }
+.cr-dress button[aria-pressed="true"] { background: var(--gold); color: var(--ink); border-color: var(--ink); }
+.cr-groups { display: grid; gap: 8px; min-width: 0; }
+.cr-foot { position: sticky; bottom: -16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--manila); padding: 8px 0 12px; margin-bottom: -8px; }
 .look-pick .lk-all .new-badge { margin-left: 8px; padding: 1px 5px; background: var(--red); color: var(--white); border: 2px solid var(--ink); font-family: var(--f-lbl); font-size: 8px; }
 .origin-card .o-head { display: flex; align-items: center; gap: 10px; }
 /* v7.5: a president card is 32 pixels drawn at 64 px, two by two (the Director's answer B on issue 899); its border sits outside the 64 */
@@ -1050,7 +1086,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v7.6</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v7.7</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1158,7 +1194,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V7.6 */
+/* HAIL TO THE CLOUT V7.7 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -3089,6 +3125,27 @@ var PRESNAMES = (function (mix) {
     if (g.vp && g.vp.slot === undefined) g.vp.slot = vslot;
     return g;
   }
+  /* v7.7: the president a player made in the creator (the Director's answer A on issue 1462): a face record inside the
+     deal's own rules and a name from the game's lists (a first name of the face's sex, a parody surname). Anything else
+     is refused (null) and the run deals its own, as before. A made face draws no dice: the bot record replays. */
+  var MADE_KEYS = ['sx', 'sk', 'ag', 'sh', 'wd', 'ey', 'es', 'no', 'br', 'mo', 'hs', 'hc', 'fh', 'gl', 'ea', 'fr', 'bl', 'li', 'la', 'ml', 't', 'gc'];
+  function madeOk(m) {
+    if (!m || !m.face || !m.name) return null;
+    var f = m.face, n = m.name, ok = f.k === 'face2';
+    var lim = { sx: 2, sk: FACE2_N.sk, ag: AGES.length, sh: FACE2_N.sh, wd: 3, ey: FACE2_N.ey, es: 2, no: FACE2_N.no, br: FACE2_N.br, mo: FACE2_N.mo,
+      hs: f.sx ? FACE2_N.hsM : FACE2_N.hsF, hc: FACE2_N.hc, fh: FACE2_N.fh, gl: 3, ea: 2, fr: 2, bl: 2, li: 4, la: 2, ml: 3, t: FACE2_N.t, gc: FACE2_N.gc };
+    MADE_KEYS.forEach(function (k) { if (!(f[k] >= 0 && f[k] < lim[k] && f[k] === (f[k] | 0))) ok = false; });
+    if (f.sx && (f.bl || f.li || f.la)) ok = false;                 /* blush, lips and lashes on women only */
+    if (!f.sx && (f.fh || !f.li)) ok = false;                       /* facial hair on men only; a woman's lips tinted */
+    if (f.fr && f.sk >= 3) ok = false;                              /* freckles on light skin only */
+    var fl = f.sx ? PRESNAMES.FIRST_M : PRESNAMES.FIRST_F, li = PRESNAMES.LAST_B.indexOf(n.last);
+    if (fl.indexOf(n.first) < 0 || li < 0) ok = false;
+    if (!ok) return null;
+    var face = { k: 'face2' };
+    MADE_KEYS.forEach(function (k) { face[k] = f[k]; });
+    face.ex = 0;
+    return { face: face, name: { first: n.first, last: n.last, sc: NAME_SC, li: li } };
+  }
   function firstFace(g, opts) {
     if (g.story || g.chap || g.daily) return { k: 'default' };
     var lk = opts && opts.look;
@@ -3150,8 +3207,9 @@ var PRESNAMES = (function (mix) {
     else if (opts && opts.mandates && !g.story && !g.chap) { g.mand = []; g.mandPick = 1; }
     else if (opts && opts.mandLater && !g.story && !g.chap) g.mand = []; /* a guided first term goes without; the second term deals them */
     g.vp = { name: 'OKAFOR', face: { k: 'okafor' }, slot: 0 }; g.vps = ['OKAFOR'];
-    g.faces = [firstFace(g, opts)]; /* v7.2 */
-    g.names = [named(g) ? PRESNAMES.deal(g.seed | 0, 1, g.faces[0], NAME_SC, { OKAFOR: 1 }) : null]; /* v7.6 */
+    var made = named(g) && !(opts && opts.look) ? madeOk(opts && opts.made) : null;   /* v7.7: the creator's president */
+    g.faces = [made ? made.face : firstFace(g, opts)]; /* v7.2 */
+    g.names = [made ? made.name : named(g) ? PRESNAMES.deal(g.seed | 0, 1, g.faces[0], NAME_SC, { OKAFOR: 1 }) : null]; /* v7.6 */
     refreshUnlocks(g);
     rollApps(g);
     /* v6.8: every run but Training starts with one lifeline (a Campaign chapter brings its kit instead) */
@@ -4864,7 +4922,7 @@ var PRESNAMES = (function (mix) {
   return {
     SCHEMA: SCHEMA, D: D, ALL: ALL, BUILD: BUILD, ORIG: ORIG, ADS: ADS, SEASONS: SEASONS,
     newGame: newGame, current: current, preview: preview, choose: choose,
-    LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, nameFill: nameFill, nameFor: nameFor, PRESNAMES: PRESNAMES, NAME_SC: NAME_SC, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
+    LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, nameFill: nameFill, nameFor: nameFor, PRESNAMES: PRESNAMES, NAME_SC: NAME_SC, madeOk: madeOk, mix: mix, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
     endQuarter: endQuarter, nextQuarter: nextQuarter,
     projection: projection, campaign: campaign, election: election, houseTier: houseTier, PTY: PTY, partyState: partyState, fundParty: fundParty, leaseLeft: leaseLeft, leaseOut: leaseOut, ARC: ARC, arcMult: arcMult, arcRun: arcRun, arcEnding: arcEnding, econMult: econMult, mktOn: mktOn, HOUSE_LV: HOUSE_LV, houseLevel: houseLevel, houseLevelOf: houseLevelOf, houseNext: houseNext, houseSeats: houseSeats, houseMove: houseMove, MKT_LV: MKT_LV, MKT_X: MKT_X, mktLevel: mktLevel, mktLevelOf: mktLevelOf, mktNext: mktNext, crashChance: crashChance, optCost: optCost, dismissChance: dismissChance, suitOpen: suitOpen,
     build: build, buildState: buildState, settle: settle, settleCost: settleCost, suitDrain: suitDrain,
@@ -5729,7 +5787,7 @@ var ART = (function () {
 
     return { SKIN: SKIN, HAIR: HAIR, SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M,
       FH: FH, AGES: AGES, LIPS: LIPS, TIE: TIE, FRAMES: FRAMES, EXPR: EXPR, GRID: GRID, PROFILE: PROFILE, lightness: lightness, key: key,
-      headSpec: headSpec, draw: draw };
+      headSpec: headSpec, draw: draw, HAIR_NAME: HAIR_NAME, FRAME_NAME: FRAME_NAME };   /* v7.7: the creator's menus name hair and frames */
   })();
 
   /* ---------- icons (8x8, currentColor) ---------- */
@@ -5969,6 +6027,182 @@ var ART = (function () {
      a save from before v7.6 is named on a copy as loading it would name it. The Daily, the Campaign and Training keep
      no name (null). PN.full reads Pauline Handshake, PN.wire PRESIDENT HANDSHAKE, PN.card HANDSHAKE. */
   const PN = E.PRESNAMES;
+  /* v7.7: the president creator's logic (the Director's answer A on issue 1462): the creator lab's labs/src/creator.js
+     v1.01, lifted byte for byte between the markers (the looks suite holds it), on the game's own deal (E.face2Of), part
+     lists (ART.FACE2), names (PRESNAMES) and mix() */
+  const FACES2 = Object.assign({}, A.FACE2, { deal: E.face2Of }), PRESNAMES = PN, mix = E.mix;
+  /* ===== CREATOR BEGIN ===== */
+/* HAIL TO THE CLOUT president creator v1.01 (2026-10-15) | the creator lab's logic: codex section 28's next lever, a
+   creator over the same parts, where a player picks the face's parts and the name changes with them. The reference a
+   game cut would lift, as faces2.js was for the faces and presnames.js for the names. No DOM, no drawing: it edits a
+   face record the game already knows how to draw (kind 'face2', drawn by ART.card and ART.face2) and a name of the
+   kind the game already shows ({ first, last, sc }).
+   The creator holds a WANT: every part the player has picked, both sexes' hair kept apart, so stepping a part and
+   stepping it back always returns the face it left (flip to a man and back and her hair, lips and name come back).
+   face(want) makes the record, inside the deal's own domain: every part in its list's range, a hairstyle from the list
+   of the face's sex, facial hair on men only, lips, lashes and blush on women only, freckles on light skin only, and
+   the tie's colour one of the game's four (never red or blue). Hair colour is the one part freed: any of the eleven on
+   any skin (the deal weights them by the skin; a player may dye).
+   The name moves with the face: the first name is an index into the first names of the face's sex, so a woman's
+   AMINA becomes a man's ADRIAN at the same place and back again; the surname is one of the game's parody surnames
+   (the Director's answer B on issue 1111, LAST_B). The name comes only from those lists (the Director's answer A on
+   issue 1462, 2026-10-15): nothing is typed, so every president stays fictional and party neutral. v1.00's option B
+   (typed(), and the want's tf and tl) is gone from v1.01.
+   The gallery (the Director's word on issue 1462, 2026-10-15): a run's seed deals GALLERY_N faces to choose from, the
+   first the run's own face (the engine's faceFor, handed in) and the rest the game's deal; galleryFace(seed, k, first)
+   is the k-th, round the ring, and pickFace(w, seed, k, first) puts it on the want with the name kept. DEAL A FACE is
+   the next one along.
+   Nothing here draws from the rules' dice (srnd) or Math.random: the gallery and DEAL A NAME come from the run's seed
+   through the engine's mix() on salts of their own (61000 + k and 60000 + k, clear of the faces' 7200 + i * 31 + k
+   and the names' 30000 + slot * 131 + k), so the bot record replays and a reload deals the same.
+   Needs: FACES2 (faces2.js: the part lists and the deal), PRESNAMES (presnames.js) and mix (the engine's). */
+var CREATOR = (function (F, N, mix) {
+  'use strict';
+  var VERSION = 'v1.01';
+  var SALT_NAME = 60000, SALT_FACE = 61000, GALLERY_N = 36;
+  var SKIN_NAME = ['LIGHT 1', 'LIGHT 2', 'LIGHT 3', 'MEDIUM 1', 'MEDIUM 2', 'MEDIUM 3', 'DEEP 1', 'DEEP 2', 'DEEP 3'];
+  var TIE_NAME = ['GOLD', 'GREEN', 'PURPLE', 'GREY'];
+  var JACKET_NAME = ['PURPLE', 'PINK', 'TEAL', 'ORANGE'];   /* Celebrity: the tie's number picks the jacket (FACE2.draw) */
+  function up(l) { return l.map(function (x) { return String(x).toUpperCase(); }); }
+  /* what hides a part, measured on the game's own drawing (the lab's gate holds it: every part a menu offers shows):
+     the Celebrity's shades cover the eyes, the glasses and the lashes; these hairstyles cover the ears; glasses cover
+     the lashes; stubble covers a mole */
+  var EARS_HID = { 'F bob': 1, 'F long': 1, 'F waves': 1, 'F afro': 1, 'F curlylong': 1, 'F locs': 1, 'M afro': 1, 'M locs': 1 };
+  function hsName(w) { return w.sx ? 'M ' + F.HS_M[w.hsM] : 'F ' + F.HS_F[w.hsF]; }
+  function shades(w, dress) { return dress === 'celeb' ? 'under the shades' : ''; }
+  /* the parts, in the order the creator shows them: id, group, label, the values' names (a function when they depend on
+     the want), and when the part applies (a part that does not apply keeps its pick and shows why) */
+  var PARTS = [
+    { id: 'sx', grp: 'PERSON', lbl: 'PERSON', names: ['WOMAN', 'MAN'] },
+    { id: 'sk', grp: 'PERSON', lbl: 'SKIN', names: SKIN_NAME },
+    { id: 'ag', grp: 'PERSON', lbl: 'AGE', names: ['PRIME', 'SENIOR'] },   /* the deal's young and mid draw alike: one step */
+    { id: 'sh', grp: 'HEAD', lbl: 'SHAPE', names: up(F.SHAPES) },
+    { id: 'wd', grp: 'HEAD', lbl: 'WIDTH', names: ['NARROW', 'USUAL', 'BROAD'] },
+    { id: 'ea', grp: 'HEAD', lbl: 'EARS', names: ['CLOSE', 'STAND OUT'], on: function (w) { return EARS_HID[hsName(w)] ? 'under the hair' : ''; } },
+    { id: 'ey', grp: 'FEATURES', lbl: 'EYES', names: up(F.EYES), on: shades },
+    { id: 'es', grp: 'FEATURES', lbl: 'EYE SET', names: ['USUAL', 'WIDE'] },
+    { id: 'br', grp: 'FEATURES', lbl: 'BROWS', names: up(F.BROWS) },
+    { id: 'no', grp: 'FEATURES', lbl: 'NOSE', names: up(F.NOSES) },
+    { id: 'mo', grp: 'FEATURES', lbl: 'MOUTH', names: up(F.MOUTHS) },
+    { id: 'ml', grp: 'FEATURES', lbl: 'MOLE', names: ['NONE', 'LEFT', 'RIGHT'], on: function (w) { return w.sx && w.fh === 4 ? 'under the stubble' : ''; } },
+    { id: 'fr', grp: 'FEATURES', lbl: 'FRECKLES', names: ['NONE', 'FRECKLES'], on: function (w) { return w.sk < 3 ? '' : 'light skin only'; } },
+    { id: 'hs', grp: 'HAIR', lbl: 'STYLE', names: function (w) { return up(w.sx ? F.HS_M : F.HS_F); } },
+    { id: 'hc', grp: 'HAIR', lbl: 'COLOUR', names: up(F.HAIR_NAME) },
+    { id: 'fh', grp: 'HAIR', lbl: 'FACIAL HAIR', names: up(F.FH), on: function (w) { return w.sx ? '' : 'men only'; } },
+    { id: 'gl', grp: 'EXTRAS', lbl: 'GLASSES', names: ['NONE', 'SQUARE', 'ROUND'], on: shades },
+    { id: 'gc', grp: 'EXTRAS', lbl: 'FRAMES', names: up(F.FRAME_NAME), on: function (w, dress) { return shades(w, dress) || (w.gl ? '' : 'with glasses'); } },
+    { id: 'li', grp: 'EXTRAS', lbl: 'LIPS', names: ['ROSE', 'BERRY', 'CORAL'], on: function (w) { return w.sx ? 'women only' : ''; } },
+    { id: 'la', grp: 'EXTRAS', lbl: 'LASHES', names: ['NONE', 'LASHES'], on: function (w, dress) { return w.sx ? 'women only' : shades(w, dress) || (w.gl ? 'under the glasses' : ''); } },
+    { id: 'bl', grp: 'EXTRAS', lbl: 'BLUSH', names: ['NONE', 'BLUSH'], on: function (w) { return w.sx ? 'women only' : ''; } },
+    { id: 't', grp: 'EXTRAS', lbl: 'TIE', names: function (w, dress) { return dress === 'celeb' ? JACKET_NAME : TIE_NAME; },
+      label: function (dress) { return dress === 'celeb' ? 'JACKET' : 'TIE'; },
+      on: function (w, dress) { return dress === 'tycoon' || dress === 'gen' ? 'the origin\'s own' : ''; } }
+  ];
+  var BY = {}; PARTS.forEach(function (p) { BY[p.id] = p; });
+  function namesOf(p, w, dress) { return typeof p.names === 'function' ? p.names(w, dress) : p.names; }
+  /* the hair style a sex flip lands on: the same style when both lists have it (sidepart, afro, locs), else the same place */
+  function hsAcross(i, toMan) {
+    var from = toMan ? F.HS_F : F.HS_M, to = toMan ? F.HS_M : F.HS_F, j = to.indexOf(from[i]);
+    return j >= 0 ? j : i % to.length;
+  }
+  function clone(w) { return JSON.parse(JSON.stringify(w)); }
+
+  /* ---------- the want ---------- */
+  /* a want from a dealt face and its name (both from the game: E.faceFor and E.nameFor, or FACES2.deal) */
+  function fromFace(f, name) {
+    var w = { sx: f.sx, sk: f.sk, ag: f.ag === 2 ? 1 : 0, ag0: f.ag === 2 ? 1 : f.ag, sh: f.sh, wd: f.wd == null ? 1 : f.wd, ea: f.ea | 0, ey: f.ey, es: f.es | 0, br: f.br, no: f.no, mo: f.mo,
+      ml: f.ml | 0, fr: f.fr | 0, hc: f.hc, gl: f.gl | 0, gc: f.gc | 0, t: f.t | 0,
+      hsF: 0, hsM: 0, fh: f.sx ? f.fh | 0 : 0, li: f.sx ? 1 : f.li || 1, la: f.sx ? 1 : f.la | 0, bl: f.sx ? 0 : f.bl | 0, fi: 0, li2: 0 };
+    if (f.sx) { w.hsM = f.hs; w.hsF = hsAcross(f.hs, false); } else { w.hsF = f.hs; w.hsM = hsAcross(f.hs, true); }
+    w.li = w.li - 1;                                    /* LIPS: the record's 1 to 3 are the menu's 0 to 2 */
+    if (name) { var fl = f.sx ? N.FIRST_M : N.FIRST_F; w.fi = Math.max(0, fl.indexOf(name.first)); w.li2 = Math.max(0, N.LAST_B.indexOf(name.last)); }
+    return w;
+  }
+  /* the face record a want makes, inside the deal's domain */
+  function face(w) {
+    var m = w.sx ? 1 : 0;
+    return { k: 'face2', sx: m, sk: w.sk, ag: w.ag ? 2 : w.ag0, sh: w.sh, ey: w.ey, es: w.es, no: w.no, br: w.br, mo: w.mo, wd: w.wd,
+      hs: m ? w.hsM : w.hsF, hc: w.hc, fh: m ? w.fh : 0, gl: w.gl, ea: w.ea, fr: w.sk < 3 ? w.fr : 0, bl: m ? 0 : w.bl,
+      li: m ? 0 : w.li + 1, la: m ? 0 : w.la, ml: w.ml, t: w.t, gc: w.gc, ex: 0 };
+  }
+  /* the part's menu as the creator shows it: its label, its values, the pick, and why it does not apply ('' when it does) */
+  function menu(w, id, dress) {
+    var p = BY[id], list = namesOf(p, w, dress), i = id === 'hs' ? (w.sx ? w.hsM : w.hsF) : w[id];
+    return { id: id, grp: p.grp, lbl: p.label ? p.label(dress) : p.lbl, list: list, i: i, off: p.on ? p.on(w, dress) : '' };
+  }
+  /* one step of one part, wrapping round its list; a new want, the old one untouched */
+  function step(w, id, dir, dress) {
+    var v = clone(w), n = namesOf(BY[id], v, dress).length, d = dir < 0 ? n - 1 : 1;
+    if (id === 'hs') { if (v.sx) v.hsM = (v.hsM + d) % n; else v.hsF = (v.hsF + d) % n; }
+    else v[id] = (v[id] + d) % n;
+    return v;   /* a sex flip keeps fi: the same place on the other sex's list, so the first name moves with the face */
+  }
+
+  /* ---------- the name ---------- */
+  /* the name a want shows: always from the lists (the Director's answer A on issue 1462) */
+  function name(w) {
+    var fl = w.sx ? N.FIRST_M : N.FIRST_F;
+    return { first: fl[w.fi % fl.length], last: N.LAST_B[w.li2 % N.LAST_B.length], sc: 'b' };
+  }
+  function nameStep(w, which, dir) {
+    var v = clone(w), n = which === 'first' ? 40 : N.LAST_B.length, d = dir < 0 ? n - 1 : 1;
+    if (which === 'first') v.fi = (v.fi + d) % n; else v.li2 = (v.li2 + d) % n;
+    return v;
+  }
+  /* DEAL A NAME: the k-th from the run's seed, the first name of the face's sex at its place, a surname off the list */
+  function dealName(w, seed, k) {
+    var v = clone(w), x = mix(seed | 0, SALT_NAME + k);
+    v.fi = x % 40; v.li2 = mix(x, 1) % N.LAST_B.length;
+    return v;
+  }
+  /* the gallery: the k-th of the seed's GALLERY_N faces, round the ring; the 0th is the run's own (first, the engine's
+     faceFor), the rest the game's own deal (faces2.js, the engine's) */
+  function gk(k) { return ((k | 0) % GALLERY_N + GALLERY_N) % GALLERY_N; }
+  function galleryFace(seed, k, first) {
+    k = gk(k);
+    return k === 0 && first ? first : F.deal(mix(seed | 0, SALT_FACE + k));
+  }
+  /* a gallery face on the want; the name stays (its first name at the same place on the list of the face's sex) */
+  function pickFace(w, seed, k, first) {
+    var v = fromFace(galleryFace(seed, k, first), null);
+    v.fi = w.fi; v.li2 = w.li2;
+    return v;
+  }
+  /* DEAL A FACE: the k-th of the gallery (the page hands it the next one along) */
+  function dealFace(w, seed, k, first) { return pickFace(w, seed, k, first); }
+
+  /* how many menu settings one sex has (the dress aside): every part's list, freckles on the three light skins only,
+     frame colours with glasses only; a hidden part still counts, since it shows again when what hides it goes */
+  function count(sx) {
+    var n = 3 * 2 + 6, w = { sx: sx, gl: 1, sk: 0, hsF: 0, hsM: 0, fh: 0 };
+    PARTS.forEach(function (p) {
+      if (p.id === 'sx' || p.id === 'sk' || p.id === 'fr' || p.id === 'gl' || p.id === 'gc') return;
+      if (p.id === 'fh' ? !sx : (p.id === 'li' || p.id === 'la' || p.id === 'bl') ? sx : false) return;
+      n *= namesOf(p, w, 'pol').length;
+    });
+    return n * (1 + 2 * F.FRAMES.length);
+  }
+
+  /* ---------- for the gate ---------- */
+  /* what a record breaks of the deal's domain ([] when none) */
+  function domain(f) {
+    var bad = [], rng = function (k, n) { if (!(f[k] >= 0 && f[k] < n && f[k] === (f[k] | 0))) bad.push(k + ' ' + f[k] + ' outside 0 to ' + (n - 1)); };
+    if (f.k !== 'face2') bad.push('kind ' + f.k);
+    rng('sx', 2); rng('sk', 9); rng('ag', 3); rng('sh', F.SHAPES.length); rng('wd', 3); rng('ey', F.EYES.length); rng('es', 2);
+    rng('no', F.NOSES.length); rng('br', F.BROWS.length); rng('mo', F.MOUTHS.length); rng('hs', (f.sx ? F.HS_M : F.HS_F).length);
+    rng('hc', F.HAIR.length); rng('fh', F.FH.length); rng('gl', 3); rng('ea', 2); rng('fr', 2); rng('bl', 2); rng('li', 4);
+    rng('la', 2); rng('ml', 3); rng('t', F.TIE.length); rng('gc', F.FRAMES.length);
+    if (f.sx && (f.bl || f.li || f.la)) bad.push('a man with blush, lips or lashes');
+    if (!f.sx && (f.fh || !f.li)) bad.push('a woman with facial hair, or no lip tint');
+    if (f.fr && f.sk >= 3) bad.push('freckles off light skin');
+    return bad;
+  }
+  return { VERSION: VERSION, PARTS: PARTS, SKIN_NAME: SKIN_NAME, TIE_NAME: TIE_NAME, JACKET_NAME: JACKET_NAME, EARS_HID: EARS_HID, count: count,
+    SALT_NAME: SALT_NAME, SALT_FACE: SALT_FACE, GALLERY_N: GALLERY_N, fromFace: fromFace, face: face, menu: menu, step: step, name: name,
+    nameStep: nameStep, dealName: dealName, galleryFace: galleryFace, pickFace: pickFace, dealFace: dealFace, gk: gk, domain: domain, hsAcross: hsAcross };
+})(FACES2, PRESNAMES, mix);
+  /* ===== CREATOR END ===== */
+  const CR = CREATOR;
   function presName(g, i) {
     if (!g || !g.faces || g.story || g.chap || g.daily) return null;
     const gg = g.names && g.names.length === g.faces.length ? g : E.nameFill(E.faceFill(JSON.parse(JSON.stringify(g))));
@@ -8596,13 +8830,95 @@ var ART = (function () {
   function lookPanel() {
     const got = looksGot(), ids = ['new'].concat(E.LOOKALIKES.filter((x) => got[x.id]).map((x) => x.id));
     if (ids.indexOf(lookPick || 'new') < 0) lookPick = null;
-    const L = lookPick ? lookOf(lookPick) : null, n = ids.length - 1, fresh = !!(prefs.looks && prefs.looks.seen === 0 && n);
+    const L = lookPick ? lookOf(lookPick) : null, n = ids.length - 1, fresh = !!(prefs.looks && prefs.looks.seen === 0 && n), mine = madeNow();
     return '<div class="look-pick" id="look-pick"><span class="lbl">YOUR LOOK</span><div class="lk-row">' +
       '<button class="lk-step" data-look-step="-1" aria-label="Previous look"' + (n ? '' : ' disabled') + '>' + ic('left') + '</button>' +
-      '<b class="lk-name" id="pres-name">' + esc(PN.full(E.nameFor(nextSeed, lookPick)).toUpperCase()) + '</b>' +
+      '<b class="lk-name" id="pres-name">' + esc(PN.full(mine ? CR.name(mine.w) : E.nameFor(nextSeed, lookPick)).toUpperCase()) + '</b>' +
       '<button class="lk-step" data-look-step="1" aria-label="Next look"' + (n ? '' : ' disabled') + '>' + ic('right') + '</button></div>' +
-      '<span class="lk-sub" id="look-name">' + esc(L ? L.name : 'A NEW FACE') + '</span>' +   /* v7.6: the name above, the look beneath */
-      '<button class="lk-all" id="look-all">' + N(n + ' OF ' + E.LOOKALIKES.length) + ' LOOKALIKES' + (fresh ? '<span class="new-badge">NEW</span>' : '') + '</button></div>';
+      '<span class="lk-sub" id="look-name">' + esc(L ? L.name : mine ? 'MADE BY YOU' : 'A NEW FACE') + '</span>' +   /* v7.6: the name above, the look beneath */
+      '<div class="lk-btns">' + (L ? '' : '<button class="lk-edit" id="look-edit">EDIT</button>') +   /* v7.7: the creator */
+      '<button class="lk-all" id="look-all">' + N(n + ' OF ' + E.LOOKALIKES.length) + ' LOOKALIKES' + (fresh ? '<span class="new-badge">NEW</span>' : '') + '</button></div></div>';
+  }
+  /* v7.7: the president creator (the Director's answer A on issue 1462, and the gallery he asked for there). EDIT under
+     YOUR LOOK opens it on the face and name the run's seed deals. The seed's faces sit in a strip on top (tap one to
+     jump to it; the arrows, DEAL A FACE and a swipe across the big face step along it, round the ring); every part of
+     the face is a menu of arrows; the name moves with the face, from the game's own lists. DONE keeps what you made for
+     this seed and START hands it to the run (E.newGame's made: G.faces[0], G.names[0]). Nothing here draws the rules'
+     dice: the strip and DEAL A NAME come from the seed through mix(). A lookalike has no creator. */
+  let made = null, crSt = null;
+  const madeNow = () => (made && made.seed === nextSeed && !lookPick ? made : null);
+  const CR_DRESS = D.ORIGINS.map((o) => [o.id, o.name.split(' ').pop().toUpperCase()]);   /* SEE IT AS: each origin's last word, as data.js names it */
+  const crStep = (dir, lbl) => '<button class="cr-step" data-dir="' + dir + '" aria-label="' + (dir < 0 ? 'Previous ' : 'Next ') + lbl + '">' + ic(dir < 0 ? 'left' : 'right') + '</button>';
+  function openCreator() {
+    const first = E.faceFor(nextSeed), own = CR.fromFace(first, E.nameFor(nextSeed)), m = madeNow();
+    crSt = m ? JSON.parse(JSON.stringify(m)) : { seed: nextSeed, w: own, k: 0, kn: 0, dress: 'pol' };
+    crSt.first = first; crSt.start = JSON.stringify(own); crSt.drawn = null;
+    let h = '<h3>Make your president</h3><p class="mini">Start from any face your run deals, then change any part. The name moves with the face.</p><div class="cr" id="cr">' +
+      '<div class="cr-gal"><div class="cr-gh"><span class="lbl">FACES FOR THIS RUN</span><span class="cr-at" id="cr-at" aria-live="polite"></span></div>' +
+      '<div class="cr-grow"><button class="cr-step" id="cr-prev" aria-label="Previous face">' + ic('left') + '</button><div class="cr-strip" id="cr-strip" role="group" aria-label="The faces your run deals">';
+    for (let k = 0; k < CR.GALLERY_N; k++) h += '<button class="cr-tile" data-k="' + k + '" aria-label="Face ' + (k + 1) + (k ? '' : ', your run\'s own') + '"><canvas class="px" width="32" height="32" aria-hidden="true"></canvas><span>' + (k ? k + 1 : 'RUN') + '</span></button>';
+    h += '</div><button class="cr-step" id="cr-next" aria-label="Next face">' + ic('right') + '</button></div></div>' +
+      '<div class="cr-me"><canvas class="px cr-big" id="cr-big" width="32" height="32" aria-hidden="true"></canvas><b class="cr-name" id="cr-name"></b></div>' +
+      '<div class="cr-names"><span class="lbl">YOUR NAME</span>' +
+      '<div class="cr-part" data-name="first"><span class="pl">FIRST NAME</span>' + crStep(-1, 'first name') + '<b class="pv" id="cr-first"></b>' + crStep(1, 'first name') + '</div>' +
+      '<div class="cr-part" data-name="last"><span class="pl">SURNAME</span>' + crStep(-1, 'surname') + '<b class="pv" id="cr-last"></b>' + crStep(1, 'surname') + '</div></div>' +
+      '<div class="cr-deal"><button class="cr-b" id="cr-deal-face">DEAL A FACE</button><button class="cr-b" id="cr-deal-name">DEAL A NAME</button><button class="cr-b" id="cr-reset">START OVER</button></div>' +
+      '<div class="cr-dress" role="group" aria-label="See it in an origin\'s clothes"><span class="lbl">SEE IT AS</span>' + CR_DRESS.map((d) => '<button data-dress="' + d[0] + '">' + d[1] + '</button>').join('') + '</div><div class="cr-groups" id="cr-groups">';
+    let grp = '';
+    CR.PARTS.forEach((q) => {
+      if (q.grp !== grp) { h += (grp ? '</div>' : '') + '<div class="cr-grp"><span class="lbl">' + esc(q.grp) + '</span>'; grp = q.grp; }
+      h += '<div class="cr-part" data-part="' + q.id + '"><span class="pl"></span>' + crStep(-1, q.lbl.toLowerCase()) + '<b class="pv"></b>' + crStep(1, q.lbl.toLowerCase()) + '</div>';
+    });
+    h += '</div></div></div><div class="cr-foot"><button class="btn" id="cr-cancel">Cancel</button><button class="btn gold" id="cr-done">Done</button></div>';
+    openModal('creator', h);
+    const mc = $('modal-card');
+    $('cr-strip').addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) { SFX.click(); crPick(+b.getAttribute('data-k')); } });
+    $('cr-prev').addEventListener('click', () => { SFX.click(); crPick(crSt.k - 1); });
+    $('cr-next').addEventListener('click', () => { SFX.click(); crPick(crSt.k + 1); });
+    $('cr-deal-face').addEventListener('click', () => { SFX.click(); crPick(crSt.k + 1); });
+    $('cr-deal-name').addEventListener('click', () => { SFX.click(); crSt.kn++; crSt.w = CR.dealName(crSt.w, crSt.seed, crSt.kn); crPaint(); });
+    $('cr-reset').addEventListener('click', () => { SFX.click(); crSt.w = JSON.parse(crSt.start); crSt.k = 0; crSt.kn = 0; crPaint(true); });
+    mc.querySelectorAll('[data-dress]').forEach((b) => b.addEventListener('click', () => { SFX.click(); crSt.dress = b.getAttribute('data-dress'); crPaint(); }));
+    mc.querySelectorAll('.cr-part[data-name] [data-dir]').forEach((b) => b.addEventListener('click', () => { SFX.click(); crSt.w = CR.nameStep(crSt.w, b.closest('.cr-part').getAttribute('data-name'), +b.getAttribute('data-dir')); crPaint(); }));
+    $('cr-groups').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-dir]'), r = b && b.closest('.cr-part'); if (!r || b.disabled) return;
+      SFX.click(); crSt.w = CR.step(crSt.w, r.getAttribute('data-part'), +b.getAttribute('data-dir'), crSt.dress); crPaint();
+    });
+    /* a swipe across the big face steps the strip: toward the left for the next face, as a photo gallery turns */
+    const big = $('cr-big'); let x0 = null, y0 = 0;
+    big.addEventListener('pointerdown', (e) => { x0 = e.clientX; y0 = e.clientY; try { big.setPointerCapture(e.pointerId); } catch (err) { /* older viewers */ } });
+    big.addEventListener('pointercancel', () => { x0 = null; });
+    big.addEventListener('pointerup', (e) => {
+      if (x0 === null) return;
+      const dx = (e.clientX - x0) / Z, dy = (e.clientY - y0) / Z; x0 = null;
+      if (Math.abs(dx) >= 30 && Math.abs(dx) > Math.abs(dy)) { SFX.click(); crPick(crSt.k + (dx < 0 ? 1 : -1)); }
+    });
+    $('cr-cancel').addEventListener('click', () => { SFX.click(); crSt = null; closeModal(); });
+    $('cr-done').addEventListener('click', () => {
+      made = JSON.stringify(crSt.w) === crSt.start ? null : { seed: crSt.seed, w: crSt.w, k: crSt.k, kn: crSt.kn, dress: crSt.dress };
+      crSt = null; SFX.good(); closeModal(); renderOrigins();
+    });
+    crPaint(true); mc.scrollTop = 0;
+    const on = mc.querySelector('.cr-tile[aria-pressed="true"]'); if (on) on.focus({ preventScroll: true });
+  }
+  function crPick(k) { crSt.k = CR.gk(k); crSt.w = CR.pickFace(crSt.w, crSt.seed, crSt.k, crSt.first); crPaint(true); }
+  /* the creator in paint: the big face, the name, the strip in the clothes you see it in, every part's menu */
+  function crPaint(scroll) {
+    const st = crSt, f = CR.face(st.w), n = CR.name(st.w), mc = $('modal-card');
+    A.face2($('cr-big'), f, { dress: st.dress });
+    $('cr-name').textContent = PN.full(n).toUpperCase();
+    $('cr-first').textContent = n.first; $('cr-last').textContent = n.last;
+    if (st.drawn !== st.dress) { mc.querySelectorAll('.cr-tile').forEach((b) => A.card(b.querySelector('canvas'), A.president(CR.galleryFace(st.seed, +b.getAttribute('data-k'), st.first), st.dress), false, 0)); st.drawn = st.dress; }
+    mc.querySelectorAll('.cr-tile').forEach((b) => b.setAttribute('aria-pressed', String(+b.getAttribute('data-k') === st.k)));
+    const edited = JSON.stringify(f) !== JSON.stringify(CR.face(CR.fromFace(CR.galleryFace(st.seed, st.k, st.first), null)));
+    $('cr-at').innerHTML = 'FACE ' + (st.k + 1) + ' OF ' + CR.GALLERY_N + (edited ? ' · <span class="ed">EDITED</span>' : '');
+    mc.querySelectorAll('[data-dress]').forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-dress') === st.dress)));
+    mc.querySelectorAll('.cr-part[data-part]').forEach((r) => {
+      const m = CR.menu(st.w, r.getAttribute('data-part'), st.dress), b = r.querySelectorAll('[data-dir]');
+      r.querySelector('.pl').textContent = m.lbl; r.querySelector('.pv').textContent = m.off ? m.off.toUpperCase() : m.list[m.i];
+      r.classList.toggle('off', !!m.off); b[0].disabled = b[1].disabled = !!m.off;
+    });
+    if (scroll) { const g = $('cr-strip'), on = g.querySelector('[data-k="' + st.k + '"]'); if (on) g.scrollLeft = Math.max(0, on.offsetLeft - (g.clientWidth - on.offsetWidth) / 2); }
   }
   function openLooks() {
     const got = looksGot();
@@ -8628,13 +8944,14 @@ var ART = (function () {
         '<p class="pf"><b>PERK</b> ' + numify(o.perk) + '</p><p class="pf"><i>FLAW</i> ' + numify(o.flaw) + '</p></button>';
     });
     $('origin-list').innerHTML = h;
-    const myFace = E.faceFor(nextSeed, lookPick);
+    const myFace = madeNow() ? CR.face(madeNow().w) : E.faceFor(nextSeed, lookPick);   /* v7.7: the face you made */
     $('origin-list').querySelectorAll('canvas[data-o]').forEach((c) => A.card(c, A.president(myFace, c.getAttribute('data-o')), false, tick));   /* v7.5: president cards */
     $('origin-list').querySelectorAll('[data-look-step]').forEach((b) => b.addEventListener('click', () => {
       const got = looksGot(), ids = [null].concat(E.LOOKALIKES.filter((x) => got[x.id]).map((x) => x.id)), k = ids.indexOf(lookPick);
       lookPick = ids[(k + +b.getAttribute('data-look-step') + ids.length) % ids.length]; SFX.click(); renderOrigins();
     }));
     $('look-all').addEventListener('click', () => { SFX.click(); openLooks(); });
+    if ($('look-edit')) $('look-edit').addEventListener('click', () => { SFX.click(); openCreator(); });
     $('origin-list').querySelectorAll('[data-origin]').forEach((b) => b.addEventListener('click', () => {
       const t = tutPick || tutDefault();
       if (t === 'guided') { prefs.seen = {}; prefs.skipTut = false; }
@@ -8651,8 +8968,9 @@ var ART = (function () {
   function startGame(origin, tutorial) {
     const guided = tutorial || (!prefs.skipTut && !prefs.seen.basics);
     const seed = nextSeed !== null ? nextSeed : (Math.random() * 2147483647) | 0, look = lookPick && looksGot()[lookPick] ? lookPick : null;
-    nextSeed = null; /* v7.2: the seed the origin screen showed you, and your look */
-    G = E.newGame(origin, seed, guided ? { script: { 0: ['intro', 'roast', 'infra'] }, mandLater: true, look: look } : { mandates: true, recent: recentMemory(), look: look });
+    const mine = !look && madeNow(), mk = mine ? { face: CR.face(mine.w), name: CR.name(mine.w) } : null;   /* v7.7: the president you made */
+    nextSeed = null; made = null; /* v7.2: the seed the origin screen showed you, and your look */
+    G = E.newGame(origin, seed, guided ? { script: { 0: ['intro', 'roast', 'infra'] }, mandLater: true, look: look, made: mk } : { mandates: true, recent: recentMemory(), look: look, made: mk });
     G.flags.seenB = { grass: 1, rapid: 1, dinners: 1 };
     stampCal();
     shown = null; chartWin = 'recent';
@@ -9156,7 +9474,7 @@ var ART = (function () {
       if (e.target.closest('#fav-chip')) { if (!busy && !holding) { SFX.click(); openBag(); } return; }
       const s = e.target.closest('[data-help]'); if (s && !busy) { SFX.click(); openHelp(s.getAttribute('data-help')); }
     });
-    $('modal').addEventListener('click', (e) => { if (e.target === $('modal') && modalKind !== 'notice' && modalKind !== 'mandate' && modalKind !== 'favpick') closeModal(); });
+    $('modal').addEventListener('click', (e) => { if (e.target === $('modal') && modalKind !== 'notice' && modalKind !== 'mandate' && modalKind !== 'favpick' && modalKind !== 'creator') closeModal(); });
     /* a tap during the decision animation finishes it at once */
     $('scr-desk').addEventListener('pointerdown', () => { if (busy) finishAll(); }, true);
     document.addEventListener('keydown', (e) => {
@@ -9167,7 +9485,10 @@ var ART = (function () {
         if (!$('modal').hidden && modalKind !== 'notice' && modalKind !== 'mandate') { closeModal(); return; }
         if (G && ['scr-desk', 'scr-report', 'scr-war', 'scr-machine'].indexOf(screen) >= 0 && $('modal').hidden) { openPause(); return; }
       }
-      if (!$('modal').hidden) return;
+      if (!$('modal').hidden) {   /* v7.7: in the creator, the arrows step the strip of faces */
+        if (modalKind === 'creator' && crSt && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !(e.target && e.target.closest && e.target.closest('.cr-part'))) { e.preventDefault(); SFX.click(); crPick(crSt.k + (e.key === 'ArrowLeft' ? -1 : 1)); }
+        return;
+      }
       if ((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey && !e.altKey) { toggleFull(); return; }
       /* while a tip is up, the keys follow the tip: Enter moves an info tip on, arrows only pick during a choose tip */
       if (COACH.on) {
@@ -9218,7 +9539,7 @@ var ART = (function () {
   try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ g: G })); } catch (e) { /* hot reload unavailable */ }
   if (hot && typeof hot.ready === 'function') { try { hot.ready(start); } catch (e) { start({}); } }
   else start((hot && hot.data) || {});
-  window.__httc = { get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle() };
+  window.__httc = { get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle(), CR: CR, creator: () => openCreator(), get cr() { return crSt; }, get made() { return madeNow(); } };
 })();
 /* ===== UI END ===== */
 
