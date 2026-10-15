@@ -127,7 +127,8 @@ html.scaled .app { position: absolute; top: 0; margin: 0; max-width: none; trans
 .look-pick .lk-step { height: 36px; background: transparent; color: var(--white); border: 2px solid var(--sky); display: grid; place-items: center; }
 .look-pick .lk-step:disabled { opacity: 0.35; }
 .look-pick .lk-step .ico { width: 14px; height: 14px; }
-.look-pick .lk-name { text-align: center; color: var(--white); font-size: 15px; letter-spacing: 0.04em; }
+.look-pick .lk-name { text-align: center; color: var(--white); font-size: 15px; letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; min-width: 0; }
+.look-pick .lk-sub { text-align: center; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; color: var(--sky); }
 .look-pick .lk-all { position: relative; justify-self: start; background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 5px 10px; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.06em; }
 .look-pick .lk-all .new-badge { margin-left: 8px; padding: 1px 5px; background: var(--red); color: var(--white); border: 2px solid var(--ink); font-family: var(--f-lbl); font-size: 8px; }
 .origin-card .o-head { display: flex; align-items: center; gap: 10px; }
@@ -144,7 +145,8 @@ html.scaled .app { position: absolute; top: 0; margin: 0; max-width: none; trans
 .pres-faces { display: flex; flex-wrap: wrap; gap: 8px; }
 .pres-faces figure { margin: 0; text-align: center; }
 .pres-faces canvas { box-sizing: content-box; width: 64px; height: 64px; border: 2px solid var(--ink); image-rendering: pixelated; }
-.pres-faces figcaption { font-family: var(--f-num); font-size: 13px; }
+.pres-faces figcaption { font-family: var(--f-num); font-size: 13px; line-height: 1.1; }
+.pres-faces figcaption .cap { display: block; font: 600 11px var(--f-body); letter-spacing: 0; white-space: nowrap; }
 .lk-won { margin: 0; font-family: var(--f-lbl); font-size: 11px; display: flex; align-items: center; gap: 6px; color: var(--good-ink); }
 .slot.has-face { grid-template-columns: auto 1fr auto; }
 .slot-face { box-sizing: content-box; width: 64px; height: 64px; border: 2px solid var(--ink); image-rendering: pixelated; }
@@ -400,7 +402,8 @@ html.scaled .app { position: absolute; top: 0; margin: 0; max-width: none; trans
 .report { background: var(--paper-d); }
 .paper { position: relative; flex: 1; overflow-y: auto; background: var(--paper); color: var(--ink); padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 14px; }
 .masthead { text-align: center; font-family: var(--f-disp); font-size: 60px; line-height: 0.8; padding-top: 4px; }
-.edition { display: flex; justify-content: space-between; border-top: 3px double var(--ink); border-bottom: 3px double var(--ink); padding: 4px 0; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; }
+.edition { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; border-top: 3px double var(--ink); border-bottom: 3px double var(--ink); padding: 4px 0; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; }
+.edition .ed-pres { white-space: nowrap; margin-left: auto; }
 .edition .num { font-size: 11px; }
 .headline { margin: 0; font-weight: 700; font-size: clamp(22px, 7vw, 28px); line-height: 1.05; text-transform: uppercase; text-wrap: balance; }
 .appr { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: center; }
@@ -1047,7 +1050,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v7.5</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v7.6</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1155,7 +1158,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V7.5 */
+/* HAIL TO THE CLOUT V7.6 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -2959,6 +2962,133 @@ var HTTC = (function (D) {
     var used = g.vps || ['OKAFOR'], names = (D.VP_NAMES || []).filter(function (n) { return used.indexOf(n) < 0; });
     return names.length ? names[mix(g.seed, 7300 + g.pres) % names.length] : 'OKAFOR';
   }
+  /* v7.6: a name for every president (the Director's answer B on issue 1111, 2026-10-14: a parody name). The names
+     lab's deal, labs/src/presnames.js v1.00, lifted verbatim between the markers (the looks suite holds it byte for
+     byte): the name is dealt with the face, from the seed through mix(), never srnd(). The first name follows the
+     face's sex; the surname is campaign talk (LAST_B) that no one in the run has worn. The Loyal Heir keeps the VP's
+     surname (VP Okafor takes the oath as SAMUEL OKAFOR) and a new VP gets a parody surname too (vpNameB). The Daily,
+     the Campaign and Training wear the default face and keep no name (null), and their VPs keep VP_NAMES. */
+  /* ===== PRESNAMES BEGIN ===== */
+/* HAIL TO THE CLOUT president names v1.00 (2026-10-08) | the names lab's deal: a name for every president (codex
+   section 28, the step after the faces). The reference a game cut would lift, as faces2.js was for the faces.
+   A name is dealt like a face: from the run's seed through the engine's own mix(), never the rules' dice (srnd) and
+   never Math.random, so a save reloads the same name and every bot report replays exactly. Two schemes share one deal:
+   the same draw picks the first name (by the face's sex, never by its skin) and the surname's place in the list, so a
+   run's president is the same person under A and B and only the surname's manner differs.
+     A, A REAL NAME: a surname from many cultures, in the manner of the game's VP list (data.js VP_NAMES).
+     B, A PARODY NAME: a surname in the manner of the cast's parody names (VIV STEELE, TOBY NIGHTS, MR. VANDERBUCKS,
+        MINISTER GOLDBAR): campaign words made into names, party neutral. Under B a new VP's surname is one too.
+   No dealt surname is a real US president's or vice president's, a cast member's, a VP list name or a word the game
+   already uses (a card id, an applicant's name); no first name is a cast member's or an applicant's. The lab's gate
+   holds all of it. Salts: 30000 + slot * 131 + k, apart from the faces' 7200 + i * 31 + k and the VP list's 7300 + n.
+   The Daily, the Campaign and Training wear the default face and keep no name: everyone plays the same president. */
+var PRESNAMES = (function (mix) {
+  'use strict';
+  var VERSION = 'v1.00';
+  var FIRST_F = ['AMINA', 'ANIKA', 'BEATRIZ', 'CELESTE', 'CHIOMA', 'CLAIRE', 'DARIA', 'ELENA', 'FATIMA', 'FRANCES',
+    'GRACE', 'HANA', 'IMANI', 'INES', 'INGRID', 'JOSEPHINE', 'KAORI', 'LEILANI', 'LUCIA', 'MAEVE',
+    'MARISOL', 'MEI', 'NADIA', 'NAOMI', 'OLIVIA', 'PAULINE', 'RAQUEL', 'ROSALIND', 'RUTH', 'SELMA',
+    'SUNITA', 'TALIA', 'TERESA', 'URSULA', 'VALERIE', 'WINIFRED', 'YASMIN', 'YOLANDA', 'ZAINAB', 'ABENA'];
+  var FIRST_M = ['ADRIAN', 'AHMED', 'ALBERTO', 'AMIR', 'ANDRES', 'BENEDICT', 'CORNELIUS', 'DESMOND', 'DIEGO', 'EMEKA',
+    'ELLIOT', 'FERNANDO', 'GIDEON', 'HARLAN', 'HIRO', 'IBRAHIM', 'ISAAC', 'JULIAN', 'KENJI', 'KWAME',
+    'LORENZO', 'LUCAS', 'MALCOLM', 'MATEO', 'NIKHIL', 'ORLANDO', 'PATRICK', 'RAFAEL', 'RAJ', 'ROLAND',
+    'SILAS', 'TEODORO', 'TOMAS', 'VIKRAM', 'WALTER', 'WESLEY', 'YUSUF', 'ZEKE', 'ARJUN', 'DMITRI'];
+  var LAST_A = ['ALVARADO', 'BANERJEE', 'BEAUMONT', 'CASTELLANO', 'CHAUDHRY', 'CORDERO', 'DESAI', 'DIALLO', 'EZE', 'FIGUEROA',
+    'FONTAINE', 'GRANADOS', 'HADLEY', 'HALSTEAD', 'HASHEMI', 'IVERSEN', 'JABLONSKI', 'KAPOOR', 'KIMURA', 'LACHANCE',
+    'LINDGREN', 'MACALLISTER', 'MENDOZA', 'MOREAU', 'MWANGI', 'NOVAK', 'OKAMOTO', 'OSEI', 'PARIKH', 'PELLETIER',
+    'QUINLAN', 'REYNOSO', 'ROSSI', 'SANDOVAL', 'SATO', 'STRAND', 'TANAKA', 'TRAN', 'UMEH', 'VALENTE',
+    'VARGAS', 'WAINWRIGHT', 'WINSLOW', 'XIONG', 'YILMAZ', 'ZAMORA', 'ZIELINSKI', 'BECKETT'];
+  var LAST_B = ['SPINWELL', 'GLADHAND', 'STUMPWORTH', 'POLLWORTHY', 'VOTESWORTH', 'SOUNDBITE', 'PRESSWELL', 'HANDSHAKE', 'BACKSLAP', 'GOODCHEER',
+    'SOAPBOX', 'SPOTLIGHT', 'GOODNEWS', 'FUNDSWORTH', 'BUNTING', 'STRAWPOLL', 'BRIGHTSIDE', 'KEYNOTE', 'RIBBONCUT', 'TALKWELL',
+    'GAVEL', 'SPEECHLEY', 'BANNERMAN', 'MEGAPHONE', 'WINDSOCK', 'FENCEPOST', 'DOORKNOCK', 'PLATFORM', 'SLOGAN', 'BALLOTT',
+    'QUORUM', 'ROSTRUM', 'HUSTINGS', 'OUTREACH', 'CHEERLY', 'RALLYMORE', 'CROWDSWELL', 'APPLAUSE', 'STAGECRAFT', 'TELEPROMPT',
+    'FILIBUSTER', 'VOTEMORE', 'STEMWINDER', 'HANDWAVE', 'STANDPAT', 'DEADLOCK', 'PORKBARREL', 'LOBBYWELL'];
+  var LAST = { a: LAST_A, b: LAST_B };
+  /* VP Okafor's first name, the day he takes the oath as the Loyal Heir (the cast's VP wears a man's crop) */
+  var OKAFOR_FIRST = 'SAMUEL';
+  /* never a dealt surname: every US president's and vice president's (the lab's gate reads this list) */
+  var REAL = ['WASHINGTON', 'ADAMS', 'JEFFERSON', 'MADISON', 'MONROE', 'JACKSON', 'VAN BUREN', 'HARRISON', 'TYLER', 'POLK',
+    'TAYLOR', 'FILLMORE', 'PIERCE', 'BUCHANAN', 'LINCOLN', 'JOHNSON', 'GRANT', 'HAYES', 'GARFIELD', 'ARTHUR', 'CLEVELAND',
+    'MCKINLEY', 'ROOSEVELT', 'TAFT', 'WILSON', 'HARDING', 'COOLIDGE', 'HOOVER', 'TRUMAN', 'EISENHOWER', 'KENNEDY', 'NIXON',
+    'FORD', 'CARTER', 'REAGAN', 'BUSH', 'CLINTON', 'OBAMA', 'TRUMP', 'BIDEN',
+    'BURR', 'GERRY', 'TOMPKINS', 'CALHOUN', 'DALLAS', 'KING', 'BRECKINRIDGE', 'HAMLIN', 'COLFAX', 'WHEELER', 'HENDRICKS',
+    'MORTON', 'STEVENSON', 'HOBART', 'FAIRBANKS', 'SHERMAN', 'MARSHALL', 'DAWES', 'CURTIS', 'GARNER', 'WALLACE', 'BARKLEY',
+    'HUMPHREY', 'AGNEW', 'ROCKEFELLER', 'MONDALE', 'QUAYLE', 'GORE', 'CHENEY', 'PENCE', 'HARRIS', 'VANCE'];
+
+  /* the face's sex: a dealt face says (0 a woman, 1 a man); the lookalikes and Okafor are men; the default face has no name */
+  function sexOf(face) {
+    if (!face || face.k === 'default') return -1;
+    return face.k === 'face2' ? face.sx : 1;
+  }
+  /* a first name for slot i of a run (1, 2 ... a president; 100 and up a VP at the oath) */
+  function firstFor(seed, slot, face) {
+    var sx = sexOf(face); if (sx < 0) return null;
+    if (face.k === 'okafor') return OKAFOR_FIRST;
+    var list = sx ? FIRST_M : FIRST_F;
+    return list[mix(seed, 30000 + slot * 131) % list.length];
+  }
+  /* a president's name: the first name above, and a surname no one in the run has worn (taken: surnames in use) */
+  function deal(seed, slot, face, scheme, taken) {
+    var first = firstFor(seed, slot, face); if (!first) return null;
+    var list = LAST[scheme] || LAST_A, t = taken || {}, k, li = 0;
+    for (k = 0; k < 64; k++) { li = mix(mix(seed, 30000 + slot * 131 + k), 1) % list.length; if (!t[list[li]]) break; }
+    return { first: first, last: list[li], sc: scheme === 'b' ? 'b' : 'a', li: li };
+  }
+  /* B's new VP: the game's vpName (engine.js) on the parody list, every surname the run has worn refused */
+  function vpNameB(g, worn) {
+    var used = (g.vps || ['OKAFOR']).concat(worn || []), names = LAST_B.filter(function (n) { return used.indexOf(n) < 0; });
+    return names.length ? names[mix(g.seed, 7300 + g.pres) % names.length] : 'OKAFOR';
+  }
+  function title(s) { return String(s).split(' ').map(function (w) { return w.charAt(0) + w.slice(1).toLowerCase(); }).join(' '); }
+  /* how a name reads: in prose (Ines Banerjee), on The Wire (PRESIDENT BANERJEE), under a card (BANERJEE) */
+  function full(n) { return n ? title(n.first + ' ' + n.last) : 'The President'; }
+  function wire(n) { return n ? 'PRESIDENT ' + n.last : 'THE PRESIDENT'; }
+  function card(n) { return n ? n.last : 'PRESIDENT'; }
+  return { VERSION: VERSION, FIRST_F: FIRST_F, FIRST_M: FIRST_M, LAST_A: LAST_A, LAST_B: LAST_B, LAST: LAST, REAL: REAL,
+    OKAFOR_FIRST: OKAFOR_FIRST, sexOf: sexOf, firstFor: firstFor, deal: deal, vpNameB: vpNameB, title: title, full: full, wire: wire, card: card };
+})(mix);
+  /* ===== PRESNAMES END ===== */
+  var NAME_SC = 'b';
+  function named(g) { return !(g.story || g.chap || g.daily); }
+  /* every surname the run has worn: Okafor, every VP, every president */
+  function wornOf(g) {
+    var w = { OKAFOR: 1 };
+    (g.vps || []).forEach(function (n) { w[n] = 1; });
+    (g.names || []).forEach(function (n) { if (n) w[n.last] = 1; });
+    return w;
+  }
+  /* the first president's name a seed deals (the origin screen shows it, as faceFor shows the face) */
+  function nameFor(seed, look) { return PRESNAMES.deal(seed | 0, 1, faceFor(seed, look), NAME_SC, { OKAFOR: 1 }); }
+  /* was president slot s the Loyal Heir? Okafor always; a dealt face that its own slot's deal did not make came from a
+     VP's slot (100 and up). A lookalike or the default face is only ever the first. */
+  function heirOf(g, f, s) {
+    if (!f) return false;
+    if (f.k === 'okafor') return true;
+    if (f.k !== 'face2') return false;
+    var key = faceKey(f);
+    for (var k = 0; k <= 64; k++) if (faceKey(deal(mix(g.seed, 7200 + s * 31 + k))) === key) return false;
+    return true;
+  }
+  /* a save from before v7.6 has no names: give it the ones its seed deals. The Loyal Heirs wear the VPs' surnames in
+     the order the VPs served, each VP's first name from the slot the VP was dealt in (100 + the president it served
+     beside first). A run whose names do not match its faces (a test that cut its line) is named again the same way. */
+  function nameFill(g) {
+    if (!g || !g.faces) return g;
+    if (g.names && g.names.length === g.faces.length) return g;
+    var w = wornOf({ vps: g.vps }), heirs = 0, vslot = 0, vps = g.vps || ['OKAFOR'];
+    g.names = [];
+    g.faces.forEach(function (f, j) {
+      var s = j + 1, n = null;
+      if (named(g)) {
+        if (j > 0 && heirs < vps.length && heirOf(g, f, s)) { n = { first: PRESNAMES.firstFor(g.seed | 0, vslot, f), last: vps[heirs], sc: NAME_SC }; heirs++; vslot = 100 + s; }
+        else n = PRESNAMES.deal(g.seed | 0, s, f, NAME_SC, w);
+        if (n) w[n.last] = 1;
+      }
+      g.names.push(n);
+    });
+    if (g.vp && g.vp.slot === undefined) g.vp.slot = vslot;
+    return g;
+  }
   function firstFace(g, opts) {
     if (g.story || g.chap || g.daily) return { k: 'default' };
     var lk = opts && opts.look;
@@ -3019,8 +3149,9 @@ var HTTC = (function (D) {
     if (opts && opts.daily) { g.daily = { d: opts.daily, off: !!opts.official }; g.mand = (opts.mand || []).filter(function (id) { return MAND[id]; }); g.mand.forEach(function (id) { mandStart(g, id); }); }
     else if (opts && opts.mandates && !g.story && !g.chap) { g.mand = []; g.mandPick = 1; }
     else if (opts && opts.mandLater && !g.story && !g.chap) g.mand = []; /* a guided first term goes without; the second term deals them */
-    g.vp = { name: 'OKAFOR', face: { k: 'okafor' } }; g.vps = ['OKAFOR'];
+    g.vp = { name: 'OKAFOR', face: { k: 'okafor' }, slot: 0 }; g.vps = ['OKAFOR'];
     g.faces = [firstFace(g, opts)]; /* v7.2 */
+    g.names = [named(g) ? PRESNAMES.deal(g.seed | 0, 1, g.faces[0], NAME_SC, { OKAFOR: 1 }) : null]; /* v7.6 */
     refreshUnlocks(g);
     rollApps(g);
     /* v6.8: every run but Training starts with one lifeline (a Campaign chapter brings its kit instead) */
@@ -3068,6 +3199,8 @@ var HTTC = (function (D) {
     if (!g.fund) g.fund = { seats: 0, n: 0 };
     /* v7.2: saves from before the faces get the ones their seed deals */
     faceFill(g);
+    /* v7.6: saves from before the names get the ones their seed deals */
+    nameFill(g);
     /* v6.8: old favors become lifelines */
     if (g.inv) Object.keys(g.inv).forEach(function (k) { if (FAV_OLD[k]) { var n = g.inv[k]; delete g.inv[k]; g.inv[FAV_OLD[k]] = (g.inv[FAV_OLD[k]] || 0) + n; } });
     if (g.inv && favCount(g) > INV_MAX) { var ks = Object.keys(g.inv); while (favCount(g) > INV_MAX) { var kk = ks.filter(function (x) { return g.inv[x] > 0; }).pop(); g.inv[kk]--; if (!g.inv[kk]) delete g.inv[kk]; } }
@@ -4590,9 +4723,17 @@ var HTTC = (function (D) {
       g.heat = g.heat * 0.6;
       g.flags.specialDone = 0; g.flags.succ = 0; g.flags.blindUntil = 0; g.mo = { a: 0, b: 0 };
       /* v7.2: the new president's face. The Loyal Heir is the VP you watched, and a new VP steps in; the Fresh Face is new */
-      faceFill(g);
-      if (succ === 'heir') { g.faces.push(g.vp.face); var vf = newFace(g, 100 + g.pres), vn = vpName(g); g.vp = { name: vn, face: vf }; g.vps.push(vn); }
-      else g.faces.push(newFace(g, g.pres));
+      faceFill(g); nameFill(g);
+      /* v7.6: the name comes with the face: the Loyal Heir keeps the VP's surname, the Fresh Face is dealt one */
+      if (succ === 'heir') {
+        var hf = g.vp.face; g.faces.push(hf);
+        g.names.push(named(g) ? { first: PRESNAMES.firstFor(g.seed | 0, g.vp.slot || 0, hf), last: g.vp.name, sc: NAME_SC } : null);
+        var vf = newFace(g, 100 + g.pres), vn = named(g) ? PRESNAMES.vpNameB(g, Object.keys(wornOf(g))) : vpName(g);
+        g.vp = { name: vn, face: vf, slot: 100 + g.pres }; g.vps.push(vn);
+      } else {
+        var ff = newFace(g, g.pres); g.faces.push(ff);
+        g.names.push(named(g) ? PRESNAMES.deal(g.seed | 0, g.pres, ff, NAME_SC, wornOf(g)) : null);
+      }
       g.notices.push({ k: 'successor', succ: succ, pres: g.pres });
     }
     /* a new term deals a new country: the old mandate lapses and three new ones are offered before the first folder */
@@ -4723,7 +4864,7 @@ var HTTC = (function (D) {
   return {
     SCHEMA: SCHEMA, D: D, ALL: ALL, BUILD: BUILD, ORIG: ORIG, ADS: ADS, SEASONS: SEASONS,
     newGame: newGame, current: current, preview: preview, choose: choose,
-    LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
+    LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, nameFill: nameFill, nameFor: nameFor, PRESNAMES: PRESNAMES, NAME_SC: NAME_SC, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
     endQuarter: endQuarter, nextQuarter: nextQuarter,
     projection: projection, campaign: campaign, election: election, houseTier: houseTier, PTY: PTY, partyState: partyState, fundParty: fundParty, leaseLeft: leaseLeft, leaseOut: leaseOut, ARC: ARC, arcMult: arcMult, arcRun: arcRun, arcEnding: arcEnding, econMult: econMult, mktOn: mktOn, HOUSE_LV: HOUSE_LV, houseLevel: houseLevel, houseLevelOf: houseLevelOf, houseNext: houseNext, houseSeats: houseSeats, houseMove: houseMove, MKT_LV: MKT_LV, MKT_X: MKT_X, mktLevel: mktLevel, mktLevelOf: mktLevelOf, mktNext: mktNext, crashChance: crashChance, optCost: optCost, dismissChance: dismissChance, suitOpen: suitOpen,
     build: build, buildState: buildState, settle: settle, settleCost: settleCost, suitDrain: suitDrain,
@@ -5823,6 +5964,15 @@ var ART = (function () {
     const old = !g.faces || g.faces.some((f) => f && f.k === 'face') || (g.vp && g.vp.face && g.vp.face.k === 'face');
     const gg = old ? E.faceFill(JSON.parse(JSON.stringify(g))) : g;
     return A.president(gg.faces[i === undefined ? gg.faces.length - 1 : i], presDress(gg));
+  }
+  /* v7.6: the name of president i of a run (the one in office when i is left out), read the way presArt reads the face:
+     a save from before v7.6 is named on a copy as loading it would name it. The Daily, the Campaign and Training keep
+     no name (null). PN.full reads Pauline Handshake, PN.wire PRESIDENT HANDSHAKE, PN.card HANDSHAKE. */
+  const PN = E.PRESNAMES;
+  function presName(g, i) {
+    if (!g || !g.faces || g.story || g.chap || g.daily) return null;
+    const gg = g.names && g.names.length === g.faces.length ? g : E.nameFill(E.faceFill(JSON.parse(JSON.stringify(g))));
+    return gg.names[i === undefined ? gg.names.length - 1 : i] || null;
   }
   /* v7.4: the president in the scenes (ART.drawScene's pres): the president in office stands in the Oval, the press
      room, the rally and the podcast. After a big win the president wears the big win face (1), after a big loss the big
@@ -7030,7 +7180,7 @@ var ART = (function () {
     let h = '';
     h += '<div class="masthead">The Wire</div>';
     const eraE = E.erasOn(G) ? E.eraOf(G) : null;
-    h += '<div class="edition"><span>YEAR ' + N(d.year) + ' · ' + d.season + ' EDITION' + (eraE && eraE.id !== 'normal' ? ' · ' + esc(ERA_SHORT[eraE.id]) : '') + '</span><span>' + (G.pres > 1 ? 'PRESIDENT ' + N('#' + G.pres) + ' · ' : '') + N('25¢') + '</span></div>';
+    h += '<div class="edition"><span>YEAR ' + N(d.year) + ' · ' + d.season + ' EDITION' + (eraE && eraE.id !== 'normal' ? ' · ' + esc(ERA_SHORT[eraE.id]) : '') + '</span>' + (presName(G) ? '<span class="ed-pres">' + esc(PN.wire(presName(G))) + ' · ' + N('25¢') : '<span>' + (G.pres > 1 ? 'PRESIDENT ' + N('#' + G.pres) + ' · ' : '') + N('25¢')) + '</span></div>';
     h += '<h2 class="headline">' + numify(r.headline) + '</h2>';
     h += '<div class="appr"><span class="n num" id="r-a">' + (blind ? '??' : pa(animate ? (r.aDesk !== undefined ? r.aDesk : r.a0) : r.a1) + '%') + '</span><span class="d ' + (blind ? '' : da >= 0.5 ? 'up' : da <= -0.5 ? 'down' : '') + '">' +
       (blind ? 'YOU FIRED THE POLLSTER · HIRE ONE IN THE MACHINE' : (Math.abs(da) >= 0.5 ? ic(da > 0 ? 'up' : 'down') : '') + 'APPROVAL ' + (Math.abs(da) < 0.5 ? 'FLAT' : N(sgn(da))) + ' THIS QUARTER') + '</span>' +
@@ -7785,7 +7935,8 @@ var ART = (function () {
       if (n.k === 'term2') return ['Four more years', (n.mandate ? 'A mandate! ' : '') + 'Four folders a quarter now. Second midterms are harsher.'];
       if (n.k === 'successor') {
         const vps = G.vps || [], vpNow = G.vp ? titleName(G.vp.name) : 'Okafor', heir = titleName(vps.length > 1 ? vps[vps.length - 2] : 'OKAFOR');
-        return ['President #' + n.pres, (n.succ === 'fresh' ? 'The Fresh Face takes the oath, and VP ' + vpNow + ' stays on.' : 'The Loyal Heir, VP ' + heir + ', takes the oath, and VP ' + vpNow + ' steps in.') + ' You play on. The Machine, lawsuits and most heat carry over.', G.faces ? presArt(G, n.pres - 1) : null];
+        const nm = presName(G, n.pres - 1);   /* v7.6 */
+        return ['President #' + n.pres + (nm ? ': ' + PN.full(nm) : ''), (n.succ === 'fresh' ? 'The Fresh Face takes the oath, and VP ' + vpNow + ' stays on.' : 'The Loyal Heir, VP ' + heir + ', takes the oath, and VP ' + vpNow + ' steps in.') + ' You play on. The Machine, lawsuits and most heat carry over.', G.faces ? presArt(G, n.pres - 1) : null];
       }
       if (n.k === 'built') { const b = E.BUILD[n.id]; return [b.name + ' is ready', b.d]; }
       if (n.k === 'era') { const e = E.ERA[n.id]; return [e.name, 'Year ' + E.dateOf(G.q).year + '. A new era. ' + e.d + (n.id === 'weird' ? '' : ' New folders join the deck.')]; }
@@ -7949,8 +8100,8 @@ var ART = (function () {
     if (g.chap) { const C = E.chapOf(g); return 'CAMPAIGN CHAPTER ' + C.id + ' · ' + C.name + ' · ' + dateLabel(g.q) + ' · APPROVAL ' + pa(g.approval) + '%'; }
     if (g.daily) return 'DAILY BRIEFING ' + dayLabel(g.daily.d) + (g.daily.off ? '' : ' (PRACTICE)') + ' · ' + dateLabel(g.q) + ' · SCORE SO FAR ' + E.dailyScore(g).total;
     const o = E.ORIG[g.origin];
-    const eo = E.eraOf(g);
-    return (o ? o.name : '') + ' · ' + dateLabel(g.q) + (eo.id !== 'normal' ? ' · ' + ERA_SHORT[eo.id] : '') + (g.pres > 1 ? ' · PRES #' + g.pres : '') + (g.mand && g.mand.length ? ' · ' + g.mand.map((id) => E.MAND[id].name).join(' + ') : '') + ' · APPROVAL ' + r0(g.approval) + '% · ' + r0(g.clout) + ' clout';
+    const eo = E.eraOf(g), nm = presName(g);   /* v7.6: the president in office first */
+    return (nm ? PN.full(nm).toUpperCase() + ' · ' : '') + (o ? o.name : '') + ' · ' + dateLabel(g.q) + (eo.id !== 'normal' ? ' · ' + ERA_SHORT[eo.id] : '') + (g.pres > 1 ? ' · PRES #' + g.pres : '') + (g.mand && g.mand.length ? ' · ' + g.mand.map((id) => E.MAND[id].name).join(' + ') : '') + ' · APPROVAL ' + r0(g.approval) + '% · ' + r0(g.clout) + ' clout';
   }
   function slotTime(at) { try { return new Date(at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } }
   function openPause(mode, arg) {
@@ -8374,7 +8525,7 @@ var ART = (function () {
     /* v7.2: every president of the run, and any lookalike the run earned */
     const fs = G.faces || [], won = earnLooks();
     if (fs.length) h += '<div class="pres-row" id="ov-pres"><span class="lbl">' + (fs.length > 1 ? 'YOUR PRESIDENTS' : 'YOUR PRESIDENT') + '</span><div class="pres-faces">' +
-      fs.map((f, i) => '<figure><canvas class="px" width="32" height="32" data-pi="' + i + '" aria-hidden="true"></canvas><figcaption>' + N('#' + (i + 1)) + '</figcaption></figure>').join('') + '</div></div>';
+      fs.map((f, i) => '<figure><canvas class="px" width="32" height="32" data-pi="' + i + '" aria-hidden="true"></canvas><figcaption>' + N('#' + (i + 1)) + (presName(G, i) ? '<span class="cap">' + esc(PN.card(presName(G, i))) + '</span>' : '') + '</figcaption></figure>').join('') + '</div></div>';
     if (won.length) h += '<p class="lk-won" id="ov-looks">' + ic('star') + 'LOOKALIKE UNLOCKED: ' + won.map((id) => esc(lookOf(id).name)).join(', ') + '</p>';
     h += '<figure class="fig"><figcaption><span>YOUR APPROVAL, WHOLE RUN</span></figcaption><canvas class="h-a" id="ov-a"></canvas></figure>';
     h += '<figure class="fig"><figcaption><span>WHO WAS TALKING ABOUT YOU</span><span>% OF SHOWS</span></figcaption><canvas class="h-m" id="ov-m"></canvas></figure>';
@@ -8440,15 +8591,17 @@ var ART = (function () {
     return '<div class="tut-pick" id="tut-pick"><div class="seg" role="group" aria-label="Tutorial"><span class="lbl">TUTORIAL</span>' +
       Object.keys(TUT).map((k) => '<button data-tut="' + k + '" aria-pressed="' + (cur === k) + '">' + TUT[k][0] + '</button>').join('') + '</div><p>' + esc(TUT[cur][1]) + '</p></div>';
   }
-  /* v7.2: your look for the first president: a new face from the run's seed, or a lookalike you have earned */
+  /* v7.2: your look for the first president: a new face from the run's seed, or a lookalike you have earned.
+     v7.6: the run's president by name (E.nameFor: the seed's name, a lookalike's too), the look beneath it */
   function lookPanel() {
     const got = looksGot(), ids = ['new'].concat(E.LOOKALIKES.filter((x) => got[x.id]).map((x) => x.id));
     if (ids.indexOf(lookPick || 'new') < 0) lookPick = null;
     const L = lookPick ? lookOf(lookPick) : null, n = ids.length - 1, fresh = !!(prefs.looks && prefs.looks.seen === 0 && n);
     return '<div class="look-pick" id="look-pick"><span class="lbl">YOUR LOOK</span><div class="lk-row">' +
       '<button class="lk-step" data-look-step="-1" aria-label="Previous look"' + (n ? '' : ' disabled') + '>' + ic('left') + '</button>' +
-      '<b class="lk-name" id="look-name">' + esc(L ? L.name : 'A NEW FACE') + '</b>' +
+      '<b class="lk-name" id="pres-name">' + esc(PN.full(E.nameFor(nextSeed, lookPick)).toUpperCase()) + '</b>' +
       '<button class="lk-step" data-look-step="1" aria-label="Next look"' + (n ? '' : ' disabled') + '>' + ic('right') + '</button></div>' +
+      '<span class="lk-sub" id="look-name">' + esc(L ? L.name : 'A NEW FACE') + '</span>' +   /* v7.6: the name above, the look beneath */
       '<button class="lk-all" id="look-all">' + N(n + ' OF ' + E.LOOKALIKES.length) + ' LOOKALIKES' + (fresh ? '<span class="new-badge">NEW</span>' : '') + '</button></div>';
   }
   function openLooks() {
