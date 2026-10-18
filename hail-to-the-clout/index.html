@@ -325,7 +325,7 @@ footer p { margin: 0; max-width: 70ch; }
   <div class="wrap">
     <span class="paid">PAID FOR BY THE COMMITTEE TO KEEP CLOUT ABOVE ZERO</span>
     <p>Hail to the Clout is a Snail Attack Studios game. It is a parody and party neutral: the president is you, every character, outlet and country in it is invented, and the lookalikes you can unlock are caricatures of presidents past. Its numbers are tuned to real presidential history anyway.</p>
-    <p class="lbl" id="site-ver">SITE V1.05 · GAME BUILD V7.6</p>
+    <p class="lbl" id="site-ver">SITE V1.07 · GAME BUILD V7.8</p>
   </div>
 </footer>
 
@@ -600,6 +600,14 @@ var ART = (function () {
      lectern and the mic. FOCUS (percent down the scene) is the 32 face's middle, which the desk keeps in view when the
      scene is cropped short. */
   var SPOT = { oval: [64, 19], press: [64, 11], rally: [64, 2], pod: [64, 22] };
+  /* v7.8 (the Director's answer B on issue 1649): the nine cast presidents (the default face, Okafor, the seven lookalikes)
+     on 32. Their CAST entry's f2 is a cast32 record ({ k: 'cast32', who, dress }), drawn by CAST32 (labs/src/cast32.js
+     v1.00, byte for byte after this block's IIFE, as ART.CAST32); every other record is FACE2's. This is the faces lab
+     v1.03's own shim on ART.FACE2.draw, so a cast face on a card, in a scene and at the desk is the lab's B pixel for pixel. */
+  function f2draw(canvas, f, opt) {
+    if (f && f.k === 'cast32') { opt = opt || {}; ART.CAST32.draw(canvas, f.who, { dress: f.dress, expr: opt.expr, blink: opt.blink, bg: opt.bg }); return; }
+    FACE2.draw(canvas, f, opt);
+  }
   var PRES = { cv: null, key: '', w: 32, jacket: '#232e66', skin: '#c98d62' };
   function presSprite(p, t) {
     var s = CAST[p.id]; if (!s || typeof document === 'undefined') return null;
@@ -609,7 +617,7 @@ var ART = (function () {
       var w = s.f2 ? 32 : 24;
       PRES.cv.width = w; PRES.cv.height = w;   /* a dealt face on 32, a cast face on 24; setting the size clears it */
       var c = PRES.cv.getContext('2d'); c.clearRect(0, 0, w, w);
-      if (s.f2) FACE2.draw(PRES.cv, s.f2, { grid: 32, dress: s.dress, expr: ex, blink: blink, bg: 'rgba(0,0,0,0)' });
+      if (s.f2) f2draw(PRES.cv, s.f2, { grid: 32, dress: s.dress, expr: ex, blink: blink, bg: 'rgba(0,0,0,0)' });
       else portrait(PRES.cv, p.id, blink, t, { bg: 'rgba(0,0,0,0)', mouth: ex === 1 ? 'beam' : ex === 2 ? 'frown' : s.mouth, acc: ex === 1 ? (s.acc || []).concat(['burn']) : s.acc });   /* the cast's big win: the beam and a glow */
       var d = w === 32 ? c.getImageData(10, 31, 1, 1).data : c.getImageData(8, 23, 1, 1).data;   /* the coat's own colour, under the lapel: the scene's torso wears it */
       PRES.jacket = 'rgb(' + d[0] + ',' + d[1] + ',' + d[2] + ')'; PRES.skin = s.skin; PRES.w = w; PRES.key = key;
@@ -667,7 +675,7 @@ var ART = (function () {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
   function portrait(canvas, id, blink, t, over) {
-    if (CAST[id] && CAST[id].f2) { FACE2.draw(canvas, CAST[id].f2, { grid: 32, dress: CAST[id].dress, blink: blink }); return; }   /* v7.3; v7.5 on the lab's 32 grid (issue 899 B) */
+    if (CAST[id] && CAST[id].f2) { f2draw(canvas, CAST[id].f2, { grid: 32, dress: CAST[id].dress, blink: blink }); return; }   /* v7.3; v7.5 on the lab's 32 grid (issue 899 B); v7.8 the nine cast presidents too (issue 1649 B) */
     if (canvas.width !== 24) { canvas.width = 24; canvas.height = 24; }   /* v7.5: a canvas that last showed a 32 face (the desk's VP) */
     var s = CAST[id] || CAST.chief, c = canvas.getContext('2d'), has = function (a) { return s.acc.indexOf(a) >= 0; };
     if (over) { s = Object.assign({}, s, over); }   /* v7.4: the scenes' clear ground and the president's beam and frown */
@@ -764,12 +772,13 @@ var ART = (function () {
   /* v7.5: a president card (the Director's answer B on issue 899): 32 wide, shown at 64 px, so every pixel is two by two.
      A dealt face fills it on the lab's 32 grid; a cast face (the default, a lookalike, Okafor) keeps the cast's 24 grid,
      one pixel to one under the card's middle, on its own ground, two by two as well. The origin cards, the successor
-     folder, the notices, the save slots and the final edition draw with it. */
+     folder, the notices, the save slots and the final edition draw with it. From v7.8 (issue 1649 B) the nine cast
+     presidents fill it on 32 too (CAST32); the 24 path stays for any other cast face. */
   var CARD = { cv: null };
   function card(canvas, id, blink, t) {
     var s = CAST[id];
     if (canvas.width !== 32) { canvas.width = 32; canvas.height = 32; }
-    if (s && s.f2) { FACE2.draw(canvas, s.f2, { grid: 32, dress: s.dress, blink: blink }); return; }
+    if (s && s.f2) { f2draw(canvas, s.f2, { grid: 32, dress: s.dress, blink: blink }); return; }   /* v7.8: a cast president's cast32 record too */
     if (!CARD.cv) { CARD.cv = document.createElement('canvas'); CARD.cv.width = 24; CARD.cv.height = 24; }
     portrait(CARD.cv, id, blink, t);
     var c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
@@ -835,6 +844,8 @@ var ART = (function () {
       spec = f.k === 'face' ? { skin: SK[f.sk], hair: PRES_HAIR[f.hc], hs: PRES_HS[f.hs], mouth: PRES_MOUTH[f.m], acc: f.g ? ['glasses'] : [] } : JSON.parse(JSON.stringify(DEFAULT_FACE));
       DRESS[dress](spec, PRES_TIE[f.k === 'face' ? f.t : 0], f.k === 'face' ? f : null);
     }
+    /* v7.8 (the Director's answer B on issue 1649): the default face, Okafor and a lookalike draw on 32 through CAST32 */
+    if (f.k !== 'face') { spec.f2 = { k: 'cast32', who: f.k === 'lk' && LOOKS[f.id] ? { k: 'lk', id: f.id } : f.k === 'okafor' ? { k: 'okafor' } : { k: 'default' }, dress: dress }; spec.dress = dress; }
     CAST[id] = spec;
     return id;
   }
@@ -1172,7 +1183,8 @@ var ART = (function () {
 
     return { SKIN: SKIN, HAIR: HAIR, SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M,
       FH: FH, AGES: AGES, LIPS: LIPS, TIE: TIE, FRAMES: FRAMES, EXPR: EXPR, GRID: GRID, PROFILE: PROFILE, lightness: lightness, key: key,
-      headSpec: headSpec, draw: draw };
+      headSpec: headSpec, draw: draw, HAIR_NAME: HAIR_NAME, FRAME_NAME: FRAME_NAME,   /* v7.7: the creator's menus name hair and frames */
+      bandOf: bandOf, shade: shade, blend: blend };   /* v7.8: cast32.js reads them, as from faces2.js */
   })();
 
   /* ---------- icons (8x8, currentColor) ---------- */
@@ -1267,6 +1279,252 @@ var ART = (function () {
     president: president, silhouette: silhouette, LOOKS: LOOKS, PRES_HAIR: PRES_HAIR, PRES_HS: PRES_HS, PRES_MOUTH: PRES_MOUTH, PRES_TIE: PRES_TIE, SK: SK, DRESS: DRESS,
     FACE2: FACE2, face2: function (canvas, f, opt) { FACE2.draw(canvas, f, Object.assign({ grid: 32 }, opt)); }, SPOT: SPOT, presFocus: presFocus, card: card };
 })();
+/* v7.8 (the Director's answer B on issue 1649): the faces lab v1.03's cast32.js v1.00, byte for byte between the CAST32
+   markers (the looks suite reds on a byte), on ART and ART.FACE2 (the game's faces2.js) as FACES2. */
+ART.CAST32 = (function (FACES2) {
+/* ===== CAST32 BEGIN ===== */
+/* HAIL TO THE CLOUT · FACES LAB · cast32.js v1.00 (2026-10-15)
+   The nine cast presidents on the lab's 32 grid: the default face ("The President", in each origin's clothes), Okafor and
+   the seven lookalikes. From v7.5 a dealt face is drawn on 32 (the Director's answer B on issue 899) while these nine stay
+   on the cast's 24, so on the 64 px cards and in the scenes they stand about two thirds the size of a dealt face. Scaling
+   a 24 picture to 32 smears it (4 pixels to 3), so this redraws each of them on 32 by hand, from the game's own art:
+     - who they are is the game's own CAST entry (ART.president(who, dress)): skin, hair, hairstyle, mouth, every mark
+       (the wig, the stovepipe hat, the chin beard, the pince-nez, the big moustache, the round specs, the cape, the
+       stars, the jabot, the bow tie), the clothes, the origin's dress (pin, shades, square, medals) and the ground;
+     - the head is the dealt faces' own geometry (FACES2.headSpec on 32), so a cast face is the same size as a dealt
+       one, its eyes on the same row, its shoulders on the same line; each one takes the shape that suits the caricature;
+     - the clothes are the game's portrait() lines in its 24 units, as faces2.js draws a dealt face's;
+     - the eyes, brows, nose, mouths, the big win and the big loss are faces2.js's on 32, so a cast face and a dealt one
+       wear the same expressions.
+   Nothing here deals or draws from the dice: these are fixed faces. Needs: ART (the game's art.js) and FACES2 (faces2.js). */
+var CAST32 = (function (ART, F2) {
+  'use strict';
+  var px = ART.px, shade = F2.shade, blend = F2.blend;
+  /* the nine, and what the 32 grid adds to each: a head shape and width from faces2.js's lists, an age (lines), a
+     nose and brows, eyes set wide or close, ears, and a few caricature cues the 24 grid had no room for */
+  var WHO = [
+    { k: 'default', name: 'THE PRESIDENT', note: 'the Daily, the Campaign and Training' },
+    { k: 'okafor', name: 'OKAFOR', note: 'the first VP, and the Loyal Heir' },
+    { k: 'lk', id: 'founder', name: 'THE FOUNDER' }, { k: 'lk', id: 'stovepipe', name: 'THE STOVEPIPE' },
+    { k: 'lk', id: 'roughrider', name: 'THE ROUGH RIDER' }, { k: 'lk', id: 'camelot', name: 'CAMELOT' },
+    { k: 'lk', id: 'fireside', name: 'THE FIRESIDE' }, { k: 'lk', id: 'buckstops', name: 'THE BUCK STOPS' },
+    { k: 'lk', id: 'fivestar', name: 'FIVE STAR' }
+  ];
+  var LOOK = {
+    'default':  { sh: 'oval', wd: 1, ag: 2, no: 'straight', br: 'straight', es: 0, ea: 0 },
+    okafor:     { sh: 'square', wd: 1, ag: 1, no: 'broad', br: 'thick', es: 0, ea: 0 },
+    founder:    { sh: 'long', wd: 1, ag: 2, no: 'long', br: 'thin', es: 0, ea: 0, chin: 1 },
+    stovepipe:  { sh: 'long', wd: 0, ag: 2, no: 'long', br: 'thick', es: 0, ea: 1, gaunt: 1, mole: 2 },
+    roughrider: { sh: 'square', wd: 2, ag: 1, no: 'broad', br: 'thick', es: 1, ea: 0 },
+    camelot:    { sh: 'square', wd: 1, ag: 0, no: 'straight', br: 'thick', es: 0, ea: 0 },
+    fireside:   { sh: 'oval', wd: 2, ag: 2, no: 'long', br: 'arched', es: 1, ea: 0, chin: 1 },
+    buckstops:  { sh: 'round', wd: 1, ag: 2, no: 'button', br: 'thin', es: 0, ea: 0 },
+    fivestar:   { sh: 'round', wd: 2, ag: 2, no: 'button', br: 'thin', es: 1, ea: 1 }
+  };
+  function keyOf(who) { return who.k === 'lk' ? who.id : who.k; }
+  function nameOf(who) { for (var i = 0; i < WHO.length; i++) if (keyOf(WHO[i]) === keyOf(who)) return WHO[i].name; return keyOf(who).toUpperCase(); }
+
+  /* draw(canvas, who, opt): who is { k: 'default' }, { k: 'okafor' } or { k: 'lk', id }; opt.dress the origin (as
+     ART.president), opt.expr 1 a big win and 2 a big loss, opt.blink the desk's blink, opt.bg a ground (a scene's clear one) */
+  function draw(canvas, who, opt) {
+    opt = opt || {};
+    var G = 32, s = 4 / 3, c = canvas.getContext('2d');
+    if (canvas.width !== G) { canvas.width = G; canvas.height = G; }
+    c.imageSmoothingEnabled = false;
+    var P = function (x, y, w, h, col) { var x0 = Math.round(x * s), y0 = Math.round(y * s); px(c, x0, y0, Math.round((x + w) * s) - x0, Math.round((y + h) * s) - y0, col); };
+    var id = ART.president(who, opt.dress), S = ART.CAST[id], L = LOOK[keyOf(who)] || LOOK['default'];
+    var acc = S.acc || [], has = function (a) { return acc.indexOf(a) >= 0; };
+    var sk = S.skin, deep = F2.bandOf(sk) === 2, skd = shade(sk, deep ? 0.74 : 0.84), skl = shade(sk, deep ? 1.2 : 1.06);
+    var hair = S.hair, hd = shade(hair, F2.lightness(hair) > 60 ? 0.82 : 0.7), hl = F2.lightness(hair) < 20 ? '#4a4a5a' : shade(hair, 1.22);
+    var H = F2.headSpec({ sh: F2.SHAPES.indexOf(L.sh), wd: L.wd }, G), g = H.g, cx = H.cx, T = H.T, C = H.C, R = H.rows;
+    var ex = opt.expr === 1 || opt.expr === 2 ? opt.expr : 0, ink = '#10131f', white = '#ffffff';
+    var span = function (y) { return R[Math.max(T, Math.min(C, y))]; };
+    var hRow = function (x0, x1, y, col) { if (x1 > x0) px(c, x0, y, x1 - x0, 1, col); };
+    var eyeY = T + Math.round((C - T) * 0.42), mouthY = T + Math.round((C - T) * 0.8);
+    var hatted = has('stovepipe');
+
+    c.clearRect(0, 0, G, G);
+    px(c, 0, 0, G, G, opt.bg || S.bg);
+
+    /* clothes: the game's portrait() lines in its 24 units (as faces2.js draws a dealt face's) */
+    var jacket = S.jacket;
+    P(3, 20, 18, 4, jacket); P(4, 19, 16, 1, jacket); P(2, 21, 20, 3, jacket);
+    P(10, 19, 4, 4, S.shirt);
+    if (S.tie) { P(11, 19, 2, 1, shade(S.tie, 0.8)); P(11, 20, 2, 4, S.tie); }
+    if (S.open) P(11, 19, 2, 2, sk);
+    P(9, 19, 1, 3, shade(jacket, 0.7)); P(14, 19, 1, 3, shade(jacket, 0.7));
+    if (has('cape')) { P(2, 19, 6, 5, S.cape); P(16, 19, 6, 5, S.cape); P(1, 21, 1, 3, S.cape); P(22, 21, 1, 3, S.cape); P(2, 19, 6, 1, shade(S.cape, 1.25)); P(16, 19, 6, 1, shade(S.cape, 1.25)); P(8, 19, 1, 1, '#f0b429'); P(15, 19, 1, 1, '#f0b429'); }
+    if (has('pin')) { P(6, 21, 2, 1, '#d23a3a'); P(6, 22, 2, 1, '#2f5bd3'); }
+    if (has('square')) { P(16, 21, 2, 1, '#f0b429'); P(16, 22, 1, 1, '#ffe08a'); }
+    if (has('medals')) { P(5, 21, 1, 2, '#d23a3a'); P(7, 21, 1, 2, '#f0b429'); P(16, 21, 1, 2, '#2f5bd3'); P(18, 21, 1, 2, '#f0b429'); }
+    if (has('stars')) {   /* five stars on each shoulder: a ring of four and one in the middle, gold */
+      [6, 25].forEach(function (x) { [[0, 0], [2, 1], [1, 3], [-1, 3], [-2, 1]].forEach(function (d) { px(c, x + d[0], 26 + d[1], 1, 1, '#f0b429'); }); px(c, x, 28, 1, 1, '#ffe08a'); });
+    }
+    if (has('jabot')) { P(10, 19, 4, 4, '#ffffff'); for (var jy = 26; jy < 32; jy++) { px(c, jy % 2 ? cx - 3 : cx + 2, jy, 1, 1, '#e8e2d0'); } px(c, cx - 1, 27, 2, 1, '#e8e2d0'); px(c, cx - 1, 30, 2, 1, '#e8e2d0'); }
+    if (has('bowtie')) { var bw = S.bow || '#10131f'; px(c, cx - 3, 25, 2, 3, bw); px(c, cx + 1, 25, 2, 3, bw); px(c, cx - 1, 26, 2, 1, shade(bw, 0.8)); px(c, cx - 1, 25, 2, 1, S.shirt); }
+    if (has('pearls')) for (var p = 9; p < 15; p += 2) P(p, 19, 1, 1, '#ffffff');
+
+    /* the neck */
+    var nw = 3 + (L.wd === 2 ? 1 : 0), nTop = C - 1, nBot = g.sh + 1;
+    px(c, cx - nw, nTop, nw * 2, nBot - nTop, skd);
+
+    /* the head: the dealt faces' own rows for this shape and width */
+    for (var y = T; y <= C; y++) hRow(R[y][0], R[y][1], y, sk);
+    for (y = mouthY - 1; y <= C; y++) { px(c, R[y][0], y, 1, 1, skd); px(c, R[y][1] - 1, y, 1, 1, skd); }
+    hRow(R[C][0] + 1, R[C][1] - 1, C, skd);
+    if (L.chin) hRow(cx - 1, cx + 1, C - 1, skd);   /* a cleft, or a double chin's line */
+    px(c, R[eyeY + 2][0] + 1, eyeY + 2, 2, 1, skl); px(c, R[eyeY + 2][1] - 3, eyeY + 2, 2, 1, skl);
+    if (L.gaunt) { for (y = eyeY + 3; y <= mouthY; y++) { px(c, R[y][0] + 2, y, 1, 1, skd); px(c, R[y][1] - 3, y, 1, 1, skd); } }
+
+    /* ears (the wig's rolls cover them) */
+    var eW = 2 + L.ea, eh = 3, eL = R[eyeY][0], eR = R[eyeY][1];
+    if (S.hs !== 'wig') { px(c, eL - eW, eyeY, eW, eh, sk); px(c, eR, eyeY, eW, eh, sk); px(c, eL - 1, eyeY + 1, 1, 1, skd); px(c, eR + eW - 1, eyeY + 1, 1, 1, skd); }
+
+    /* hair: every mass starts on the cap or the head, as faces2.js's do */
+    var hairline = T + Math.max(1, Math.round((C - T) * (L.ag === 2 ? 0.16 : 0.2)));
+    var cap = function (top, line, out, col) { for (var y = top; y <= line; y++) { var sp = span(y), o = y < T ? -1 : out; hRow(sp[0] - o, sp[1] + o, y, col || hair); } };
+    var temples = function (rows, out, col) { for (var y = hairline + 1; y <= hairline + rows; y++) { var sp = span(y); px(c, sp[0] - out, y, 1 + out, 1, col || hair); px(c, sp[1] - 1, y, 1 + out, 1, col || hair); } };
+    switch (S.hs) {
+      case 'slick': cap(T - 1, hairline, 1); temples(2, 0); hRow(cx - 3, cx + 4, T, hl); px(c, cx - 4, T + 1, 2, 1, hl); break;
+      case 'crop': cap(T, hairline, 0); temples(1, 0, S.temples); break;
+      case 'short': cap(T - 1, hairline, 1); temples(2, 0); hRow(cx - 2, cx + 3, T - 1, hd); break;
+      case 'swept':
+        /* the sweep: a full top lifted two rows over the crown, a forelock falling to the right, a shine on the left */
+        cap(T - 1, hairline, 1); temples(2, 0);
+        hRow(span(T)[0], span(T)[1] + 1, T - 2, hair); hRow(cx - 4, cx + 5, T - 3, hair);
+        hRow(cx + 1, span(hairline + 1)[1] - 1, hairline + 1, hair); px(c, cx + 3, hairline + 2, 2, 1, hair);
+        hRow(cx - 4, cx, T - 2, hl); px(c, cx - 5, T - 1, 2, 1, hl);
+        break;
+      case 'wig': {
+        /* the powdered wig: a smooth top, and two rolls a side standing on the head's edge, shaded in the middle */
+        cap(T - 1, hairline, 1); temples(2, 0);
+        [eyeY - 2, eyeY + 2].forEach(function (ry) {
+          var l = span(ry)[0], r = span(ry)[1];
+          px(c, l - 4, ry, 4, 3, hair); px(c, r, ry, 4, 3, hair);
+          px(c, l - 4, ry + 1, 3, 1, shade(hair, 0.9)); px(c, r + 1, ry + 1, 3, 1, shade(hair, 0.9)); px(c, l - 4, ry + 2, 1, 1, shade(hair, 0.8)); px(c, r + 3, ry + 2, 1, 1, shade(hair, 0.8));
+        });
+        for (y = hairline + 1; y < eyeY + 2; y++) { px(c, span(y)[0] - 1, y, 1, 1, hair); px(c, span(y)[1], y, 1, 1, hair); }
+        hRow(cx - 3, cx + 3, T, shade(hair, 0.92));
+        break;
+      }
+      case 'parted': cap(T - 1, hairline, 1); temples(2, 0); px(c, cx - 3, T - 1, 1, hairline - T + 2, shade(sk, 1.05)); hRow(cx - 2, cx + 4, T, hl); break;
+      case 'bald': { var by = eyeY - 2; px(c, R[by][0], by, 2, 4, hair); px(c, R[by][1] - 2, by, 2, 4, hair); px(c, cx - 2, T + 1, 4, 1, skl); px(c, cx - 1, T + 2, 2, 1, skl); } break;
+    }
+
+    /* brows: faces2.js's, on 32; a big win lifts them and a big loss knits them */
+    var bcol = F2.lightness(hair) > 75 ? shade(hair, 0.72) : hd;
+    if (deep && F2.lightness(hair) < 20) bcol = '#161616';
+    var ew = g.ew, gap = 1 + L.es, lx = cx - gap - ew, rx2 = cx + gap;
+    var browY = eyeY - 2 - (ex === 1 ? 1 : 0);
+    var brow = function (x, outer) {
+      var bt = L.br, w = ew + (bt === 'thick' || bt === 'straight' ? 1 : 0), bx = outer < 0 ? x - (w - ew) : x;
+      var inner = outer < 0 ? bx + w - 1 : bx, outerX = outer < 0 ? bx : bx + w - 1;
+      if (ex === 2) {
+        px(c, bx, browY, w, 1, bcol); px(c, inner, browY - 1, 1, 1, bcol); px(c, outerX, browY, 1, 1, sk); px(c, outerX, browY + 1, 1, 1, bcol);
+        px(c, inner, browY - 2, 1, 1, bcol); px(c, inner + (outer < 0 ? -1 : 1), browY - 1, 1, 1, bcol);
+        return;
+      }
+      px(c, bx, browY, w, 1, bcol);
+      if (bt === 'thick') px(c, bx, browY - 1, w, 1, bcol);
+      if (bt === 'arched') { px(c, outerX, browY - 1, 1, 1, bcol); px(c, outerX, browY, 1, 1, sk); }
+    };
+    brow(lx, -1); brow(rx2, 1);
+
+    /* eyes: the cast's round eyes, on 32 */
+    var eye = function (x) {
+      if (opt.blink) { px(c, x, eyeY + 1, ew, 1, ink); return; }
+      px(c, x, eyeY, ew, 2, white); px(c, x + 1, eyeY, 1, 2, ink);
+      if (ex === 2) { px(c, x, eyeY, ew, 1, skd); px(c, x + 1, eyeY + 1, 1, 1, ink); }
+      if (ex === 1) { px(c, x, eyeY + 1, ew, 1, blend(sk, '#ff9a7a', deep ? 0.25 : 0.35)); px(c, x + 1, eyeY, 1, 1, ink); }
+    };
+    eye(lx); eye(rx2);
+    if (ex === 2) { px(c, rx2 + ew - 1, eyeY + 2, 1, 3, '#8fc1ff'); px(c, rx2 + ew - 1, eyeY + 2, 1, 1, '#d8ecff'); }
+
+    /* nose */
+    var nTopY = eyeY + 2, nTip = mouthY - 2, ndk = shade(sk, deep ? 0.62 : 0.76), nsh = deep ? ndk : skd;
+    switch (L.no) {
+      case 'button': px(c, cx - 1, nTip, 2, 1, nsh); px(c, cx - 1, nTip - 1, 2, 1, skl); break;
+      case 'straight': px(c, cx, nTopY, 1, Math.max(1, nTip - nTopY), nsh); px(c, cx - 1, nTip, 2, 1, nsh); break;
+      case 'broad': px(c, cx - 2, nTip, 4, 1, nsh); px(c, cx - 2, nTip, 1, 1, ndk); px(c, cx + 1, nTip, 1, 1, ndk); px(c, cx - 1, nTip - 1, 2, 1, nsh); break;
+      case 'long': px(c, cx - 1, nTopY - 1, 1, Math.max(1, nTip - nTopY + 1), nsh); px(c, cx - 1, nTip, 3, 1, nsh); break;
+    }
+
+    /* cheeks: a big win's glow, age lines, a mole */
+    if (ex === 1 || has('burn')) { var glow = blend(sk, '#ff9a7a', deep ? 0.25 : 0.35), gy = eyeY + 2 + (has('roundspecs') || has('pincenez') ? 1 : 0); px(c, lx, gy, ew, 1, glow); px(c, rx2, gy, ew, 1, glow); }
+    else if (L.ag === 2) { px(c, lx, eyeY + 2, ew, 1, skd); px(c, rx2, eyeY + 2, ew, 1, skd); px(c, cx - 4, mouthY - 1, 1, 2, skd); px(c, cx + 3, mouthY - 1, 1, 2, skd); }
+    if (L.mole) px(c, L.mole === 1 ? lx : rx2 + ew - 1, mouthY - 1, 1, 1, shade(sk, 0.55));
+
+    /* the mouth: the cast's own (S.mouth), drawn as faces2.js draws its mouths on 32 */
+    var mw = 5, mx0 = cx - (mw >> 1), lipD = deep ? shade(sk, 0.5) : '#7a2a2a', lc = lipD;
+    var mo = ex === 1 ? 'beam' : ex === 2 ? 'worry' : S.mouth;
+    switch (mo) {
+      case 'smile': px(c, mx0, mouthY + 1, mw, 1, lc); px(c, mx0 - 1, mouthY, 1, 1, lc); px(c, mx0 + mw, mouthY, 1, 1, lc); break;
+      case 'grin': px(c, mx0 - 1, mouthY, mw + 2, 2, lc); px(c, mx0, mouthY, mw, 1, white); break;
+      case 'flat': px(c, mx0, mouthY, mw, 1, lipD); break;
+      case 'smirk': px(c, mx0, mouthY + 1, mw - 1, 1, lc); px(c, mx0 + mw - 1, mouthY, 2, 1, lc); break;
+      case 'open': px(c, mx0, mouthY, mw, 2, '#5a1a1a'); px(c, mx0 + 1, mouthY + 1, mw - 2, 1, '#c24a5a'); break;
+      case 'teeth': px(c, mx0 - 1, mouthY, mw + 2, 2, lc); px(c, mx0 - 1, mouthY, mw + 2, 1, white); px(c, cx, mouthY, 1, 1, '#e8e2d0'); break;
+      case 'frown': case 'worry':
+        px(c, mx0, mouthY, mw, 1, lipD); px(c, mx0 - 1, mouthY + 1, 1, 1, lipD); px(c, mx0 + mw, mouthY + 1, 1, 1, lipD);
+        px(c, mx0 - 2, mouthY + 2, 1, 1, lipD); px(c, mx0 + mw + 1, mouthY + 2, 1, 1, lipD);
+        px(c, mx0, mouthY + 1, mw, 1, blend(sk, lipD, 0.4));
+        break;
+      case 'beam': default:
+        px(c, mx0 - 1, mouthY, mw + 2, 2, lc); px(c, mx0, mouthY, mw, 1, white); px(c, mx0 - 2, mouthY - 1, 1, 1, lc); px(c, mx0 + mw + 1, mouthY - 1, 1, 1, lc);
+        px(c, mx0 - 1, mouthY + 2, mw + 2, 1, lipD); px(c, mx0, mouthY + 1, mw, 1, '#5a1a1a');
+        break;
+    }
+
+    /* facial hair: the chin beard (no moustache) and the big moustache */
+    if (has('chinbeard')) {
+      for (y = mouthY - 1; y <= C; y++) { px(c, R[y][0], y, 1, 1, hair); px(c, R[y][1] - 1, y, 1, 1, hair); }
+      for (y = mouthY + 2; y <= C + 1; y++) { var sp2 = span(y); hRow(sp2[0] + (y > C ? 1 : 0), sp2[1] - (y > C ? 1 : 0), y, hair); }
+      for (y = eyeY + 2; y < mouthY - 1; y++) { px(c, R[y][0], y, 1, 1, hair); px(c, R[y][1] - 1, y, 1, 1, hair); }
+    }
+    if (has('bigstache')) { var mc = S.stache || hair; hRow(mx0 - 2, mx0 + mw + 2, mouthY - 1, mc); px(c, mx0 - 3, mouthY, 2, 1, mc); px(c, mx0 + mw + 1, mouthY, 2, 1, mc); px(c, mx0 - 3, mouthY + 1, 1, 1, mc); px(c, mx0 + mw + 2, mouthY + 1, 1, 1, mc); hRow(mx0, mx0 + mw, mouthY - 2, shade(mc, 1.15)); }
+
+    /* glasses: the Celebrity's shades, the pince-nez, the round specs */
+    var room = rx2 - (lx + ew) >= 3;
+    if (has('shades')) { px(c, lx - 1, eyeY, rx2 + ew + 1 - lx + 1, 2, '#10131f'); px(c, lx, eyeY, 1, 1, '#5a6080'); px(c, rx2, eyeY, 1, 1, '#5a6080'); }
+    var ring = function (col, arms) {
+      [[lx, -1], [rx2, 1]].forEach(function (e) {
+        var x = e[0], xo = e[1] < 0 ? x - 1 : x + ew, xi = e[1] < 0 ? x + ew : x - 1;
+        px(c, x, eyeY - 1, ew, 1, col); px(c, x, eyeY + 2, ew, 1, col); px(c, xo, eyeY, 1, 2, col); if (room) px(c, xi, eyeY, 1, 2, col);
+        if (arms) px(c, e[1] < 0 ? xo - 1 : xo + 1, eyeY, 1, 1, col);
+      });
+      var b0 = lx + ew + (room ? 1 : 0), b1 = rx2 - (room ? 1 : 0); if (b1 > b0) px(c, b0, eyeY, b1 - b0, 1, col);
+    };
+    if (has('roundspecs')) ring('#2a2d40', true);
+    if (has('pincenez')) { ring('#2a2d40', false); for (y = eyeY + 2; y <= mouthY + 1; y++) px(c, rx2 + ew + 1, y, 1, 1, y % 2 ? '#f0b429' : '#c9a24a'); }
+
+    /* the stovepipe hat sits low on the brow, its crown to the top of the grid */
+    if (hatted) {
+      var brim = hairline;
+      px(c, cx - 5, 0, 10, brim, '#141418'); px(c, cx - 5, brim - 2, 10, 1, '#3a3d52'); px(c, cx - 4, 0, 1, brim - 2, '#2a2d40');
+      px(c, cx - 8, brim, 16, 1, '#141418'); px(c, cx - 7, brim + 1, 14, 1, shade(hair, 1));
+    }
+  }
+  /* a president card: 32 wide, the face filling it (as ART.card draws a dealt face) */
+  function card(canvas, who, opt) { draw(canvas, who, opt); }
+  /* a lookalike still to be earned, as a shadow on 32: ART.silhouette's colours and its question mark, on a dealt head */
+  function silhouette(canvas) {
+    var G = 32, s = 4 / 3, c = canvas.getContext('2d');
+    if (canvas.width !== G) { canvas.width = G; canvas.height = G; }
+    c.imageSmoothingEnabled = false;
+    var P = function (x, y, w, h, col) { var x0 = Math.round(x * s), y0 = Math.round(y * s); px(c, x0, y0, Math.round((x + w) * s) - x0, Math.round((y + h) * s) - y0, col); };
+    var d = '#141726', q = '#5a5f78', H = F2.headSpec({ sh: 0, wd: 1 }, G), y;
+    px(c, 0, 0, G, G, '#2a2d40');
+    P(3, 20, 18, 4, d); P(4, 19, 16, 1, d); P(2, 21, 20, 3, d);
+    px(c, H.cx - 3, H.C - 1, 6, H.g.sh + 2 - H.C, d);
+    for (y = H.T; y <= H.C; y++) px(c, H.rows[y][0], y, H.rows[y][1] - H.rows[y][0], 1, d);
+    for (y = H.T - 1; y < H.T; y++) px(c, H.rows[H.T][0] + 1, y, H.rows[H.T][1] - H.rows[H.T][0] - 2, 1, d);
+    px(c, H.cx - 2, 9, 4, 1, q); px(c, H.cx + 2, 10, 1, 3, q); px(c, H.cx, 13, 2, 1, q); px(c, H.cx, 14, 1, 2, q); px(c, H.cx, 17, 1, 1, q);
+  }
+  return { VERSION: 'v1.00', WHO: WHO, LOOK: LOOK, keyOf: keyOf, nameOf: nameOf, draw: draw, card: card, silhouette: silhouette };
+})(ART, FACES2);
+/* ===== CAST32 END ===== */
+  return CAST32;
+})(ART.FACE2);
 /* ===== ART END ===== */
 
 </script>
