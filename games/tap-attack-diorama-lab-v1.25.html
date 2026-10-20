@@ -15,7 +15,7 @@
 <meta name="twitter:title" content="TAP ATTACK : a Snail Attack Studios bar">
 <meta name="twitter:description" content="Pour it. Slide it. Catch the empties. Two bartenders, six bars, one last call.">
 <!-- ==================== PORTAL ADAPTER FENCE : END   ==================== -->
-<title>TAP ATTACK DIORAMA LAB v1.24</title>
+<title>TAP ATTACK DIORAMA LAB v1.25</title>
 <style>
 html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden;}
 body{display:flex;align-items:center;justify-content:center;box-sizing:border-box;
@@ -37,7 +37,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;backg
 <body>
 <canvas id="cv" width="640" height="880"></canvas>
 <div id="fs">FULLSCREEN</div>
-<div id="lab" role="button" aria-label="Open the lab panel">DIORAMA LAB v1.24</div>
+<div id="lab" role="button" aria-label="Open the lab panel">DIORAMA LAB v1.25</div>
 <div id="labp" hidden></div>
 <script>
 /* =============================================================================
@@ -2850,7 +2850,14 @@ if(urlParam('debug')==='1'&&typeof window!=='undefined')window.__TAP={G:function
 if(typeof requestAnimationFrame==='function')requestAnimationFrame(frameTick);
 
 /* the game v1.05 BUILD 6, seen through the diorama lab */
-/* ==== TAP ATTACK DIORAMA LAB v1.24 (2026-10-01) ======================================================
+/* ==== TAP ATTACK DIORAMA LAB v1.25 (2026-10-14) ======================================================
+   v1.25, on BUILD 6 (v1.05), the Director's answers of 2026-10-14: the DIORAMA is the default view, and the view
+   switches from the game's own menus (issue #361, verbatim: "The issue is I want to see the diorama version as
+   default, not the side view. Please include the switching in the options menu but I'd prefer you share the debug
+   version we had earlier on this while i test"): the title and the pause menu each gain VIEW: DIORAMA / VIEW:
+   CLASSIC (section 6w), saved under a new key (view25), so this cut opens on the DIORAMA even where an older cut
+   saved CLASSIC. THE FLOW starts on C BIGGER, his pick on issue #362; THE EMPTIES stay A MARKED, his pick on issue
+   #363. Sound, drawing and menus only: no rule changed.
    v1.24, on BUILD 6 (v1.05): the nine candidates of issue #365 (which atmosphere to build next) sketched in the room
    under YOUR QUESTIONS, THE NEXT ATMOSPHERE (CLAUDE.md section 12, options first): WINTER, HALLOWEEN, KARAOKE NIGHT,
    AFTER HOURS, NEW YEAR'S EVE, THUNDERSTORM POWER CUT, SYNTHWAVE, SUMMER TERRACE, GAME DAY, each a light and one
@@ -3008,10 +3015,10 @@ if(typeof requestAnimationFrame==='function')requestAnimationFrame(frameTick);
    the room like a night club, remaps floats and bursts into the room, and adds a LAB panel: the view
    (diorama or classic), the lights (club or plain), the pour feel (five ways to make PERFECT harder),
    and a jump to any venue. Nothing here changes a rule unless the POUR FEEL panel says so. */
-var LAB={ver:'1.24', view:'iso', lights:true, hd:true, half:false, dcache:true, atm:'auto', pour:'F', bpm:{"LAST CALL":112,"SPUR RAG":138,"HALFTIME":120,"SAFETY PIN":168,"VELVET":92,"SLOW LANE":80,"ORBIT 9":116,"SHAKE UP":140,"HAPPY HOUR":152}, fps:0, ms:0, lastT:0, hold:false, clk:0, frame:0};
+var LAB={ver:'1.25', view:'iso', lights:true, hd:true, half:false, dcache:true, atm:'auto', pour:'F', bpm:{"LAST CALL":112,"SPUR RAG":138,"HALFTIME":120,"SAFETY PIN":168,"VELVET":92,"SLOW LANE":80,"ORBIT 9":116,"SHAKE UP":140,"HAPPY HOUR":152}, fps:0, ms:0, lastT:0, hold:false, clk:0, frame:0};
 (function(){ try{ var s=JSON.parse(localStorage.getItem('tapattack-dlab')||'{}');
-  if(s.view==='iso'||s.view==='classic')LAB.view=s.view; if(typeof s.lights==='boolean')LAB.lights=s.lights; if(typeof s.hd==='boolean')LAB.hd=s.hd; if(s.atm)LAB.atm=s.atm; if(typeof s.pour6==='string'&&/^[FABCDE]$/.test(s.pour6))LAB.pour=s.pour6; if(typeof s.fl==='number')LAB.fl=s.fl; if(typeof s.half==='boolean')LAB.half=s.half; }catch(e){} })();
-function labSave(){ try{ localStorage.setItem('tapattack-dlab',JSON.stringify({view:LAB.view,lights:LAB.lights,hd:LAB.hd,half:LAB.half,atm:LAB.atm,pour6:LAB.pour,fl:(typeof FLAIR!=='undefined')?(FLAIR.on?FLAIR.n:0):LAB.fl})); }catch(e){} }
+  if(s.view25==='iso'||s.view25==='classic')LAB.view=s.view25; if(typeof s.lights==='boolean')LAB.lights=s.lights; if(typeof s.hd==='boolean')LAB.hd=s.hd; if(s.atm)LAB.atm=s.atm; if(typeof s.pour6==='string'&&/^[FABCDE]$/.test(s.pour6))LAB.pour=s.pour6; if(typeof s.fl==='number')LAB.fl=s.fl; if(typeof s.half==='boolean')LAB.half=s.half; }catch(e){} })();
+function labSave(){ try{ localStorage.setItem('tapattack-dlab',JSON.stringify({view25:LAB.view,lights:LAB.lights,hd:LAB.hd,half:LAB.half,atm:LAB.atm,pour6:LAB.pour,fl:(typeof FLAIR!=='undefined')?(FLAIR.on?FLAIR.n:0):LAB.fl})); }catch(e){} }
 
 /* ---------- 1. THE POUR FEEL: five ways to make the gold band harder to hit ----------
    A is BUILD 2 as shipped. B narrows the band. C makes the fill RUSH: slow at the bottom, twice as fast at FULL
@@ -4996,7 +5003,7 @@ function halfEnd(s){
    later), and the hands meet on that same clock, so sound and picture land on the music's beat. Without the song, a
    steady grid at its tempo. LAB, THE FLOW: ON (the default) or OFF; PLAY A FLOW runs the 4th to the 9th on the beat, to
    see and hear it without pouring. */
-var FLOW={style:'today', hn:0, hd:-1, on:true, n:0, base:0, lvl:0, hitT:-9, hitN:0, cresc:false, crescT:-9, breakT:-9, next:0, claps:[], parts:[], log:[], clk:null, demo:null, flash:0, hits:0, midi:0};
+var FLOW={style:'big', hn:0, hd:-1, on:true, n:0, base:0, lvl:0, hitT:-9, hitN:0, cresc:false, crescT:-9, breakT:-9, next:0, claps:[], parts:[], log:[], clk:null, demo:null, flash:0, hits:0, midi:0};
 var MUSIC={t0:0, bpm:0, name:null};
 var FKEY={'SPUR RAG':[60,0],'HALFTIME':[60,0],'SAFETY PIN':[64,1],'VELVET':[60,0],'SLOW LANE':[67,0],'ORBIT 9':[69,1],'LAST CALL':[60,1],'SHAKE UP':[60,0],'HAPPY HOUR':[60,0]}, FSC=[[0,2,4,7,9],[0,3,5,7,10]];
 (function(){ if(typeof AKIT==='undefined'||!AKIT.music||!AKIT.music.start||!AKIT.music.nowPlaying)return;
@@ -5127,6 +5134,31 @@ function emptyMark(mp,danger){ if(!EMPTY.on||(EMPTY.style==='red'&&!danger))retu
   var by=Math.round(mp[1]-34-3*Math.abs(Math.sin(LAB.clk*6))), cx=Math.round(mp[0]);                                     // a marker bobbing over it
   rect(cx-7,by+1,14,2,'rgba(0,0,0,0.5)'); rect(cx-7,by,14,2,col); rect(cx-5,by+2,10,2,col); rect(cx-3,by+4,6,2,col); rect(cx-1,by+6,2,2,col); }
 
+/* ---------- 6w. THE VIEW IN THE GAME'S OWN MENUS (v1.25) ----------
+   The Director, issue #361: the DIORAMA by default, the switch in the options menu. The title's menu and the pause
+   menu each gain a VIEW item that flips LAB.view (saved, like the LAB panel's VIEW row). The title's items move closer
+   (40 px tall, not 46) and the pause menu's (44, not 54) so the extra item fits above the version line and inside the
+   pause panel; the game's own menuRect does the drawing and the hit test in both views, so taps land on what is drawn.
+   The title's VIEW is its last item (the game's own items keep their places); the pause menu's sits above QUIT. */
+var VIEWM={title:titleItems, pause:pauseItems, st:stTitle, sp:stPause, rect:menuRect};
+function viewName(){ return 'VIEW: '+(LAB.view==='iso'?'DIORAMA':'CLASSIC'); }
+function viewFlip(){ LAB.view=LAB.view==='iso'?'classic':'iso'; labSave(); }
+titleItems=function(){ return VIEWM.title().concat([viewName()]); };
+pauseItems=function(){ var it=VIEWM.pause(); return it.slice(0,3).concat([viewName()],it.slice(3)); };
+menuRect=function(i,n,y0,h){
+  if(STATE==='title'&&!UI.pause&&y0===318&&n===VIEWM.title().length+1)h=40;
+  else if(UI.pause&&y0===300&&n===VIEWM.pause().length+1)h=44;
+  return VIEWM.rect(i,n,y0,h); };
+stTitle=function(L,dt){ VIEWM.st(L,dt); if(STATE==='title'&&L.press&&UI.menu===titleItems().length-1)viewFlip(); };
+stPause=function(L){
+  var n=pauseItems().length, VI=3;
+  if(L.d-L.u){ UI.pmenu=(UI.pmenu+L.d-L.u+n*10)%n; playSfx('move'); }
+  var h=hitMenu(n,L.tap,300,54); if(h>=0){ UI.pmenu=h; L.press++; }
+  if(!L.back&&L.press&&UI.pmenu===VI){ playSfx('sel'); viewFlip(); return; }
+  var k=UI.pmenu; UI.pmenu=k>VI?k-1:k;   // the game's own index (QUIT is its 3)
+  VIEWM.sp({u:0,d:0,l:0,r:0,press:L.press,back:L.back,bk:0,tap:null});
+  if(UI.pause)UI.pmenu=k; };
+
 /* ---------- 7. THE LAB PANEL ---------- */
 function labBtn(label,on,fn){ var b=document.createElement('button'); b.textContent=label; if(on)b.className='on'; b.onclick=function(e){ e.stopPropagation(); fn(); if(b.blur)b.blur(); }; return b; }
 function labRow(title,btns,note){ var r=document.createElement('div'); r.className='row'; var h=document.createElement('b'); h.textContent=title; r.appendChild(h);
@@ -5176,16 +5208,16 @@ function labPanel(){
     labBtn('A CAT NAP',false,function(){ if(!catOn(meN.bar))G.cats.push({b:meN.bar,x:DOOR_X+22,st:'walk',t:0,rx:DOOR_X+120,rk:2}); labOpen(false); }),
     labBtn('A DRUNK CAT',false,function(){ if(!catOn(meN.bar))G.cats.push({b:meN.bar,x:DOOR_X+22,st:'walk',t:0,dk:3}); labOpen(false); })]:[]),
     'Waiting tics (a foot tap, a look at the watch), a song past four drinks, a chef\'s kiss for a PERFECT, a wet sleeve after a SLOPPY, the critic\'s score card, the twins fighting over one mug, and the cat grooming or napping on its way (it rests once, letting mugs pass, then stretches). Serve a critic PERFECT for his 10. (v1.13) The cat drinks any full mug it meets, and now it shows: one and it blushes and hiccups, two and it sways with heavy eyes, three and it staggers. A DRUNK CAT sends one that has had three.'));
-  p.appendChild(labRow('YOUR QUESTIONS (v1.24: issues #368, #371, #370, #362, #363, #419, #365)',[],'The options for your open questions, each starting on A, today\'s rule, every time the lab opens. Pick one, play, and answer its issue with the letter.'));
+  p.appendChild(labRow('YOUR QUESTIONS (v1.25: issues #368, #371, #370, #419, #365; #362 and #363 answered)',[],'The options for your open questions, each starting on A, today\'s rule, every time the lab opens (THE FLOW on C and THE EMPTIES on A, your picks). Pick one, play, and answer its issue with the letter.'));
   p.appendChild(labRow('SUNDOWN\'S RUSH (#368)',[labBtn('A TODAY\'S',CROWD.rush==='today',function(){ CROWD.rush='today'; labPanel(); }),labBtn('B ONE BEHIND',CROWD.rush==='one',function(){ CROWD.rush='one'; labPanel(); }),labBtn('C A SMALLER SHARE',CROWD.rush==='share',function(){ CROWD.rush='share'; labPanel(); })],
     'With CROWDS on and ATMOSPHERE SUNDOWN (or AUTO\'s round 2): A, each after-work patron brings one or two more right behind him; B, always one more; C, '+Math.round(CROWD.duskShare*100)+'% of the regulars become the rush, not '+Math.round(CROWD.share*100)+'%.'));
   p.appendChild(labRow('GOAL! (#371)',[labBtn('A THE DASH',EVENTS.goal==='dash',function(){ EVENTS.goal='dash'; labPanel(); }),labBtn('B A SHORT DASH',EVENTS.goal==='short',function(){ EVENTS.goal='short'; labPanel(); }),labBtn('C A CHEER ONLY',EVENTS.goal==='cheer',function(){ EVENTS.goal='cheer'; labPanel(); })],
     'A, the whole bar jumps up and rushes the counter ('+EVENTS.dash+' px), and the next two walk in right behind; B, the same with half the dash ('+(EVENTS.dash/2)+' px); C, the bar jumps and cheers, nobody moves and nobody hurries in. EVENTS, GOAL! fires one.'));
   p.appendChild(labRow('THE CAT\'S REST (#370)',[labBtn('A THE REST',HUMOUR.cat&&!HUMOUR.groom,function(){ HUMOUR.cat=true; HUMOUR.groom=false; labPanel(); }),labBtn('B GROOM ONLY',!HUMOUR.cat&&HUMOUR.groom,function(){ HUMOUR.cat=false; HUMOUR.groom=true; labPanel(); }),labBtn('C OFF',!HUMOUR.cat&&!HUMOUR.groom,function(){ HUMOUR.cat=false; HUMOUR.groom=false; labPanel(); })],
     'A, the cat stops once on its way down the bar to groom or nap, letting mugs pass; B, no stop: it grooms in the last of its lap after a slurp (a picture only); C, neither. HUMOUR, A CAT NAP sends one (with A).'));
-  p.appendChild(labRow('THE FLOW (#362)',[labBtn('A AS IT IS',FLOW.style==='today',function(){ FLOW.style='today'; labPanel(); }),labBtn('B SOFTER',FLOW.style==='soft',function(){ FLOW.style='soft'; labPanel(); }),labBtn('C BIGGER',FLOW.style==='big',function(){ FLOW.style='big'; labPanel(); })],
+  p.appendChild(labRow('THE FLOW (#362: C, your pick)',[labBtn('A AS IT IS',FLOW.style==='today',function(){ FLOW.style='today'; labPanel(); }),labBtn('B SOFTER',FLOW.style==='soft',function(){ FLOW.style='soft'; labPanel(); }),labBtn('C BIGGER',FLOW.style==='big',function(){ FLOW.style='big'; labPanel(); })],
     'A, THE FLOW as built; B, the claps, the shaker and the stomps at half the volume and the gold light at half; C, from the 6th PERFECT the whole bar bobs to the beat and the light is brighter. THE FLOW, PLAY A FLOW shows it without pouring.'));
-  p.appendChild(labRow('THE EMPTIES (#363)',[labBtn('A MARKED',EMPTY.style==='marked',function(){ EMPTY.style='marked'; labPanel(); }),labBtn('B RED ONLY',EMPTY.style==='red',function(){ EMPTY.style='red'; labPanel(); })],
+  p.appendChild(labRow('THE EMPTIES (#363: A, your pick)',[labBtn('A MARKED',EMPTY.style==='marked',function(){ EMPTY.style='marked'; labPanel(); }),labBtn('B RED ONLY',EMPTY.style==='red',function(){ EMPTY.style='red'; labPanel(); })],
     'A, a glow, a rim and a marker on every empty coming home, the marker red in danger; B, the glow on every one, the rim and the marker only when it is in danger (nobody at that tap, near the end).'));
   p.appendChild(labRow('WHAT FILLS FLAIR (#419)',[labBtn('A CAUGHT EMPTIES',FLAIR.charge==='catch',function(){ FLAIR.charge='catch'; labPanel(); }),labBtn('B EMPTIES AND SERVES',FLAIR.charge==='serve',function(){ FLAIR.charge='serve'; labPanel(); })],
     'A, every empty you catch fills your FLAIR meter (as built); B, so does every patron your mug serves out the door, on a meter '+FLAIR.serveK+' times as long, so it fires about as often as A on average. TANK and SHELLY shove hardest, so they serve more and catch fewer: B evens the five out. With FLAIR on (its row, below, sets 4, 6 or 8; B: '+[4,6,8].map(function(k){ return Math.round(k*FLAIR.serveK); }).join(', ')+' steps).'));
@@ -5317,6 +5349,7 @@ if(typeof window!=='undefined')window.__DLAB={LAB:LAB,labPour:labPour,windowMs:w
   RUSH:RUSH,rushOn:rushOn,slideOn:slideOn,   // v1.12: the dishwashing rush
   WET:WET,wetAt:wetAt,wetBar:function(b){ return wetBar(b); },wetSpot:wetSpot,updMugs:function(dt){ return updMugs(dt); },updBartender:function(bt,dt){ return updBartender(bt,dt); },drawPuddles:function(b,y){ return drawPuddles(b,y); },   // v1.16: the wet trail
   FLOW:FLOW,MUSIC:MUSIC,flowTick:flowTick,flowMidi:flowMidi,flowClock:flowClock,EMPTY:EMPTY,PMX:PMX,POURS:POURS,   // v1.20
+  VIEWM:VIEWM,viewName:viewName,viewFlip:viewFlip,stTitle:function(L,dt){ return stTitle(L,dt); },stPause:function(L){ return stPause(L); },menuRect:function(i,n,y0,h){ return menuRect(i,n,y0,h); },titleItems:function(){ return titleItems(); },pauseItems:function(){ return pauseItems(); },   // v1.25: the view in the game's menus (issue #361)
   flowSnd:flowSnd, flowLit:flowLit, flowBob:flowBob,   // v1.22: THE FLOW's and THE EMPTIES' options (FLOW.style, EMPTY.style)
   crowdShare:crowdShare,   // v1.21: the options for issues #368, #371 and #370 (CROWD.rush, EVENTS.goal, HUMOUR.groom)
   SMOOTH:SMOOTH,smoothA:smoothA,PERF:PERF,CLR:CLR,tick:function(){ return tick; },renderNow:function(){ return render(); },   // v1.18: the smooth slide, the counter, the banner
