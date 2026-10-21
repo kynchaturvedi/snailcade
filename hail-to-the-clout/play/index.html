@@ -917,6 +917,11 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 .board-row .br-x.arm { border-color: var(--bad); color: var(--bad); }
 .board-row:not(:has(.br-x)) { grid-template-columns: 26px 64px 1fr auto; }
 .board-empty { color: #a9b3d6; }
+/* v7.9: the online board's tabs (issue 690 A) */
+.bd-tabs { display: flex; gap: 6px; }
+.bd-tabs button { flex: 1 1 0; min-height: 36px; padding: 6px 8px; border: 2px solid #3d4a80; background: none; color: #a9b3d6; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; cursor: pointer; }
+.bd-tabs button.on { border-color: var(--gold); color: var(--gold); background: #1c1a10; }
+.board-gap { text-align: center; letter-spacing: 0.3em; }
 .board .mini { margin: 0; color: #a9b3d6; }
 .board #daily-add { justify-self: stretch; }
 .friend-msg { min-height: 1.3em; margin: 0; }
@@ -1086,7 +1091,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v7.8</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.0</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1194,7 +1199,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V7.8 */
+/* HAIL TO THE CLOUT V8.0 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -3898,7 +3903,7 @@ var PRESNAMES = (function (mix) {
     var oc = optCost(g, card, opt);
     if (oc && g.clout < oc) return { ok: false, why: 'clout' };
     /* v6.8: holding TAKE IT BACK, the run before this call is kept so it can be undone while the result is on screen */
-    if (g.inv && g.inv.undo > 0 && favOn(g)) { g.undoSnap = null; g.undoSnap = JSON.stringify(g); } else g.undoSnap = null;
+    if (g.inv && g.inv.undo > 0 && favOn(g) && !g.noSnap) { g.undoSnap = null; g.undoSnap = JSON.stringify(g); } else g.undoSnap = null;   /* v7.9: noSnap only for a replay step no TAKE IT BACK follows */
     var hedgeNow = hedged(g, card), focusNow = g.focus && g.focus.id === card.id ? g.focus : null;
     var res = { ok: true, side: side, card: card.id, hl: opt.hl || null, text: null, win: null, hedged: hedgeNow, focus: !!focusNow };
     var s0 = { a: g.approval, b: g.base, h: g.heat, c: g.clout };
@@ -4919,7 +4924,7 @@ var PRESNAMES = (function (mix) {
   function dailyNo(d) { return dayNum(d) + 1; }
   function dailyFlags(sc) { return (sc.mid && sc.mid.won ? 1 : 0) | (sc.gen && sc.gen.won ? 2 : 0) | (sc.over ? 4 : 0); }
 
-  return {
+  var API = {
     SCHEMA: SCHEMA, D: D, ALL: ALL, BUILD: BUILD, ORIG: ORIG, ADS: ADS, SEASONS: SEASONS,
     newGame: newGame, current: current, preview: preview, choose: choose,
     LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, nameFill: nameFill, nameFor: nameFor, PRESNAMES: PRESNAMES, NAME_SC: NAME_SC, madeOk: madeOk, mix: mix, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
@@ -4943,6 +4948,72 @@ var PRESNAMES = (function (mix) {
     promote: promote, promoCost: promoCost, promoState: promoState, LV: LV,
     FAV: FAV, INV_MAX: INV_MAX, favCount: favCount, favPrice: favPrice, favState: favState, buyFavor: buyFavor, useFavor: useFavor, favBlock: favBlock, favGive: favGive, favKeep: favKeep, favNext: favNext, standoutOf: standoutOf, hedged: hedged, favOn: favOn
   };
+
+  /* ---------- v7.9: the Daily's run record, for the online board (the Director's answer A on issue 690). Every rules
+     call made on a Daily run is written to g.daily.log as it happens, one short step each ([code, ...arguments]);
+     replay(d, log) plays the day's world again from that list alone, on the raw rules, and the board's server runs
+     the same replay to check a score. Nothing here draws a die: the record is written beside the rules, never into them.
+     A step's arguments are checked against the rules' own lists before it runs, so a forged list can only make calls
+     a player could make ---------- */
+  var REC = { choose: 'c', endQuarter: 'e', nextQuarter: 'n', build: 'b', settle: 's', hire: 'h', letGo: 'l', promote: 'p', useFavor: 'u', favKeep: 'k', fundParty: 'f', pickMandate: 'm', retire: 'r', campaign: 'w', election: 'v', refreshUnlocks: 'x', migrate: 'g' };
+  var RAW = {}, LOG_MAX = 4000;
+  var own = function (o, k) { return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); };
+  var word = function (k) { return typeof k === 'string' && k.length > 0 && k.length <= 40 && /^[A-Za-z0-9_\-]+$/.test(k); };
+  /* what each step may carry: anything else refuses the whole list */
+  var STEP_OK = {
+    c: function (a) { return a.length === 1 && (a[0] === 'L' || a[0] === 'R'); },
+    e: function (a) { return a.length === 0; }, n: function (a) { return a.length === 0; }, r: function (a) { return a.length === 0; },
+    x: function (a) { return a.length === 0; }, g: function (a) { return a.length === 0; }, v: function (a) { return a.length === 0; },
+    w: function (a) { return a.length === 1 && a[0] === (a[0] | 0) && a[0] >= 0 && a[0] < ADS.length; },
+    b: function (a) { return a.length === 1 && own(BUILD, a[0]); },
+    s: function (a) { return a.length === 1 && a[0] === (a[0] | 0) && a[0] >= 0 && a[0] < 64; },
+    h: function (a) { return (a.length === 1 || a.length === 2) && word(a[0]) && (a.length === 1 || (a[1] && typeof a[1] === 'object' && !Array.isArray(a[1]) && Object.keys(a[1]).every(function (k) { return k === 'replace' && (typeof a[1].replace === 'boolean' || a[1].replace === null || a[1].replace === undefined); }))); },
+    l: function (a) { return a.length === 1 && own(STAFF, a[0]); }, p: function (a) { return a.length === 1 && own(STAFF, a[0]); },
+    u: function (a) { return a.length === 1 && own(FAV, a[0]); },
+    k: function (a) { return a.length === 0 || (a.length === 1 && (a[0] === null || own(FAV, a[0]))); },
+    f: function (a) { return a.length === 1 && own(PTY, a[0]); },
+    m: function (a) { return a.length === 1 && own(MAND, a[0]); }
+  };
+  var BYCODE = {};
+  Object.keys(REC).forEach(function (name) {
+    var raw = API[name], code = REC[name];
+    RAW[name] = raw; BYCODE[code] = raw;
+    API[name] = function (g) {
+      var args = Array.prototype.slice.call(arguments, 1), log = g && g.daily && typeof g.daily === 'object' ? (g.daily.log || (g.daily.log = [])) : null;
+      var res = raw.apply(null, arguments);
+      if (log) {
+        while (args.length && args[args.length - 1] === undefined) args.pop();
+        /* TAKE IT BACK hands back the run before the call: the record carries on, the undone call and the favor both in it */
+        var tg = res && res.game && res.game.daily ? res.game : g;
+        tg.daily.log = log;
+        if (log.length < LOG_MAX) log.push([code].concat(JSON.parse(JSON.stringify(args))));
+      }
+      return res;
+    };
+  });
+  /* the day's world played again from its record: { ok, s, f, sc, g } when it ends a finished term, else { ok: false, why } */
+  function replay(d, log) {
+    if (typeof d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return { ok: false, why: 'day' };
+    if (!Array.isArray(log) || !log.length || log.length > LOG_MAX) return { ok: false, why: 'log' };
+    var W = dailySetup(d), g = newGame(W.origin, W.seed, { daily: W.d, mand: W.mand, official: true });
+    for (var i = 0; i < log.length; i++) {
+      var st = log[i];
+      if (!Array.isArray(st) || !own(STEP_OK, st[0]) || !STEP_OK[st[0]](st.slice(1))) return { ok: false, why: 'step ' + i };
+      /* a call's TAKE IT BACK copy is made only when the record takes it back before the next call or quarter end:
+         the copy is the whole run as text, the replay's dearest part, and nothing else reads it */
+      var snap = true;
+      if (st[0] === 'c') { snap = false; for (var j = i + 1; j < log.length; j++) { var nx = log[j]; if (!Array.isArray(nx)) break; if (nx[0] === 'u' && nx[1] === 'undo') { snap = true; break; } if (nx[0] === 'c' || nx[0] === 'e') break; } }
+      var res;
+      if (!snap) g.noSnap = 1;
+      try { res = BYCODE[st[0]].apply(null, [g].concat(st.slice(1))); } catch (e) { return { ok: false, why: 'step ' + i + ' failed' }; } finally { delete g.noSnap; }
+      if (res && res.game && res.game.daily) g = res.game;
+    }
+    if (!dailyDone(g)) return { ok: false, why: 'unfinished' };
+    var sc = dailyScore(g);
+    return { ok: true, s: sc.total, f: dailyFlags(sc), sc: sc, g: g };
+  }
+  API.REC = REC; API.RAW = RAW; API.LOG_MAX = LOG_MAX; API.replay = replay;
+  return API;
 })(HTTC_DATA);
 if (typeof module !== 'undefined') module.exports = HTTC;
 /* ===== ENGINE END ===== */
@@ -9368,7 +9439,7 @@ var CREATOR = (function (F, N, mix) {
   function boardRow(x, n, withDate) {
     return '<div class="board-row' + (x.me ? ' me' : '') + '"><span class="br-n num">' + n + '</span><span class="br-i">' + esc(x.i) + (x.me ? '<small>YOU</small>' : '') + '</span>' +
       '<span class="br-w">' + esc(withDate ? dayLabel(x.d) : flagWords(x.f)) + '</span><b class="br-s num">' + x.s + '</b>' +
-      (!x.me && !withDate ? '<button class="br-x" data-unfriend="' + esc(x.d + '|' + x.c) + '" aria-label="Remove ' + esc(x.i) + '">' + ic('x') + '</button>' : '') + '</div>';
+      (!x.me && !withDate && !x.on ? '<button class="br-x" data-unfriend="' + esc(x.d + '|' + x.c) + '" aria-label="Remove ' + esc(x.i) + '">' + ic('x') + '</button>' : '') + '</div>';
   }
   /* add a friend's result: their whole card or just the code, pasted */
   function openFriendAdd() {
@@ -9415,6 +9486,60 @@ var CREATOR = (function (F, N, mix) {
     const fallback = () => { openModal('help', '<h3>' + ic('share') + ' Your result</h3><p class="mini">Copy this and send it:</p><textarea class="share-box" id="share-box" readonly rows="9">' + esc(txt) + '</textarea><button class="btn gold" id="help-ok">Done</button>'); const t = $('share-box'); t.focus(); t.select(); $('help-ok').addEventListener('click', () => { closeModal(); if (after) after(); }); };
     try { navigator.clipboard.writeText(txt).then(() => { showTicker('Result copied. Paste it anywhere.', 'good', 'COPIED'); }, fallback); } catch (e) { fallback(); }
   }
+  /* ---------- v7.9: the Daily's online board (the Director's answer A on issue 690: Cloudflare Workers with D1). Off
+     unless the build carries the board's address (board/BOARD-URL.txt, stamped by build.py): then the official run's
+     score card offers POST TO THE BOARD and TODAY'S BOARD gains an ONLINE tab. The run's record (G.daily.log, written by
+     the engine) goes with the score, and the board's server plays the day again and files the score only if its own
+     replay finds the same. Three initials and a random device id travel, nothing else. Offline or refused, the local
+     board and the codes work as before ---------- */
+  const BOARD = String((typeof window !== 'undefined' && window.__httcBoard) || 'https://httc-board.kyn-a14.workers.dev').replace(/\/+$/, '');
+  const GAME_BUILD = 'v8.0';
+  const boardOn = () => /^https:\/\/[^\s]+$/.test(BOARD);
+  function boardDev() {
+    prefs.daily = prefs.daily || {};
+    if (!prefs.daily.dev) {
+      const a = new Uint8Array(16);
+      try { crypto.getRandomValues(a); } catch (e) { for (let i = 0; i < 16; i++) a[i] = (Date.now() * (i + 7) + i * 131) & 255; }
+      prefs.daily.dev = Array.from(a, (x) => x.toString(16).padStart(2, '0')).join(''); savePrefs();
+    }
+    return prefs.daily.dev;
+  }
+  const boardPost = (d) => (prefs.daily && prefs.daily.post && prefs.daily.post.d === d ? prefs.daily.post : null);
+  const boardDone = (d) => (prefs.daily && prefs.daily.posted && prefs.daily.posted[d]) || null;
+  let boardTab = 'here';
+  async function boardFetch(path, opt) {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, tm = ctl ? setTimeout(() => ctl.abort(), 8000) : 0;
+    try { const r = await fetch(BOARD + path, Object.assign({ signal: ctl ? ctl.signal : undefined, cache: 'no-store' }, opt || {})); return (await r.json().catch(() => null)) || { ok: false, why: 'server' }; }
+    catch (e) { return { ok: false, why: 'offline' }; } finally { if (tm) clearTimeout(tm); }
+  }
+  const BOARD_WHY = { filed: 'Already on today\'s board.', stale: 'The board runs a newer build. Reload the game, then post again.', mismatch: 'The board could not check this run, so it was not posted.', offline: 'No connection to the board. Try again from the Daily screen.', 'slow down': 'Too many tries from here today. Try again later.', day: 'That briefing is closed on the board.', initials: 'Set three initials first.', server: 'The board is not answering. Try again later.' };
+  const boardWhy = (w) => BOARD_WHY[w] || (/^replay/.test(String(w || '')) ? BOARD_WHY.mismatch : BOARD_WHY.server);
+  const boardPlace = (r) => 'On today\'s online board: ' + ord(r.n || 1).toLowerCase() + ' of ' + (r.of || r.n || 1) + '.';
+  /* the official run's record is kept for its day until the board takes it (or refuses it for good) */
+  async function postBoard(d) {
+    const p = boardPost(d); if (!p || !boardOn()) return { ok: false, why: 'server' };
+    if (!dIni()) return { ok: false, why: 'initials' };
+    const r = await boardFetch('/v1/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ d: d, i: dIni(), s: p.s, f: p.f, dev: boardDev(), build: GAME_BUILD, log: p.log }) });
+    if (r.ok || r.why === 'filed' || r.why === 'mismatch' || /^replay/.test(String(r.why || '')) || r.why === 'day') {
+      prefs.daily = prefs.daily || {}; delete prefs.daily.post;
+      if (r.ok || r.why === 'filed') {
+        const ps = prefs.daily.posted = prefs.daily.posted || {}; ps[d] = { n: r.n || 0, of: r.of || 0 };
+        const cut = dstr(new Date(Date.now() - 14 * 86400000)); Object.keys(ps).forEach((x) => { if (x < cut) delete ps[x]; });
+      }
+      savePrefs();
+    }
+    return r;
+  }
+  /* the ONLINE tab: today's top 50, your row marked, your place below them if lower */
+  async function fillOnline(d) {
+    const r = await boardFetch('/v1/board?d=' + encodeURIComponent(d) + '&dev=' + encodeURIComponent(boardDev()));
+    const el = $('board-online'); if (!el || el.getAttribute('data-d') !== d) return;
+    if (!r.ok) { el.innerHTML = '<p class="mini board-empty">' + numify(boardWhy(r.why)) + '</p>'; return; }
+    let h = r.top.length ? '<div class="board-list">' + r.top.map((x) => boardRow({ i: x.i, s: x.s, f: x.f, me: !!x.me, on: true, d: d }, x.n)).join('') + '</div>' : '<p class="mini board-empty">' + numify('Nobody on the online board yet today.') + '</p>';
+    if (r.me && !r.top.some((x) => x.me)) h += '<p class="mini board-gap">· · ·</p><div class="board-list">' + boardRow({ i: r.me.i, s: r.me.s, f: r.me.f, me: true, on: true, d: d }, r.me.n) + '</div>';
+    h += '<p class="mini">' + numify(r.n + (r.n === 1 ? ' official run' : ' official runs') + ' on the board today. Every score is checked: the board plays the run again.') + '</p>';
+    el.innerHTML = h;
+  }
   /* v7.0: an official run left unfinished on an earlier day: shown once on the Daily screen, then cleared */
   function staleDaily() {
     try { const g = JSON.parse(lsGet(KEYS.daily)); if (g && g.daily && g.daily.d < today() && g.phase !== 'over') { lsDel(KEYS.daily); return g.daily.off ? g : null; } } catch (e) { /* corrupt */ }
@@ -9455,10 +9580,21 @@ var CREATOR = (function (F, N, mix) {
     h += '</section>';
     /* v6.9: today's board and the high scores, on this device */
     const bd = boardFor(d);
+    const online = boardOn() && boardTab === 'online';
     h += '<section class="board" id="board"><div class="board-head"><h3 class="sec daily-sec">TODAY\'S BOARD</h3><button class="linkbtn ini-edit" id="ini-edit">' + (dIni() ? 'PLAYING AS <b>' + esc(dIni()) + '</b> · CHANGE' : 'SET YOUR INITIALS') + '</button></div>';
-    h += bd.length ? '<div class="board-list">' + bd.map((x, i) => boardRow(x, i + 1)).join('') + '</div>' : '<p class="mini board-empty">' + numify('Nobody on it yet. Your score joins when you finish your official run.') + '</p>';
-    if (!rec && bd.length) h += '<p class="mini board-empty">' + numify('Your score joins when you finish your official run.') + '</p>';
-    h += '<button class="btn" id="daily-add">' + ic('crown') + ' Add a friend\'s score</button><p class="mini">' + numify('Friends send their card. Paste it here to rank against them. Scores stay on this device.') + '</p></section>';
+    /* v7.9: with a board address, two tabs: this device's board, and the online one */
+    if (boardOn()) h += '<div class="bd-tabs" role="tablist"><button role="tab" data-btab="here" aria-selected="' + !online + '"' + (online ? '' : ' class="on"') + '>THIS DEVICE</button><button role="tab" data-btab="online" aria-selected="' + online + '"' + (online ? ' class="on"' : '') + '>ONLINE</button></div>';
+    if (online) {
+      const pend = boardPost(d), done = boardDone(d);
+      if (pend) h += '<button class="btn gold" id="board-post">' + ic('crown') + ' Post to the board</button><p class="mini friend-msg" id="board-msg"></p>';
+      else if (done && done.n) h += '<p class="mini">' + numify('You posted today\'s official run.') + '</p>';
+      else if (!rec) h += '<p class="mini">' + numify('Finish your official run to post it here.') + '</p>';
+      h += '<div id="board-online" data-d="' + d + '"><p class="mini board-empty">' + numify('Reading today\'s board…') + '</p></div></section>';
+    } else {
+      h += bd.length ? '<div class="board-list">' + bd.map((x, i) => boardRow(x, i + 1)).join('') + '</div>' : '<p class="mini board-empty">' + numify('Nobody on it yet. Your score joins when you finish your official run.') + '</p>';
+      if (!rec && bd.length) h += '<p class="mini board-empty">' + numify('Your score joins when you finish your official run.') + '</p>';
+      h += '<button class="btn" id="daily-add">' + ic('crown') + ' Add a friend\'s score</button><p class="mini">' + numify('Friends send their card. Paste it here to rank against them. Scores stay on this device.') + '</p></section>';
+    }
     const all = [];
     Object.keys(dailyHist()).forEach((x) => { const r = dailyHist()[x]; all.push({ i: dIni() || 'YOU', s: r.s, f: recFlags(r), me: true, d: x }); });
     Object.keys((prefs.daily && prefs.daily.fr) || {}).forEach((x) => friendsOf(x).forEach((y) => all.push({ i: y.i, s: y.s, f: y.f, c: y.c, d: x })));
@@ -9479,8 +9615,21 @@ var CREATOR = (function (F, N, mix) {
       startDaily(!rec);
     });
     const sb = $('daily-share'); if (sb) sb.addEventListener('click', () => { SFX.click(); const go = () => copyShare(shareText(Object.assign({ d: d, k: k }, rec))); if (dIni()) go(); else openIniEdit(go); });
-    $('daily-add').addEventListener('click', () => { SFX.click(); openFriendAdd(); });
+    const da = $('daily-add'); if (da) da.addEventListener('click', () => { SFX.click(); openFriendAdd(); });
     $('ini-edit').addEventListener('click', () => { SFX.click(); openIniEdit(null); });
+    $('daily-body').querySelectorAll('[data-btab]').forEach((b) => b.addEventListener('click', () => { const t = b.getAttribute('data-btab'); if (t === boardTab) return; SFX.click(); boardTab = t; showDaily(); }));
+    if (online) fillOnline(d);
+    const bp = $('board-post');
+    if (bp) bp.addEventListener('click', async () => {
+      SFX.click();
+      if (!dIni()) { openIniEdit(null); return; }
+      bp.disabled = true; const m = $('board-msg'); if (m) { m.textContent = 'Posting…'; m.className = 'mini friend-msg'; }
+      const r = await postBoard(d);
+      if (screen !== 'scr-daily') return;
+      if (r.ok) { SFX.good(); showDaily(); showTicker(boardPlace(r), 'good', 'POSTED'); return; }
+      SFX.bad(); bp.disabled = false; const m2 = $('board-msg'); if (m2) { m2.textContent = boardWhy(r.why); m2.className = 'mini friend-msg bad'; }
+      if (!boardPost(d)) showDaily();
+    });
     $('daily-body').querySelectorAll('[data-unfriend]').forEach((b) => b.addEventListener('click', () => {
       if (!b.classList.contains('arm')) { SFX.click(); b.classList.add('arm'); b.innerHTML = 'REMOVE?'; return; }
       const [dd, cc] = b.getAttribute('data-unfriend').split('|'); const list = friendsOf(dd), i = list.findIndex((y) => y.c === cc);
@@ -9502,6 +9651,8 @@ var CREATOR = (function (F, N, mix) {
     const sc = E.dailyScore(G), d = G.daily.d, off = G.daily.off && !dailyHist()[d];
     const rec = { s: sc.total, f: E.dailyFlags(sc), o: E.ORIG[G.origin] ? E.ORIG[G.origin].name : '', m: G.mand.map((id) => E.MAND[id].name).join(' + '), sp: spark(G.hist), r: resultWords(sc) || 'STILL STANDING' };
     if (off) { prefs.daily = prefs.daily || {}; prefs.daily.hist = prefs.daily.hist || {}; prefs.daily.hist[d] = rec; prefs.daily.best = Math.max(prefs.daily.best || 0, sc.total); savePrefs(); earnLooks(); }
+    /* v7.9: the official run's record, kept for the online board until it is posted */
+    if (off && boardOn() && G.daily.log) { prefs.daily.post = { d: d, s: sc.total, f: rec.f, log: G.daily.log }; savePrefs(); }
     lsDel(KEYS.daily);
     (sc.gen && sc.gen.won ? SFX.fanfare : sc.over ? SFX.bad : SFX.good)();
     const k = dailyStreak(), best = (prefs.daily && prefs.daily.best) || 0;
@@ -9516,8 +9667,20 @@ var CREATOR = (function (F, N, mix) {
       h += '<label class="ini-row">YOUR INITIALS <input class="ini-box" id="ini-box" autocomplete="off" autocapitalize="characters" spellcheck="false" value="' + esc(dIni()) + '" placeholder="AAA"></label>';
       if (bd.length > 1) h += '<p class="mini">' + numify('Today\'s board on this device: ' + ord(me).toLowerCase() + ' of ' + bd.length + '.') + '</p>';
     }
+    if (off && boardPost(d)) h += '<button class="btn gold" id="res-post">' + ic('crown') + ' Post to the board</button><p class="mini friend-msg" id="res-post-msg"></p>';
     h += '<div class="row2"><button class="btn" id="res-list">Daily screen</button><button class="btn gold" id="res-share">' + ic('share') + ' Share</button></div>';
     openModal('story', h);
+    const rp = $('res-post');
+    if (rp) rp.addEventListener('click', async () => {
+      SFX.click();
+      const m = $('res-post-msg'), say = (t, cls) => { m.textContent = t; m.className = 'mini friend-msg' + (cls ? ' ' + cls : ''); };
+      const ibx = $('ini-box'); if (ibx && ibx.value.length === 3) setIni(ibx.value);
+      if (!dIni()) { SFX.bad(); say('Three letters, A to Z, first.', 'bad'); return; }
+      rp.disabled = true; say('Posting…');
+      const r = await postBoard(d);
+      if (r.ok) { SFX.good(); say(boardPlace(r), 'good'); rp.remove(); boardTab = 'online'; return; }
+      SFX.bad(); say(boardWhy(r.why), 'bad'); if (boardPost(d)) rp.disabled = false; else rp.remove();
+    });
     const ib = $('ini-box'); if (ib) ib.addEventListener('input', () => { ib.value = ib.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3); if (ib.value.length === 3) setIni(ib.value); });
     $('res-list').addEventListener('click', () => { SFX.click(); closeModal(); showDaily(); });
     $('res-share').addEventListener('click', () => { SFX.click(); const go = () => copyShare(shareText(Object.assign({ d: d, k: off ? k : 0 }, rec))); if (dIni() || !off) go(); else openIniEdit(go); });
