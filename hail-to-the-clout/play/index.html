@@ -811,6 +811,23 @@ html.scaled .app { position: absolute; top: 0; margin: 0; max-width: none; trans
 .hall-empty { margin: 0; font-size: 15px; color: #d7dcf0; }
 .over .hall-hung { margin: 0; display: flex; align-items: center; gap: 6px; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.06em; color: #6a3fa0; }
 .over .hall-hung .ico { width: 14px; height: 14px; }
+/* v8.2: the medals */
+.medal { flex: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: content-box; width: 20px; height: 20px; border: 2px solid var(--ink); border-radius: 50%; box-shadow: 0 2px 0 #000; color: var(--ink); }
+.medal .ico { width: 12px; height: 12px; }
+.medal.t-b { background: #c98a4b; } .medal.t-s { background: #d4d8e4; } .medal.t-g { background: var(--gold); }
+.medal-chip { display: inline-flex; align-items: center; gap: 4px; }
+.md-row { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.md-name { font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.05em; }
+.over .md-won { display: flex; flex-direction: column; gap: 6px; }
+.over .md-won .medal-chip.new .md-name { color: #6a3fa0; }
+.hall-frame .hf-medals { grid-column: 1 / -1; border-top: 1px dashed var(--ink); padding-top: 6px; }
+.md-case { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; padding: 8px 12px; background: var(--paper); color: var(--ink); border: 3px solid var(--gold-d); box-shadow: 3px 3px 0 #000; }
+.md-case:not(.got) { opacity: 0.55; }
+.md-case:not(.got) .medal { background: #8a8fa8; }
+.md-case .mc-t { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.md-case .mc-name { font-weight: 700; font-size: 15px; line-height: 1.15; text-transform: uppercase; overflow-wrap: anywhere; }
+.md-case .mc-how { font-size: 14px; line-height: 1.3; }
+.md-case .mc-rec { font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; color: #5a4a22; }
 .story-list { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 10px; }
 .story-intro { margin: 0 0 4px; font-size: 15px; color: #d7dcf0; }
 .story-prog { font-family: var(--f-num); font-weight: 700; font-size: 16px; color: var(--gold); }
@@ -1109,7 +1126,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.1</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.2</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1121,6 +1138,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
         <button class="btn" id="btn-camp">Campaign</button>
         <button class="btn" id="btn-load" hidden>Load game</button>
         <button class="btn" id="btn-hall" hidden>Hall of Presidents</button>
+        <button class="btn" id="btn-medals" hidden>Medal case</button>
         <button class="btn" id="btn-how">How to play</button>
       </div>
       <p class="best" id="best"></p>
@@ -1210,6 +1228,10 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
     <header class="sheet-head"><button class="back" id="hall-back" aria-label="Back to the title"></button><h2>Hall of Presidents</h2><span class="story-prog" id="hall-count"></span></header>
     <div class="story-list hall-list" id="hall-list"></div>
   </section>
+  <section id="scr-medals" class="scr story medals" aria-label="Medal case" hidden>
+    <header class="sheet-head"><button class="back" id="medals-back" aria-label="Back to the title"></button><h2>Medal case</h2><span class="story-prog" id="medals-count"></span></header>
+    <div class="story-list medals-list" id="medals-list"></div>
+  </section>
 
   <section id="scr-how" class="scr how" aria-label="How to play" hidden>
     <header class="sheet-head"><button class="back" id="how-back" aria-label="Back"></button><h2>How to play</h2></header>
@@ -1223,7 +1245,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V8.1 */
+/* HAIL TO THE CLOUT V8.2 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -6242,8 +6264,8 @@ var CAST32 = (function (ART, F2) {
   'use strict';
   const E = HTTC, D = HTTC_DATA, A = ART;
   const $ = (id) => document.getElementById(id);
-  const KEYS = { save: 'httc.save.v1', best: 'httc.best.v1', hall: 'httc.hall.v1', prefs: 'httc.prefs.v2', chap: 'httc.chap.v1', daily: 'httc.daily.v1', live: 'httc.live.v1', slot: (i) => 'httc.slot.' + i };
-  const SCREENS = ['scr-title', 'scr-origin', 'scr-desk', 'scr-report', 'scr-machine', 'scr-war', 'scr-night', 'scr-over', 'scr-how', 'scr-camp', 'scr-daily', 'scr-hall'];
+  const KEYS = { save: 'httc.save.v1', best: 'httc.best.v1', hall: 'httc.hall.v1', medals: 'httc.medals.v1', prefs: 'httc.prefs.v2', chap: 'httc.chap.v1', daily: 'httc.daily.v1', live: 'httc.live.v1', slot: (i) => 'httc.slot.' + i };
+  const SCREENS = ['scr-title', 'scr-origin', 'scr-desk', 'scr-report', 'scr-machine', 'scr-war', 'scr-night', 'scr-over', 'scr-how', 'scr-camp', 'scr-daily', 'scr-hall', 'scr-medals'];
   const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   let G = null, screen = 'scr-title', tick = 0, sceneLoc = 'oval', busy = false, blinkAt = 20, adTier = 0;
   let shown = null, chartWin = 'recent', howReturn = null, modalKind = null, howTab = 'basics';
@@ -6601,6 +6623,77 @@ var CREATOR = (function (F, N, mix) {
   }
   const lookCard = (id) => { const L = lookOf(id); return ['Lookalike unlocked', L.name + ' is yours. Pick the look for your next president on the origin screen.', A.president({ k: 'lk', id: id })]; };
   function getBest() { try { return JSON.parse(lsGet(KEYS.best)) || null; } catch (e) { return null; } }
+  /* ===== MEDALS BEGIN ===== */
+  /* v8.2: the medals (the Director's answer A on issue 2234). Forty feats, each judged once from the finished run as the
+     run already holds it (its stats, its history line, its votes, threads, staff and Machine), so a medal reads the run
+     and never the rules or their dice. Every New presidency that hangs in the Hall wears the medals its run earned, and the
+     medal case on the title counts how often each was won and on which frame first. Tiers: b bronze, s silver, g gold. */
+  var MEDALS = (function () {
+    function yrs(g) { return g.over && g.over.years !== undefined ? g.over.years : (g.q + 1) / 4; }
+    function anns(g, t) { var n = 0; (g.hist || []).forEach(function (p) { if (p.ann === t) n++; }); return n; }
+    function votes(g, t) { return (g.votes || []).filter(function (v) { return v.type === t; }); }
+    function run(list, ok) { var best = 0, cur = 0; list.forEach(function (v) { cur = ok(v) ? cur + 1 : 0; if (cur > best) best = cur; }); return best; }
+    function histMax(g, k) { var m = -1e9; (g.hist || []).forEach(function (p) { if (p[k] > m) m = p[k]; }); return m; }
+    function cause(g) { return g.over ? g.over.cause : ''; }
+    function survived(g) { return anns(g, 'IMPEACHED') - (cause(g) === 'removed' ? 1 : 0); }
+    function comeback(g) { var low = false; return (g.hist || []).some(function (p) { if (p.a <= 25) low = true; return low && p.a >= 50; }); }
+    function darkClean(g) {
+      var b = g.built && g.built.dark; if (!b) return false;
+      return votes(g, 'gen').some(function (v) {
+        if (!v.won || v.q <= b.at || (b.until !== undefined && v.q > b.until)) return false;
+        var p = (g.hist || []).filter(function (x) { return x.q === v.q; })[0]; return !!p && p.h <= 10;
+      });
+    }
+    function staffTop(g) { var s = g.staff || {}; return Object.keys(s).some(function (k) { return s[k] && s[k].lvl >= 3; }); }
+    function eraN(g, E) { var e = E.eraOf(g), i = E.ERAS.map(function (x) { return x.id; }).indexOf(e.id); return i; }
+    var LIST = [
+      { id: 'year1', t: 'b', ico: 'cal', name: 'FIRST YEAR', how: 'Serve a full year', ok: function (g) { return yrs(g) >= 1; } },
+      { id: 'term1', t: 'b', ico: 'desk', name: 'FULL TERM', how: 'Serve four years', ok: function (g) { return yrs(g) >= 4; } },
+      { id: 'decade', t: 's', ico: 'cal', name: 'THE DECADE', how: 'Stay in power ten years', ok: function (g) { return yrs(g) >= 10; } },
+      { id: 'dynasty', t: 'g', ico: 'crown', name: 'DYNASTY', how: 'Keep one party machine in power twenty years', ok: function (g) { return yrs(g) >= 20; } },
+      { id: 'forty', t: 'g', ico: 'globe', name: 'THE FORTY YEAR PLAN', how: 'Stay in power forty years', ok: function (g) { return yrs(g) >= 40; } },
+      { id: 'reelect', t: 'b', ico: 'vote', name: 'FOUR MORE YEARS', how: 'Win a reelection', ok: function (g) { return anns(g, 'REELECTED') >= 1; } },
+      { id: 'heir', t: 's', ico: 'staff', name: 'THE HEIR', how: 'Elect a successor', ok: function (g) { return anns(g, 'NEW PRESIDENT') >= 1; } },
+      { id: 'fivepres', t: 'g', ico: 'flag', name: 'PARTY MACHINE', how: 'Run five presidents in one machine', ok: function (g) { return (g.pres || 1) >= 5; } },
+      { id: 'landslide', t: 's', ico: 'up', name: 'LANDSLIDE', how: 'Win a general election with 60% or more', ok: function (g) { return votes(g, 'gen').some(function (v) { return v.won && v.result >= 60; }); } },
+      { id: 'mandates', t: 'g', ico: 'streak', name: 'THE MANDATE', how: 'Win three general elections in a row with 53% or more', ok: function (g) { return run(votes(g, 'gen'), function (v) { return v.won && v.result >= 53; }) >= 3; } },
+      { id: 'whisker', t: 's', ico: 'risk', name: 'BY A WHISKER', how: 'Win a general election with under 51%', ok: function (g) { return votes(g, 'gen').some(function (v) { return v.won && v.result < 51; }); } },
+      { id: 'midrun', t: 's', ico: 'house', name: 'HOUSE PROUD', how: 'Hold three midterms in a row', ok: function (g) { return run(votes(g, 'mid'), function (v) { return v.won; }) >= 3; } },
+      { id: 'allmid', t: 'g', ico: 'shield', name: 'NEVER LOST THE HOUSE', how: 'Hold every midterm, four or more', ok: function (g) { var m = votes(g, 'mid'); return m.length >= 4 && m.every(function (v) { return v.won; }); } },
+      { id: 'peak70', t: 'b', ico: 'approval', name: 'BELOVED', how: 'Reach 70% approval', ok: function (g) { return (g.stats.peakA || 0) >= 70; } },
+      { id: 'peak85', t: 'g', ico: 'star', name: 'NATIONAL TREASURE', how: 'Reach 85% approval', ok: function (g) { return (g.stats.peakA || 0) >= 85; } },
+      { id: 'roll', t: 's', ico: 'streak', name: 'ON A ROLL', how: 'Raise approval five times in a row', ok: function (g) { return (g.stats.streakA || 0) >= 5; } },
+      { id: 'comeback', t: 'g', ico: 'loop', name: 'THE COMEBACK', how: 'Climb from 25% approval or less back to 50%', ok: comeback },
+      { id: 'walk', t: 'b', ico: 'left', name: 'WALK AWAY', how: 'Retire on your own terms', ok: function (g) { return cause(g) === 'retired'; } },
+      { id: 'ontop', t: 's', ico: 'crown', name: 'OUT ON TOP', how: 'Retire with 50% approval or more', ok: function (g) { return cause(g) === 'retired' && !!g.over.top; } },
+      { id: 'trial', t: 's', ico: 'suit', name: 'TRIAL BY FIRE', how: 'Survive an impeachment', ok: function (g) { return survived(g) >= 1; } },
+      { id: 'teflon', t: 'g', ico: 'shield', name: 'TEFLON', how: 'Survive two impeachments', ok: function (g) { return survived(g) >= 2; } },
+      { id: 'buried', t: 'b', ico: 'house', name: 'FRIENDS IN THE HOUSE', how: 'Have the House bury an impeachment', ok: function (g) { return anns(g, 'IMPEACHMENT BURIED') >= 1; } },
+      { id: 'clean', t: 's', ico: 'leaf', name: 'CLEAN HANDS', how: 'Serve four years with heat never over 30', ok: function (g) { return yrs(g) >= 4 && histMax(g, 'h') <= 30; } },
+      { id: 'darkclean', t: 'g', ico: 'eye', name: 'SPOTLESS', how: 'Win a general election on dark money with heat at 10 or less', ok: darkClean },
+      { id: 'lawyered', t: 's', ico: 'suit', name: 'LAWYERED UP', how: 'Face ten lawsuits in one run', ok: function (g) { return (g.stats.suits || 0) >= 10; } },
+      { id: 'court', t: 's', ico: 'book', name: 'SEE YOU IN COURT', how: 'Face three lawsuits and never settle one', ok: function (g) { return (g.stats.suits || 0) >= 3 && !(g.stats.settled || 0); } },
+      { id: 'chest', t: 's', ico: 'clout', name: 'WAR CHEST', how: 'Earn 5,000 clout in one run', ok: function (g) { return (g.stats.earned || 0) >= 5000; } },
+      { id: 'machine', t: 's', ico: 'pillar', name: 'MACHINE BUILDER', how: 'Own ten things from The Machine', ok: function (g) { return Object.keys(g.built || {}).length >= 10; } },
+      { id: 'moon', t: 'b', ico: 'bolt', name: 'TO THE MOON', how: 'Launch $CLOUT', ok: function (g) { return anns(g, '$CLOUT LAUNCH') >= 1 || !!(g.flags && g.flags.coin); } },
+      { id: 'bull', t: 's', ico: 'mkt', name: 'BULL RUN', how: 'Push the market to 130', ok: function (g) { return histMax(g, 'm') >= 130; } },
+      { id: 'crashes', t: 'b', ico: 'down', name: 'BEAR HUG', how: 'Live through two market crashes', ok: function (g) { return (g.stats.crashes || 0) >= 2; } },
+      { id: 'staff', t: 'b', ico: 'staff', name: 'FULL HOUSE', how: 'Hire five staffers in one run', ok: function (g) { return (g.stats.hires || 0) >= 5; } },
+      { id: 'corner', t: 's', ico: 'promo', name: 'CORNER OFFICE', how: 'Raise a staffer to level 3', ok: staffTop },
+      { id: 'favors', t: 's', ico: 'phone', name: 'CALLING IN FAVORS', how: 'Use ten lifelines in one run', ok: function (g) { return (g.stats.favors || 0) >= 10; } },
+      { id: 'stories', t: 's', ico: 'book', name: 'STORYTELLER', how: 'See three story threads through', ok: function (g) { return !!g.th && Object.keys(g.th.done || {}).length >= 3; } },
+      { id: 'crisis', t: 's', ico: 'heat', name: 'CRISIS MANAGER', how: 'See ten events through', ok: function (g) { return (g.stats.arcs || 0) >= 10; } },
+      { id: 'eras', t: 'g', ico: 'globe', name: 'TIME TRAVELER', how: 'See the country into its third era', ok: function (g, E) { return eraN(g, E) >= 2; } },
+      { id: 'mountain', t: 'g', ico: 'crown', name: 'YOUR FACE ON A MOUNTAIN', how: 'Leave a legacy of 1,200 or more', ok: function (g, E) { return E.legacyScore(g).total >= 1200; } },
+      { id: 'brief', t: 'b', ico: 'x', name: 'THE SHORTEST TERM', how: 'Leave office inside a year', ok: function (g) { return !!g.over && yrs(g) < 1; } },
+      { id: 'etu', t: 'b', ico: 'base', name: 'ET TU', how: 'Get pushed out by your own party', ok: function (g) { return cause(g) === 'revolt'; } }
+    ];
+    var BY = {}; LIST.forEach(function (m) { BY[m.id] = m; });
+    /* the medals a finished run earned, in the list's order; a judge that throws earns nothing */
+    function judge(g, E) { if (!g || !g.over) return []; return LIST.filter(function (m) { try { return !!m.ok(g, E); } catch (e) { return false; } }).map(function (m) { return m.id; }); }
+    return { LIST: LIST, BY: BY, N: LIST.length, judge: judge };
+  })();
+  /* ===== MEDALS END ===== */
   /* v8.1: the Hall of Presidents (the Director's answer A on issue 2191). Every New presidency run, good or bad, hangs
      one frame when its final edition shows: the run's first president (the one you made in the creator, a lookalike or
      the seed's face) by name, the origin, years in power, peak approval, the run's biggest headline, how it ended and the
@@ -6624,8 +6717,21 @@ var CREATOR = (function (F, N, mix) {
     if (!g || !g.over || g.story || g.chap || g.daily) return null;
     const h = getHall(), fr = hallFrame(g), had = h.runs.find((x) => x.id === fr.id);
     if (had) return had;
+    fr.md = MEDALS.judge(g, E);   /* v8.2: the medals the run earned, judged once as it hangs */
     fr.no = h.n + 1; h.n = fr.no; h.runs.unshift(fr); if (h.runs.length > HALL_MAX) h.runs.length = HALL_MAX;
-    return lsSet(KEYS.hall, JSON.stringify(h)) ? fr : null;
+    if (!lsSet(KEYS.hall, JSON.stringify(h))) return null;
+    const mc = getMedals(), fresh = [];
+    fr.md.forEach((id) => { const r = mc.got[id]; if (!r) fresh.push(id); mc.got[id] = { n: (r ? r.n : 0) + 1, first: r ? r.first : fr.no, at: r ? r.at : fr.at }; });
+    if (fr.md.length) lsSet(KEYS.medals, JSON.stringify(mc));
+    return Object.assign({}, fr, { fresh: fresh });
+  }
+  /* v8.2: the medal case, httc.medals.v1 as { got: { id: { n, first, at } } }: how often each medal was won, the Hall
+     frame that first won it and when. A corrupt or missing case reads as empty. */
+  function getMedals() { try { const m = JSON.parse(lsGet(KEYS.medals)); if (m && m.got && typeof m.got === 'object' && !Array.isArray(m.got)) return m; } catch (e) { /* corrupt */ } return { got: {} }; }
+  function medalWon() { const g = getMedals().got; return MEDALS.LIST.filter((m) => g[m.id] && g[m.id].n > 0).length; }
+  function medalHTML(id, named) {
+    const m = MEDALS.BY[id]; if (!m) return '';
+    return '<span class="medal-chip" data-medal="' + m.id + '"><span class="medal t-' + m.t + '" title="' + esc(m.name) + '">' + ic(m.ico) + '</span>' + (named ? '<span class="md-name">' + esc(m.name) + '</span>' : '') + '</span>';
   }
 
   /* ---------- sound: tiny original chiptune blips ---------- */
@@ -9141,6 +9247,8 @@ var CREATOR = (function (F, N, mix) {
       fs.map((f, i) => '<figure><canvas class="px" width="32" height="32" data-pi="' + i + '" aria-hidden="true"></canvas><figcaption>' + N('#' + (i + 1)) + (presName(G, i) ? '<span class="cap">' + esc(PN.card(presName(G, i))) + '</span>' : '') + '</figcaption></figure>').join('') + '</div></div>';
     const hung = hangInHall(G);   /* v8.1: every run hangs a frame in the Hall of Presidents */
     if (hung) h += '<p class="hall-hung" id="ov-hall">' + ic('crown') + 'YOUR PORTRAIT HANGS IN THE HALL OF PRESIDENTS · ' + N('No. ' + hung.no) + '</p>';
+    if (hung && hung.md && hung.md.length) h += '<div class="md-won" id="ov-medals"><span class="lbl">MEDALS WON · ' + N(hung.md.length) + (hung.fresh && hung.fresh.length ? ' · ' + N(hung.fresh.length) + ' NEW' : '') + '</span><div class="md-row">' +
+      hung.md.map((id) => medalHTML(id, true).replace('class="medal-chip"', 'class="medal-chip' + (hung.fresh && hung.fresh.indexOf(id) >= 0 ? ' new' : '') + '"')).join('') + '</div></div>';   /* v8.2 */
     if (won.length) h += '<p class="lk-won" id="ov-looks">' + ic('star') + 'LOOKALIKE UNLOCKED: ' + won.map((id) => esc(lookOf(id).name)).join(', ') + '</p>';
     h += '<figure class="fig"><figcaption><span>YOUR APPROVAL, WHOLE RUN</span></figcaption><canvas class="h-a" id="ov-a"></canvas></figure>';
     h += '<figure class="fig"><figcaption><span>WHO WAS TALKING ABOUT YOU</span><span>% OF SHOWS</span></figcaption><canvas class="h-m" id="ov-m"></canvas></figure>';
@@ -9168,7 +9276,8 @@ var CREATOR = (function (F, N, mix) {
       '<div class="hf-facts"><span>' + N(yrs) + ' YEARS</span><span>PEAK ' + N(fr.peakA + '%') + '</span><span>' + esc(fr.cause === 'retired' && fr.top ? 'RETIRED ON TOP' : e[0]) + '</span>' +
       (fr.pres > 1 ? '<span>' + N(fr.pres) + ' PRESIDENTS</span>' : '') + '<span>LEGACY ' + N(fr.lg) + '</span></div>' +
       '<p class="hf-hl">' + numify(fr.hl || fr.head) + '</p>' +
-      (fr.hl ? '<p class="hf-end">' + esc(fr.head) + '</p>' : '');
+      (fr.hl ? '<p class="hf-end">' + esc(fr.head) + '</p>' : '') +
+      (fr.md && fr.md.length ? '<div class="hf-medals md-row">' + fr.md.map((id) => medalHTML(id, true)).join('') + '</div>' : '');   /* v8.2: the medals the run earned */
     h += epilogueHTML(fr.epi || []).replace(' id="epi"', '');
     return h + '</article>';
   }
@@ -9183,6 +9292,18 @@ var CREATOR = (function (F, N, mix) {
     $('hall-list').scrollTop = 0;
   }
 
+  /* v8.2: the medal case: all forty, won ones lit with how often and the frame that first won them, the rest dim with how
+     to win them. Drawn once when opened (no animation). */
+  function showMedals() {
+    show('scr-medals');
+    const got = getMedals().got, won = medalWon();
+    $('medals-count').innerHTML = N(won + ' / ' + MEDALS.N);
+    $('medals-list').innerHTML = MEDALS.LIST.map((m) => { const r = got[m.id], on = !!(r && r.n > 0);
+      return '<article class="md-case' + (on ? ' got' : '') + '" data-case="' + m.id + '">' + medalHTML(m.id, false) + '<div class="mc-t"><b class="mc-name">' + esc(m.name) + '</b><span class="mc-how">' + esc(m.how) + '</span>' +
+        '<span class="mc-rec">' + (on ? numify('WON ' + (r.n === 1 ? 'ONCE' : r.n + ' TIMES') + ' · FIRST ON No. ' + r.first) : 'NOT YET WON') + '</span></div></article>'; }).join('');
+    $('medals-list').scrollTop = 0;
+  }
+
   /* ---------- title and origins ---------- */
   function showTitle() {
     lsDel(KEYS.live); /* back on the title on purpose: nothing to resume on a reload */
@@ -9192,6 +9313,7 @@ var CREATOR = (function (F, N, mix) {
     if (s) { cont.hidden = false; cont.innerHTML = 'Continue · ' + numify(dateLabel(s.q)); } else cont.hidden = true;
     $('btn-load').hidden = !anySlot();
     const hl = getHall(); $('btn-hall').hidden = !hl.runs.length; $('btn-hall').innerHTML = 'Hall of Presidents' + (hl.runs.length ? ' · ' + N(hl.n) : '');   /* v8.1 */
+    const mw = medalWon(); $('btn-medals').hidden = !mw; $('btn-medals').innerHTML = 'Medal case' + (mw ? ' · ' + N(mw + ' of ' + MEDALS.N) : '');   /* v8.2 */
     const sd = Object.keys(storyDone()).length, cd = Object.keys(campRes()).length;
     $('story-hint').hidden = !!(b || s || sd || cd);
     $('story-hint').innerHTML = 'NEW HERE? THE CAMPAIGN OPENS WITH ' + N(D.STORY.length) + ' QUICK TRAINING LESSONS.';
@@ -9573,7 +9695,7 @@ var CREATOR = (function (F, N, mix) {
      replay finds the same. Three initials and a random device id travel, nothing else. Offline or refused, the local
      board and the codes work as before ---------- */
   const BOARD = String((typeof window !== 'undefined' && window.__httcBoard) || 'https://httc-board.kyn-a14.workers.dev').replace(/\/+$/, '');
-  const GAME_BUILD = 'v8.1';
+  const GAME_BUILD = 'v8.2';
   const boardOn = () => /^https:\/\/[^\s]+$/.test(BOARD);
   function boardDev() {
     prefs.daily = prefs.daily || {};
@@ -9935,7 +10057,7 @@ var CREATOR = (function (F, N, mix) {
     $('btn-pause').innerHTML = ic('pause'); $('btn-pause-r').innerHTML = ic('pause');
     $('btn-key').innerHTML = ic('help') + '<span class="kl">KEY</span>';
     $('sign-l').innerHTML = ic('left'); $('sign-r').innerHTML = ic('right');
-    ['origin-back', 'machine-back', 'how-back', 'camp-back', 'daily-back', 'hall-back'].forEach((id) => { $(id).innerHTML = ic('left'); });
+    ['origin-back', 'machine-back', 'how-back', 'camp-back', 'daily-back', 'hall-back', 'medals-back'].forEach((id) => { $(id).innerHTML = ic('left'); });
     $('btn-next').innerHTML = 'Next quarter ' + ic('right');
     $('ch-undo').addEventListener('click', () => { SFX.click(); takeBack(); });
     $('btn-machine').innerHTML = 'The Machine ' + ic('right');
@@ -9965,6 +10087,8 @@ var CREATOR = (function (F, N, mix) {
     $('daily-back').addEventListener('click', () => { SFX.click(); showTitle(); });
     $('hall-back').addEventListener('click', () => { SFX.click(); showTitle(); });   /* v8.1 */
     $('btn-hall').addEventListener('click', () => { SFX.click(); showHall(); });
+    $('medals-back').addEventListener('click', () => { SFX.click(); showTitle(); });   /* v8.2 */
+    $('btn-medals').addEventListener('click', () => { SFX.click(); showMedals(); });
     $('camp-back').addEventListener('click', () => { SFX.click(); showTitle(); });
     $('machine-back').addEventListener('click', () => { SFX.click(); leaveMachine(); });
     $('btn-next').addEventListener('click', () => { SFX.click(); markSeenB(); nextQuarter(); });
@@ -10042,7 +10166,7 @@ var CREATOR = (function (F, N, mix) {
   try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ g: G })); } catch (e) { /* hot reload unavailable */ }
   if (hot && typeof hot.ready === 'function') { try { hot.ready(start); } catch (e) { start({}); } }
   else start((hot && hot.data) || {});
-  window.__httc = { get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle(), hall: () => showHall(), get hallData() { return getHall(); }, CR: CR, creator: () => openCreator(), get cr() { return crSt; }, get made() { return madeNow(); } };
+  window.__httc = { get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle(), hall: () => showHall(), get hallData() { return getHall(); }, medals: () => showMedals(), get medalData() { return getMedals(); }, MEDALS: MEDALS, CR: CR, creator: () => openCreator(), get cr() { return crSt; }, get made() { return madeNow(); } };
 })();
 /* ===== UI END ===== */
 
