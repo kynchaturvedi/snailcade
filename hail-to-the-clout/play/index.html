@@ -793,6 +793,24 @@ html.scaled .app { position: absolute; top: 0; margin: 0; max-width: none; trans
 .lv-hl { margin: 0; font-weight: 700; font-size: 18px !important; line-height: 1.15; text-transform: uppercase; border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink); padding: 6px 0; }
 .rs-row.goal { background: #e6f5e0; border-color: var(--good-ink); } .rs-row.goal .ri, .rs-row.goal .nm { color: var(--good-ink); }
 .rs-row.broke { background: #fbe7e2; border-color: var(--bad-ink); } .rs-row.broke .ri, .rs-row.broke .nm { color: var(--bad-ink); }
+/* v8.1: the Hall of Presidents (the Director's answer A on issue 2191): one frame a New presidency run, newest first */
+.hall-frame { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: start; padding: 10px 12px; background: var(--paper); color: var(--ink); border: 3px solid var(--gold-d); box-shadow: 3px 3px 0 #000; }
+.hall-frame.latest { border-color: var(--gold); }
+.hall-frame canvas { box-sizing: content-box; width: 64px; height: 64px; border: 2px solid var(--ink); image-rendering: pixelated; background: var(--white); }
+.hall-frame .hf-t { min-width: 0; }
+.hall-frame .hf-no { display: block; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; color: #7a6430; }
+.hall-frame .hf-name { display: block; font-weight: 700; font-size: 17px; line-height: 1.15; text-transform: uppercase; overflow-wrap: anywhere; }
+.hall-frame .hf-sub { display: block; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.05em; color: #5a4a22; margin-top: 2px; }
+.hall-frame .hf-facts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.hall-frame .hf-facts span { font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; padding: 3px 6px; background: var(--ink); color: var(--gold); }
+.hall-frame .hf-facts .num { font-size: 10px; }
+.hall-frame .hf-hl { grid-column: 1 / -1; margin: 0; font-weight: 700; font-size: 15px; line-height: 1.2; text-transform: uppercase; border-top: 2px solid var(--ink); padding-top: 6px; }
+.hall-frame .hf-end { grid-column: 1 / -1; margin: 0; font-size: 14px; line-height: 1.35; }
+.hall-frame .epi { grid-column: 1 / -1; border-top: 1px dashed var(--ink); padding-top: 6px; }
+.hall-frame .epi p { font-size: 13px; }
+.hall-empty { margin: 0; font-size: 15px; color: #d7dcf0; }
+.over .hall-hung { margin: 0; display: flex; align-items: center; gap: 6px; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.06em; color: #6a3fa0; }
+.over .hall-hung .ico { width: 14px; height: 14px; }
 .story-list { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 10px; }
 .story-intro { margin: 0 0 4px; font-size: 15px; color: #d7dcf0; }
 .story-prog { font-family: var(--f-num); font-weight: 700; font-size: 16px; color: var(--gold); }
@@ -1091,7 +1109,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.0</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.1</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1102,6 +1120,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
         <button class="btn daily-btn" id="btn-daily">Daily briefing</button>
         <button class="btn" id="btn-camp">Campaign</button>
         <button class="btn" id="btn-load" hidden>Load game</button>
+        <button class="btn" id="btn-hall" hidden>Hall of Presidents</button>
         <button class="btn" id="btn-how">How to play</button>
       </div>
       <p class="best" id="best"></p>
@@ -1187,6 +1206,11 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
     <div class="over-body" id="over-body"></div>
   </section>
 
+  <section id="scr-hall" class="scr story hall" aria-label="Hall of Presidents" hidden>
+    <header class="sheet-head"><button class="back" id="hall-back" aria-label="Back to the title"></button><h2>Hall of Presidents</h2><span class="story-prog" id="hall-count"></span></header>
+    <div class="story-list hall-list" id="hall-list"></div>
+  </section>
+
   <section id="scr-how" class="scr how" aria-label="How to play" hidden>
     <header class="sheet-head"><button class="back" id="how-back" aria-label="Back"></button><h2>How to play</h2></header>
     <nav class="tabs" id="how-tabs" role="tablist" aria-label="Guide sections"></nav>
@@ -1199,7 +1223,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V8.0 */
+/* HAIL TO THE CLOUT V8.1 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -6218,8 +6242,8 @@ var CAST32 = (function (ART, F2) {
   'use strict';
   const E = HTTC, D = HTTC_DATA, A = ART;
   const $ = (id) => document.getElementById(id);
-  const KEYS = { save: 'httc.save.v1', best: 'httc.best.v1', prefs: 'httc.prefs.v2', chap: 'httc.chap.v1', daily: 'httc.daily.v1', live: 'httc.live.v1', slot: (i) => 'httc.slot.' + i };
-  const SCREENS = ['scr-title', 'scr-origin', 'scr-desk', 'scr-report', 'scr-machine', 'scr-war', 'scr-night', 'scr-over', 'scr-how', 'scr-camp', 'scr-daily'];
+  const KEYS = { save: 'httc.save.v1', best: 'httc.best.v1', hall: 'httc.hall.v1', prefs: 'httc.prefs.v2', chap: 'httc.chap.v1', daily: 'httc.daily.v1', live: 'httc.live.v1', slot: (i) => 'httc.slot.' + i };
+  const SCREENS = ['scr-title', 'scr-origin', 'scr-desk', 'scr-report', 'scr-machine', 'scr-war', 'scr-night', 'scr-over', 'scr-how', 'scr-camp', 'scr-daily', 'scr-hall'];
   const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   let G = null, screen = 'scr-title', tick = 0, sceneLoc = 'oval', busy = false, blinkAt = 20, adTier = 0;
   let shown = null, chartWin = 'recent', howReturn = null, modalKind = null, howTab = 'basics';
@@ -6577,6 +6601,32 @@ var CREATOR = (function (F, N, mix) {
   }
   const lookCard = (id) => { const L = lookOf(id); return ['Lookalike unlocked', L.name + ' is yours. Pick the look for your next president on the origin screen.', A.president({ k: 'lk', id: id })]; };
   function getBest() { try { return JSON.parse(lsGet(KEYS.best)) || null; } catch (e) { return null; } }
+  /* v8.1: the Hall of Presidents (the Director's answer A on issue 2191). Every New presidency run, good or bad, hangs
+     one frame when its final edition shows: the run's first president (the one you made in the creator, a lookalike or
+     the seed's face) by name, the origin, years in power, peak approval, the run's biggest headline, how it ended and the
+     epilogue. Kept under httc.hall.v1 as { n, runs }, newest first, the newest HALL_MAX frames; n counts every frame ever
+     hung, so a frame's number never changes. A run hangs once: its id is its seed, final quarter and ending, so reloading
+     the final edition hangs nothing new. The Daily and the Campaign keep their own records. Nothing here reads or draws
+     the rules' dice: the Hall copies what the run already holds. */
+  const HALL_MAX = 60;
+  function getHall() { try { const h = JSON.parse(lsGet(KEYS.hall)); if (h && Array.isArray(h.runs) && h.n >= h.runs.length) return h; } catch (e) { /* corrupt */ } return { n: 0, runs: [] }; }
+  function hallFrame(g) {
+    const o = g.over, s = g.stats, e = ENDS[o.cause] || ENDS.clout;
+    const old = !g.faces || g.faces.some((f) => f && f.k === 'face');
+    const gg = old ? E.faceFill(JSON.parse(JSON.stringify(g))) : g, f = gg.faces && gg.faces[0];
+    return { id: g.seed + '.' + o.q + '.' + o.cause, at: Date.now(), origin: g.origin, cause: o.cause, top: !!o.top, q: o.q,
+      years: o.years, peakA: Math.round(s.peakA), pres: g.pres, wins: s.wins,
+      head: o.cause === 'retired' && o.top ? 'PRESIDENT RETIRES ON TOP' : e[1], hl: s.bestHl || '',
+      lg: E.legacyScore(g).total, f: f ? JSON.parse(JSON.stringify(f)) : null, nm: presName(g, 0),
+      epi: E.epilogue(g).map((l) => ({ k: l.k, t: l.t, name: l.name || '' })) };
+  }
+  function hangInHall(g) {
+    if (!g || !g.over || g.story || g.chap || g.daily) return null;
+    const h = getHall(), fr = hallFrame(g), had = h.runs.find((x) => x.id === fr.id);
+    if (had) return had;
+    fr.no = h.n + 1; h.n = fr.no; h.runs.unshift(fr); if (h.runs.length > HALL_MAX) h.runs.length = HALL_MAX;
+    return lsSet(KEYS.hall, JSON.stringify(h)) ? fr : null;
+  }
 
   /* ---------- sound: tiny original chiptune blips ---------- */
   let AC = null;
@@ -9089,19 +9139,48 @@ var CREATOR = (function (F, N, mix) {
     const fs = G.faces || [], won = earnLooks();
     if (fs.length) h += '<div class="pres-row" id="ov-pres"><span class="lbl">' + (fs.length > 1 ? 'YOUR PRESIDENTS' : 'YOUR PRESIDENT') + '</span><div class="pres-faces">' +
       fs.map((f, i) => '<figure><canvas class="px" width="32" height="32" data-pi="' + i + '" aria-hidden="true"></canvas><figcaption>' + N('#' + (i + 1)) + (presName(G, i) ? '<span class="cap">' + esc(PN.card(presName(G, i))) + '</span>' : '') + '</figcaption></figure>').join('') + '</div></div>';
+    const hung = hangInHall(G);   /* v8.1: every run hangs a frame in the Hall of Presidents */
+    if (hung) h += '<p class="hall-hung" id="ov-hall">' + ic('crown') + 'YOUR PORTRAIT HANGS IN THE HALL OF PRESIDENTS · ' + N('No. ' + hung.no) + '</p>';
     if (won.length) h += '<p class="lk-won" id="ov-looks">' + ic('star') + 'LOOKALIKE UNLOCKED: ' + won.map((id) => esc(lookOf(id).name)).join(', ') + '</p>';
     h += '<figure class="fig"><figcaption><span>YOUR APPROVAL, WHOLE RUN</span></figcaption><canvas class="h-a" id="ov-a"></canvas></figure>';
     h += '<figure class="fig"><figcaption><span>WHO WAS TALKING ABOUT YOU</span><span>% OF SHOWS</span></figcaption><canvas class="h-m" id="ov-m"></canvas></figure>';
-    h += '<div class="btns"><button class="btn gold" id="ov-again">Run it back</button><button class="btn" id="ov-origin">Pick a new origin</button><button class="btn" id="ov-title">Title screen</button></div>';
+    h += '<div class="btns"><button class="btn gold" id="ov-again">Run it back</button><button class="btn" id="ov-origin">Pick a new origin</button><button class="btn" id="ov-hall-go">Hall of Presidents</button><button class="btn" id="ov-title">Title screen</button></div>';
     $('over-body').innerHTML = h;
     $('over-body').querySelectorAll('canvas[data-pi]').forEach((c) => A.card(c, presArt(G, +c.getAttribute('data-pi')), false, tick));   /* v7.5: president cards */
     $('scr-over').scrollTop = 0;
     countUp($('ov-y'), 0, years, T(900), (v) => (Math.round(v * 4) / 4).toFixed(2).replace(/\.00$/, ''));
     countUp($('ov-lg'), 0, lg.total, T(1100), (v) => String(Math.round(v)));
-    requestAnimationFrame(() => { drawApproval($('ov-a'), G.hist, -1); drawMentions($('ov-m'), G.hist, -1); });
+    const ovHist = G.hist;   /* v8.1: read now: Title screen and Hall of Presidents clear G, and a quick tap can land before this frame */
+    requestAnimationFrame(() => { drawApproval($('ov-a'), ovHist, -1); drawMentions($('ov-m'), ovHist, -1); });
     $('ov-again').addEventListener('click', () => startGame(G.origin));
     $('ov-origin').addEventListener('click', () => { renderOrigins(); show('scr-origin'); });
     $('ov-title').addEventListener('click', () => { G = null; showTitle(); });
+    $('ov-hall-go').addEventListener('click', () => { SFX.click(); G = null; showHall(); });
+  }
+  /* v8.1: the Hall of Presidents screen: one frame a run, newest first, each president drawn once on a 32 card (no
+     animation: the screen draws nothing more until it is opened again) */
+  function hallFrameHTML(fr, latest) {
+    const o = E.ORIG[fr.origin], e = ENDS[fr.cause] || ENDS.clout, lk = fr.f && fr.f.k === 'lk' ? lookOf(fr.f.id) : null;
+    const yrs = String(fr.years).replace(/\.00$/, '');
+    let h = '<article class="hall-frame' + (latest ? ' latest' : '') + '" data-hall="' + esc(fr.id) + '"><canvas class="px" width="32" height="32" aria-hidden="true"></canvas>' +
+      '<div class="hf-t"><span class="hf-no">' + N('No. ' + fr.no) + '</span><b class="hf-name">' + esc(fr.nm ? PN.full(fr.nm) : 'THE PRESIDENT') + '</b>' +
+      '<span class="hf-sub">' + esc((o ? o.name : 'PRESIDENT') + (lk ? ' · ' + lk.name : '')) + '</span></div>' +
+      '<div class="hf-facts"><span>' + N(yrs) + ' YEARS</span><span>PEAK ' + N(fr.peakA + '%') + '</span><span>' + esc(fr.cause === 'retired' && fr.top ? 'RETIRED ON TOP' : e[0]) + '</span>' +
+      (fr.pres > 1 ? '<span>' + N(fr.pres) + ' PRESIDENTS</span>' : '') + '<span>LEGACY ' + N(fr.lg) + '</span></div>' +
+      '<p class="hf-hl">' + numify(fr.hl || fr.head) + '</p>' +
+      (fr.hl ? '<p class="hf-end">' + esc(fr.head) + '</p>' : '');
+    h += epilogueHTML(fr.epi || []).replace(' id="epi"', '');
+    return h + '</article>';
+  }
+  function showHall() {
+    show('scr-hall');
+    const h = getHall();
+    $('hall-count').innerHTML = h.runs.length ? N(h.n) : '';
+    $('hall-list').innerHTML = h.runs.length ? h.runs.map((fr, i) => hallFrameHTML(fr, i === 0)).join('') +
+      (h.n > h.runs.length ? '<p class="hall-empty">THE HALL KEEPS THE NEWEST ' + N(HALL_MAX) + ' PORTRAITS.</p>' : '')
+      : '<p class="hall-empty">No portraits yet. Every New presidency, good or bad, hangs its president here when the run ends.</p>';
+    $('hall-list').querySelectorAll('.hall-frame').forEach((el, i) => { const fr = h.runs[i]; A.card(el.querySelector('canvas'), A.president(fr.f || { k: 'default' }, E.ORIG[fr.origin] ? fr.origin : 'pol'), false, 0); });
+    $('hall-list').scrollTop = 0;
   }
 
   /* ---------- title and origins ---------- */
@@ -9112,6 +9191,7 @@ var CREATOR = (function (F, N, mix) {
     const cont = $('btn-continue');
     if (s) { cont.hidden = false; cont.innerHTML = 'Continue · ' + numify(dateLabel(s.q)); } else cont.hidden = true;
     $('btn-load').hidden = !anySlot();
+    const hl = getHall(); $('btn-hall').hidden = !hl.runs.length; $('btn-hall').innerHTML = 'Hall of Presidents' + (hl.runs.length ? ' · ' + N(hl.n) : '');   /* v8.1 */
     const sd = Object.keys(storyDone()).length, cd = Object.keys(campRes()).length;
     $('story-hint').hidden = !!(b || s || sd || cd);
     $('story-hint').innerHTML = 'NEW HERE? THE CAMPAIGN OPENS WITH ' + N(D.STORY.length) + ' QUICK TRAINING LESSONS.';
@@ -9493,7 +9573,7 @@ var CREATOR = (function (F, N, mix) {
      replay finds the same. Three initials and a random device id travel, nothing else. Offline or refused, the local
      board and the codes work as before ---------- */
   const BOARD = String((typeof window !== 'undefined' && window.__httcBoard) || 'https://httc-board.kyn-a14.workers.dev').replace(/\/+$/, '');
-  const GAME_BUILD = 'v8.0';
+  const GAME_BUILD = 'v8.1';
   const boardOn = () => /^https:\/\/[^\s]+$/.test(BOARD);
   function boardDev() {
     prefs.daily = prefs.daily || {};
@@ -9855,7 +9935,7 @@ var CREATOR = (function (F, N, mix) {
     $('btn-pause').innerHTML = ic('pause'); $('btn-pause-r').innerHTML = ic('pause');
     $('btn-key').innerHTML = ic('help') + '<span class="kl">KEY</span>';
     $('sign-l').innerHTML = ic('left'); $('sign-r').innerHTML = ic('right');
-    ['origin-back', 'machine-back', 'how-back', 'camp-back', 'daily-back'].forEach((id) => { $(id).innerHTML = ic('left'); });
+    ['origin-back', 'machine-back', 'how-back', 'camp-back', 'daily-back', 'hall-back'].forEach((id) => { $(id).innerHTML = ic('left'); });
     $('btn-next').innerHTML = 'Next quarter ' + ic('right');
     $('ch-undo').addEventListener('click', () => { SFX.click(); takeBack(); });
     $('btn-machine').innerHTML = 'The Machine ' + ic('right');
@@ -9883,6 +9963,8 @@ var CREATOR = (function (F, N, mix) {
     $('btn-camp').addEventListener('click', () => { SFX.click(); showCamp(); });
     $('btn-daily').addEventListener('click', () => { SFX.click(); showDaily(); });
     $('daily-back').addEventListener('click', () => { SFX.click(); showTitle(); });
+    $('hall-back').addEventListener('click', () => { SFX.click(); showTitle(); });   /* v8.1 */
+    $('btn-hall').addEventListener('click', () => { SFX.click(); showHall(); });
     $('camp-back').addEventListener('click', () => { SFX.click(); showTitle(); });
     $('machine-back').addEventListener('click', () => { SFX.click(); leaveMachine(); });
     $('btn-next').addEventListener('click', () => { SFX.click(); markSeenB(); nextQuarter(); });
@@ -9960,7 +10042,7 @@ var CREATOR = (function (F, N, mix) {
   try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ g: G })); } catch (e) { /* hot reload unavailable */ }
   if (hot && typeof hot.ready === 'function') { try { hot.ready(start); } catch (e) { start({}); } }
   else start((hot && hot.data) || {});
-  window.__httc = { get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle(), CR: CR, creator: () => openCreator(), get cr() { return crSt; }, get made() { return madeNow(); } };
+  window.__httc = { get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle(), hall: () => showHall(), get hallData() { return getHall(); }, CR: CR, creator: () => openCreator(), get cr() { return crSt; }, get made() { return madeNow(); } };
 })();
 /* ===== UI END ===== */
 
