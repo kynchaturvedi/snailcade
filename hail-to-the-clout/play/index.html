@@ -169,6 +169,13 @@ html.scaled .app { position: absolute; top: 0; margin: 0; max-width: none; trans
 .look-pick .lk-all .new-badge { margin-left: 8px; padding: 1px 5px; background: var(--red); color: var(--white); border: 2px solid var(--ink); font-family: var(--f-lbl); font-size: 8px; }
 .origin-card .o-head { display: flex; align-items: center; gap: 10px; }
 /* v7.5: a president card is 32 pixels drawn at 64 px, two by two (the Director's answer B on issue 899); its border sits outside the 64 */
+.origin-card.locked { background: #d9d2bd; color: #4a4d60; box-shadow: 0 4px 0 #4a4d60; border-color: #4a4d60; cursor: default; }
+.origin-card.locked:active { transform: none; box-shadow: 0 4px 0 #4a4d60; }
+.origin-card .o-lock { margin: 4px 0 0; display: flex; align-items: center; gap: 6px; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.04em; }
+.origin-card .o-lock .num { font-family: var(--f-num); font-weight: 700; font-size: 13px; letter-spacing: 0; }
+.origin-card .o-new { display: inline-block; vertical-align: middle; font-family: var(--f-lbl); font-size: 10px; background: var(--good-ink); color: var(--white); padding: 2px 6px; margin-left: 4px; }
+.origin-card.fresh { border-color: var(--good-ink); }
+.origin-card .o-lock .lstar { width: 12px; height: 12px; margin: 0 4px; border-width: 2px; box-shadow: none; } .origin-card .o-lock .lstar .ico { width: 8px; height: 8px; }
 .px.o-face { box-sizing: content-box; width: 64px; height: 64px; flex: none; border: 2px solid var(--ink); image-rendering: pixelated; }
 .lk-list { display: grid; gap: 8px; max-height: 52vh; overflow-y: auto; }
 .lk-item { display: grid; grid-template-columns: 68px 1fr auto; align-items: center; gap: 10px; padding: 8px; border: 2px solid var(--ink); background: var(--paper2); }
@@ -828,6 +835,35 @@ html.scaled .app { position: absolute; top: 0; margin: 0; max-width: none; trans
 .md-case .mc-name { font-weight: 700; font-size: 15px; line-height: 1.15; text-transform: uppercase; overflow-wrap: anywhere; }
 .md-case .mc-how { font-size: 14px; line-height: 1.3; }
 .md-case .mc-rec { font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; color: #5a4a22; }
+/* v8.3: ambitions and Legacy stars */
+.ambbox { --bx: #8a5a00; margin: 10px 0 4px; padding: 8px 10px; border: 3px solid var(--bx); background: #fff6dc; box-shadow: 3px 3px 0 var(--bx); display: grid; gap: 6px; }
+.ambbox.mine.st-done { --bx: var(--good-ink); background: #eef7e4; } .ambbox.mine.st-lost { --bx: var(--bad-ink); background: #fbe7e2; }
+.ab-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 10px; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.05em; }
+.ab-top b { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; color: var(--bx); font-size: 11px; }
+.ab-top .ico { width: 12px; height: 12px; }
+.ambbox p { margin: 0; font-size: 13px; line-height: 1.35; color: #3a2f14; }
+.amb-list { display: grid; gap: 6px; }
+.amb-pick { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; text-align: left; padding: 7px 9px; min-height: 44px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); box-shadow: 2px 2px 0 #000; font: inherit; cursor: pointer; }
+.amb-pick:disabled { opacity: 0.5; cursor: default; }
+.amb-pick .ap-ico .ico { width: 16px; height: 16px; }
+.amb-pick .ap-t { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.amb-pick .ap-t b { font-size: 14px; text-transform: uppercase; overflow-wrap: anywhere; }
+.amb-pick .ap-t span { font-size: 13px; line-height: 1.3; }
+.amb-pick .ap-k { font-style: normal; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; color: #8a5a00; }
+.lstar { flex: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: content-box; width: 20px; height: 20px; border: 2px solid var(--ink); background: var(--gold); box-shadow: 0 2px 0 #000; color: var(--ink); transform: rotate(45deg); }
+.lstar .ico { width: 12px; height: 12px; transform: rotate(-45deg); }
+.lstar { margin: 0 5px; } .lstar.big { width: 26px; height: 26px; margin: 0 8px; } .lstar.big .ico { width: 16px; height: 16px; }
+.star-chip { display: inline-flex; align-items: center; gap: 6px; }
+.over .st-won .star-chip .md-name { color: #6a3fa0; }
+.st-sum { display: grid; gap: 8px; padding: 10px 12px; background: var(--paper); color: var(--ink); border: 3px solid var(--gold-d); box-shadow: 3px 3px 0 #000; }
+.st-orig { display: flex; flex-wrap: wrap; gap: 6px; } .st-orig > span { font-family: var(--f-lbl); font-size: 10px; padding: 3px 7px; border: 2px solid var(--ink); }
+.st-orig > span.on { background: var(--good-ink); color: var(--white); } .st-orig > span.off { background: transparent; color: #5a5f78; border-style: dashed; } .st-orig .num { font-family: var(--f-num); font-weight: 700; font-size: 12px; letter-spacing: 0; }
+.st-head { display: flex; align-items: center; gap: 12px; } .st-head b { font-family: var(--f-num); font-size: 18px; }
+.st-list { display: grid; gap: 6px; }
+.st-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.st-row:not(.got) .lstar { background: #8a8fa8; } .st-row:not(.got) { opacity: 0.6; }
+.st-row .st-t { min-width: 0; display: flex; flex-direction: column; gap: 1px; } .st-row .st-t b { font-size: 13px; text-transform: uppercase; } .st-row .st-t span { font-size: 13px; line-height: 1.3; }
+.st-row i { font-style: normal; font-family: var(--f-num); font-weight: 700; }
 .story-list { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 10px; }
 .story-intro { margin: 0 0 4px; font-size: 15px; color: #d7dcf0; }
 .story-prog { font-family: var(--f-num); font-weight: 700; font-size: 16px; color: var(--gold); }
@@ -993,6 +1029,20 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 .thbox li i { font-style: normal; color: #5a4a22; } .thbox li .num { font-size: 12px; }
 .retbox .btn { justify-self: start; display: inline-flex; align-items: center; gap: 6px; }
 .retbox .btn .ico { width: 12px; height: 12px; }
+/* v8.5: emergency powers */
+.powbox { --bx: #7a1f2b; margin: 10px 0 4px; padding: 8px 10px; border: 3px solid var(--bx); background: #fbf0ee; box-shadow: 3px 3px 0 var(--bx); display: grid; gap: 6px; }
+.powbox.hot { border-width: 4px; background: #f8e2de; } .powbox.soon { border-style: dashed; box-shadow: none; }
+.pw-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 10px; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.05em; }
+.pw-top b { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; color: var(--bx); font-size: 11px; } .pw-top .ico { width: 12px; height: 12px; }
+.powbox p { margin: 0; font-size: 13px; line-height: 1.35; color: #3a2f14; } .powbox .pw-note { font-size: 12px; color: #6a2a2a; }
+.powbox ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.powbox li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 7px; border: 2px solid var(--ink); background: var(--paper2); }
+.powbox li > div { display: grid; gap: 2px; min-width: 0; } .powbox li b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-lbl); font-size: 10px; font-weight: 400; letter-spacing: 0.04em; color: var(--bx); }
+.powbox li b .ico { width: 12px; height: 12px; } .powbox li span { font-size: 12px; line-height: 1.3; }
+.powbox li > i { flex: none; font-style: normal; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.05em; color: #6a5a3a; }
+.powbox li > i.pw-held { color: #fff; background: var(--bx); padding: 3px 6px; }
+.powbox li.pw-held { background: #f3d9d4; } .powbox li .btn { flex: none; }
+.pw-wire { display: flex; align-items: center; gap: 6px; font-family: var(--f-lbl); font-size: 12px; letter-spacing: 0.03em; color: var(--bx); } .pw-wire .ico { width: 12px; height: 12px; }
 .newbox.thr { border-color: #6a3fa0; background: #f1eafb; } .newbox.thr b { color: #6a3fa0; display: flex; align-items: center; gap: 6px; }
 .blegacy { color: var(--gold); display: flex; align-items: flex-start; gap: 6px; } .szn-hint { color: #ff9a62; display: flex; align-items: flex-start; gap: 6px; }
 .blegacy .ico, .szn-hint .ico { margin-top: 2px; flex: none; }
@@ -1126,7 +1176,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.2</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.5</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1245,7 +1295,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V8.2 */
+/* HAIL TO THE CLOUT V8.5 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -1312,7 +1362,21 @@ var HTTC_DATA = (function () {
       perk: 'Deals pay 50% more clout.', flaw: 'Heat builds 30% faster.' },
     { id: 'gen', name: 'GENERAL', tag: 'Commands the room. Hates cameras.',
       start: { a: 54, b: 55, c: 50, h: 0 },
-      perk: 'Crisis wins count 50% more. Bolder gambles abroad.', flaw: 'Good press lands 20% softer.' }
+      perk: 'Crisis wins count 50% more. Bolder gambles abroad.', flaw: 'Good press lands 20% softer.' },
+    /* v8.4: the four origins the Legacy stars unlock (the Director's answer A on issue 2257, its second build). stars: how many
+       Legacy stars open each one on the origin screen. The Daily deals only the four above (engine DAILY_ORIG). */
+    { id: 'gov', name: 'GOVERNOR', tag: 'Ran a state. Has signed a budget before.', stars: 1,
+      start: { a: 52, b: 57, c: 75, h: 0 },
+      perk: 'Crisis wins count 30% more.', flaw: 'Wins abroad land 20% softer.' },
+    { id: 'infl', name: 'INFLUENCER', tag: 'Twelve million followers. Zero votes cast.', stars: 2,
+      start: { a: 48, b: 66, c: 60, h: 5 },
+      perk: 'Speeches fire up the base 50% more.', flaw: 'Speeches that miss cost 30% more approval.' },
+    { id: 'astro', name: 'ASTRONAUT', tag: 'Has seen the whole country from orbit.', stars: 4,
+      start: { a: 56, b: 50, c: 55, h: 0 },
+      perk: 'Wins abroad land 30% bigger.', flaw: 'Deals pay 25% less clout.' },
+    { id: 'judge', name: 'JUDGE', tag: 'Overruled. Sustained. Elected.', stars: 6,
+      start: { a: 53, b: 52, c: 65, h: 0 },
+      perk: 'Legal folders land 40% bigger. Heat builds 20% slower.', flaw: 'Speeches land 20% softer.' }
   ];
 
   /* The Machine. Pillars: slow to build, steady forever. Shortcuts: instant, and they bite. */
@@ -1348,6 +1412,15 @@ var HTTC_DATA = (function () {
     whistle: { tag: 'WHISTLEBLOWER', open: { b: -1 }, openTxt: 'Base -1 every quarter while your own side wonders.', settle: { h: 3 }, settleTxt: 'The hush money story: heat +3.' },
     libel:   { tag: 'DEFAMATION', open: { a: -1 }, openTxt: 'The late shows keep at it: approval -1 every quarter.', settle: { b: -2 }, settleTxt: 'Caving to a comedian: base -2.' }
   };
+  /* v8.5: emergency powers (the Director's answer A on issue 2296). New presidency only: they open once approval 60%+,
+     base 75+, a market BOOM and a House SUPERMAJORITY hold at two closes in a row. Each pays every quarter and adds heat;
+     fall off the line (approval under 50, base under 60, heat 80+) while holding any and a BACKLASH strips them all. */
+  var POWERS = [
+    { id: 'ban', name: 'MEDIA BAN', ico: 'mic', pay: 'Approval +2 every quarter: the friendly shows are the only shows.', h: 3, wire: 'NETWORKS PULLED OFF THE AIR BY DECREE' },
+    { id: 'decree', name: 'RULE BY DECREE', ico: 'pillar', pay: 'Clout +20 every quarter: orders skip Congress and the favors flow.', h: 3, wire: 'PRESIDENT SIGNS 40 ORDERS BEFORE LUNCH' },
+    { id: 'court', name: 'A COURT OF YOUR OWN', ico: 'suit', pay: 'Every open lawsuit is thrown out at the close of each quarter.', h: 3, wire: 'COURT PACKED OVERNIGHT, NINE NEW JUSTICES SWORN IN' },
+    { id: 'term', name: 'A THIRD TERM', ico: 'crown', pay: 'No term limit: you run again yourself instead of a successor. Win that vote and you are President for Life.', h: 3, wire: 'TERM LIMITS SUSPENDED UNTIL FURTHER NOTICE' }
+  ];
   var SUIT_OF = { 'ETHICS COMPLAINT': 'ethics', 'WATCHDOG RECORDS SUIT': 'records', 'REGULATORS V. $CLOUT': 'records', 'SUBPOENA FIGHT': 'records',
     'CONTRACT FRAUD PROBE': 'fraud', 'CLASS ACTION: $CLOUT': 'fraud', 'CAMPAIGN FINANCE PROBE': 'finance', 'DEEPFAKE AD SUIT': 'finance',
     'EMOLUMENTS SUIT': 'emol', 'WHISTLEBLOWER CASE': 'whistle', 'NIGHTS V. PRESIDENT': 'libel',
@@ -2771,7 +2844,7 @@ var HTTC_DATA = (function () {
   /* v7.2: once VP Okafor takes the oath as the Loyal Heir, a new VP steps in: fictional surnames, none a real VP's */
   var VP_NAMES = ['ADEYEMI', 'BRANDT', 'CALLOWAY', 'DELACROIX', 'ESPINOZA', 'FAIRWEATHER', 'GALLAGHER', 'HOLLOWAY', 'IBARRA', 'JANSSEN',
     'KOWALSKI', 'LINDQVIST', 'MAHONEY', 'NAKAMURA', 'OYELARAN', 'QUINTANA', 'RASMUSSEN', 'SANTORO', 'THIBODEAUX', 'VANTERPOOL', 'WHITLOCK', 'YAMADA'];
-  return { LOOKALIKES: LOOKALIKES, VP_NAMES: VP_NAMES, THREADS: THREADS, ERAS: ERAS, ERA_CARDS: ERA_CARDS, SEASONAL: SEASONAL, SEASON_CARDS: SEASON_CARDS, MANDATES: MANDATES, TRAITS: TRAITS, WHO: WHO, LOC: LOC, ORIGINS: ORIGINS, BUILD: BUILD, STAFF: STAFF, ROLE: ROLE, FAVORS: FAVORS, SUIT_T: SUIT_T, SUIT_OF: SUIT_OF, ARCS: ARCS, PARTY: PARTY, CARDS: CARDS, CAMP: CAMP, SPECIAL: SPECIAL, OPENERS: OPENERS, STORY: STORY, STORY_CARDS: STORY_CARDS, CHAP_CARDS: CHAP_CARDS, CAMPAIGN: CAMPAIGN };
+  return { POWERS: POWERS, LOOKALIKES: LOOKALIKES, VP_NAMES: VP_NAMES, THREADS: THREADS, ERAS: ERAS, ERA_CARDS: ERA_CARDS, SEASONAL: SEASONAL, SEASON_CARDS: SEASON_CARDS, MANDATES: MANDATES, TRAITS: TRAITS, WHO: WHO, LOC: LOC, ORIGINS: ORIGINS, BUILD: BUILD, STAFF: STAFF, ROLE: ROLE, FAVORS: FAVORS, SUIT_T: SUIT_T, SUIT_OF: SUIT_OF, ARCS: ARCS, PARTY: PARTY, CARDS: CARDS, CAMP: CAMP, SPECIAL: SPECIAL, OPENERS: OPENERS, STORY: STORY, STORY_CARDS: STORY_CARDS, CHAP_CARDS: CHAP_CARDS, CAMPAIGN: CAMPAIGN };
 })();
 /* ===== DATA END ===== */
 
@@ -2797,6 +2870,9 @@ var HTTC = (function (D) {
     a.stages.forEach(function (st, i) { ALL['arc_' + a.id + '_' + i] = { id: 'arc_' + a.id + '_' + i, kind: 'arc', pool: 'arc', arc: a.id, stage: i, who: st.who, loc: st.loc, t: st.t, L: st.L, R: st.R }; });
   });
   D.ORIGINS.forEach(function (o) { ORIG[o.id] = o; });
+  /* v8.4: the Daily deals from the four origins open to everyone, never one the Legacy stars unlock, so every day's world
+     and every older build's Daily record stay as they were */
+  var DAILY_ORIG = D.ORIGINS.filter(function (o) { return !o.stars; });
   /* v6.2: era folders join the deck and wait for their era; seasonal folders wait for their week of the real year;
      a story thread is a chain of four folders, the first choice picks the line and the last one picks the ending */
   (D.ERA_CARDS || []).forEach(function (c) { c.pool = 'main'; ALL[c.id] = c; });
@@ -3500,12 +3576,19 @@ var PRESNAMES = (function (mix) {
       if (org === 'gen' && o.a > 0) o.a *= 0.8;
     }
     if ((k === 'crisis' || k === 'world') && org === 'gen' && o.a > 0) o.a *= 1.5;
+    /* v8.4: the four origins the Legacy stars unlock */
+    if (org === 'gov' && o.a > 0) { if (k === 'crisis') o.a *= 1.3; if (k === 'world') o.a *= 0.8; }
+    if (org === 'infl' && k === 'say') { if (o.b > 0) o.b *= 1.5; if (o.a < 0) o.a *= 1.3; }
+    if (org === 'astro' && k === 'world' && o.a > 0) o.a *= 1.3;
+    if (org === 'judge') { if (k === 'legal' && o.a > 0) o.a *= 1.4; if (k === 'say' && o.a > 0) o.a *= 0.8; if (k === 'say' && o.b > 0) o.b *= 0.8; }
     if (o.a < 0 && k === 'say' && on(g, 'rapid')) o.a *= 0.65; /* v6.8: 35%, was 25% */
     if (o.a > 0 && k === 'say' && staffOn(g, 'hwrite')) o.a *= 1 + LV.hwrite.boost[staffLvl(g, 'hwrite')]; /* v6.8: a speechwriter */
     if (o.a < 0 && on(g, 'factdesk')) o.a *= 0.8; /* v6.8: 20%, was 10% */
     if (opt && opt.tag === 'mod' && o.b < 0 && on(g, 'coal')) o.b *= 0.5;
     if (o.h > 0 && org === 'tycoon') o.h *= 1.3;
     if (o.c > 0 && org === 'tycoon') o.c *= 1.5;
+    if (o.h > 0 && org === 'judge') o.h *= 0.8;
+    if (o.c > 0 && k === 'deal' && org === 'astro') o.c *= 0.75;
     if (o.c > 0 && k === 'deal' && suitOpen(g, 'emol')) o.c *= 1 - D.SUIT_T.emol.deals;
     /* a strong market makes the gains of economic calls bigger, a weak one smaller */
     if (card.econ) { var em = econMult(g); if (o.a > 0) o.a *= em; if (o.c > 0) o.c *= em; }
@@ -3537,6 +3620,7 @@ var PRESNAMES = (function (mix) {
       if (g.origin === 'celeb') o.a *= 0.8;
     }
     if (o.h > 0 && g.origin === 'tycoon') o.h *= 1.3;
+    if (o.h > 0 && g.origin === 'judge') o.h *= 0.8;   /* v8.4 */
     if (hedged(g, card)) { if (o.a < 0) o.a *= 0.5; if (o.b < 0) o.b *= 0.5; if (o.h > 0) o.h *= 0.5; if (o.c < 0) o.c *= 0.5; }
     return o;
   }
@@ -4246,6 +4330,7 @@ var PRESNAMES = (function (mix) {
     if (m) L.push({ k: 'The Machine', v: m });
     var frz = m > 0 && suitOpen(g, 'fraud') ? Math.round(m * D.SUIT_T.fraud.machine) : 0;
     if (frz) L.push({ k: 'Assets frozen', v: -frz, sub: g.suits.filter(function (x) { return x.t === 'fraud'; }).map(function (x) { return { k: x.n, v: 0 }; }) });
+    if (powerOn(g, 'decree')) L.push({ k: 'Decrees', v: EP_LINE.decree }); /* v8.5 */
     if (staffOn(g, 'hfund')) L.push({ k: 'Fundraiser', v: LV.hfund.clout[staffLvl(g, 'hfund')] });
     /* v6.4: the market's level pays or costs (v6.3 paid 1 per full 5 points) */
     if (mktOn(g)) { var ml = mktLevel(g); if (ml.c) L.push({ k: 'Market', v: ml.c, lv: ml.name }); }
@@ -4444,6 +4529,7 @@ var PRESNAMES = (function (mix) {
       if (cc && rnd(g) < cc) { var cm0 = g.mkt; mktMove(g, -MKT_CRASH); rep.crash = { from: cm0, to: g.mkt, p: cc }; g.stats.crashes = (g.stats.crashes || 0) + 1; }
       addA(g, (g.mkt - 100) * 0.1, 'market');
     }
+    if (powerOn(g, 'ban')) addA(g, EP_LINE.ban, 'powers'); /* v8.5 */
     rep.m1 = g.mkt; rep.mLv0 = mktLevelOf(rep.m0 === undefined ? 100 : rep.m0).id; rep.mLv1 = mktLevel(g).id;
     if (storyHas(g, 'house')) { rep.hLv0 = houseLevelOf(217 + Math.round(g.ql.hm0 === undefined ? g.house.m : g.ql.hm0)).id; rep.hSeats0 = 217 + Math.round(g.ql.hm0 === undefined ? g.house.m : g.ql.hm0); }
     /* base and heat dynamics */
@@ -4466,6 +4552,7 @@ var PRESNAMES = (function (mix) {
     if (mandOn(g, 'watch')) hd -= 2;
     if (mandOn(g, 'money')) hd += 1;
     if (traitOn(g, 'lips')) hd += 1; /* v6.8: LOOSE LIPS on staff */
+    if (g.ep) powersHeld(g).forEach(function (id) { hd += POW[id].h; }); /* v8.5: every power held */
     g.heat = clamp(g.heat + hd, 0, 100);
     if (on(g, 'bots') && rnd(g) < 0.12) queueFol(g, 'botsout', 1, 1, { build: 'bots' });
     /* lawsuits from heat */
@@ -4506,10 +4593,11 @@ var PRESNAMES = (function (mix) {
         return true;
       });
     }
+    epClose(g, rep); /* v8.5: emergency powers */
     g.suits.forEach(function (s) { s.q--; });
     g.suits = g.suits.filter(function (s) { if (s.q <= 0) { rep.ended.push(s.n); logSuit(g, s.n); return false; } return true; });
-    /* impeachment */
-    if (g.heat >= 100) {
+    /* impeachment (a backlash that deposes you comes first) */
+    if (g.heat >= 100 && !(rep.backlash && rep.backlash.deposed)) {
       if (g.house.m > 0) {
         rep.imp = 'buried'; g.heat -= 40; g.base = clamp(g.base + 6, 0, 100); addA(g, -2, 'events');
         g.ql.ann = 'IMPEACHMENT BURIED';
@@ -4527,13 +4615,14 @@ var PRESNAMES = (function (mix) {
     if (g.election) {
       var el = g.election;
       rep.headline = el.type === 'mid' ? (el.held ? 'PRESIDENT\'S PARTY HOLDS THE HOUSE' : 'HOUSE FLIPS IN MIDTERM ROUT')
-        : (el.win ? (el.succession ? 'VOTERS PICK YOUR SUCCESSOR' : 'FOUR MORE YEARS') : 'VOTERS SHOW PRESIDENT THE DOOR');
+        : (el.win ? (el.forlife ? 'PRESIDENT FOR LIFE' : el.succession ? 'VOTERS PICK YOUR SUCCESSOR' : 'FOUR MORE YEARS') : 'VOTERS SHOW PRESIDENT THE DOOR');
       rep.hlTag = '';
     }
     if (rep.imp === 'buried') rep.headline = 'HOUSE MAJORITY BURIES IMPEACHMENT';
     if (rep.imp === 'acquitted') rep.headline = 'IMPEACHED, THEN ACQUITTED';
     if (rep.imp === 'bought') rep.headline = 'PRESIDENT SURVIVES TRIAL, BARELY';
     if (rep.imp === 'removed') rep.headline = 'SENATE CONVICTS, PRESIDENT REMOVED';
+    if (rep.backlash) rep.headline = rep.backlash.deposed ? 'PRESIDENT DEPOSED AS POWERS COLLAPSE' : 'BACKLASH: POWERS STRIPPED, SPECIAL COUNSEL NAMED';
     if (!rep.headline) {
       var dd = g.approval - g.ql.a0;
       rep.headline = dd >= 2 ? 'PRESIDENT HAS A GOOD QUARTER' : dd <= -2 ? 'ROUGH QUARTER FOR THE WHITE HOUSE' : 'QUIET QUARTER IN THE CAPITAL';
@@ -4558,6 +4647,8 @@ var PRESNAMES = (function (mix) {
     g.report = rep;
     /* how runs end */
     if (rep.imp === 'removed') return gameOver(g, 'removed');
+    if (rep.backlash && rep.backlash.deposed) return gameOver(g, 'deposed');
+    if (rep.election && rep.election.forlife) { g.trans = null; return gameOver(g, 'forlife'); }
     if (g.base <= 0) return gameOver(g, 'revolt');
     if (g.clout <= 0) return gameOver(g, 'clout');
     g.phase = 'report';
@@ -4593,20 +4684,20 @@ var PRESNAMES = (function (mix) {
      left behind; then the retirement multiplier. Being forced out (clout, removal, revolt) leaves with nothing. */
   function legacyScore(g) {
     var st = g.stats, cause = g.over ? g.over.cause : null, retired = cause === 'retired', ap = Math.round(g.approval);
-    var done = g.th ? Object.keys(g.th.done).length : 0, forced = cause === 'clout' || cause === 'removed' || cause === 'revolt';
+    var done = g.th ? Object.keys(g.th.done).length : 0, forced = cause === 'clout' || cause === 'removed' || cause === 'revolt' || cause === 'deposed', life = cause === 'forlife';
     var parts = [
       { k: 'years', t: 'Years in power', v: Math.round((g.q + 1) / 4 * 10) },
       { k: 'wins', t: 'General elections won', v: (st.wins || 0) * 30 },
       { k: 'mid', t: 'Midterms held', v: (st.midHeld || 0) * 10 },
       { k: 'peak', t: 'Best approval', v: Math.round(st.peakA || 0) },
       { k: 'stories', t: 'Stories and events seen through', v: done * 15 + (st.arcs || 0) * 5 },
-      { k: 'exit', t: forced ? 'Forced out' : (retired ? 'Retired' : cause === 'election' || cause === 'successor' ? 'Voted out' : 'Left') + ' at ' + ap + '% approval', v: forced ? 0 : ap },
+      { k: 'exit', t: forced ? 'Forced out' : life ? 'Crowned for life at ' + ap + '% approval' : (retired ? 'Retired' : cause === 'election' || cause === 'successor' ? 'Voted out' : 'Left') + ' at ' + ap + '% approval', v: forced ? 0 : ap },
       { k: 'mess', t: 'Heat and open lawsuits left behind', v: -(Math.round(g.heat / 2) + 10 * g.suits.length) }
     ];
     var sub = 0; parts.forEach(function (x) { sub += x.v; });
-    var top = retired && g.approval >= 49.5, mult = top ? 1.5 : retired ? 1.25 : 1;
+    var top = retired && g.approval >= 49.5, mult = top ? 1.5 : retired || life ? 1.25 : 1;
     var total = Math.round(sub * mult);
-    return { parts: parts, sub: sub, mult: mult, multT: top ? 'Retired on top' : retired ? 'Retired on your own terms' : '', total: total, rank: legacyRank(total), retired: retired, top: top };
+    return { parts: parts, sub: sub, mult: mult, multT: top ? 'Retired on top' : retired ? 'Retired on your own terms' : life ? 'President for Life' : '', total: total, rank: legacyRank(total), retired: retired, top: top };
   }
   /* the epilogue: how the run ended, the era it reached, and how each story thread came out */
   function yearsText(q) { var y = Math.floor((q + 1) / 4); return y < 1 ? 'less than a year' : y === 1 ? 'a year' : y + ' years'; }
@@ -4618,7 +4709,9 @@ var PRESNAMES = (function (mix) {
       successor: 'Your successor lost, and the party\'s run ended after ' + y + '.',
       removed: 'Congress removed you from office after ' + y + '.',
       revolt: 'Your own party pushed you out after ' + y + '.',
-      clout: 'The money ran out after ' + y + '.'
+      clout: 'The money ran out after ' + y + '.',
+      forlife: 'You made yourself President for Life after ' + y + ', with ' + ap + '% approval. The history books are still arguing.',
+      deposed: 'The backlash to your emergency powers deposed you after ' + y + '.'
     };
     L.push({ k: 'open', t: open[cause] || ('The run ended after ' + y + '.') });
     if (g.pres > 1) L.push({ k: 'pres', t: 'Your party held the White House through ' + g.pres + ' presidents.' });
@@ -4637,7 +4730,7 @@ var PRESNAMES = (function (mix) {
       var seats = -24 + (g.approval - 50) * 1.5 + (g.base - 50) * 0.25 + (on(g, 'party') ? 6 : 0) + (on(g, 'dark') ? 4 : 0) + (on(g, 'stateparty') ? 2 : 0) + (on(g, 'pacnet') ? 5 : 0) + ((g.fund && g.fund.seats) || 0) + LV.hpoll.seats[staffLvl(g, 'hpoll')] + (traitOn(g, 'connected') ? 2 : 0) + g.camp * 2 + (g.presTerm === 2 ? -7 : 0) - D.SUIT_T.finance.seats * suitCount(g, 'finance') - 0.3 * Math.max(0, g.house.m - 15); /* v6.5: a big cushion puts more seats in play */
       return { type: 'mid', mean: seats, spread: 5 * (mandOn(g, 'swing') ? 2 : 1), margin: g.house.m, sixYear: g.presTerm === 2 };
     }
-    var succ = g.presTerm === 2;
+    var succ = g.presTerm === 2 && !powerOn(g, 'term'); /* v8.5: A THIRD TERM runs you again */
     /* incumbent: two party vote tracks approval (Gallup: 50%+ incumbents all won; 34 to 37% lost).
        successor: the outgoing record only partly transfers, and voters want a change. */
     var vote = succ
@@ -4688,6 +4781,7 @@ var PRESNAMES = (function (mix) {
         g.house.m = clamp(Math.max(Math.round(hm0 + coat), fresh) + ((g.fund && g.fund.seats) || 0), -150, HOUSE_MAX);
         el.coat = { from: 217 + Math.round(hm0), to: 217 + Math.round(g.house.m) };
         el.ann = pj.succession ? 'NEW PRESIDENT' : 'REELECTED';
+        if (!pj.succession && g.presTerm === 2 && powerOn(g, 'term')) { el.forlife = true; el.ann = 'PRESIDENT FOR LIFE'; g.stats.forlife = 1; }
         el.unlock = !pj.succession && !g.flags.tier2;
         g.trans = { kind: pj.succession ? 'successor' : 'reelect', vote: result, mandate: mandate };
         if (!pj.succession) g.flags.tier2 = 1; /* second term powers show in The Machine right after the win */
@@ -4709,6 +4803,54 @@ var PRESNAMES = (function (mix) {
     }
     g.phase = 'afterElection';
     return el;
+  }
+
+  /* ---------- v8.5: emergency powers (the Director's answer A on issue 2296). New presidency only. Hold approval 60%+,
+     base 75+, a market BOOM (or a BUBBLE) and a House SUPERMAJORITY at two closes in a row and the powers open between
+     quarters. Each pays every quarter and adds 3 heat. Fall off the line (approval under 50, base under 60, heat 80+) while
+     holding any and a BACKLASH strips them all, adds 30 heat and names a special counsel; a backlash that takes heat to
+     100 deposes you. Win a general election on A THIRD TERM and you are President for Life. Nothing here draws a die: a
+     run that never seizes a power plays exactly as before. ---------- */
+  var POW = {}; (D.POWERS || []).forEach(function (x) { POW[x.id] = x; });
+  var EP_LINE = { a: 60, b: 75, q: 2, fallA: 50, fallB: 60, fallH: 80, heat: 30, ban: 2, decree: 20 };
+  var COUNSEL = { n: 'SPECIAL COUNSEL', d: 8, q: 8, t: 'ethics' };
+  function epOn(g) { return erasOn(g) && !!(D.POWERS && D.POWERS.length); }
+  function epMet(g) { var m = mktLevel(g).id; return g.approval >= EP_LINE.a && g.base >= EP_LINE.b && (m === 'boom' || m === 'bubble') && houseLevel(g).id === 'super'; }
+  function epFell(g) { return g.approval < EP_LINE.fallA || g.base < EP_LINE.fallB || g.heat >= EP_LINE.fallH; }
+  function powerOn(g, id) { return !!(g.ep && g.ep.held[id] !== undefined); }
+  function powersHeld(g) { return (D.POWERS || []).filter(function (x) { return powerOn(g, x.id); }).map(function (x) { return x.id; }); }
+  function powersOpen(g) { return epOn(g) && !!g.ep && g.ep.streak >= EP_LINE.q; }
+  function powerState(g, id) {
+    if (!POW[id] || !epOn(g)) return 'hidden';
+    if (powerOn(g, id)) return 'held';
+    return powersOpen(g) && g.phase === 'report' ? 'available' : 'locked';
+  }
+  function seize(g, id) {
+    if (powerState(g, id) !== 'available') return { ok: false };
+    g.ep.held[id] = g.q; g.ep.n++;
+    g.stats.powers = (g.stats.powers || 0) + 1;
+    return { ok: true, id: id };
+  }
+  /* the close: the backlash first (it strips the court before the court can act), then the court, then the line */
+  function epClose(g, rep) {
+    if (!epOn(g)) return;
+    if (!g.ep) g.ep = { streak: 0, held: {}, n: 0, lash: 0 };
+    var held = powersHeld(g);
+    if (held.length && epFell(g)) {
+      g.ep.held = {}; g.ep.streak = 0; g.ep.lash++;
+      g.stats.backlash = (g.stats.backlash || 0) + 1;
+      g.heat = clamp(g.heat + EP_LINE.heat, 0, 100);
+      rep.backlash = { lost: held, suit: addSuit(g, COUNSEL), deposed: g.heat >= 100 };
+      g.ql.ann = rep.backlash.deposed ? 'DEPOSED' : 'BACKLASH';
+      return;
+    }
+    if (powerOn(g, 'court') && g.suits.length) {
+      rep.courted = g.suits.map(function (s) { logSuit(g, s.n); return s.n; });
+      g.suits = [];
+    }
+    var was = powersOpen(g);
+    g.ep.streak = epMet(g) ? g.ep.streak + 1 : 0;
+    rep.ep = { streak: g.ep.streak, met: epMet(g), opened: !was && powersOpen(g), held: powersHeld(g) };
   }
 
   /* ---------- the Machine ---------- */
@@ -4880,8 +5022,8 @@ var PRESNAMES = (function (mix) {
       /* which term of the current president will it be by then (assuming wins) */
       var pt = ((g.presTerm - 1) + (Math.floor(qq / 16) - Math.floor(g.q / 16))) % 2 + 1;
       if (qq % 16 === 7) ev = 'MIDTERMS';
-      else if (qq % 16 === 15) ev = pt === 2 ? 'SUCCESSOR RACE' : 'ELECTION';
-      else if (qq % 16 === 12 && pt === 2) ev = 'TERM LIMIT';
+      else if (qq % 16 === 15) ev = pt === 2 && !powerOn(g, 'term') ? 'SUCCESSOR RACE' : pt === 2 ? 'FOR LIFE' : 'ELECTION';
+      else if (qq % 16 === 12 && pt === 2 && !powerOn(g, 'term')) ev = 'TERM LIMIT';
       var fx = byQ[i] || null;
       var fol = g.fol.some(function (f) { return f.at === qq; });
       if (ev || fx || fol) out.push({ d: i, ev: ev, fx: fx, fol: fol });
@@ -4898,7 +5040,7 @@ var PRESNAMES = (function (mix) {
   function dailySetup(d) {
     var h = strHash('httc-daily-' + d), ids = (D.MANDATES || []).map(function (m) { return m.id; });
     var a = ids.splice(mix(h, 1) % ids.length, 1)[0], b = ids.splice(mix(h, 2) % ids.length, 1)[0];
-    return { d: d, seed: (h % 2147483646) + 1, origin: D.ORIGINS[mix(h, 3) % D.ORIGINS.length].id, mand: [a, b] };
+    return { d: d, seed: (h % 2147483646) + 1, origin: DAILY_ORIG[mix(h, 3) % DAILY_ORIG.length].id, mand: [a, b] };
   }
   var DAILY_Q = 15;
   function dailyDone(g) { return !!(g && g.daily) && (g.phase === 'over' || (g.phase === 'report' && g.q >= DAILY_Q)); }
@@ -4975,6 +5117,7 @@ var PRESNAMES = (function (mix) {
     newGame: newGame, current: current, preview: preview, choose: choose,
     LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, nameFill: nameFill, nameFor: nameFor, PRESNAMES: PRESNAMES, NAME_SC: NAME_SC, madeOk: madeOk, mix: mix, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
     endQuarter: endQuarter, nextQuarter: nextQuarter,
+    POW: POW, EP_LINE: EP_LINE, epOn: epOn, epMet: epMet, epFell: epFell, powerOn: powerOn, powersHeld: powersHeld, powersOpen: powersOpen, powerState: powerState, seize: seize,
     projection: projection, campaign: campaign, election: election, houseTier: houseTier, PTY: PTY, partyState: partyState, fundParty: fundParty, leaseLeft: leaseLeft, leaseOut: leaseOut, ARC: ARC, arcMult: arcMult, arcRun: arcRun, arcEnding: arcEnding, econMult: econMult, mktOn: mktOn, HOUSE_LV: HOUSE_LV, houseLevel: houseLevel, houseLevelOf: houseLevelOf, houseNext: houseNext, houseSeats: houseSeats, houseMove: houseMove, MKT_LV: MKT_LV, MKT_X: MKT_X, mktLevel: mktLevel, mktLevelOf: mktLevelOf, mktNext: mktNext, crashChance: crashChance, optCost: optCost, dismissChance: dismissChance, suitOpen: suitOpen,
     build: build, buildState: buildState, settle: settle, settleCost: settleCost, suitDrain: suitDrain,
     income: income, upcoming: upcoming, mentions: mentions, dateOf: dateOf,
@@ -5541,7 +5684,14 @@ var ART = (function () {
     celeb: function (s, t, f) { s.jacket = ['#8a3fd0', '#ff6fae', '#2bb3a3', '#e0782a'][f ? f.t : 0]; s.shirt = s.jacket; s.open = true; s.acc = s.acc.filter(function (a) { return a !== 'glasses'; }); s.acc.push('shades'); s.bg = '#ffcf7a'; },
     tycoon: function (s) { s.jacket = '#141726'; s.shirt = '#f7f3e6'; s.tie = '#f0b429'; s.acc.push('square'); s.bg = '#f7f3e6'; },
     gen: function (s) { s.jacket = '#4a5a2e'; s.shirt = '#c9c6a0'; s.tie = '#2a3318'; s.acc.push('medals'); s.bg = '#c9c6bd'; },
-    vp: function (s, t) { s.jacket = '#1d2a57'; s.shirt = '#f7f3e6'; s.tie = t; s.acc.push('pin'); s.bg = '#e8dcae'; }
+    vp: function (s, t) { s.jacket = '#1d2a57'; s.shirt = '#f7f3e6'; s.tie = t; s.acc.push('pin'); s.bg = '#e8dcae'; },
+    /* v8.4, the origins the Legacy stars unlock: Governor a charcoal suit and the flag pin on a state house green, Influencer
+       a teal blazer on a ring light's lilac, Astronaut a white flight jacket on the night sky, Judge the black robe and a
+       white collar on oak; each wears the face's own tie, as the Career Politician does */
+    gov: function (s, t) { s.jacket = '#3a3d52'; s.shirt = '#f7f3e6'; s.tie = t; s.acc.push('pin'); s.bg = '#cfe6c8'; },
+    infl: function (s, t) { s.jacket = '#1f9e8f'; s.shirt = '#f7f3e6'; s.tie = t; s.bg = '#e6c8f5'; },
+    astro: function (s, t) { s.jacket = '#e4e6ee'; s.shirt = '#9aa0b4'; s.tie = t; s.acc.push('square'); s.bg = '#2a3160'; },
+    judge: function (s, t) { s.jacket = '#16161e'; s.shirt = '#ffffff'; s.tie = t; s.bg = '#c8a878'; }
   };
   /* the lookalikes: caricatures of historical presidents, unnamed (the Director's answer A on issue 511) */
   var LOOKS = {
@@ -6264,7 +6414,7 @@ var CAST32 = (function (ART, F2) {
   'use strict';
   const E = HTTC, D = HTTC_DATA, A = ART;
   const $ = (id) => document.getElementById(id);
-  const KEYS = { save: 'httc.save.v1', best: 'httc.best.v1', hall: 'httc.hall.v1', medals: 'httc.medals.v1', prefs: 'httc.prefs.v2', chap: 'httc.chap.v1', daily: 'httc.daily.v1', live: 'httc.live.v1', slot: (i) => 'httc.slot.' + i };
+  const KEYS = { save: 'httc.save.v1', best: 'httc.best.v1', hall: 'httc.hall.v1', medals: 'httc.medals.v1', stars: 'httc.stars.v1', prefs: 'httc.prefs.v2', chap: 'httc.chap.v1', daily: 'httc.daily.v1', live: 'httc.live.v1', slot: (i) => 'httc.slot.' + i };
   const SCREENS = ['scr-title', 'scr-origin', 'scr-desk', 'scr-report', 'scr-machine', 'scr-war', 'scr-night', 'scr-over', 'scr-how', 'scr-camp', 'scr-daily', 'scr-hall', 'scr-medals'];
   const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   let G = null, screen = 'scr-title', tick = 0, sceneLoc = 'oval', busy = false, blinkAt = 20, adTier = 0;
@@ -6694,6 +6844,65 @@ var CREATOR = (function (F, N, mix) {
     return { LIST: LIST, BY: BY, N: LIST.length, judge: judge };
   })();
   /* ===== MEDALS END ===== */
+  /* ===== AMBITIONS BEGIN ===== */
+  /* v8.3: Ambitions and Legacy stars (the Director's answer A on issue 2257). Every term of a New presidency deals three
+     ambitions on The Wire; pick one in the term's first year and finish it by the term's end for a Legacy star. A reach
+     ambition is done the moment it is met; a keep ambition must hold every quarter of the whole term. Each one reads the
+     run as it already stands (its history line, its votes, its counters against the term's first quarter, the House seats
+     sampled each quarter), so an ambition never reads or draws the rules' dice, and the deal comes from a hash of the seed
+     and the term (E.mix), never srnd. Stars hang on the run's Hall frame beside its medals; the medal case counts them,
+     and every ten different medals in the case count one more. */
+  var AMBITIONS = (function () {
+    function pts(g, w) { return (g.hist || []).filter(function (p) { return p.q >= w.from && p.q < w.to; }); }
+    function vts(g, w, t) { return (g.votes || []).filter(function (v) { return v.type === t && v.q >= w.from && v.q < w.to; }); }
+    function d(g, w, k) { return ((g.stats && g.stats[k]) || 0) - ((w.s0 && w.s0[k]) || 0); }
+    function every(g, w, k, ok) { return pts(g, w).every(function (p) { return ok(p[k]); }); }
+    function some(g, w, k, ok) { return pts(g, w).some(function (p) { return ok(p[k]); }); }
+    function streak(g, w, k, ok) { var best = 0, cur = 0; pts(g, w).forEach(function (p) { cur = ok(p[k]) ? cur + 1 : 0; if (cur > best) best = cur; }); return best; }
+    function built(g) { return Object.keys(g.built || {}).length; }
+    var LIST = [
+      { id: 'high', k: 'reach', a: 1, ico: 'approval', name: 'HIGH NOON', how: 'Reach 65% approval this term', ok: function (g, w) { return some(g, w, 'a', function (v) { return v >= 65; }); } },
+      { id: 'landslide', k: 'reach', ico: 'vote', name: 'LANDSLIDE', how: 'Win this term\'s general election with 55% or more', ok: function (g, w) { return vts(g, w, 'gen').some(function (v) { return v.won && v.result >= 55; }); } },
+      { id: 'holdmid', k: 'reach', house: 1, ico: 'house', name: 'HOLD THE LINE', how: 'Hold the House at this term\'s midterms', ok: function (g, w) { return vts(g, w, 'mid').some(function (v) { return v.won; }); } },
+      { id: 'chest', k: 'reach', ico: 'clout', name: 'DEEP POCKETS', how: 'Earn 1,200 clout this term', ok: function (g, w) { return d(g, w, 'earned') >= 1200; } },
+      { id: 'builder', k: 'reach', ico: 'pillar', name: 'THE BUILDER', how: 'Get three new things from The Machine this term', ok: function (g, w) { return built(g) - ((w.s0 && w.s0.built) || 0) >= 3; } },
+      { id: 'scout', k: 'reach', ico: 'staff', name: 'TALENT SCOUT', how: 'Hire two staffers this term', ok: function (g, w) { return d(g, w, 'hires') >= 2; } },
+      { id: 'fire', k: 'reach', ico: 'heat', name: 'UNDER FIRE', how: 'See three events through this term', ok: function (g, w) { return d(g, w, 'arcs') >= 3; } },
+      { id: 'story', k: 'reach', ico: 'book', name: 'THE NARRATIVE', how: 'See a story thread through this term', ok: function (g, w) { return d(g, w, 'threads') >= 1; } },
+      { id: 'bull', k: 'reach', ico: 'mkt', name: 'BULL MARKET', how: 'Keep the market at 110 or more for four quarters in a row', ok: function (g, w) { return streak(g, w, 'm', function (v) { return v >= 110; }) >= 4; } },
+      { id: 'clean', k: 'keep', ico: 'leaf', name: 'CLEAN TERM', how: 'Keep heat at 25 or under all term', ok: function (g, w) { return every(g, w, 'h', function (v) { return v <= 25; }); } },
+      { id: 'court', k: 'keep', ico: 'suit', name: 'NO DEALS', how: 'Face a lawsuit and settle none all term', ok: function (g, w) { return d(g, w, 'settled') <= 0; }, end: function (g, w) { return d(g, w, 'suits') >= 1; } },
+      { id: 'majority', k: 'keep', house: 1, ico: 'house', name: 'BIG MAJORITY', how: 'Keep 250 House seats or more all term', ok: function (g, w) { return w.lo === undefined || w.lo >= 250; } },
+      { id: 'fired', k: 'keep', ico: 'base', name: 'FIRED UP', how: 'Keep your base at 55 or more all term', ok: function (g, w) { return every(g, w, 'b', function (v) { return v >= 55; }); } },
+      { id: 'solo', k: 'keep', ico: 'phone', name: 'NO FAVORS', how: 'Use no lifeline all term', ok: function (g, w) { return d(g, w, 'favors') <= 0; } },
+      { id: 'steady', k: 'keep', ico: 'down', name: 'NO SLUMP', how: 'Keep the market at 95 or more all term', ok: function (g, w) { return every(g, w, 'm', function (v) { return v >= 95; }); } },
+      { id: 'water', k: 'keep', a: 1, ico: 'up', name: 'ABOVE WATER', how: 'Keep approval at 50% or more all term', ok: function (g, w) { return every(g, w, 'a', function (v) { return v >= 50; }); } }
+    ];
+    var BY = {}; LIST.forEach(function (x) { BY[x.id] = x; });
+    var TERM_Q = 16, PICK_Q = 4, MEDALS_PER_STAR = 10;
+    /* what the term's counters stood at when it began: an ambition counts from here */
+    function snap(g) { var s = g.stats || {}; return { earned: s.earned || 0, hires: s.hires || 0, arcs: s.arcs || 0, threads: s.threads || 0, settled: s.settled || 0, suits: s.suits || 0, favors: s.favors || 0, built: built(g) }; }
+    /* three for this term, from a hash of the seed and the term; never last term's pick, never a House one without the House */
+    function offer(g, E, last) {
+      var house = E.storyHas(g, 'house'), base = E.mix(g.seed | 0, 2257 + (g.termIdx | 0));
+      return LIST.filter(function (x) { return x.id !== last && (house || !x.house); })
+        .map(function (x, i) { return { id: x.id, r: E.mix(base, i + 1) }; })
+        .sort(function (p, q) { return p.r - q.r; }).slice(0, 3).map(function (x) { return x.id; });
+    }
+    function win(rec, to) { return { from: rec.at, to: to, s0: rec.s0, lo: rec.lo }; }
+    function test(g, x, w) { try { return !!x.ok(g, w); } catch (e) { return false; } }
+    /* live: 'done' (met), 'on' (still to play for) or 'lost' (a keep ambition broken) */
+    function state(g, rec) { var x = BY[rec.id]; if (!x) return 'lost'; var ok = test(g, x, win(rec, Infinity)); return x.k === 'reach' ? (ok ? 'done' : 'on') : (ok ? 'on' : 'lost'); }
+    /* at the term's end (to: its first quarter after), or the run's end; full when every quarter of the term was played */
+    function final(g, rec, to, full) {
+      var x = BY[rec.id], w = win(rec, to); if (!x || !test(g, x, w)) return false;
+      if (x.k === 'reach') return true;
+      if (!full) return false;
+      try { return !x.end || !!x.end(g, w); } catch (e) { return false; }
+    }
+    return { LIST: LIST, BY: BY, N: LIST.length, TERM_Q: TERM_Q, PICK_Q: PICK_Q, MEDALS_PER_STAR: MEDALS_PER_STAR, snap: snap, offer: offer, state: state, final: final };
+  })();
+  /* ===== AMBITIONS END ===== */
   /* v8.1: the Hall of Presidents (the Director's answer A on issue 2191). Every New presidency run, good or bad, hangs
      one frame when its final edition shows: the run's first president (the one you made in the creator, a lookalike or
      the seed's face) by name, the origin, years in power, peak approval, the run's biggest headline, how it ended and the
@@ -6718,6 +6927,7 @@ var CREATOR = (function (F, N, mix) {
     const h = getHall(), fr = hallFrame(g), had = h.runs.find((x) => x.id === fr.id);
     if (had) return had;
     fr.md = MEDALS.judge(g, E);   /* v8.2: the medals the run earned, judged once as it hangs */
+    fr.st = ambClose(g);   /* v8.3: the Legacy stars its ambitions earned */
     fr.no = h.n + 1; h.n = fr.no; h.runs.unshift(fr); if (h.runs.length > HALL_MAX) h.runs.length = HALL_MAX;
     if (!lsSet(KEYS.hall, JSON.stringify(h))) return null;
     const mc = getMedals(), fresh = [];
@@ -6732,6 +6942,87 @@ var CREATOR = (function (F, N, mix) {
   function medalHTML(id, named) {
     const m = MEDALS.BY[id]; if (!m) return '';
     return '<span class="medal-chip" data-medal="' + m.id + '"><span class="medal t-' + m.t + '" title="' + esc(m.name) + '">' + ic(m.ico) + '</span>' + (named ? '<span class="md-name">' + esc(m.name) + '</span>' : '') + '</span>';
+  }
+  /* v8.3: the run's ambitions, as G.amb = { skip, s0: { term, at, v, lo }, off: { term, ids }, cur: { term, id }, done: [{ term, id, ok }] }:
+     the term a guided first term skips, what the term's counters stood at when it began (and its lowest House seats so far),
+     this term's three on offer, the one picked, and every term judged. The stars live in httc.stars.v1 as { n, got, keys }:
+     how many were earned, how often each ambition, and one key per run and term so a reload never pays a star twice. */
+  const ambOn = (g) => !!g && !g.story && !g.chap && !g.daily;
+  function ambOf(g) { if (!g.amb) g.amb = { skip: 0, done: [] }; if (!g.amb.done) g.amb.done = []; return g.amb; }
+  function getStars() { try { const s = JSON.parse(lsGet(KEYS.stars)); if (s && typeof s.n === 'number' && s.got && typeof s.got === 'object' && s.keys && typeof s.keys === 'object') return s; } catch (e) { /* corrupt */ } return { n: 0, got: {}, keys: {} }; }
+  const medalStars = () => Math.floor(medalWon() / AMBITIONS.MEDALS_PER_STAR);
+  const starsTotal = () => getStars().n + medalStars();
+  /* v8.4: the four origins the Legacy stars unlock (the Director's answer A on issue 2257, its second build). An origin with
+     stars in data.js opens once the stars in the case (earned plus the medals' own) reach it, and stays open. prefs.orig
+     keeps { ann, seen }: the unlocks the final edition has announced and those the origin screen has shown as NEW. */
+  const STAR_ORIGINS = D.ORIGINS.filter((o) => o.stars);
+  function origOf() { if (!prefs.orig || typeof prefs.orig !== 'object') prefs.orig = {}; ['ann', 'seen'].forEach((k) => { if (!prefs.orig[k] || typeof prefs.orig[k] !== 'object') prefs.orig[k] = {}; }); return prefs.orig; }
+  const originOpen = (o, n) => !!o && (!o.stars || (n === undefined ? starsTotal() : n) >= o.stars);
+  function originsAnnounce() {
+    const po = origOf(), n = starsTotal(), fresh = STAR_ORIGINS.filter((o) => originOpen(o, n) && !po.ann[o.id]);
+    fresh.forEach((o) => { po.ann[o.id] = 1; }); if (fresh.length) savePrefs();
+    return fresh;
+  }
+  function keepStar(g, d) {
+    if (!d.ok) return;
+    const s = getStars(), k = (g.seed | 0) + '.' + d.term + '.' + d.id;
+    if (s.keys[k]) return;
+    s.keys[k] = 1; s.n++; s.got[d.id] = (s.got[d.id] || 0) + 1; lsSet(KEYS.stars, JSON.stringify(s));
+  }
+  function ambSeats(g) { const am = g.amb; if (!am || !am.s0 || !E.storyHas(g, 'house')) return; const s = E.houseSeats(g); am.s0.lo = am.s0.lo === undefined ? s : Math.min(am.s0.lo, s); }
+  const ambRec = (am) => ({ id: am.cur.id, at: am.s0.at, s0: am.s0.v, lo: am.s0.lo });
+  function ambCard(d) {
+    const x = AMBITIONS.BY[d.id]; if (!x) return null;   /* an id this build does not know (an older or newer save) says nothing */
+    return d.ok ? ['Legacy star earned', x.name + ' is done: ' + x.how.charAt(0).toLowerCase() + x.how.slice(1) + '. Its star hangs on this run\'s frame in the Hall of Presidents.']
+      : ['Ambition missed', x.name + ' slipped away this term. The new term deals three more on The Wire.'];
+  }
+  /* each quarter, after the rules move on: judge a term that just ended, start the new term's count, sample the House */
+  function ambTick(g) {
+    if (!ambOn(g) || g.over) return [];
+    const am = ambOf(g), out = [];
+    if (am.cur && am.s0 && am.cur.term === am.s0.term && am.cur.term !== g.termIdx) {
+      const d = { term: am.cur.term, id: am.cur.id, ok: AMBITIONS.final(g, ambRec(am), g.termStart, true) };
+      am.done.push(d); am.cur = null; keepStar(g, d); const c = ambCard(d); if (c) out.push(c);
+    }
+    if (!am.s0 || am.s0.term !== g.termIdx) am.s0 = { term: g.termIdx, at: g.termStart, v: AMBITIONS.snap(g) };
+    ambSeats(g);
+    return out;
+  }
+  /* the run's end: an ambition still open is judged on the quarters played (a keep ambition needs the whole term) */
+  function ambClose(g) {
+    const am = g.amb; if (!am || !am.done) return [];
+    if (am.cur && am.s0 && am.cur.term === am.s0.term) {
+      const to = g.over.q + 1, d = { term: am.cur.term, id: am.cur.id, ok: AMBITIONS.final(g, ambRec(am), to, to - am.s0.at >= AMBITIONS.TERM_Q) };
+      am.done.push(d); am.cur = null; keepStar(g, d);
+    }
+    return am.done.filter((d) => d.ok).map((d) => d.id);
+  }
+  function starHTML(id, named) {
+    const x = AMBITIONS.BY[id]; if (!x) return '';
+    return '<span class="star-chip" data-star="' + x.id + '"><span class="lstar" title="' + esc(x.name) + '">' + ic('star') + '</span>' + (named ? '<span class="md-name">' + esc(x.name) + '</span>' : '') + '</span>';
+  }
+  const AMB_ST = { on: 'ON TRACK', done: 'DONE · THE STAR COMES AT THE TERM\'S END', lost: 'BROKEN · NO STAR THIS TERM' };
+  /* The Wire: the three on offer in the term's first year, then the one you picked and how it stands */
+  function ambBox() {
+    if (!ambOn(G) || G.over || !G.amb || !G.amb.s0 || G.amb.s0.term !== G.termIdx || G.amb.skip === G.termIdx) return '';
+    const am = G.amb;
+    if (am.cur && am.cur.term === G.termIdx) {
+      const x = AMBITIONS.BY[am.cur.id]; if (!x) return '';
+      const st = x.a && isBlind() ? 'dark' : AMBITIONS.state(G, ambRec(am));
+      return '<section class="ambbox mine st-' + st + '" id="ambbox" data-amb-state="' + st + '"><div class="ab-top"><b>' + ic('star') + 'YOUR AMBITION · ' + esc(x.name) + '</b><span>' + esc(st === 'dark' ? 'POLLS DARK' : AMB_ST[st]) + '</span></div><p>' + numify(x.how + (x.k === 'keep' ? ', every quarter to the term\'s end.' : ', by the term\'s end.')) + '</p></section>';
+    }
+    const left = am.s0.at + AMBITIONS.PICK_Q - G.q;
+    if (left <= 0) return '';
+    const last = am.done.length ? am.done[am.done.length - 1].id : null;
+    if (!am.off || am.off.term !== G.termIdx) am.off = { term: G.termIdx, ids: AMBITIONS.offer(G, E, last) };
+    return '<section class="ambbox" id="ambbox"><div class="ab-top"><b>' + ic('star') + 'AMBITIONS FOR THIS TERM</b><span>' + N(left === 1 ? 'PICK BY THE END OF NEXT QUARTER' : 'PICK ONE · ' + left + ' QUARTERS LEFT TO PICK') + '</span></div>' +
+      '<p>' + numify('Finish the one you pick by the end of the term for a Legacy star. REACH is done once you get there; KEEP must hold every quarter of the term.') + '</p><div class="amb-list">' +
+      am.off.ids.map((id) => { const x = AMBITIONS.BY[id], gone = x.k === 'keep' && !(x.a && isBlind()) && AMBITIONS.state(G, { id: id, at: am.s0.at, s0: am.s0.v, lo: am.s0.lo }) === 'lost';
+        return '<button class="amb-pick" data-amb="' + id + '"' + (gone ? ' disabled' : '') + '><span class="ap-ico">' + ic(x.ico) + '</span><span class="ap-t"><b>' + esc(x.name) + '</b><span>' + numify(x.how) + '</span></span><i class="ap-k">' + (gone ? 'BROKEN' : x.k === 'keep' ? 'KEEP' : 'REACH') + '</i></button>'; }).join('') + '</div></section>';
+  }
+  function pickAmbition(id) {
+    if (!ambOn(G) || !G.amb || !G.amb.off || G.amb.off.term !== G.termIdx || G.amb.off.ids.indexOf(id) < 0 || (G.amb.cur && G.amb.cur.term === G.termIdx)) return false;
+    G.amb.cur = { term: G.termIdx, id: id }; return true;
   }
 
   /* ---------- sound: tiny original chiptune blips ---------- */
@@ -7723,7 +8014,7 @@ var CREATOR = (function (F, N, mix) {
   /* v6.3: the desk shows approval before the quarter's close; say what the close did, so the two numbers agree */
   function closeNote(r) {
     if (r.aDesk === undefined || pa(r.a1) === pa(r.aDesk)) return '';
-    const names = { fatigue: 'fatigue', gravity: 'gravity', machine: 'the Machine', market: 'the market', events: 'events', landed: 'laws' };
+    const names = { fatigue: 'fatigue', gravity: 'gravity', machine: 'the Machine', market: 'the market', events: 'events', landed: 'laws', powers: 'the media ban' };
     const parts = Object.keys(r.aClose || {}).filter((k) => names[k] && Math.abs(r.aClose[k]) >= 0.1).map((k) => names[k]);
     const list = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0] || '';
     return '<p class="close-note">' + numify('You left the desk at ' + pa(r.aDesk) + '%. The quarter close moved it ' + sgn(pa(r.a1) - pa(r.aDesk)) + (list ? ': ' + list : '') + '.') + '</p>';
@@ -7759,7 +8050,7 @@ var CREATOR = (function (F, N, mix) {
     return '<div class="newbox ' + (up ? '' : 'bad') + ' mkbox"><b>' + ic('house') + 'HOUSE: ' + a.name + ' → ' + b.name + ' · ' + N(r.hSeats0 + ' → ' + r.hSeats1) + ' SEATS</b><span>' + t + '</span></div>';
   }
   function whyChips(r) {
-    const names = { cards: 'Your calls', landed: 'Laws landing', fatigue: 'Voter fatigue', gravity: 'Partisan gravity', machine: 'The Machine', market: 'The market', events: 'Events' };
+    const names = { cards: 'Your calls', landed: 'Laws landing', fatigue: 'Voter fatigue', gravity: 'Partisan gravity', machine: 'The Machine', market: 'The market', events: 'Events', powers: 'Media ban' };
     const out = Object.keys(names).filter((k) => Math.abs(r.aBreak[k] || 0) >= 0.1).map((k) => {
       const v = r.aBreak[k];
       return '<span class="' + (v >= 0 ? 'up' : 'down') + '">' + esc(names[k]) + ' ' + N(sgn1(v)) + '</span>';
@@ -7804,6 +8095,41 @@ var CREATOR = (function (F, N, mix) {
         tl.on.map((t) => { const d = Math.max(1, t.next - G.q); return '<li><span>' + esc(t.name) + '</span><i>' + N('PART ' + (t.part + 1) + ' OF ' + t.of) + ' · ' + (d === 1 ? 'NEXT QUARTER' : 'IN ' + N(d) + ' QTRS') + '</i></li>'; }).join('') + '</ul></section>';
     }
     return h;
+  }
+  /* v8.5: emergency powers (issue 2296 A): the line, the powers open between quarters, the backlash */
+  function powersBox(r) {
+    if (!E.epOn(G)) return '';
+    const L = E.EP_LINE, held = E.powersHeld(G), open = E.powersOpen(G);
+    let h = '';
+    if (r.backlash) h += '<div class="newbox bad" id="backlash"><b>' + ic('heat') + (r.backlash.deposed ? 'DEPOSED' : 'BACKLASH') + '</b><span>' + numify('The country turned on ' + r.backlash.lost.map((id) => E.POW[id].name).join(', ') + '. Every power is gone, heat +' + L.heat + ', and a ' + r.backlash.suit + ' opens for ' + 8 + ' quarters.' + (r.backlash.deposed ? ' Heat hit 100: you are out.' : '')) + '</span></div>';
+    if (r.courted && r.courted.length) h += '<div class="newbox" id="courted"><b>' + ic('suit') + 'YOUR COURT RULES</b><span>' + esc(r.courted.join(', ')) + ' thrown out.</span></div>';
+    if (!open && !held.length) {
+      if (r.ep && r.ep.met) h += '<section class="powbox soon" id="powbox"><div class="pw-top"><b>' + ic('crown') + 'THE CONSTITUTION BENDS</b><span>' + N(r.ep.streak) + ' OF ' + N(L.q) + ' QUARTERS</span></div><p>' + numify('Approval ' + L.a + '%+, base ' + L.b + '+, a market BOOM and a House SUPERMAJORITY. Hold them all one more quarter and emergency powers open.') + '</p></section>';
+      return h;
+    }
+    h += '<section class="powbox' + (r.ep && r.ep.opened ? ' hot' : '') + '" id="powbox"><div class="pw-top"><b>' + ic('crown') + (r.ep && r.ep.opened ? 'EMERGENCY POWERS OPEN' : 'EMERGENCY POWERS') + '</b><span>' + (held.length ? N(held.length) + ' HELD · HEAT +' + N(3 * held.length) + ' A QUARTER' : 'NONE HELD') + '</span></div>' +
+      (r.seized || []).map((id) => '<div class="pw-wire">' + ic('flag') + esc(E.POW[id].wire) + '</div>').join('') +
+      '<p>' + numify('Each pays every quarter and adds 3 heat. Fall under ' + L.fallA + '% approval or ' + L.fallB + ' base, or reach ' + L.fallH + ' heat, while holding any and a BACKLASH strips them all, adds ' + L.heat + ' heat and names a special counsel.') + '</p><ul>';
+    D.POWERS.forEach((p) => {
+      const st = E.powerState(G, p.id);
+      h += '<li class="pw-' + st + '"><div><b>' + ic(p.ico) + esc(p.name) + '</b><span>' + numify(p.pay) + '</span></div>' +
+        (st === 'held' ? '<i class="pw-held">HELD</i>' : st === 'available' ? '<button class="btn sm" data-seize="' + p.id + '">Seize</button>' : '<i>LOCKED</i>') + '</li>';
+    });
+    h += '</ul>' + (open ? '' : '<p class="pw-note">' + numify('The line broke: hold it ' + L.q + ' quarters again to seize more.') + '</p>') + '</section>';
+    return h;
+  }
+  function askSeize(id) {
+    const p = E.POW[id]; if (!p || E.powerState(G, id) !== 'available') return;
+    openModal('seize', '<h3>Seize ' + esc(p.name) + '?</h3><p>' + numify(p.pay + ' Heat +' + p.h + ' every quarter. A backlash takes it back, with interest.') + '</p><div class="row2"><button class="btn" id="sz-no">Not yet</button><button class="btn gold" id="sz-yes">Seize it</button></div>');
+    $('sz-no').addEventListener('click', () => { SFX.click(); closeModal(); });
+    $('sz-yes').addEventListener('click', () => { SFX.good(); closeModal(); doSeize(id); });
+  }
+  function doSeize(id) {
+    if (!G || !E.seize(G, id).ok) return false;
+    G.report.seized = (G.report.seized || []).concat([id]);
+    save(); renderReport(false);
+    const pb = $('powbox'); if (pb && pb.scrollIntoView) pb.scrollIntoView({ behavior: 'instant', block: 'center' });
+    return true;
   }
   /* retiring on top: the legacy as it would stand today */
   function legacyNow() { const x = JSON.parse(JSON.stringify(G)); E.retire(x); return E.legacyScore(x); }
@@ -7913,7 +8239,9 @@ var CREATOR = (function (F, N, mix) {
     h += eventBox(r);
     h += threadBox(r);
     if (G.trans) h += retireBox();
+    h += powersBox(r);   /* v8.5 */
     h += eraBox();
+    ambSeats(G); h += ambBox();   /* v8.3 */
     if (r.ready && r.ready.length && has('machine')) h += '<div class="newbox"><b>FINISHED BUILDING</b><span>' + r.ready.map((id) => esc(E.BUILD[id].name)).join(', ') + '. Working now.</span></div>';
     if (r.unlocked && r.unlocked.length && has('machine')) h += '<div class="newbox"><b>NEW IN THE MACHINE</b><span>' + r.unlocked.map((id) => esc(E.BUILD[id].name)).join(', ') + '</span></div>';
     if (r.walkouts && r.walkouts.length) {
@@ -7968,7 +8296,9 @@ var CREATOR = (function (F, N, mix) {
     if (!G.trans) h += retireBox();
     $('paper').innerHTML = h;
     if ($('btn-retire')) $('btn-retire').addEventListener('click', () => { SFX.click(); askRetire(); });
+    $('paper').querySelectorAll('[data-seize]').forEach((b) => b.addEventListener('click', () => { SFX.click(); askSeize(b.getAttribute('data-seize')); }));
     if ($('fav-pick-open')) $('fav-pick-open').addEventListener('click', () => { SFX.click(); openFavPick(); });
+    $('paper').querySelectorAll('[data-amb]').forEach((b) => b.addEventListener('click', () => { if (!pickAmbition(b.getAttribute('data-amb'))) return; SFX.good(); save(); renderReport(false); const ab = $('ambbox'); if (ab && ab.scrollIntoView) ab.scrollIntoView({ block: 'nearest' }); }));   /* v8.3 */
     $('paper').querySelectorAll('[data-jump]').forEach((b) => b.addEventListener('click', () => { SFX.click(); const t = $(b.getAttribute('data-jump')); if (t) t.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }));
     renderPurse('r-purse', animate ? G.clout - net : G.clout);
     if (animate) countUp($('r-purse-c'), G.clout - net, G.clout, T(700) + lines.length * T(90), (v) => String(r0(v)));
@@ -8669,6 +8999,7 @@ var CREATOR = (function (F, N, mix) {
     save();
     const list = noticeCards();
     earnLooks().forEach((id) => list.push(lookCard(id))); /* v7.2 */
+    ambTick(G).forEach((c) => list.push(c)); save();   /* v8.3: a term's ambition judged as the next term begins */
     if (list.length) SFX.good();
     queueNotices(list, () => { if (G.mandPick) openMandates(() => showDesk(true)); else showDesk(true); });
   }
@@ -9201,7 +9532,9 @@ var CREATOR = (function (F, N, mix) {
     successor: ['TORCH DROPPED', 'HEIR FLOPS, MACHINE COLLAPSES', 'Your successor lost. Voters wanted a change.'],
     removed: ['REMOVED', 'SENATE CONVICTS, PRESIDENT REMOVED', 'Heat hit 100 without a House majority, and your base was too small to save you.'],
     revolt: ['PARTY REVOLT', 'PARTY DUMPS PRESIDENT AS BASE TUNES OUT', 'Your own side stopped showing up. When the base hits zero, your party finds someone else.'],
-    retired: ['RETIRED', 'PRESIDENT BOWS OUT', 'You walked away on your own terms.']
+    retired: ['RETIRED', 'PRESIDENT BOWS OUT', 'You walked away on your own terms.'],
+    forlife: ['PRESIDENT FOR LIFE', 'PRESIDENT FOR LIFE', 'You won a third term on emergency powers. There will be no next election.'],
+    deposed: ['DEPOSED', 'PRESIDENT DEPOSED AS POWERS COLLAPSE', 'The backlash to your emergency powers sent heat to 100, and the country took the office back.']
   };
   /* v6.2: the legacy and the epilogue on the final edition */
   function legacyHTML(lg, rec) {
@@ -9249,6 +9582,9 @@ var CREATOR = (function (F, N, mix) {
     if (hung) h += '<p class="hall-hung" id="ov-hall">' + ic('crown') + 'YOUR PORTRAIT HANGS IN THE HALL OF PRESIDENTS · ' + N('No. ' + hung.no) + '</p>';
     if (hung && hung.md && hung.md.length) h += '<div class="md-won" id="ov-medals"><span class="lbl">MEDALS WON · ' + N(hung.md.length) + (hung.fresh && hung.fresh.length ? ' · ' + N(hung.fresh.length) + ' NEW' : '') + '</span><div class="md-row">' +
       hung.md.map((id) => medalHTML(id, true).replace('class="medal-chip"', 'class="medal-chip' + (hung.fresh && hung.fresh.indexOf(id) >= 0 ? ' new' : '') + '"')).join('') + '</div></div>';   /* v8.2 */
+    if (hung && hung.st && hung.st.length) h += '<div class="md-won st-won" id="ov-stars"><span class="lbl">LEGACY STARS · ' + N(hung.st.length) + '</span><div class="md-row">' + hung.st.map((id) => starHTML(id, true)).join('') + '</div></div>';   /* v8.3 */
+    const nuO = originsAnnounce();   /* v8.4: an origin these stars just opened */
+    if (nuO.length) h += '<p class="lk-won" id="ov-origins">' + ic('star') + 'ORIGIN UNLOCKED: ' + nuO.map((o) => esc(o.name)).join(', ') + ' · PICK IT FOR YOUR NEXT RUN</p>';
     if (won.length) h += '<p class="lk-won" id="ov-looks">' + ic('star') + 'LOOKALIKE UNLOCKED: ' + won.map((id) => esc(lookOf(id).name)).join(', ') + '</p>';
     h += '<figure class="fig"><figcaption><span>YOUR APPROVAL, WHOLE RUN</span></figcaption><canvas class="h-a" id="ov-a"></canvas></figure>';
     h += '<figure class="fig"><figcaption><span>WHO WAS TALKING ABOUT YOU</span><span>% OF SHOWS</span></figcaption><canvas class="h-m" id="ov-m"></canvas></figure>';
@@ -9277,7 +9613,8 @@ var CREATOR = (function (F, N, mix) {
       (fr.pres > 1 ? '<span>' + N(fr.pres) + ' PRESIDENTS</span>' : '') + '<span>LEGACY ' + N(fr.lg) + '</span></div>' +
       '<p class="hf-hl">' + numify(fr.hl || fr.head) + '</p>' +
       (fr.hl ? '<p class="hf-end">' + esc(fr.head) + '</p>' : '') +
-      (fr.md && fr.md.length ? '<div class="hf-medals md-row">' + fr.md.map((id) => medalHTML(id, true)).join('') + '</div>' : '');   /* v8.2: the medals the run earned */
+      (fr.md && fr.md.length ? '<div class="hf-medals md-row">' + fr.md.map((id) => medalHTML(id, true)).join('') + '</div>' : '') +   /* v8.2: the medals the run earned */
+      (fr.st && fr.st.length ? '<div class="hf-medals hf-stars md-row">' + fr.st.map((id) => starHTML(id, true)).join('') + '</div>' : '');   /* v8.3: its Legacy stars */
     h += epilogueHTML(fr.epi || []).replace(' id="epi"', '');
     return h + '</article>';
   }
@@ -9298,7 +9635,12 @@ var CREATOR = (function (F, N, mix) {
     show('scr-medals');
     const got = getMedals().got, won = medalWon();
     $('medals-count').innerHTML = N(won + ' / ' + MEDALS.N);
-    $('medals-list').innerHTML = MEDALS.LIST.map((m) => { const r = got[m.id], on = !!(r && r.n > 0);
+    const sg = getStars(), ms = medalStars();   /* v8.3: the Legacy stars lead the case */
+    const stars = '<section class="st-sum" id="stars-sum"><div class="st-head"><span class="lstar big">' + ic('star') + '</span><b>' + N('LEGACY STARS · ' + (sg.n + ms)) + '</b></div>' +
+      '<p class="mc-how">' + numify(sg.n + ' from ambitions finished, ' + ms + ' from medals (one for every ' + AMBITIONS.MEDALS_PER_STAR + ' different medals in the case). Every term of a New presidency deals three ambitions on The Wire.') + '</p>' +
+      '<div class="st-orig" id="stars-orig">' + STAR_ORIGINS.map((o) => '<span class="' + (originOpen(o, sg.n + ms) ? 'on' : 'off') + '" data-orig-case="' + o.id + '">' + esc(o.name) + ' · ' + N(originOpen(o, sg.n + ms) ? 'OPEN' : o.stars + (o.stars === 1 ? ' STAR' : ' STARS')) + '</span>').join('') + '</div>' +   /* v8.4: the origins the stars open */
+      '<div class="st-list">' + AMBITIONS.LIST.map((x) => { const n = sg.got[x.id] || 0; return '<div class="st-row' + (n ? ' got' : '') + '" data-amb-case="' + x.id + '">' + starHTML(x.id, false) + '<span class="st-t"><b>' + esc(x.name) + '</b><span>' + numify(x.how) + '</span></span><i>' + (n ? N('×' + n) : '') + '</i></div>'; }).join('') + '</div></section>';
+    $('medals-list').innerHTML = stars + MEDALS.LIST.map((m) => { const r = got[m.id], on = !!(r && r.n > 0);
       return '<article class="md-case' + (on ? ' got' : '') + '" data-case="' + m.id + '">' + medalHTML(m.id, false) + '<div class="mc-t"><b class="mc-name">' + esc(m.name) + '</b><span class="mc-how">' + esc(m.how) + '</span>' +
         '<span class="mc-rec">' + (on ? numify('WON ' + (r.n === 1 ? 'ONCE' : r.n + ' TIMES') + ' · FIRST ON No. ' + r.first) : 'NOT YET WON') + '</span></div></article>'; }).join('');
     $('medals-list').scrollTop = 0;
@@ -9313,7 +9655,7 @@ var CREATOR = (function (F, N, mix) {
     if (s) { cont.hidden = false; cont.innerHTML = 'Continue · ' + numify(dateLabel(s.q)); } else cont.hidden = true;
     $('btn-load').hidden = !anySlot();
     const hl = getHall(); $('btn-hall').hidden = !hl.runs.length; $('btn-hall').innerHTML = 'Hall of Presidents' + (hl.runs.length ? ' · ' + N(hl.n) : '');   /* v8.1 */
-    const mw = medalWon(); $('btn-medals').hidden = !mw; $('btn-medals').innerHTML = 'Medal case' + (mw ? ' · ' + N(mw + ' of ' + MEDALS.N) : '');   /* v8.2 */
+    const mw = medalWon(), lsw = starsTotal(); $('btn-medals').hidden = !mw && !lsw; $('btn-medals').innerHTML = 'Medal case' + (mw ? ' · ' + N(mw + ' of ' + MEDALS.N) : '') + (lsw ? ' · ' + N(lsw + (lsw === 1 ? ' STAR' : ' STARS')) : '');   /* v8.2; v8.3 its Legacy stars */
     const sd = Object.keys(storyDone()).length, cd = Object.keys(campRes()).length;
     $('story-hint').hidden = !!(b || s || sd || cd);
     $('story-hint').innerHTML = 'NEW HERE? THE CAMPAIGN OPENS WITH ' + N(D.STORY.length) + ' QUICK TRAINING LESSONS.';
@@ -9378,7 +9720,7 @@ var CREATOR = (function (F, N, mix) {
      dice: the strip and DEAL A NAME come from the seed through mix(). A lookalike has no creator. */
   let made = null, crSt = null;
   const madeNow = () => (made && made.seed === nextSeed && !lookPick ? made : null);
-  const CR_DRESS = D.ORIGINS.map((o) => [o.id, o.name.split(' ').pop().toUpperCase()]);   /* SEE IT AS: each origin's last word, as data.js names it */
+  const CR_DRESS = () => D.ORIGINS.filter((o) => originOpen(o)).map((o) => [o.id, o.name.split(' ').pop().toUpperCase()]);   /* SEE IT AS: each open origin's last word, as data.js names it (v8.4: the locked ones wait) */
   const crStep = (dir, lbl) => '<button class="cr-step" data-dir="' + dir + '" aria-label="' + (dir < 0 ? 'Previous ' : 'Next ') + lbl + '">' + ic(dir < 0 ? 'left' : 'right') + '</button>';
   function openCreator() {
     const first = E.faceFor(nextSeed), own = CR.fromFace(first, E.nameFor(nextSeed)), m = madeNow();
@@ -9394,7 +9736,7 @@ var CREATOR = (function (F, N, mix) {
       '<div class="cr-part" data-name="first"><span class="pl">FIRST NAME</span>' + crStep(-1, 'first name') + '<b class="pv" id="cr-first"></b>' + crStep(1, 'first name') + '</div>' +
       '<div class="cr-part" data-name="last"><span class="pl">SURNAME</span>' + crStep(-1, 'surname') + '<b class="pv" id="cr-last"></b>' + crStep(1, 'surname') + '</div></div>' +
       '<div class="cr-deal"><button class="cr-b" id="cr-deal-face">DEAL A FACE</button><button class="cr-b" id="cr-deal-name">DEAL A NAME</button><button class="cr-b" id="cr-reset">START OVER</button></div>' +
-      '<div class="cr-dress" role="group" aria-label="See it in an origin\'s clothes"><span class="lbl">SEE IT AS</span>' + CR_DRESS.map((d) => '<button data-dress="' + d[0] + '">' + d[1] + '</button>').join('') + '</div><div class="cr-groups" id="cr-groups">';
+      '<div class="cr-dress" role="group" aria-label="See it in an origin\'s clothes"><span class="lbl">SEE IT AS</span>' + CR_DRESS().map((d) => '<button data-dress="' + d[0] + '">' + d[1] + '</button>').join('') + '</div><div class="cr-groups" id="cr-groups">';
     let grp = '';
     CR.PARTS.forEach((q) => {
       if (q.grp !== grp) { h += (grp ? '</div>' : '') + '<div class="cr-grp"><span class="lbl">' + esc(q.grp) + '</span>'; grp = q.grp; }
@@ -9469,12 +9811,22 @@ var CREATOR = (function (F, N, mix) {
   function renderOrigins() {
     if (nextSeed === null) nextSeed = (Math.random() * 2147483647) | 0; /* v7.2: the run's seed is dealt here, so each card can show your face */
     let h = tutPanel() + lookPanel();
+    const nS = starsTotal(), po = origOf();
     D.ORIGINS.forEach((o) => {
-      h += '<button class="origin-card" data-origin="' + o.id + '"><div class="o-head"><canvas class="px o-face" width="32" height="32" data-o="' + o.id + '" aria-hidden="true"></canvas><h3>' + esc(o.name) + '</h3></div><p class="tagl">' + esc(o.tag) + '</p>' +
+      if (!originOpen(o, nS)) {   /* v8.4: locked until the Legacy stars reach it */
+        h += '<button class="origin-card locked" disabled data-locked="' + o.id + '"><div class="o-head"><canvas class="px o-face" width="32" height="32" data-lo="' + o.id + '" aria-hidden="true"></canvas><div><h3>' + esc(o.name) + '</h3>' +
+          '<p class="o-lock"><span class="lstar">' + ic('star') + '</span>' + N('LOCKED · ' + o.stars + (o.stars === 1 ? ' LEGACY STAR' : ' LEGACY STARS') + ' · YOU HAVE ' + nS) + '</p></div></div><p class="tagl">' + esc(o.tag) + '</p>' +
+          '<p class="pf"><b>PERK</b> ' + numify(o.perk) + '</p><p class="pf"><i>FLAW</i> ' + numify(o.flaw) + '</p></button>';
+        return;
+      }
+      const isNew = o.stars && !po.seen[o.id];
+      h += '<button class="origin-card' + (isNew ? ' fresh' : '') + '" data-origin="' + o.id + '"><div class="o-head"><canvas class="px o-face" width="32" height="32" data-o="' + o.id + '" aria-hidden="true"></canvas><h3>' + esc(o.name) + (isNew ? ' <span class="o-new">NEW</span>' : '') + '</h3></div><p class="tagl">' + esc(o.tag) + '</p>' +
         '<div class="stats"><span>' + ic('approval') + 'APPROVAL ' + N(o.start.a) + '</span><span>' + ic('base') + 'BASE ' + N(o.start.b) + '</span><span>' + ic('clout') + 'CLOUT ' + C(o.start.c) + '</span><span>' + ic('heat') + 'HEAT ' + N(o.start.h) + '</span></div>' +
         '<p class="pf"><b>PERK</b> ' + numify(o.perk) + '</p><p class="pf"><i>FLAW</i> ' + numify(o.flaw) + '</p></button>';
     });
     $('origin-list').innerHTML = h;
+    if (STAR_ORIGINS.some((o) => originOpen(o, nS) && !po.seen[o.id])) { STAR_ORIGINS.forEach((o) => { if (originOpen(o, nS)) po.seen[o.id] = 1; }); savePrefs(); }   /* v8.4: NEW shows once */
+    $('origin-list').querySelectorAll('canvas[data-lo]').forEach((c) => A.CAST32.silhouette(c));
     const myFace = madeNow() ? CR.face(madeNow().w) : E.faceFor(nextSeed, lookPick);   /* v7.7: the face you made */
     $('origin-list').querySelectorAll('canvas[data-o]').forEach((c) => A.card(c, A.president(myFace, c.getAttribute('data-o')), false, tick));   /* v7.5: president cards */
     $('origin-list').querySelectorAll('[data-look-step]').forEach((b) => b.addEventListener('click', () => {
@@ -9484,6 +9836,7 @@ var CREATOR = (function (F, N, mix) {
     $('look-all').addEventListener('click', () => { SFX.click(); openLooks(); });
     if ($('look-edit')) $('look-edit').addEventListener('click', () => { SFX.click(); openCreator(); });
     $('origin-list').querySelectorAll('[data-origin]').forEach((b) => b.addEventListener('click', () => {
+      if (!originOpen(E.ORIG[b.getAttribute('data-origin')])) return;   /* v8.4: never a locked origin */
       const t = tutPick || tutDefault();
       if (t === 'guided') { prefs.seen = {}; prefs.skipTut = false; }
       else if (t === 'tips') { prefs.skipTut = false; prefs.seen.basics = 1; }
@@ -9504,6 +9857,7 @@ var CREATOR = (function (F, N, mix) {
     G = E.newGame(origin, seed, guided ? { script: { 0: ['intro', 'roast', 'infra'] }, mandLater: true, look: look, made: mk } : { mandates: true, recent: recentMemory(), look: look, made: mk });
     G.flags.seenB = { grass: 1, rapid: 1, dinners: 1 };
     stampCal();
+    G.amb = { skip: guided ? 1 : 0, done: [] }; ambTick(G);   /* v8.3: a guided first term deals no ambitions */
     shown = null; chartWin = 'recent';
     save(); SFX.good();
     if (G.mandPick) openMandates(() => showDesk(false)); else showDesk(false);
@@ -9695,7 +10049,7 @@ var CREATOR = (function (F, N, mix) {
      replay finds the same. Three initials and a random device id travel, nothing else. Offline or refused, the local
      board and the codes work as before ---------- */
   const BOARD = String((typeof window !== 'undefined' && window.__httcBoard) || 'https://httc-board.kyn-a14.workers.dev').replace(/\/+$/, '');
-  const GAME_BUILD = 'v8.2';
+  const GAME_BUILD = 'v8.5';
   const boardOn = () => /^https:\/\/[^\s]+$/.test(BOARD);
   function boardDev() {
     prefs.daily = prefs.daily || {};
@@ -10166,7 +10520,7 @@ var CREATOR = (function (F, N, mix) {
   try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ g: G })); } catch (e) { /* hot reload unavailable */ }
   if (hot && typeof hot.ready === 'function') { try { hot.ready(start); } catch (e) { start({}); } }
   else start((hot && hot.data) || {});
-  window.__httc = { get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle(), hall: () => showHall(), get hallData() { return getHall(); }, medals: () => showMedals(), get medalData() { return getMedals(); }, MEDALS: MEDALS, CR: CR, creator: () => openCreator(), get cr() { return crSt; }, get made() { return madeNow(); } };
+  window.__httc = { get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), over: () => showOver(), seize: (id) => doSeize(id), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle(), hall: () => showHall(), get hallData() { return getHall(); }, medals: () => showMedals(), get medalData() { return getMedals(); }, MEDALS: MEDALS, AMBITIONS: AMBITIONS, get starData() { return getStars(); }, ambPick: (id) => { const ok = pickAmbition(id); if (ok) save(); return ok; }, ambTick: () => ambTick(G), origins: () => { renderOrigins(); show('scr-origin'); }, originOpen: (id, n) => originOpen(E.ORIG[id], n), get starsTotal() { return starsTotal(); }, get origData() { return JSON.parse(JSON.stringify(origOf())); }, CR: CR, creator: () => openCreator(), get cr() { return crSt; }, get made() { return madeNow(); } };
 })();
 /* ===== UI END ===== */
 
