@@ -325,7 +325,7 @@ footer p { margin: 0; max-width: 70ch; }
   <div class="wrap">
     <span class="paid">PAID FOR BY THE COMMITTEE TO KEEP CLOUT ABOVE ZERO</span>
     <p>Hail to the Clout is a Snail Attack Studios game. It is a parody and party neutral: the president is you, every character, outlet and country in it is invented, and the lookalikes you can unlock are caricatures of presidents past. Its numbers are tuned to real presidential history anyway.</p>
-    <p class="lbl" id="site-ver">SITE V1.10 · GAME BUILD V8.2</p>
+    <p class="lbl" id="site-ver">SITE V1.12 · GAME BUILD V8.4</p>
   </div>
 </footer>
 
@@ -809,7 +809,14 @@ var ART = (function () {
     celeb: function (s, t, f) { s.jacket = ['#8a3fd0', '#ff6fae', '#2bb3a3', '#e0782a'][f ? f.t : 0]; s.shirt = s.jacket; s.open = true; s.acc = s.acc.filter(function (a) { return a !== 'glasses'; }); s.acc.push('shades'); s.bg = '#ffcf7a'; },
     tycoon: function (s) { s.jacket = '#141726'; s.shirt = '#f7f3e6'; s.tie = '#f0b429'; s.acc.push('square'); s.bg = '#f7f3e6'; },
     gen: function (s) { s.jacket = '#4a5a2e'; s.shirt = '#c9c6a0'; s.tie = '#2a3318'; s.acc.push('medals'); s.bg = '#c9c6bd'; },
-    vp: function (s, t) { s.jacket = '#1d2a57'; s.shirt = '#f7f3e6'; s.tie = t; s.acc.push('pin'); s.bg = '#e8dcae'; }
+    vp: function (s, t) { s.jacket = '#1d2a57'; s.shirt = '#f7f3e6'; s.tie = t; s.acc.push('pin'); s.bg = '#e8dcae'; },
+    /* v8.4, the origins the Legacy stars unlock: Governor a charcoal suit and the flag pin on a state house green, Influencer
+       a teal blazer on a ring light's lilac, Astronaut a white flight jacket on the night sky, Judge the black robe and a
+       white collar on oak; each wears the face's own tie, as the Career Politician does */
+    gov: function (s, t) { s.jacket = '#3a3d52'; s.shirt = '#f7f3e6'; s.tie = t; s.acc.push('pin'); s.bg = '#cfe6c8'; },
+    infl: function (s, t) { s.jacket = '#1f9e8f'; s.shirt = '#f7f3e6'; s.tie = t; s.bg = '#e6c8f5'; },
+    astro: function (s, t) { s.jacket = '#e4e6ee'; s.shirt = '#9aa0b4'; s.tie = t; s.acc.push('square'); s.bg = '#2a3160'; },
+    judge: function (s, t) { s.jacket = '#16161e'; s.shirt = '#ffffff'; s.tie = t; s.bg = '#c8a878'; }
   };
   /* the lookalikes: caricatures of historical presidents, unnamed (the Director's answer A on issue 511) */
   var LOOKS = {
