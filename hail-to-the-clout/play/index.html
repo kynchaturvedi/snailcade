@@ -1185,7 +1185,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.6</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.7</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1304,7 +1304,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V8.6 */
+/* HAIL TO THE CLOUT V8.7 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -6864,7 +6864,12 @@ var CREATOR = (function (F, N, mix) {
      run as it already stands (its history line, its votes, its counters against the term's first quarter, the House seats
      sampled each quarter), so an ambition never reads or draws the rules' dice, and the deal comes from a hash of the seed
      and the term (E.mix), never srnd. Stars hang on the run's Hall frame beside its medals; the medal case counts them,
-     and every ten different medals in the case count one more. */
+     and every ten different medals in the case count one more.
+     v8.7: the seventeenth, IRON GRIP, is the endings' ambition (the last part of the Director's answer A on issue 2296). It
+     is dealt only to a run that has touched the emergency powers (the line met at a close, a power seized or a backlash
+     suffered), and its kind is read from the powers the run holds when the term begins: none, and it is a REACH (seize
+     a power this term); any, and it is a KEEP (hold them all term, no backlash). It reads the counters the rules keep
+     (powers seized, backlashes) and g.ep, never a die, so the sixteen deal exactly as before to every other run. */
   var AMBITIONS = (function () {
     function pts(g, w) { return (g.hist || []).filter(function (p) { return p.q >= w.from && p.q < w.to; }); }
     function vts(g, w, t) { return (g.votes || []).filter(function (v) { return v.type === t && v.q >= w.from && v.q < w.to; }); }
@@ -6889,31 +6894,40 @@ var CREATOR = (function (F, N, mix) {
       { id: 'fired', k: 'keep', ico: 'base', name: 'FIRED UP', how: 'Keep your base at 55 or more all term', ok: function (g, w) { return every(g, w, 'b', function (v) { return v >= 55; }); } },
       { id: 'solo', k: 'keep', ico: 'phone', name: 'NO FAVORS', how: 'Use no lifeline all term', ok: function (g, w) { return d(g, w, 'favors') <= 0; } },
       { id: 'steady', k: 'keep', ico: 'down', name: 'NO SLUMP', how: 'Keep the market at 95 or more all term', ok: function (g, w) { return every(g, w, 'm', function (v) { return v >= 95; }); } },
-      { id: 'water', k: 'keep', a: 1, ico: 'up', name: 'ABOVE WATER', how: 'Keep approval at 50% or more all term', ok: function (g, w) { return every(g, w, 'a', function (v) { return v >= 50; }); } }
+      { id: 'water', k: 'keep', a: 1, ico: 'up', name: 'ABOVE WATER', how: 'Keep approval at 50% or more all term', ok: function (g, w) { return every(g, w, 'a', function (v) { return v >= 50; }); } },
+      { id: 'grip', k: 'pow', pow: 1, ico: 'bolt', name: 'IRON GRIP', how: 'Seize an emergency power in a term, or hold every one you have all term',
+        hows: { reach: 'Seize an emergency power this term', keep: 'Hold every emergency power you have all term' },
+        ok: function (g, w) { var s0 = w.s0 || {}; if (s0.powers === undefined) return false; return s0.held ? d(g, w, 'backlash') <= 0 : d(g, w, 'powers') >= 1; } }
     ];
     var BY = {}; LIST.forEach(function (x) { BY[x.id] = x; });
     var TERM_Q = 16, PICK_Q = 4, MEDALS_PER_STAR = 10;
     /* what the term's counters stood at when it began: an ambition counts from here */
-    function snap(g) { var s = g.stats || {}; return { earned: s.earned || 0, hires: s.hires || 0, arcs: s.arcs || 0, threads: s.threads || 0, settled: s.settled || 0, suits: s.suits || 0, favors: s.favors || 0, built: built(g) }; }
+    function snap(g) { var s = g.stats || {}; return { earned: s.earned || 0, hires: s.hires || 0, arcs: s.arcs || 0, threads: s.threads || 0, settled: s.settled || 0, suits: s.suits || 0, favors: s.favors || 0, built: built(g),
+      powers: s.powers || 0, backlash: s.backlash || 0, held: Object.keys((g.ep && g.ep.held) || {}).length }; }
+    /* v8.7: an ambition's kind and words for a term (IRON GRIP's read from the powers held when the term began) */
+    function kind(x, s0) { return x.k === 'pow' ? (s0 && s0.held ? 'keep' : 'reach') : x.k; }
+    function how(x, s0) { return x.hows ? x.hows[kind(x, s0)] : x.how; }
+    /* v8.7: a run that has touched the powers (the line met, a power seized, a backlash) */
+    function touched(g, E) { return !!(E.epOn && E.epOn(g) && g.ep && (g.ep.streak || g.ep.n || g.ep.lash)); }
     /* three for this term, from a hash of the seed and the term; never last term's pick, never a House one without the House */
     function offer(g, E, last) {
-      var house = E.storyHas(g, 'house'), base = E.mix(g.seed | 0, 2257 + (g.termIdx | 0));
-      return LIST.filter(function (x) { return x.id !== last && (house || !x.house); })
+      var house = E.storyHas(g, 'house'), pow = touched(g, E), base = E.mix(g.seed | 0, 2257 + (g.termIdx | 0));
+      return LIST.filter(function (x) { return x.id !== last && (house || !x.house) && (pow || !x.pow); })
         .map(function (x, i) { return { id: x.id, r: E.mix(base, i + 1) }; })
         .sort(function (p, q) { return p.r - q.r; }).slice(0, 3).map(function (x) { return x.id; });
     }
     function win(rec, to) { return { from: rec.at, to: to, s0: rec.s0, lo: rec.lo }; }
     function test(g, x, w) { try { return !!x.ok(g, w); } catch (e) { return false; } }
     /* live: 'done' (met), 'on' (still to play for) or 'lost' (a keep ambition broken) */
-    function state(g, rec) { var x = BY[rec.id]; if (!x) return 'lost'; var ok = test(g, x, win(rec, Infinity)); return x.k === 'reach' ? (ok ? 'done' : 'on') : (ok ? 'on' : 'lost'); }
+    function state(g, rec) { var x = BY[rec.id]; if (!x) return 'lost'; var ok = test(g, x, win(rec, Infinity)); return kind(x, rec.s0) === 'reach' ? (ok ? 'done' : 'on') : (ok ? 'on' : 'lost'); }
     /* at the term's end (to: its first quarter after), or the run's end; full when every quarter of the term was played */
     function final(g, rec, to, full) {
       var x = BY[rec.id], w = win(rec, to); if (!x || !test(g, x, w)) return false;
-      if (x.k === 'reach') return true;
+      if (kind(x, rec.s0) === 'reach') return true;
       if (!full) return false;
       try { return !x.end || !!x.end(g, w); } catch (e) { return false; }
     }
-    return { LIST: LIST, BY: BY, N: LIST.length, TERM_Q: TERM_Q, PICK_Q: PICK_Q, MEDALS_PER_STAR: MEDALS_PER_STAR, snap: snap, offer: offer, state: state, final: final };
+    return { LIST: LIST, BY: BY, N: LIST.length, TERM_Q: TERM_Q, PICK_Q: PICK_Q, MEDALS_PER_STAR: MEDALS_PER_STAR, snap: snap, offer: offer, state: state, final: final, kind: kind, how: how, touched: touched };
   })();
   /* ===== AMBITIONS END ===== */
   /* v8.1: the Hall of Presidents (the Director's answer A on issue 2191). Every New presidency run, good or bad, hangs
@@ -6985,9 +6999,10 @@ var CREATOR = (function (F, N, mix) {
   }
   function ambSeats(g) { const am = g.amb; if (!am || !am.s0 || !E.storyHas(g, 'house')) return; const s = E.houseSeats(g); am.s0.lo = am.s0.lo === undefined ? s : Math.min(am.s0.lo, s); }
   const ambRec = (am) => ({ id: am.cur.id, at: am.s0.at, s0: am.s0.v, lo: am.s0.lo });
-  function ambCard(d) {
+  function ambCard(d, s0) {
     const x = AMBITIONS.BY[d.id]; if (!x) return null;   /* an id this build does not know (an older or newer save) says nothing */
-    return d.ok ? ['Legacy star earned', x.name + ' is done: ' + x.how.charAt(0).toLowerCase() + x.how.slice(1) + '. Its star hangs on this run\'s frame in the Hall of Presidents.']
+    const hw = AMBITIONS.how(x, s0);   /* v8.7: IRON GRIP's words are the term's own */
+    return d.ok ? ['Legacy star earned', x.name + ' is done: ' + hw.charAt(0).toLowerCase() + hw.slice(1) + '. Its star hangs on this run\'s frame in the Hall of Presidents.']
       : ['Ambition missed', x.name + ' slipped away this term. The new term deals three more on The Wire.'];
   }
   /* each quarter, after the rules move on: judge a term that just ended, start the new term's count, sample the House */
@@ -6996,7 +7011,7 @@ var CREATOR = (function (F, N, mix) {
     const am = ambOf(g), out = [];
     if (am.cur && am.s0 && am.cur.term === am.s0.term && am.cur.term !== g.termIdx) {
       const d = { term: am.cur.term, id: am.cur.id, ok: AMBITIONS.final(g, ambRec(am), g.termStart, true) };
-      am.done.push(d); am.cur = null; keepStar(g, d); const c = ambCard(d); if (c) out.push(c);
+      am.done.push(d); am.cur = null; keepStar(g, d); const c = ambCard(d, am.s0.v); if (c) out.push(c);
     }
     if (!am.s0 || am.s0.term !== g.termIdx) am.s0 = { term: g.termIdx, at: g.termStart, v: AMBITIONS.snap(g) };
     ambSeats(g);
@@ -7022,8 +7037,8 @@ var CREATOR = (function (F, N, mix) {
     const am = G.amb;
     if (am.cur && am.cur.term === G.termIdx) {
       const x = AMBITIONS.BY[am.cur.id]; if (!x) return '';
-      const st = x.a && isBlind() ? 'dark' : AMBITIONS.state(G, ambRec(am));
-      return '<section class="ambbox mine st-' + st + '" id="ambbox" data-amb-state="' + st + '"><div class="ab-top"><b>' + ic('star') + 'YOUR AMBITION · ' + esc(x.name) + '</b><span>' + esc(st === 'dark' ? 'POLLS DARK' : AMB_ST[st]) + '</span></div><p>' + numify(x.how + (x.k === 'keep' ? ', every quarter to the term\'s end.' : ', by the term\'s end.')) + '</p></section>';
+      const st = x.a && isBlind() ? 'dark' : AMBITIONS.state(G, ambRec(am)), k = AMBITIONS.kind(x, am.s0.v);
+      return '<section class="ambbox mine st-' + st + '" id="ambbox" data-amb-state="' + st + '" data-amb-kind="' + k + '"><div class="ab-top"><b>' + ic('star') + 'YOUR AMBITION · ' + esc(x.name) + '</b><span>' + esc(st === 'dark' ? 'POLLS DARK' : AMB_ST[st]) + '</span></div><p>' + numify(AMBITIONS.how(x, am.s0.v) + (k === 'keep' ? ', every quarter to the term\'s end.' : ', by the term\'s end.')) + '</p></section>';
     }
     const left = am.s0.at + AMBITIONS.PICK_Q - G.q;
     if (left <= 0) return '';
@@ -7031,8 +7046,8 @@ var CREATOR = (function (F, N, mix) {
     if (!am.off || am.off.term !== G.termIdx) am.off = { term: G.termIdx, ids: AMBITIONS.offer(G, E, last) };
     return '<section class="ambbox" id="ambbox"><div class="ab-top"><b>' + ic('star') + 'AMBITIONS FOR THIS TERM</b><span>' + N(left === 1 ? 'PICK BY THE END OF NEXT QUARTER' : 'PICK ONE · ' + left + ' QUARTERS LEFT TO PICK') + '</span></div>' +
       '<p>' + numify('Finish the one you pick by the end of the term for a Legacy star. REACH is done once you get there; KEEP must hold every quarter of the term.') + '</p><div class="amb-list">' +
-      am.off.ids.map((id) => { const x = AMBITIONS.BY[id], gone = x.k === 'keep' && !(x.a && isBlind()) && AMBITIONS.state(G, { id: id, at: am.s0.at, s0: am.s0.v, lo: am.s0.lo }) === 'lost';
-        return '<button class="amb-pick" data-amb="' + id + '"' + (gone ? ' disabled' : '') + '><span class="ap-ico">' + ic(x.ico) + '</span><span class="ap-t"><b>' + esc(x.name) + '</b><span>' + numify(x.how) + '</span></span><i class="ap-k">' + (gone ? 'BROKEN' : x.k === 'keep' ? 'KEEP' : 'REACH') + '</i></button>'; }).join('') + '</div></section>';
+      am.off.ids.map((id) => { const x = AMBITIONS.BY[id], k = AMBITIONS.kind(x, am.s0.v), gone = k === 'keep' && !(x.a && isBlind()) && AMBITIONS.state(G, { id: id, at: am.s0.at, s0: am.s0.v, lo: am.s0.lo }) === 'lost';
+        return '<button class="amb-pick" data-amb="' + id + '"' + (gone ? ' disabled' : '') + '><span class="ap-ico">' + ic(x.ico) + '</span><span class="ap-t"><b>' + esc(x.name) + '</b><span>' + numify(AMBITIONS.how(x, am.s0.v)) + '</span></span><i class="ap-k">' + (gone ? 'BROKEN' : k === 'keep' ? 'KEEP' : 'REACH') + '</i></button>'; }).join('') + '</div></section>';
   }
   function pickAmbition(id) {
     if (!ambOn(G) || !G.amb || !G.amb.off || G.amb.off.term !== G.termIdx || G.amb.off.ids.indexOf(id) < 0 || (G.amb.cur && G.amb.cur.term === G.termIdx)) return false;
@@ -10072,7 +10087,7 @@ var CREATOR = (function (F, N, mix) {
      replay finds the same. Three initials and a random device id travel, nothing else. Offline or refused, the local
      board and the codes work as before ---------- */
   const BOARD = String((typeof window !== 'undefined' && window.__httcBoard) || 'https://httc-board.kyn-a14.workers.dev').replace(/\/+$/, '');
-  const GAME_BUILD = 'v8.6';
+  const GAME_BUILD = 'v8.7';
   const boardOn = () => /^https:\/\/[^\s]+$/.test(BOARD);
   function boardDev() {
     prefs.daily = prefs.daily || {};
