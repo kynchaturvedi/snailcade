@@ -1038,6 +1038,22 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 .thbox li i { font-style: normal; color: #5a4a22; } .thbox li .num { font-size: 12px; }
 .retbox .btn { justify-self: start; display: inline-flex; align-items: center; gap: 6px; }
 .retbox .btn .ico { width: 12px; height: 12px; }
+/* v8.8: rivals with memory */
+.rvbox { --bx: #23477a; margin: 10px 0 4px; padding: 8px 10px; border: 3px solid var(--bx); background: #eef2fa; box-shadow: 3px 3px 0 var(--bx); display: grid; gap: 6px; }
+.rv-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 10px; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.05em; }
+.rv-top b { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; color: var(--bx); font-size: 11px; } .rv-top .ico { width: 12px; height: 12px; }
+.rvbox p { margin: 0; font-size: 12px; line-height: 1.35; color: #3a2f14; }
+.rvbox ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rvbox li { display: flex; align-items: flex-start; gap: 8px; padding: 6px 7px; border: 2px solid var(--ink); background: var(--paper2); }
+.rvbox li.rv-pri { background: #fbf3e6; }
+.rvbox li > div { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.rvbox canvas.rv-face { flex: none; width: 48px; height: 48px; image-rendering: pixelated; border: 2px solid var(--ink); background: #d9d2bf; box-sizing: content-box; }
+.rvbox li b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-lbl); font-size: 10px; font-weight: 400; letter-spacing: 0.04em; color: var(--bx); }
+.rvbox .rv-back { font-style: normal; font-size: 8px; color: #fff; background: #7a1f2b; padding: 2px 4px; }
+.rvbox .rv-role, .rvbox .rv-mem { font-family: var(--f-lbl); font-size: 8px; letter-spacing: 0.04em; color: #4a4030; overflow-wrap: anywhere; }
+.rvbox .rv-cost { font-size: 12px; line-height: 1.3; }
+.rv-bar { height: 6px; border: 1px solid var(--ink); background: #fff; } .rv-bar i { display: block; height: 100%; background: var(--bx); }
+.newbox.rvn { border-color: #23477a; } .newbox.rvn b { color: #23477a; display: flex; align-items: center; gap: 6px; }
 /* v8.5: emergency powers */
 .powbox { --bx: #7a1f2b; margin: 10px 0 4px; padding: 8px 10px; border: 3px solid var(--bx); background: #fbf0ee; box-shadow: 3px 3px 0 var(--bx); display: grid; gap: 6px; }
 .powbox.hot { border-width: 4px; background: #f8e2de; } .powbox.soon { border-style: dashed; box-shadow: none; }
@@ -1185,7 +1201,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.7</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.8</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1304,7 +1320,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V8.7 */
+/* HAIL TO THE CLOUT V8.8 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -4603,6 +4619,7 @@ var PRESNAMES = (function (mix) {
       });
     }
     epClose(g, rep); /* v8.5: emergency powers */
+    rvClose(g, rep); /* v8.8: rivals with memory */
     g.suits.forEach(function (s) { s.q--; });
     g.suits = g.suits.filter(function (s) { if (s.q <= 0) { rep.ended.push(s.n); logSuit(g, s.n); return false; } return true; });
     /* impeachment (a backlash that deposes you comes first) */
@@ -4736,7 +4753,7 @@ var PRESNAMES = (function (mix) {
   /* t forces the kind of vote ('mid' or 'gen'), so The Wire can forecast the next one as if it were held today */
   function projection(g, t) {
     if (t ? t === 'mid' : isMidterm(g)) {
-      var seats = -24 + (g.approval - 50) * 1.5 + (g.base - 50) * 0.25 + (on(g, 'party') ? 6 : 0) + (on(g, 'dark') ? 4 : 0) + (on(g, 'stateparty') ? 2 : 0) + (on(g, 'pacnet') ? 5 : 0) + ((g.fund && g.fund.seats) || 0) + LV.hpoll.seats[staffLvl(g, 'hpoll')] + (traitOn(g, 'connected') ? 2 : 0) + g.camp * 2 + (g.presTerm === 2 ? -7 : 0) - D.SUIT_T.finance.seats * suitCount(g, 'finance') - 0.3 * Math.max(0, g.house.m - 15); /* v6.5: a big cushion puts more seats in play */
+      var seats = -24 + (g.approval - 50) * 1.5 + (g.base - 50) * 0.25 + (on(g, 'party') ? 6 : 0) + (on(g, 'dark') ? 4 : 0) + (on(g, 'stateparty') ? 2 : 0) + (on(g, 'pacnet') ? 5 : 0) + ((g.fund && g.fund.seats) || 0) + LV.hpoll.seats[staffLvl(g, 'hpoll')] + (traitOn(g, 'connected') ? 2 : 0) + g.camp * 2 + (g.presTerm === 2 ? -7 : 0) - D.SUIT_T.finance.seats * suitCount(g, 'finance') - 0.3 * Math.max(0, g.house.m - 15) - rvSeats(g); /* v8.8: a strong opposition leader */ /* v6.5: a big cushion puts more seats in play */
       return { type: 'mid', mean: seats, spread: 5 * (mandOn(g, 'swing') ? 2 : 1), margin: g.house.m, sixYear: g.presTerm === 2 };
     }
     var succ = g.presTerm === 2 && !powerOn(g, 'term'); /* v8.5: A THIRD TERM runs you again */
@@ -4746,7 +4763,7 @@ var PRESNAMES = (function (mix) {
       ? 50 + (g.approval - 50) * 0.3 - 1.5 + (g.flags.succ === 'fresh' ? 1.5 : 0) + (on(g, 'kingmaker') ? 2 : 0)
       : 50 + (g.approval - 49) * 0.7;
     vote += (g.base - 50) * 0.04 + (on(g, 'party') ? 1 : 0) + (on(g, 'dark') ? 1.5 : 0) + (on(g, 'pacnet') ? 2 : 0) + (g.presTerm === 2 && g.flags.groom ? 1.5 : 0) + LV.hpoll.vote[staffLvl(g, 'hpoll')] + g.camp * 0.6 - D.SUIT_T.finance.vote * suitCount(g, 'finance') -
-      Math.max(0, g.termIdx - 2) * 1.5; /* v6.5: from the third term on, fatigue grows 1.5 a term (was 1): richer staff and a House that keeps its seats made a 50 year dynasty routine */
+      Math.max(0, g.termIdx - 2) * 1.5 - rvVote(g); /* v8.8: the rivals; v6.5: from the third term on, fatigue grows 1.5 a term (was 1): richer staff and a House that keeps its seats made a 50 year dynasty routine */
     return { type: 'gen', mean: vote, spread: 2 * (mandOn(g, 'swing') ? 2 : 1), succession: succ };
   }
   function campaign(g, tier) {
@@ -4861,6 +4878,79 @@ var PRESNAMES = (function (mix) {
     g.ep.streak = epMet(g) ? g.ep.streak + 1 : 0;
     rep.ep = { streak: g.ep.streak, met: epMet(g), opened: !was && powersOpen(g), held: powersHeld(g) };
   }
+
+  /* ===== RIVALS BEGIN ===== */
+  /* ---------- v8.8: rivals with memory (the Director's answer A on issue 2319). New presidency only. Two rivals stand
+     against you: the opposition leader (LEADER HOLLOWAY first) and, when your base sags, a primary challenger from your
+     own party. Each has a standing (0 to 100) that pulls toward where your numbers put it, and a grudge: every hot call
+     you make is one the opposition remembers, every moderate call one your own party's hard core remembers. A grudge
+     fades a little each quarter and raises the rival's standing; a strong rival costs you votes at a general election
+     and seats at a midterm. Win a general election and the leader you beat leaves (a challenger you beat goes with them);
+     the next quarter a new one rises, with a face and a name dealt from the seed. A beaten rival with a deep grudge comes
+     back a term later. Nothing here draws a die: every number comes from the run's state and mix(). ---------- */
+  var RV = { pull: 0.25, fade: 0.85, gMax: 10, gW: 3, sLo: 15, sHi: 85, vote: 0.06, seats: 0.15, pri: 0.06, priAt: 40,
+    priRise: 45, priLeave: 65, priGap: 4, back: 6, backGap: 8, midLost: 8, midHeld: -5, mem: 3, start: 50 };
+  function rvOn(g) { return erasOn(g); }
+  function rvNew(g, kind) {
+    var n = g.rv.n++;
+    if (kind === 'opp' && n === 0) return { kind: 'opp', n: 0, face: { k: 'cast', id: 'oppo' }, name: { first: '', last: 'HOLLOWAY' }, s: RV.start, g: 0, q0: g.q, mem: [], beat: 0 };
+    var face = newFace(g, 500 + n), taken = wornOf(g);
+    g.rv.out.concat(g.rv.opp ? [g.rv.opp] : [], g.rv.pri ? [g.rv.pri] : []).forEach(function (r) { taken[r.name.last] = 1; });
+    var nm = PRESNAMES.deal(g.seed | 0, 500 + n, face, NAME_SC, taken) || { first: '', last: 'HOLLOWAY' };
+    return { kind: kind, n: n, face: face, name: { first: nm.first, last: nm.last }, s: RV.start, g: 0, q0: g.q, mem: [], beat: 0 };
+  }
+  function rvInit(g) { if (!g.rv) { g.rv = { n: 0, opp: null, pri: null, out: [], beaten: 0, backs: 0 }; g.rv.opp = rvNew(g, 'opp'); } return g.rv; }
+  function rvTarget(g, r) {
+    var x = r.kind === 'opp' ? 100 - g.approval : 100 - g.base;
+    return clamp(x + RV.gW * r.g, RV.sLo, RV.sHi);
+  }
+  function rvVote(g) {
+    if (!rvOn(g) || !g.rv) return 0;
+    var v = g.rv.opp ? (g.rv.opp.s - 50) * RV.vote : 0;
+    if (g.rv.pri && g.presTerm === 1) v += Math.max(0, g.rv.pri.s - RV.priAt) * RV.pri;
+    return v;
+  }
+  function rvSeats(g) { return rvOn(g) && g.rv && g.rv.opp ? (g.rv.opp.s - 50) * RV.seats : 0; }
+  function rvRemember(r, choices, tag) {
+    choices.forEach(function (c) {
+      if (c.tag !== tag) return;
+      r.g = Math.min(RV.gMax, r.g + 1);
+      r.mem.unshift({ id: c.id, side: c.side }); if (r.mem.length > RV.mem) r.mem.length = RV.mem;
+    });
+  }
+  function rvLeave(g, r, why) { r.left = g.q; r.why = why; r.g = Math.min(RV.gMax, r.g + 2); g.rv.out.push(r); g.rv.beaten++; }
+  /* the close: the vote first (it can end a rival), then memory, then the pull toward the numbers, then who rises */
+  function rvClose(g, rep) {
+    if (!rvOn(g)) return;
+    var rv = rvInit(g), el = g.election, out = { rose: null, back: null, beaten: [], down: null };
+    if (el && el.type === 'gen' && el.win) {
+      if (rv.opp) { rvLeave(g, rv.opp, 'beaten'); out.beaten.push(rv.opp); rv.opp = null; }
+      if (rv.pri) { rvLeave(g, rv.pri, 'beaten'); out.beaten.push(rv.pri); rv.pri = null; }
+    }
+    if (el && el.type === 'mid' && rv.opp) rv.opp.s = clamp(rv.opp.s + (el.held ? RV.midHeld : RV.midLost), 0, 100);
+    [rv.opp, rv.pri].forEach(function (r) {
+      if (!r) return;
+      r.g = r.g * RV.fade;
+      rvRemember(r, g.ql.choices, r.kind === 'opp' ? 'hot' : 'mod');
+      r.s = clamp(r.s + (rvTarget(g, r) - r.s) * RV.pull, 0, 100);
+    });
+    if (rv.pri && g.base >= RV.priLeave) { rvLeave(g, rv.pri, 'down'); out.down = rv.pri; rv.pri = null; }
+    if (!rv.opp && !(el && el.type === 'gen')) {
+      var back = null;
+      rv.out.forEach(function (r) { if (r.kind === 'opp' && !r.back && r.g >= RV.back && g.q - r.left >= RV.backGap && (!back || r.g > back.g)) back = r; });
+      if (back) {
+        rv.out.splice(rv.out.indexOf(back), 1); back.back = g.q; back.s = clamp(back.s + 10, 0, 100); back.q0 = g.q;
+        rv.opp = back; rv.backs++; out.back = back;
+      } else { rv.opp = rvNew(g, 'opp'); out.rose = rv.opp; }
+    }
+    var last = rv.out.filter(function (r) { return r.kind === 'pri'; }).pop();
+    if (!rv.pri && g.presTerm === 1 && g.base < RV.priRise && (!last || g.q - last.left >= RV.priGap) && !(el && el.type === 'gen')) {
+      rv.pri = rvNew(g, 'pri'); rv.pri.s = clamp(rvTarget(g, rv.pri), 0, 100); out.rose = out.rose || rv.pri; out.pri = rv.pri;
+    }
+    rep.rv = out;
+  }
+  function rvName(r) { return r ? (r.kind === 'opp' ? 'LEADER ' : 'SENATOR ') + r.name.last : ''; }
+  /* ===== RIVALS END ===== */
 
   /* ---------- the Machine ---------- */
   var tier2 = function (g) { return !!g.flags.tier2; };
@@ -5126,6 +5216,7 @@ var PRESNAMES = (function (mix) {
     newGame: newGame, current: current, preview: preview, choose: choose,
     LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, nameFill: nameFill, nameFor: nameFor, PRESNAMES: PRESNAMES, NAME_SC: NAME_SC, madeOk: madeOk, mix: mix, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
     endQuarter: endQuarter, nextQuarter: nextQuarter,
+    RV: RV, rvOn: rvOn, rvVote: rvVote, rvSeats: rvSeats, rvTarget: rvTarget, rvName: rvName,
     POW: POW, EP_LINE: EP_LINE, epOn: epOn, epMet: epMet, epFell: epFell, powerOn: powerOn, powersHeld: powersHeld, powersOpen: powersOpen, powerState: powerState, seize: seize,
     projection: projection, campaign: campaign, election: election, houseTier: houseTier, PTY: PTY, partyState: partyState, fundParty: fundParty, leaseLeft: leaseLeft, leaseOut: leaseOut, ARC: ARC, arcMult: arcMult, arcRun: arcRun, arcEnding: arcEnding, econMult: econMult, mktOn: mktOn, HOUSE_LV: HOUSE_LV, houseLevel: houseLevel, houseLevelOf: houseLevelOf, houseNext: houseNext, houseSeats: houseSeats, houseMove: houseMove, MKT_LV: MKT_LV, MKT_X: MKT_X, mktLevel: mktLevel, mktLevelOf: mktLevelOf, mktNext: mktNext, crashChance: crashChance, optCost: optCost, dismissChance: dismissChance, suitOpen: suitOpen,
     build: build, buildState: buildState, settle: settle, settleCost: settleCost, suitDrain: suitDrain,
@@ -8160,6 +8251,42 @@ var CREATOR = (function (F, N, mix) {
     const pb = $('powbox'); if (pb && pb.scrollIntoView) pb.scrollIntoView({ behavior: 'instant', block: 'center' });
     return true;
   }
+  /* ===== RIVALS UI BEGIN ===== */
+  /* v8.8: rivals with memory (issue 2319 A): who stands against you, how strong, what they remember */
+  function rvLine(r) {
+    const c = r && r.mem && r.mem[0] && E.ALL[r.mem[0].id], o = c && c[r.mem[0].side];
+    return o ? 'REMEMBERS · YOU CHOSE ' + o.t.toUpperCase() : 'REMEMBERS NOTHING YET';
+  }
+  function rvRow(r, i) {
+    const s = Math.round(r.s), cost = r.kind === 'opp' ? (r.s - 50) * E.RV.vote : G.presTerm === 1 ? Math.max(0, r.s - E.RV.priAt) * E.RV.pri : 0;
+    const role = r.kind === 'opp' ? 'OPPOSITION LEADER' : 'PRIMARY CHALLENGER';
+    return '<li class="rv-' + r.kind + '"><canvas class="px rv-face" width="32" height="32" data-rv="' + i + '" aria-hidden="true"></canvas><div><b>' + esc(E.rvName(r)) + (r.back !== undefined && r.back !== null ? '<i class="rv-back">BACK</i>' : '') + '</b>' +
+      '<span class="rv-role">' + role + ' · STANDING ' + N(s) + ' · GRUDGE ' + N(Math.round(r.g)) + ' OF ' + N(E.RV.gMax) + '</span>' +
+      '<div class="rv-bar" aria-hidden="true"><i style="width:' + s + '%"></i></div>' +
+      '<span class="rv-mem">' + esc(rvLine(r)) + '</span>' +
+      '<span class="rv-cost">' + numify(Math.abs(cost) < 0.05 ? 'Costs you nothing at the polls today.' : cost > 0 ? 'Costs you ' + (Math.round(cost * 10) / 10) + '% of the vote today.' : 'Weak: worth +' + (Math.round(-cost * 10) / 10) + '% of the vote to you today.') + '</span></div></li>';
+  }
+  function rivalsList() { const rv = G && G.rv; return rv ? [rv.opp, rv.pri].filter(Boolean) : []; }
+  function rivalsBox(r) {
+    if (!E.rvOn(G) || !G.rv) return '';
+    const x = r.rv || {};
+    let h = '';
+    (x.beaten || []).forEach((b) => { h += '<div class="newbox rvn" id="rv-beaten"><b>' + ic('flag') + 'RIVAL BEATEN</b><span>' + esc(E.rvName(b)) + ' goes home with a grudge of ' + N(Math.round(b.g)) + '. ' + (b.kind === 'opp' ? 'The opposition picks a new leader next quarter.' : 'Your party falls in line.') + '</span></div>'; });
+    if (x.down) h += '<div class="newbox rvn" id="rv-down"><b>' + ic('flag') + 'CHALLENGER BACKS DOWN</b><span>' + numify('Your base is ' + Math.round(G.base) + ' strong: ' + E.rvName(x.down) + ' drops the primary challenge.') + '</span></div>';
+    if (x.back) h += '<div class="newbox bad rvn" id="rv-comeback"><b>' + ic('flag') + 'THE COMEBACK</b><span>' + esc(E.rvName(x.back)) + ' is back to lead the opposition, and remembers every call.</span></div>';
+    else if (x.rose && x.rose.kind === 'opp') h += '<div class="newbox rvn" id="rv-rose"><b>' + ic('flag') + 'A NEW RIVAL RISES</b><span>' + esc(E.rvName(x.rose)) + ' now leads the opposition.</span></div>';
+    if (x.pri) h += '<div class="newbox bad rvn" id="rv-pri"><b>' + ic('flag') + 'PRIMARY CHALLENGE</b><span>' + numify('Your base sank under ' + E.RV.priRise + '. ' + E.rvName(x.pri) + ' will run against you in your own party. Get your base to ' + E.RV.priLeave + ' and the challenge ends.') + '</span></div>';
+    const L = rivalsList();
+    if (!L.length) return h;
+    h += '<section class="rvbox" id="rvbox"><div class="rv-top"><b>' + ic('flag') + 'YOUR RIVALS</b><span>' + N(G.rv.beaten) + ' BEATEN' + (G.rv.backs ? ' · ' + N(G.rv.backs) + ' CAME BACK' : '') + '</span></div><ul>' + L.map(rvRow).join('') + '</ul>' +
+      '<p>' + numify('Every hot call is one the opposition remembers; every moderate call, one your own hard core remembers. A grudge fades a little each quarter. Beat a rival at a general election and a new one rises.') + '</p></section>';
+    return h;
+  }
+  function rivalsDraw() {
+    const L = rivalsList();
+    document.querySelectorAll('canvas[data-rv]').forEach((c) => { const r = L[+c.getAttribute('data-rv')]; if (!r) return; if (r.face.k === 'cast') A.portrait(c, r.face.id, false, tick); else A.card(c, A.president(r.face, 'pol'), false, tick); });
+  }
+  /* ===== RIVALS UI END ===== */
   /* retiring on top: the legacy as it would stand today */
   function legacyNow() { const x = JSON.parse(JSON.stringify(G)); E.retire(x); return E.legacyScore(x); }
   function retireBox() {
@@ -8269,6 +8396,7 @@ var CREATOR = (function (F, N, mix) {
     h += threadBox(r);
     if (G.trans) h += retireBox();
     h += powersBox(r);   /* v8.5 */
+    h += rivalsBox(r);   /* v8.8 */
     h += eraBox();
     ambSeats(G); h += ambBox();   /* v8.3 */
     if (r.ready && r.ready.length && has('machine')) h += '<div class="newbox"><b>FINISHED BUILDING</b><span>' + r.ready.map((id) => esc(E.BUILD[id].name)).join(', ') + '. Working now.</span></div>';
@@ -8337,6 +8465,7 @@ var CREATOR = (function (F, N, mix) {
     }));
     $('paper').querySelectorAll('[data-win]').forEach((b) => b.addEventListener('click', () => { chartWin = b.getAttribute('data-win'); SFX.click(); renderReport(false); }));
     r.outlets.forEach((o, i) => A.face($('face-' + i), o.id, o.mood));
+    rivalsDraw();   /* v8.8 */
     requestAnimationFrame(() => { drawReportCharts(-1); bindChartTips(); });
     if (animate) {
       if (!blind) countUp($('r-a'), r.aDesk !== undefined ? r.aDesk : r.a0, r.a1, T(900), (v) => pa(v) + '%');
@@ -8931,6 +9060,7 @@ var CREATOR = (function (F, N, mix) {
     }
     /* what you have to spend, and what is left after the ads you picked */
     h += '<div class="war-bank"><span>' + ic('clout') + 'YOUR CLOUT <b>' + C(G.clout) + '</b></span>' + (ad.cost ? '<span>AFTER ' + esc(ad.name) + ' <b>' + C(G.clout - ad.cost) + '</b></span>' : '') + '</div>';
+    if (E.rvOn(G) && G.rv) { const rvv = mid ? E.rvSeats(G) : E.rvVote(G); if (Math.abs(rvv) >= 0.05) h += '<p class="war-note" id="war-rivals">' + numify((rvv > 0 ? 'Your rivals are in this projection: ' + (Math.round(rvv * 10) / 10) + (mid ? ' fewer seats' : '% fewer votes') : 'A weak opposition is in this projection: ' + (Math.round(-rvv * 10) / 10) + (mid ? ' more seats' : '% more votes')) + ' (' + rivalsList().map((x) => E.rvName(x) + ' ' + Math.round(x.s)).join(', ') + ').') + '</p>'; }   /* v8.8 */
     if (E.suitOpen(G, 'finance')) h += '<p class="war-note">' + numify('An open campaign finance case is already in this projection: ' + (mid ? '3 fewer seats' : '1% fewer votes') + ' for each one.') + '</p>';
     h += '<div class="ads">';
     E.ADS.forEach((t) => {
@@ -10087,7 +10217,7 @@ var CREATOR = (function (F, N, mix) {
      replay finds the same. Three initials and a random device id travel, nothing else. Offline or refused, the local
      board and the codes work as before ---------- */
   const BOARD = String((typeof window !== 'undefined' && window.__httcBoard) || 'https://httc-board.kyn-a14.workers.dev').replace(/\/+$/, '');
-  const GAME_BUILD = 'v8.7';
+  const GAME_BUILD = 'v8.8';
   const boardOn = () => /^https:\/\/[^\s]+$/.test(BOARD);
   function boardDev() {
     prefs.daily = prefs.daily || {};
