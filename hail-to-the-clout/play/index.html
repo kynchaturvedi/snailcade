@@ -1200,6 +1200,49 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
   .dstamp.slam { animation: none; opacity: 1; }
   .folder.snap, .folder.fly, .folder.spring, .coach-ring { transition: none; }
 }
+/* v9.0: The Opposition (issue 2379 A): one sheet, redrawn per phase */
+.opp-list { gap: 12px; }
+.op-hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.op-st { display: grid; justify-items: center; gap: 2px; padding: 6px 4px; background: var(--ink); border: 2px solid var(--navy3); color: var(--sky); font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.05em; text-align: center; }
+.op-st b { color: var(--gold); font-family: var(--f-body); font-size: 18px; letter-spacing: 0; }
+.op-pres, .op-brief { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--navy2); border: 2px solid var(--ink); color: var(--sky); }
+.op-pres canvas { box-sizing: content-box; width: 48px; height: 48px; border: 2px solid var(--ink); image-rendering: pixelated; flex: none; }
+.op-brief canvas { box-sizing: content-box; width: 48px; height: 48px; border: 2px solid var(--ink); image-rendering: pixelated; flex: none; background: var(--paper); }
+.op-pres div, .op-brief div { display: grid; gap: 2px; min-width: 0; }
+.op-pres b, .op-brief b { color: var(--gold); font-family: var(--f-lbl); font-size: 11px; letter-spacing: 0.05em; }
+.op-pres span, .op-brief span { font-size: 13px; }
+.op-card { position: relative; display: grid; gap: 8px; padding: 26px 14px 14px; background: var(--manila); color: var(--ink); border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink); }
+.op-card .tab { position: absolute; top: -3px; left: 12px; padding: 4px 8px 3px; background: var(--ink); color: var(--gold); font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; }
+.op-card .who { display: flex; align-items: center; gap: 8px; }
+.op-card .who canvas { box-sizing: content-box; width: 48px; height: 48px; border: 2px solid var(--ink); image-rendering: pixelated; background: var(--paper2); flex: none; }
+.op-card .who div { display: grid; } .op-card .who b { font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.05em; } .op-card .who span { font-size: 12px; }
+.op-card .ask { margin: 0; font-size: 17px; line-height: 1.3; font-weight: 600; }
+.op-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.op-ch .need { font-family: var(--f-lbl); font-size: 9px; color: var(--gold); }
+.op-ch[disabled] { opacity: 0.5; }
+.op-gam, .op-hl { margin: 0; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.05em; }
+.op-gam.g { color: var(--good-ink); } .op-gam.b { color: var(--bad-ink); }
+.op-fx { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; font-family: var(--f-lbl); font-size: 10px; }
+.op-fx b.g { color: var(--good-ink); } .op-fx b.b { color: var(--bad-ink); } .op-fx b.m { color: var(--muted-ink); }
+.op-war { display: grid; gap: 8px; color: var(--sky); }
+.op-war h3 { margin: 0; font-family: var(--f-disp); font-weight: 400; font-size: 32px; color: var(--gold); }
+.op-war .sub { margin: 0; font-size: 14px; }
+.op-paper { display: grid; gap: 8px; padding: 12px 14px; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); }
+.op-dl { margin: 0; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; }
+.op-head { margin: 0; font-weight: 700; font-size: clamp(22px, 7vw, 28px); line-height: 1.05; text-transform: uppercase; text-wrap: balance; }
+.opp .sheet-head h2 { font-size: 30px; white-space: nowrap; }
+.opp .story-prog { white-space: nowrap; }
+.op-el { display: grid; gap: 2px; padding: 6px 8px; border: 2px solid var(--ink); }
+.op-el.g { background: #cfe9d6; } .op-el.b { background: #f1cfcf; }
+.op-el b { font-family: var(--f-lbl); font-size: 11px; letter-spacing: 0.05em; }
+.op-news { margin: 0; font-size: 13px; } .op-news.b { color: var(--red-d); }
+.op-tab { width: 100%; border-collapse: collapse; font-size: 13px; }
+.op-tab td { padding: 3px 2px; border-top: 1px solid var(--paper-d); } .op-tab td:last-child { text-align: right; }
+.op-next-vote { margin: 0; font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; }
+.op-final .op-pres, .op-final .op-brief { background: var(--navy); }
+.op-rules, .op-goals { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; color: #d7dcf0; }
+.op-goals { color: var(--ink); } .op-goals li.ok { font-weight: 700; } .op-goals li.no { opacity: 0.7; }
+.op-rules .ico, .op-goals .ico { margin-right: 6px; color: var(--gold); } .op-goals .ico { color: var(--gold-d); }
 </style>
 
 </head>
@@ -1207,7 +1250,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v8.9</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v9.0</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1217,6 +1260,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
         <button class="btn gold" id="btn-new">New presidency</button>
         <button class="btn daily-btn" id="btn-daily">Daily briefing</button>
         <button class="btn" id="btn-camp">Campaign</button>
+        <button class="btn opp-btn" id="btn-opp">The Opposition</button>
         <button class="btn" id="btn-load" hidden>Load game</button>
         <button class="btn" id="btn-hall" hidden>Hall of Presidents</button>
         <button class="btn" id="btn-medals" hidden>Medal case</button>
@@ -1305,6 +1349,11 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
     <div class="over-body" id="over-body"></div>
   </section>
 
+  <section id="scr-opp" class="scr story opp" aria-label="The Opposition" hidden>
+    <header class="sheet-head"><button class="back" id="opp-back" aria-label="Back to the title"></button><h2>The Opposition</h2><span class="story-prog" id="opp-prog"></span></header>
+    <div class="story-list opp-list" id="opp-body"></div>
+  </section>
+
   <section id="scr-hall" class="scr story hall" aria-label="Hall of Presidents" hidden>
     <header class="sheet-head"><button class="back" id="hall-back" aria-label="Back to the title"></button><h2>Hall of Presidents</h2><span class="story-prog" id="hall-count"></span></header>
     <div class="story-list hall-list" id="hall-list"></div>
@@ -1326,7 +1375,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V8.9 */
+/* HAIL TO THE CLOUT V9.0 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -2875,7 +2924,110 @@ var HTTC_DATA = (function () {
   /* v7.2: once VP Okafor takes the oath as the Loyal Heir, a new VP steps in: fictional surnames, none a real VP's */
   var VP_NAMES = ['ADEYEMI', 'BRANDT', 'CALLOWAY', 'DELACROIX', 'ESPINOZA', 'FAIRWEATHER', 'GALLAGHER', 'HOLLOWAY', 'IBARRA', 'JANSSEN',
     'KOWALSKI', 'LINDQVIST', 'MAHONEY', 'NAKAMURA', 'OYELARAN', 'QUINTANA', 'RASMUSSEN', 'SANTORO', 'THIBODEAUX', 'VANTERPOOL', 'WHITLOCK', 'YAMADA'];
-  return { POWERS: POWERS, LOOKALIKES: LOOKALIKES, VP_NAMES: VP_NAMES, THREADS: THREADS, ERAS: ERAS, ERA_CARDS: ERA_CARDS, SEASONAL: SEASONAL, SEASON_CARDS: SEASON_CARDS, MANDATES: MANDATES, TRAITS: TRAITS, WHO: WHO, LOC: LOC, ORIGINS: ORIGINS, BUILD: BUILD, STAFF: STAFF, ROLE: ROLE, FAVORS: FAVORS, SUIT_T: SUIT_T, SUIT_OF: SUIT_OF, ARCS: ARCS, PARTY: PARTY, CARDS: CARDS, CAMP: CAMP, SPECIAL: SPECIAL, OPENERS: OPENERS, STORY: STORY, STORY_CARDS: STORY_CARDS, CHAP_CARDS: CHAP_CARDS, CAMPAIGN: CAMPAIGN };
+  /* ---------- v9.0: The Opposition (issue 2379 A). Your folders as LEADER HOLLOWAY. Each call moves the president's
+     approval (p: down is good for you), your standing (s), your base (b), heat on you (h) and clout (c); seats moves the
+     House now. need 'house' deals a folder only while you hold the gavel, 'minority' only while you do not. ---------- */
+  var OPPO = [
+    { id: 'op_sotu', who: 'anchor', r: 'Anchor, Away Team News', t: 'The president just gave the State of the Union. Away Team wants your response in five minutes.',
+      L: { t: 'Tear it apart', p: -2, b: 5, h: 3, s: -1, tag: 'hot', hl: 'HOLLOWAY SHREDS STATE OF THE UNION' },
+      R: { t: 'Sober and short', p: -1, s: 3, b: -2, tag: 'mod', hl: 'HOLLOWAY STRIKES A SOBER TONE' } },
+    { id: 'op_shutdown', who: 'whip', r: 'Your Whip', t: 'The budget runs out Friday. Your whip can hold every vote and shut the government down.',
+      L: { t: 'Shut it down', p: -4, b: 6, h: 6, s: -4, tag: 'hot', risk: { p: 0.5, win: { p: -2 }, lose: { s: -3, h: 3 }, hl: 'VOTERS BLAME HOLLOWAY FOR THE SHUTDOWN' }, hl: 'SHUTDOWN BITES THE WHITE HOUSE' },
+      R: { t: 'Pass a clean budget', p: 1, s: 3, b: -4, tag: 'mod', hl: 'HOLLOWAY KEEPS THE LIGHTS ON' } },
+    { id: 'op_town', who: 'voter', r: 'Voter, Town Hall', t: 'Jo has a question at your town hall: what would you actually do differently?',
+      L: { t: 'Give a real plan', s: 4, b: -1, c: -5, tag: 'mod' },
+      R: { t: 'Blame the president', p: -1, b: 3, s: -1, tag: 'hot' } },
+    { id: 'op_donor', who: 'donor', r: 'Megadonor', t: 'Mr. Vanderbucks will fund your whole midterm push. He would like a small favor later.',
+      L: { t: 'Take the check', c: 30, h: 6, tag: 'hot' },
+      R: { t: 'Small donors only', c: 8, b: 3, s: 1 } },
+    { id: 'op_scandal', who: 'pod', r: 'Host, Echo Chamber', t: 'Braxton has a juicy rumor about the White House. It is not checked.',
+      L: { t: 'Repeat it on air', p: -3, b: 4, h: 5, tag: 'hot', risk: { p: 0.55, win: { p: -2 }, lose: { s: -4, h: 4 }, hl: 'HOLLOWAY RUMOR FALLS APART' }, hl: 'HOLLOWAY AIRS WHITE HOUSE RUMOR' },
+      R: { t: 'Wait for the facts', s: 2, b: -2, tag: 'mod' } },
+    { id: 'op_bill', who: 'carmen', r: 'Your Legislative Director', t: 'The president wants your votes for a popular roads bill. Carmen says you could take half the credit.',
+      L: { t: 'Vote it down', p: -2, b: 4, s: -3, tag: 'hot', hl: 'HOLLOWAY SINKS ROADS BILL' },
+      R: { t: 'Co-sign it', p: 2, s: 4, b: -3, tag: 'mod', hl: 'ROADS BILL PASSES WITH HOLLOWAY ON IT' } },
+    { id: 'op_ad', who: 'camp', r: 'Your Campaign Manager', t: 'Rita has cut an attack ad on the economy. It is brutal and expensive.',
+      L: { t: 'Run it everywhere', p: -3, h: 2, c: -20, tag: 'hot' },
+      R: { t: 'Save the money', c: 5 } },
+    { id: 'op_comedy', who: 'comic', r: 'Late Night Host', t: 'Toby Nights wants you on the show to read mean tweets about yourself.',
+      L: { t: 'Be a good sport', s: 4, b: -1 },
+      R: { t: 'Too busy governing', b: 2, s: -1 } },
+    { id: 'op_hearing', who: 'counsel', r: 'Your Counsel', t: 'You can open an oversight hearing on the White House travel budget.',
+      L: { t: 'Gavel it in', p: -3, h: 3, b: 3, tag: 'hot', hl: 'HOLLOWAY HEARING GRILLS WHITE HOUSE' },
+      R: { t: 'Not worth the time', s: 1 }, need: 'house' },
+    { id: 'op_subpoena', who: 'counsel', r: 'Your Counsel', t: 'Your committee can subpoena the president\'s schedule. The White House will fight it in court.',
+      L: { t: 'Issue the subpoena', p: -4, h: 5, b: 4, c: -10, tag: 'hot', risk: { p: 0.6, win: { p: -2 }, lose: { s: -3 }, hl: 'COURT QUASHES HOLLOWAY SUBPOENA' }, hl: 'HOLLOWAY SUBPOENAS THE WHITE HOUSE' },
+      R: { t: 'Ask nicely first', s: 2, b: -2, tag: 'mod' }, need: 'house' },
+    { id: 'op_deal', who: 'chief', r: 'The President\'s Chief of Staff', t: 'Dana calls from the White House: a quiet deal on taxes, if you stand beside the president at the signing.',
+      L: { t: 'Stand at the signing', p: 2, s: 5, b: -5, c: 10, tag: 'mod', hl: 'HOLLOWAY AND PRESIDENT SIGN TAX DEAL' },
+      R: { t: 'Leak the offer', p: -2, b: 4, h: 3, tag: 'hot', hl: 'HOLLOWAY LEAKS SECRET TAX OFFER' } },
+    { id: 'op_poll', who: 'nora', r: 'Your Pollster', t: 'Nora can run a deep poll to find the president\'s weakest issue.',
+      L: { t: 'Commission it', c: -15, p: -2, s: 1 },
+      R: { t: 'Trust your gut', c: 3 } },
+    { id: 'op_tour', who: 'deshawn', r: 'Your Field Organizer', t: 'Deshawn has booked a bus tour of swing districts. It is long and it is cold.',
+      L: { t: 'Get on the bus', s: 3, b: 3, c: -10, seats: 2 },
+      R: { t: 'Do it by video', s: -1, c: 2 } },
+    { id: 'op_feud', who: 'marsh', r: 'Senator, Your Own Party', t: 'Sen. Marsh says you are too soft and wants your job. The cameras are waiting.',
+      L: { t: 'Hit back hard', b: 4, h: 3, s: -2, tag: 'hot' },
+      R: { t: 'Unite the party', b: -2, s: 3, c: -5, tag: 'mod' } },
+    { id: 'op_crisis', who: 'gen', r: 'Joint Chiefs', t: 'A crisis abroad. The president asks the country to rally. Gen. Stone briefs you privately.',
+      L: { t: 'Rally behind the flag', p: 2, s: 4, b: -3, tag: 'mod' },
+      R: { t: 'Question the plan', p: -2, b: 4, s: -2, h: 2, tag: 'hot' } },
+    { id: 'op_market', who: 'kip', r: 'Your Economist', t: 'Stocks just fell for a third day. Kip says you could call it the president\'s slump.',
+      L: { t: 'Name the slump', p: -3, b: 3, h: 2, tag: 'hot', hl: 'HOLLOWAY: IT IS THE PRESIDENT\'S SLUMP' },
+      R: { t: 'Calm the markets', s: 3, p: 1, tag: 'mod' } },
+    { id: 'op_celeb', who: 'celeb', r: 'Pop Star', t: 'Starla will endorse you at her stadium show if you join her on stage.',
+      L: { t: 'Dance with Starla', s: 3, b: 2, h: 2 },
+      R: { t: 'A thank you note', s: 1 } },
+    { id: 'op_filibuster', who: 'whip', r: 'Your Whip', t: 'The president\'s big bill reaches the Senate. Your whip can talk it to death.',
+      L: { t: 'Filibuster', p: -3, b: 5, h: 2, s: -1, tag: 'hot', hl: 'HOLLOWAY TALKS THE BILL TO DEATH' },
+      R: { t: 'Let it pass, amend it', p: 1, s: 3, b: -2, c: 5, tag: 'mod' } },
+    { id: 'op_crypto', who: 'crypto', r: 'Crypto Guy', t: 'Chad offers your caucus a new coin. Every member gets some. What could go wrong.',
+      L: { t: 'Launch HOLLO COIN', c: 25, risk: { p: 0.4, win: { c: 15 }, lose: { h: 10, s: -4, c: -10 }, hl: 'HOLLO COIN COLLAPSES' } },
+      R: { t: 'Hard pass', s: 1, b: 1 } },
+    { id: 'op_book', who: 'penn', r: 'Your Speechwriter', t: 'Penn can ghost write your memoir, out before the election.',
+      L: { t: 'Publish it', c: 15, s: 2, h: 2 },
+      R: { t: 'Not yet', c: 0 } },
+    { id: 'op_leak', who: 'bruno', r: 'The Fixer', t: 'Bruno has a White House memo that should not be in your hands.',
+      L: { t: 'Leak it', p: -4, h: 7, b: 3, tag: 'hot', risk: { p: 0.6, win: { p: -1 }, lose: { h: 6, s: -3 }, hl: 'HOLLOWAY CAUGHT LEAKING MEMO' }, hl: 'LEAKED MEMO ROCKS THE WHITE HOUSE' },
+      R: { t: 'Hand it back', s: 3, h: -2, tag: 'mod' } },
+    { id: 'op_debate', who: 'anchor', r: 'Anchor, Away Team News', t: 'Viv Steele offers you a prime time debate with a cabinet member.',
+      L: { t: 'Go for the knockout', p: -2, b: 3, s: 1, risk: { p: 0.5, win: { p: -2, s: 2 }, lose: { s: -3 }, hl: 'HOLLOWAY STUMBLES ON PRIME TIME' } },
+      R: { t: 'Stay on message', s: 2 } },
+    { id: 'op_vote', who: 'deshawn', r: 'Your Field Organizer', t: 'Deshawn wants money to register new voters in the districts you need.',
+      L: { t: 'Fund it', c: -20, seats: 3, b: 2 },
+      R: { t: 'Later', c: 0, b: -1 } },
+    { id: 'op_shadow', who: 'morgan', r: 'Your Strategist', t: 'Morgan says name a shadow cabinet now, so voters can picture you in charge.',
+      L: { t: 'Name it today', s: 4, b: -1, c: -10 },
+      R: { t: 'Keep them guessing', b: 1 } },
+    { id: 'op_gaffe', who: 'pod', r: 'Host, Echo Chamber', t: 'You called a whole state boring on a hot mic. Braxton is playing it on loop.',
+      L: { t: 'Double down', b: 3, h: 4, s: -3, tag: 'hot' },
+      R: { t: 'Apologize, visit', s: 1, c: -5, b: -1 } },
+    { id: 'op_impeach', who: 'counsel', r: 'Your Counsel', t: 'Your caucus wants articles of impeachment over the travel budget. It will dominate the year.',
+      L: { t: 'Draft the articles', p: -4, b: 7, h: 6, s: -4, tag: 'hot', hl: 'HOLLOWAY HOUSE DRAFTS ARTICLES' },
+      R: { t: 'Censure instead', p: -1, s: 2, b: -2, tag: 'mod' }, need: 'house' },
+    { id: 'op_budget', who: 'carmen', r: 'Your Legislative Director', t: 'As Speaker you write the budget now. Carmen has two drafts.',
+      L: { t: 'Starve their programs', p: -3, b: 4, h: 2, tag: 'hot' },
+      R: { t: 'Fund the basics', s: 3, c: 8, tag: 'mod' }, need: 'house' },
+    { id: 'op_minority', who: 'whip', r: 'Your Whip', t: 'In the minority you have one weapon left: a discharge petition on a popular bill.',
+      L: { t: 'File the petition', p: -2, s: 2, b: 2, c: -5 },
+      R: { t: 'Save your fire', c: 4 }, need: 'minority' },
+    { id: 'op_fund', who: 'tiff', r: 'Your Fundraiser', t: 'Tiffany has a dinner of 400 donors waiting. They want a speech with red meat.',
+      L: { t: 'Give them red meat', c: 20, b: 3, h: 3, tag: 'hot' },
+      R: { t: 'Talk policy', c: 10, s: 1 } },
+    { id: 'op_veto', who: 'chief', r: 'The President\'s Chief of Staff', t: 'The president threatens to veto your bill. Dana hints the threat is a bluff.',
+      L: { t: 'Call the bluff', p: -2, b: 3, risk: { p: 0.5, win: { p: -2, s: 2 }, lose: { s: -2, b: -2 }, hl: 'VETO STANDS: HOLLOWAY BILL DIES' } },
+      R: { t: 'Water it down', s: 2, b: -3, tag: 'mod' }, need: 'house' }
+  ];
+  /* the president's own quarter, off screen: one headline dealt at each close (p moves the president's approval) */
+  var OPP_NEWS = [
+    { t: 'PRESIDENT CUTS A RIBBON ON A NEW BRIDGE', p: 1.5 }, { t: 'JOBS REPORT BEATS THE FORECAST', p: 2 },
+    { t: 'WHITE HOUSE STAFFER WRITES A TELL ALL', p: -2 }, { t: 'PRESIDENT\'S DOG BITES AN AMBASSADOR', p: -1 },
+    { t: 'QUIET WEEK AT THE WHITE HOUSE', p: 0 }, { t: 'PRESIDENT SINKS A HOLE IN ONE ON CAMERA', p: 1 },
+    { t: 'GAS PRICES CLIMB AGAIN', p: -2 }, { t: 'SUMMIT ENDS WITH A HANDSHAKE', p: 1.5 },
+    { t: 'CABINET MEMBER RESIGNS IN A HUFF', p: -1.5 }, { t: 'PRESIDENT FORGETS THE NAME OF A STATE', p: -1 }
+  ];
+  return { OPPO: OPPO, OPP_NEWS: OPP_NEWS, POWERS: POWERS, LOOKALIKES: LOOKALIKES, VP_NAMES: VP_NAMES, THREADS: THREADS, ERAS: ERAS, ERA_CARDS: ERA_CARDS, SEASONAL: SEASONAL, SEASON_CARDS: SEASON_CARDS, MANDATES: MANDATES, TRAITS: TRAITS, WHO: WHO, LOC: LOC, ORIGINS: ORIGINS, BUILD: BUILD, STAFF: STAFF, ROLE: ROLE, FAVORS: FAVORS, SUIT_T: SUIT_T, SUIT_OF: SUIT_OF, ARCS: ARCS, PARTY: PARTY, CARDS: CARDS, CAMP: CAMP, SPECIAL: SPECIAL, OPENERS: OPENERS, STORY: STORY, STORY_CARDS: STORY_CARDS, CHAP_CARDS: CHAP_CARDS, CAMPAIGN: CAMPAIGN };
 })();
 /* ===== DATA END ===== */
 
@@ -4990,6 +5142,151 @@ var PRESNAMES = (function (mix) {
   }
   function rvName(r) { return r ? (r.kind === 'opp' ? 'LEADER ' : r.kind === 'cn' ? 'COUNSEL ' : 'SENATOR ') + r.name.last : ''; }
   /* ===== RIVALS END ===== */
+  /* ===== OPPOSITION BEGIN ===== */
+  /* ---------- v9.0: The Opposition (the Director's answer A on issue 2379). Flip the chair: you are LEADER HOLLOWAY, and
+     the president (a face and a name dealt from the seed) governs off screen. Your numbers are your own: standing (the
+     country's view of you), base (your party), heat (on you) and clout; the president's approval is the line you work
+     against. One term of 16 quarters: win the House at the midterm, then the White House at the general. A run here is
+     its own object (o.mode 'opp'), with its own dice (o.rs, seeded apart from any presidency), so no presidency, Daily or
+     bot record moves: nothing here reads or writes a presidency's g. The president remembers your hot calls (a grudge,
+     as v8.8's rivals remember yours) and hits back at the close. ---------- */
+  var OP = { q: 16, mid: 7, gen: 15, seats0: 205, need: 218, s0: 40, b0: 55, h0: 15, c0: 60, pa0: 54,
+    paFat: 0.35, paAnchor: 50, paPull: 0.4, paLo: 28, paHi: 62, squeeze: 20, sAnchor: 30, sAnchorB: 0.2, sPull: 0.15, sGain: 0.35, bDrift: -1.5, bAnchor: 55, bPull: 0.1, hDrift: -3,
+    gFade: 0.85, gMax: 10, gHeat: 0.4, gStand: 0.2, gridlock: 0.5,
+    midPen: 0, midA: 1.2, midB: 0.25, midS: 0.3, midH: 0.15, hAt: 30, midSpread: 5, genInc: -9, genA: 0.6, genS: 0.1, genB: 0.12, genH: 0.08, genHouse: 1, genSpread: 2,
+    incS: 0.3, incSAt: 30, incB: 12, speaker: 6, upkeep: 6, hand: 3, hand2: 4, hand2At: 8, fresh: 6 };
+  var OPPO = {}; (D.OPPO || []).forEach(function (c) { OPPO[c.id] = c; });
+  var OPP_NEWS = D.OPP_NEWS || [];
+  function opOn() { return (D.OPPO || []).length > 0; }
+  function opPoint(o, ann) { return { q: o.q, pa: r1(o.pa), s: r1(o.s), b: Math.round(o.b), h: Math.round(o.h), c: Math.round(o.c), seats: o.seats, ann: ann || null }; }
+  function opNew(seed) {
+    seed = seed | 0;
+    var o = { schema: SCHEMA, mode: 'opp', seed: seed, rs: (mix(seed, 9001) | 0) || 1, q: 0, s: OP.s0, b: OP.b0, h: OP.h0, c: OP.c0, pa: OP.pa0,
+      seats: OP.seats0, speaker: false, pg: 0, hand: [], hi: 0, phase: 'desk', seen: {}, hist: [], last: null, report: null, votes: [],
+      election: null, over: null, ad: 0, stats: { calls: 0, hot: 0, mod: 0, spent: 0 } };
+    var pf = newFace({ seed: seed, vp: { face: { k: 'okafor' } } }, 1);
+    var pn = PRESNAMES.deal(seed, 1, pf, NAME_SC, { HOLLOWAY: 1, OKAFOR: 1 }) || { first: '', last: 'BRANDT' };
+    o.pres = { face: pf, name: { first: pn.first, last: pn.last } };
+    var h0 = opPoint(o, null); h0.q = -1; o.hist.push(h0);
+    opDeal(o);
+    return o;
+  }
+  /* the quarter's stack: folders you have not seen lately first, weighted by the dice; Speaker folders only once you hold the House */
+  function opFits(o, c) { return !c.need || (c.need === 'house' ? o.speaker : !o.speaker); }
+  function opDeal(o) {
+    var n = o.q >= OP.hand2At ? OP.hand2 : OP.hand, pool = (D.OPPO || []).filter(function (c) { return opFits(o, c); }), hand = [];
+    for (var k = 0; k < n && pool.length; k++) {
+      var w = pool.map(function (c) { var s = o.seen[c.id]; return hand.indexOf(c.id) >= 0 ? 0 : s === undefined ? 3 : o.q - s >= OP.fresh ? 1 : 0.15; });
+      var tot = w.reduce(function (x, y) { return x + y; }, 0); if (tot <= 0) break;
+      var r = rnd(o) * tot, i = 0; while (i < w.length - 1 && r >= w[i]) { r -= w[i]; i++; }
+      hand.push(pool[i].id);
+    }
+    o.hand = hand; o.hi = 0; o.phase = 'desk';
+    o.ql = { pa0: o.pa, s0: o.s, b0: o.b, h0: o.h, c0: o.c, calls: [] };
+  }
+  function opCard(o) { return o && o.phase === 'desk' ? OPPO[o.hand[o.hi]] || null : null; }
+  function opCost(opt) { return opt && opt.c < 0 ? -opt.c : 0; }
+  function opCan(o, side) { var c = opCard(o), opt = c && c[side]; return !!opt && o.c >= opCost(opt); }
+  /* the president's approval is squeezed as a president's is (effA in the screens): a hit lands softer the lower it
+     already is, a lift softer the higher */
+  function opSq(o, v) { return v < 0 ? v * clamp((o.pa - OP.paLo) / OP.squeeze, 0.25, 1) : v * clamp((OP.paHi - o.pa) / OP.squeeze, 0.25, 1); }
+  function opApply(o, fx) {
+    o.pa = clamp(o.pa + opSq(o, fx.p || 0), 5, 95); o.s = clamp(o.s + (fx.s || 0), 0, 100);
+    o.b = clamp(o.b + (fx.b || 0), 0, 100); o.h = clamp(o.h + (fx.h || 0), 0, 100); o.c = o.c + (fx.c || 0);
+    if (fx.seats) o.seats = clamp(o.seats + fx.seats, 100, 335);
+  }
+  function opChoose(o, side) {
+    var card = opCard(o); if (!card || (side !== 'L' && side !== 'R')) return { ok: false, why: 'phase' };
+    var opt = card[side]; if (o.c < opCost(opt)) return { ok: false, why: 'clout' };
+    var fx = { p: opt.p || 0, s: opt.s || 0, b: opt.b || 0, h: opt.h || 0, c: opt.c || 0 }, gamble = null;
+    if (opt.risk) {
+      var won = rnd(o) < opt.risk.p, alt = won ? opt.risk.win : opt.risk.lose;
+      gamble = { won: won, p: opt.risk.p };
+      ['p', 's', 'b', 'h', 'c'].forEach(function (k) { fx[k] += alt[k] || 0; });
+    }
+    if (opt.c < 0) o.stats.spent -= opt.c;
+    opApply(o, fx);
+    if (opt.tag === 'hot') { o.stats.hot++; o.pg = Math.min(OP.gMax, o.pg + 1); }
+    if (opt.tag === 'mod') o.stats.mod++;
+    o.stats.calls++; o.seen[card.id] = o.q;
+    var call = { id: card.id, side: side, fx: fx, gamble: gamble, hl: (gamble && !gamble.won && opt.risk.hl) || opt.hl || null };
+    o.ql.calls.push(call); o.last = call;
+    o.hi++;
+    if (o.hi >= o.hand.length) o.phase = o.q === OP.mid || o.q === OP.gen ? 'warchest' : 'quarterEnd';
+    return { ok: true, call: call, card: card, opt: opt };
+  }
+  function opIsMid(o) { return o.q === OP.mid; }
+  function opProj(o) {
+    if (opIsMid(o)) return { type: 'mid', mean: OP.midPen + (50 - o.pa) * OP.midA + (o.b - 50) * OP.midB + (o.s - 50) * OP.midS - Math.max(0, o.h - OP.hAt) * OP.midH, spread: OP.midSpread, seats: o.seats };
+    return { type: 'gen', mean: 50 + OP.genInc + (49 - o.pa) * OP.genA + (o.s - 50) * OP.genS + (o.b - 50) * OP.genB - Math.max(0, o.h - OP.hAt) * OP.genH + (o.speaker ? OP.genHouse : 0), spread: OP.genSpread };
+  }
+  function opAds(o, tier) {
+    var t = ADS[tier] || ADS[0];
+    if (o.phase !== 'warchest') return { ok: false, why: 'phase' };
+    if (t.cost && o.c < t.cost) return { ok: false, why: 'clout' };
+    o.c -= t.cost; o.stats.spent += t.cost; o.ad = opIsMid(o) ? t.seats : t.vote;
+    return { ok: true };
+  }
+  function opVote(o) {
+    if (o.phase !== 'warchest') return null;
+    var pj = opProj(o), result = pj.mean + o.ad + (rnd(o) * 2 - 1) * pj.spread, el = { type: pj.type, q: o.q, mean: r1(pj.mean + o.ad), ad: o.ad };
+    if (pj.type === 'mid') {
+      var was = o.seats; o.seats = clamp(Math.round(OP.seats0 + result), 100, 335);
+      el.from = was; el.seats = o.seats; el.gain = o.seats - was; el.won = o.seats >= OP.need; o.speaker = el.won;
+      el.ann = el.won ? 'HOUSE FLIPPED' : 'HOUSE HELD';
+    } else {
+      el.vote = r1(result); el.won = result >= 50; el.ann = el.won ? 'PRESIDENT HOLLOWAY' : 'DEFEATED';
+    }
+    o.votes.push({ q: o.q, type: el.type, won: el.won, seats: el.seats, vote: el.vote });
+    o.election = el; o.ad = 0; o.phase = 'quarterEnd';
+    return el;
+  }
+  /* the close: the president's own quarter (fatigue, gravity, one dealt headline, gridlock under your House), your
+     numbers settle, the White House hits back on its grudge, clout pays, and the run ends where it ends */
+  function opClose(o) {
+    if (o.phase !== 'quarterEnd') return null;
+    var rep = { q: o.q, pa0: o.ql.pa0, s0: o.ql.s0, b0: o.ql.b0, h0: o.ql.h0, c0: o.ql.c0, calls: o.ql.calls.slice(), election: o.election };
+    var paA = o.pa;
+    o.pa += -OP.paFat + (OP.paAnchor - o.pa) * OP.paPull;
+    if (OPP_NEWS.length) { var nw = OPP_NEWS[Math.floor(rnd(o) * OPP_NEWS.length)]; o.pa += nw.p; rep.news = nw; }
+    if (o.speaker) { o.pa -= OP.gridlock; rep.gridlock = true; }
+    o.pa = clamp(o.pa, 5, 95);
+    o.s = clamp(o.s + (paA - o.pa) * OP.sGain + (OP.sAnchor + o.b * OP.sAnchorB - o.s) * OP.sPull, 0, 100);
+    if (o.pg >= 1) { var hb = { h: r1(o.pg * OP.gHeat), s: r1(-o.pg * OP.gStand) }; o.h = clamp(o.h + hb.h, 0, 100); o.s = clamp(o.s + hb.s, 0, 100); rep.hitBack = hb; rep.pg = r1(o.pg); }
+    o.pg = o.pg * OP.gFade;
+    /* the ends read your numbers as the quarter closes, before they settle */
+    var fell = o.b <= 0 ? 'caucus' : o.h >= 100 ? 'censure' : null;
+    o.b = clamp(o.b + OP.bDrift + (OP.bAnchor - o.b) * OP.bPull, 0, 100); o.h = clamp(o.h + OP.hDrift, 0, 100);
+    var inc = { stand: Math.round((o.s - OP.incSAt) * OP.incS), base: Math.round(o.b / OP.incB), speaker: o.speaker ? OP.speaker : 0, upkeep: -OP.upkeep };
+    inc.net = inc.stand + inc.base + inc.speaker + inc.upkeep; o.c += inc.net; rep.income = inc;
+    var el = o.election; o.election = null;
+    var ann = el ? el.ann : null;
+    rep.pa1 = o.pa; rep.s1 = o.s; rep.b1 = o.b; rep.h1 = o.h; rep.c1 = o.c;
+    rep.headline = el ? (el.type === 'mid' ? (el.won ? 'HOUSE FLIPS: HOLLOWAY TAKES THE GAVEL' : 'PRESIDENT\'S PARTY HOLDS THE HOUSE') : (el.won ? 'HOLLOWAY WINS THE WHITE HOUSE' : 'PRESIDENT WINS A SECOND TERM'))
+      : (rep.calls.length && rep.calls[rep.calls.length - 1].hl) || (o.pa - rep.pa0 <= -2 ? 'ROUGH QUARTER FOR THE WHITE HOUSE' : o.pa - rep.pa0 >= 2 ? 'PRESIDENT HAS A GOOD QUARTER' : 'QUIET QUARTER IN THE CAPITAL');
+    o.hist.push(opPoint(o, ann));
+    o.report = rep;
+    if (el && el.type === 'gen') return opOver(o, el.won ? 'won' : 'lost');
+    if (fell) return opOver(o, fell);
+    if (o.c <= 0) return opOver(o, 'broke');
+    o.phase = 'report';
+    return rep;
+  }
+  function opOver(o, cause) { o.over = { cause: cause, q: o.q }; o.phase = 'over'; return o.report; }
+  function opNext(o) { if (o.phase !== 'report') return false; o.q++; opDeal(o); return true; }
+  /* the grade: two goals, the House at the midterm and the White House at the general; a landslide (53% or more) is a third star */
+  function opGoals(o) {
+    var mid = null, gen = null; (o.votes || []).forEach(function (v) { if (v.type === 'mid') mid = v; else gen = v; });
+    return [
+      { id: 'house', t: 'Win the House at the midterm (' + OP.need + ' seats)', ok: !!(mid && mid.won), pend: !mid, val: mid ? mid.seats : o.seats },
+      { id: 'wh', t: 'Win the White House at the general election', ok: !!(gen && gen.won), pend: !gen, val: gen ? gen.vote : null },
+      { id: 'land', t: 'Win it with 53% or more', ok: !!(gen && gen.won && gen.vote >= 53), pend: !gen, val: gen ? gen.vote : null }
+    ];
+  }
+  function opStars(o) { return opGoals(o).filter(function (x) { return x.ok; }).length; }
+  function opPresName(o) { return o && o.pres && o.pres.name ? 'PRESIDENT ' + o.pres.name.last : 'THE PRESIDENT'; }
+  function opValid(o) { return !!(o && o.mode === 'opp' && o.schema === SCHEMA && o.phase !== 'over' && Array.isArray(o.hand)); }
+  /* ===== OPPOSITION END ===== */
 
   /* ---------- the Machine ---------- */
   var tier2 = function (g) { return !!g.flags.tier2; };
@@ -5255,6 +5552,7 @@ var PRESNAMES = (function (mix) {
     newGame: newGame, current: current, preview: preview, choose: choose,
     LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, nameFill: nameFill, nameFor: nameFor, PRESNAMES: PRESNAMES, NAME_SC: NAME_SC, madeOk: madeOk, mix: mix, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
     endQuarter: endQuarter, nextQuarter: nextQuarter,
+    OP: OP, OPPO: OPPO, opOn: opOn, opNew: opNew, opCard: opCard, opCan: opCan, opCost: opCost, opChoose: opChoose, opProj: opProj, opAds: opAds, opVote: opVote, opClose: opClose, opNext: opNext, opGoals: opGoals, opStars: opStars, opPresName: opPresName, opValid: opValid, opIsMid: opIsMid,
     RV: RV, rvOn: rvOn, rvVote: rvVote, rvSeats: rvSeats, rvTarget: rvTarget, rvName: rvName,
     POW: POW, EP_LINE: EP_LINE, epOn: epOn, epMet: epMet, epFell: epFell, powerOn: powerOn, powersHeld: powersHeld, powersOpen: powersOpen, powerState: powerState, seize: seize,
     projection: projection, campaign: campaign, election: election, houseTier: houseTier, PTY: PTY, partyState: partyState, fundParty: fundParty, leaseLeft: leaseLeft, leaseOut: leaseOut, ARC: ARC, arcMult: arcMult, arcRun: arcRun, arcEnding: arcEnding, econMult: econMult, mktOn: mktOn, HOUSE_LV: HOUSE_LV, houseLevel: houseLevel, houseLevelOf: houseLevelOf, houseNext: houseNext, houseSeats: houseSeats, houseMove: houseMove, MKT_LV: MKT_LV, MKT_X: MKT_X, mktLevel: mktLevel, mktLevelOf: mktLevelOf, mktNext: mktNext, crashChance: crashChance, optCost: optCost, dismissChance: dismissChance, suitOpen: suitOpen,
@@ -6553,8 +6851,8 @@ var CAST32 = (function (ART, F2) {
   'use strict';
   const E = HTTC, D = HTTC_DATA, A = ART;
   const $ = (id) => document.getElementById(id);
-  const KEYS = { save: 'httc.save.v1', best: 'httc.best.v1', hall: 'httc.hall.v1', medals: 'httc.medals.v1', stars: 'httc.stars.v1', prefs: 'httc.prefs.v2', chap: 'httc.chap.v1', daily: 'httc.daily.v1', live: 'httc.live.v1', slot: (i) => 'httc.slot.' + i };
-  const SCREENS = ['scr-title', 'scr-origin', 'scr-desk', 'scr-report', 'scr-machine', 'scr-war', 'scr-night', 'scr-over', 'scr-how', 'scr-camp', 'scr-daily', 'scr-hall', 'scr-medals'];
+  const KEYS = { opp: 'httc.opp.v1', oppBest: 'httc.oppbest.v1', save: 'httc.save.v1', best: 'httc.best.v1', hall: 'httc.hall.v1', medals: 'httc.medals.v1', stars: 'httc.stars.v1', prefs: 'httc.prefs.v2', chap: 'httc.chap.v1', daily: 'httc.daily.v1', live: 'httc.live.v1', slot: (i) => 'httc.slot.' + i };
+  const SCREENS = ['scr-title', 'scr-origin', 'scr-desk', 'scr-report', 'scr-machine', 'scr-war', 'scr-night', 'scr-over', 'scr-how', 'scr-camp', 'scr-daily', 'scr-hall', 'scr-medals', 'scr-opp'];
   const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   let G = null, screen = 'scr-title', tick = 0, sceneLoc = 'oval', busy = false, blinkAt = 20, adTier = 0;
   let shown = null, chartWin = 'recent', howReturn = null, modalKind = null, howTab = 'basics';
@@ -9907,6 +10205,7 @@ var CREATOR = (function (F, N, mix) {
     $('btn-daily').innerHTML = ic('cal') + ' Daily briefing · ' + N('No. ' + dno) + (drec ? ' · ' + ic('vote') + N(drec.s) : '') + (dk > 1 ? ' · ' + ic('streak') + N(dk) : '') + (drec ? '' : '<span class="new-badge">NEW TODAY</span>');
     $('btn-daily').classList.toggle('fresh', !drec); titleDay = today();
     /* v6.9: one Campaign button. Training is its first act, so the button shows chapters once you have played one, lessons before */
+    const ob = opBest(); $('btn-opp').innerHTML = 'The Opposition' + (opLoad() ? ' · ' + ic('right') + 'CONTINUE' : ob.stars ? ' · ' + ic('star') + N(ob.stars) : '');   /* v9.0 */
     $('btn-camp').innerHTML = 'Campaign' + (cd ? ' · ' + N(cd + '/' + D.CAMPAIGN.length) : sd ? ' · ' + N(sd + '/' + D.STORY.length) + ' lessons' : '');
     $('best').innerHTML = b ? 'BEST RUN: ' + N(String(b.years).replace(/\.00$/, '')) + ' YEARS · ' + (E.ORIG[b.origin] ? E.ORIG[b.origin].name : '') : 'NO RECORD YET. HOW LONG CAN YOU LAST?';
     const lr = prefs.legacy; $('best-legacy').hidden = !lr; $('best-legacy').innerHTML = lr ? ic('crown') + 'BEST LEGACY: ' + N(lr.best) + ' · ' + esc(lr.rank) : '';
@@ -10291,7 +10590,7 @@ var CREATOR = (function (F, N, mix) {
      replay finds the same. Three initials and a random device id travel, nothing else. Offline or refused, the local
      board and the codes work as before ---------- */
   const BOARD = String((typeof window !== 'undefined' && window.__httcBoard) || 'https://httc-board.kyn-a14.workers.dev').replace(/\/+$/, '');
-  const GAME_BUILD = 'v8.9';
+  const GAME_BUILD = 'v9.0';
   const boardOn = () => /^https:\/\/[^\s]+$/.test(BOARD);
   function boardDev() {
     prefs.daily = prefs.daily || {};
@@ -10647,13 +10946,192 @@ var CREATOR = (function (F, N, mix) {
       default: showTitle();
     }
   }
+  /* ===== OPPOSITION UI BEGIN ===== */
+  /* v9.0: The Opposition (the Director's answer A on issue 2379). You are LEADER HOLLOWAY; the president governs off
+     screen. The run (OPR) is the engine's opposition object, never G, saved under its own key. Its screen is one sheet
+     redrawn per phase: the folder, the result of a call, the war chest, the quarter's report and the final edition. */
+  let OPR = null, opSlip = false, opTier = 0;
+  const OP_STAT = { p: ['approval', 'President'], s: ['vote', 'Standing'], b: ['base', 'Base'], h: ['heat', 'Heat'] };
+  const OP_TH = { p: [0.5, 2.5, 4], s: [0.5, 2.5, 4], b: [0.5, 3, 6], h: [0.5, 3, 6] };
+  const opGood = (k, v) => (k === 'p' || k === 'h') ? v < 0 : v > 0;
+  const OP_END = { won: 'PRESIDENT HOLLOWAY', lost: 'PRESIDENT WINS A SECOND TERM', caucus: 'CAUCUS DUMPS HOLLOWAY', censure: 'HOLLOWAY CENSURED, STEPS DOWN', broke: 'HOLLOWAY WAR CHEST RUNS DRY' };
+  const OP_WHY = { won: 'You beat the president and take the White House.', lost: 'The president keeps the White House. Four more years in opposition.', caucus: 'Your base walked away and the caucus picked a new leader.', censure: 'Heat hit 100: the chamber censured you and you stepped down.', broke: 'Your clout ran out before the race did.' };
+  function opLoad() { try { const o = JSON.parse(lsGet(KEYS.opp)); if (E.opValid(o)) return o; } catch (e) { /* corrupt */ } return null; }
+  function opSave() { if (OPR && OPR.phase !== 'over') lsSet(KEYS.opp, JSON.stringify(OPR)); else lsDel(KEYS.opp); }
+  function opBest() { try { const b = JSON.parse(lsGet(KEYS.oppBest)); if (b && typeof b.runs === 'number') return b; } catch (e) { /* corrupt */ } return { runs: 0, wins: 0, house: 0, stars: 0 }; }
+  function opRecord(o) {
+    const b = opBest(), gl = E.opGoals(o);
+    b.runs++; if (gl[1].ok) b.wins++; if (gl[0].ok) b.house++; b.stars = Math.max(b.stars, E.opStars(o));
+    lsSet(KEYS.oppBest, JSON.stringify(b));
+  }
+  function opBit(k, v) {
+    const ar = arrows(v, OP_TH[k]); if (!ar) return '';
+    return '<b class="' + (opGood(k, v) ? 'g' : 'b') + '">' + ic(OP_STAT[k][0]) + ar + '</b>';
+  }
+  function opChips(opt) {
+    const out = [];
+    if (opt.c < 0) out.push(chip('n', null, C(opt.c, true), 'Costs ' + (-opt.c) + ' clout, paid now'));
+    ['p', 's', 'b', 'h'].forEach((k) => { const bit = opBit(k, opt[k] || 0); if (bit) out.push('<span class="fxc stat ' + (opGood(k, opt[k]) ? 'g' : 'b') + '" data-opk="' + k + '" title="' + esc(OP_STAT[k][1]) + '">' + bit + '</span>'); });
+    if (opt.c > 0) out.push(chip('g', null, C(opt.c, true), 'Clout you gain now'));
+    if (opt.seats) out.push(chip('g', 'house', '+' + opt.seats + ' SEATS', 'Seats your party picks up now'));
+    if (opt.risk) out.push(chip('m', 'risk', N(Math.round(opt.risk.p * 100) + '%'), Math.round(opt.risk.p * 100) + '% chance it pays off'));
+    if (!out.length) out.push('<span class="fxc m">NO EFFECT</span>');
+    return out.join('');
+  }
+  function opNums(fx) {
+    let s = '';
+    ['p', 's', 'b', 'h'].forEach((k) => { const v = fx[k] || 0; if (Math.abs(v) >= 0.5) s += '<b class="' + (opGood(k, v) ? 'g' : 'b') + '">' + ic(OP_STAT[k][0]) + N(fmtV('b', v)) + '</b>'; });
+    if (Math.abs(fx.c || 0) >= 0.5) s += '<b class="' + (fx.c > 0 ? 'g' : 'b') + '">' + C(fx.c, true) + '</b>';
+    return s || '<b class="m">NO CHANGE</b>';
+  }
+  function opHUD(o) {
+    const seat = o.speaker ? 'SPEAKER · ' + N(o.seats) + ' SEATS' : N(o.seats) + ' SEATS · ' + N(E.OP.need) + ' WIN THE HOUSE';
+    return '<div class="op-hud" id="op-hud">' +
+      '<span class="op-st" data-ops="s">' + ic('vote') + 'STANDING<b>' + N(Math.round(o.s) + '%') + '</b></span>' +
+      '<span class="op-st" data-ops="b">' + ic('base') + 'BASE<b>' + N(Math.round(o.b)) + '</b></span>' +
+      '<span class="op-st" data-ops="h">' + ic('heat') + 'HEAT<b>' + N(Math.round(o.h)) + '</b></span>' +
+      '<span class="op-st" data-ops="c">' + ic('clout') + 'CLOUT<b>' + N(Math.round(o.c)) + '</b></span></div>' +
+      '<div class="op-pres" id="op-pres"><canvas class="px" width="32" height="32" id="op-pres-face" aria-hidden="true"></canvas><div><b>' + esc(E.opPresName(o)) + '</b><span>' + ic('approval') + 'APPROVAL ' + N(Math.round(o.pa) + '%') + '</span><span class="op-seats">' + ic('house') + seat + '</span></div></div>';
+  }
+  function opDrawFaces() {
+    const c = $('op-pres-face'); if (c && OPR) A.card(c, A.president(OPR.pres.face, 'pol'), false, tick);
+    document.querySelectorAll('#opp-body canvas[data-opwho]').forEach((cv) => A.portrait(cv, cv.getAttribute('data-opwho'), false, tick));
+  }
+  function showOpp() {
+    show('scr-opp');
+    if (!OPR) OPR = opLoad();
+    if (!OPR || OPR.phase === 'over') { if (OPR && OPR.phase === 'over') { opOver(); return; } opIntro(); return; }
+    opRender();
+  }
+  function opIntro() {
+    OPR = null; $('opp-prog').innerHTML = '';
+    const b = opBest(), sv = opLoad();
+    let h = '<div class="op-brief" id="op-brief"><canvas class="px op-me" width="24" height="24" data-opwho="oppo" aria-hidden="true"></canvas><div><b>YOU ARE LEADER HOLLOWAY</b><span>Opposition Leader</span></div></div>' +
+      '<p class="story-intro">' + numify('Flip the chair. The president governs off screen; every folder on your desk is a chance to push back, or to look like a leader. Win the House at the midterm (' + E.OP.need + ' seats), then the White House at the general.') + '</p>' +
+      '<ul class="op-rules"><li>' + ic('approval') + 'The president\'s approval is the line you work against: down is good for you.</li><li>' + ic('vote') + 'Your standing is how the country sees you. It wins votes and pays clout.</li>' +
+      '<li>' + ic('heat') + 'Heat at 100 and you are censured. The White House remembers your hot calls and hits back.</li><li>' + ic('base') + 'Your base wants fights. At 0 the caucus replaces you.</li></ul>';
+    if (b.runs) h += '<p class="best" id="op-best">' + N(b.runs) + (b.runs === 1 ? ' RUN' : ' RUNS') + ' · ' + N(b.house) + ' HOUSE · ' + N(b.wins) + ' WHITE HOUSE · BEST ' + N(b.stars + (b.stars === 1 ? ' STAR' : ' STARS')) + '</p>';
+    if (sv) h += '<button class="btn gold" id="op-resume" data-opp-go>Continue · ' + numify(dateLabel(sv.q)) + '</button>';
+    h += '<button class="btn' + (sv ? '' : ' gold') + '" id="op-start"' + (sv ? '' : ' data-opp-go') + '>' + (sv ? 'Start over' : 'Take the chair') + '</button>';
+    $('opp-body').innerHTML = h;
+    opDrawFaces();
+    const rs = $('op-resume'); if (rs) rs.addEventListener('click', () => { SFX.click(); OPR = opLoad(); opSlip = false; if (OPR) opRender(); else opIntro(); });
+    $('op-start').addEventListener('click', () => { SFX.good(); opStart(); });
+  }
+  function opStart(seed) {
+    OPR = E.opNew(seed !== undefined ? seed | 0 : (Math.random() * 2147483647) | 0);
+    opSlip = false; opTier = 0; opSave(); opRender();
+  }
+  function opRender() {
+    const o = OPR; if (!o) { opIntro(); return; }
+    $('opp-prog').innerHTML = numify(dateLabel(Math.max(0, o.q)));
+    if (o.phase === 'over') { opOver(); return; }
+    if (o.phase === 'report') { opReport(); return; }
+    if (opSlip && o.last) { opResult(); return; }
+    if (o.phase === 'warchest') { opWar(); return; }
+    if (o.phase === 'quarterEnd') { E.opClose(o); opAfterClose(); return; }
+    const c = E.opCard(o); if (!c) return;
+    const left = o.hand.length - o.hi, vote = (o.q === E.OP.mid ? 'MIDTERMS' : o.q === E.OP.gen ? 'ELECTION DAY' : '');
+    let h = opHUD(o) + '<article class="op-card" id="op-card" data-op="' + c.id + '"><span class="tab">' + (vote ? esc(vote) + ' QUARTER' : 'FOLDER') + ' · ' + N(left + ' LEFT') + '</span>' +
+      '<div class="who"><canvas class="px" width="24" height="24" data-opwho="' + esc(c.who) + '" aria-hidden="true"></canvas><div><b>' + esc(D.WHO[c.who] ? D.WHO[c.who].n : c.who) + '</b><span>' + esc(c.r || (D.WHO[c.who] ? D.WHO[c.who].r : '')) + '</span></div></div>' +
+      '<p class="ask">' + numify(c.t) + '</p></article><div class="op-choices">';
+    ['L', 'R'].forEach((s) => {
+      const opt = c[s], can = E.opCan(o, s);
+      h += '<button class="choice op-ch" id="op-' + s + '" data-side="' + s + '"' + (can ? '' : ' disabled') + '><span class="ct">' + (s === 'L' ? ic('left') : '') + esc(opt.t) + (s === 'R' ? ic('right') : '') + '</span><span class="fx">' + opChips(opt) + '</span>' + (can ? '' : '<span class="need">NEED ' + C(-opt.c) + '</span>') + '</button>';
+    });
+    h += '</div>';
+    $('opp-body').innerHTML = h;
+    opDrawFaces();
+    $('opp-body').querySelectorAll('[data-side]').forEach((b) => b.addEventListener('click', () => opPick(b.getAttribute('data-side'))));
+  }
+  function opPick(side) {
+    if (!OPR || OPR.phase !== 'desk' || opSlip) return false;
+    if (!E.opCan(OPR, side)) { SFX.bad(); return false; }
+    const r = E.opChoose(OPR, side); if (!r.ok) return false;
+    SFX.stamp(); opSlip = true; opSave(); opRender(); return true;
+  }
+  function opResult() {
+    const o = OPR, call = o.last, c = E.OPPO[call.id], opt = c[call.side];
+    let h = opHUD(o) + '<article class="op-card op-done" id="op-result"><span class="tab">DECIDED</span><p class="ask">' + numify(opt.t) + '</p>' +
+      (call.gamble ? '<p class="op-gam ' + (call.gamble.won ? 'g' : 'b') + '">' + ic('risk') + (call.gamble.won ? 'IT PAID OFF' : 'IT BACKFIRED') + '</p>' : '') +
+      (call.hl ? '<p class="op-hl">' + esc(call.hl) + '</p>' : '') + '<p class="op-fx">' + opNums(call.fx) + '</p></article>' +
+      '<button class="btn gold" id="op-next" data-opp-go>' + (o.phase === 'desk' ? 'Next folder' : o.phase === 'warchest' ? 'To the war chest' : 'Close the quarter') + ' ' + ic('right') + '</button>';
+    $('opp-body').innerHTML = h;
+    opDrawFaces();
+    $('op-next').addEventListener('click', () => { SFX.click(); opSlip = false; opRender(); });
+  }
+  function opWar() {
+    const o = OPR, pj = E.opProj(o), mid = pj.type === 'mid', ad = E.ADS[opTier] || E.ADS[0];
+    const eff = mid ? ad.seats : ad.vote, mean = pj.mean + eff;
+    let h = opHUD(o) + '<div class="op-war" id="op-war"><h3>' + (mid ? 'Midterms' : 'Election day') + '</h3><p class="sub">' + numify(mid ? 'The House is on the ballot. Your party holds ' + o.seats + ' seats; ' + E.OP.need + ' takes the gavel.' : 'You against the president. 50% wins the White House.') + '</p>';
+    if (mid) { const after = Math.round(E.OP.seats0 + mean); h += '<div class="proj"><span class="pl">PROJECTED SEATS FOR YOUR PARTY</span><span class="pv num">' + after + ' ±' + pj.spread + '</span><span>' + numify(after >= E.OP.need ? 'You would take the House.' : 'You would fall ' + (E.OP.need - after) + ' short.') + '</span></div>'; }
+    else h += '<div class="proj"><span class="pl">PROJECTED SHARE OF THE VOTE</span><span class="pv num">' + (Math.round(mean * 10) / 10) + '% ±' + pj.spread + '</span><span>' + numify('50% wins.') + '</span></div>';
+    h += '<div class="war-bank"><span>' + ic('clout') + 'YOUR CLOUT <b>' + C(o.c) + '</b></span>' + (ad.cost ? '<span>AFTER ' + esc(ad.name) + ' <b>' + C(o.c - ad.cost) + '</b></span>' : '') + '</div><div class="ads">';
+    E.ADS.forEach((t) => {
+      const can = !t.cost || o.c >= t.cost;
+      h += '<button class="ad" data-optier="' + t.id + '" aria-pressed="' + (t.id === opTier) + '"' + (can ? '' : ' disabled') + '><b>' + t.name + '</b><span class="cost">' + (t.cost ? C(-t.cost, true) : 'Free') + '</span><span>' + (t.id === 0 ? 'Keep your clout.' : mid ? N('+' + t.seats) + ' seats' : N('+' + t.vote + '%') + ' of the vote') + '</span></button>';
+    });
+    h += '</div><button class="btn gold" id="op-vote" data-opp-go>Call the race</button></div>';
+    $('opp-body').innerHTML = h;
+    opDrawFaces();
+    $('opp-body').querySelectorAll('[data-optier]').forEach((b) => b.addEventListener('click', () => { opTier = +b.getAttribute('data-optier'); SFX.click(); opWar(); }));
+    $('op-vote').addEventListener('click', () => opCall());
+  }
+  function opCall() {
+    const o = OPR; if (!o || o.phase !== 'warchest') return false;
+    if (!E.opAds(o, opTier).ok) E.opAds(o, 0);
+    opTier = 0; const el = E.opVote(o); if (!el) return false;
+    if (el.won) SFX.fanfare(); else SFX.sad();
+    E.opClose(o); opAfterClose(); return true;
+  }
+  function opAfterClose() { if (OPR.phase === 'over') opRecord(OPR); opSave(); if (OPR.phase === 'over') opOver(); else opReport(); }
+  function opReport() {
+    const o = OPR, r = o.report, el = r.election, d = (a, b) => { const v = b - a; return Math.abs(v) < 0.5 ? N('±0') : N((v > 0 ? '+' : '−') + Math.abs(Math.round(v))); };
+    $('opp-prog').innerHTML = numify(dateLabel(r.q));
+    let h = '<div class="op-paper" id="op-report"><p class="op-dl">' + numify(dateLabel(r.q)) + ' · THE WIRE</p><h3 class="op-head">' + esc(r.headline) + '</h3>';
+    if (el) h += '<div class="op-el ' + (el.won ? 'g' : 'b') + '" id="op-el" data-el="' + el.type + '"><b>' + esc(el.ann) + '</b><span>' + numify(el.type === 'mid' ? 'Your party: ' + el.seats + ' seats (' + (el.gain >= 0 ? '+' : '') + el.gain + ').' + (el.won ? ' You hold the gavel: Speaker folders join your desk.' : '') : 'Your share: ' + el.vote + '%.') + '</span></div>';
+    if (r.news) h += '<p class="op-news">' + ic('approval') + 'AT THE WHITE HOUSE: ' + esc(r.news.t) + '</p>';
+    if (r.gridlock) h += '<p class="op-news">' + ic('house') + 'GRIDLOCK: your House slows the president down.</p>';
+    if (r.hitBack) h += '<p class="op-news b" id="op-hitback">' + ic('flag') + numify('THE WHITE HOUSE HITS BACK: it remembers your hot calls (grudge ' + r.pg + '). Heat +' + r.hitBack.h + ', standing ' + r.hitBack.s + '.') + '</p>';
+    h += '<table class="op-tab"><tr><td>' + ic('approval') + 'President</td><td>' + N(Math.round(r.pa0) + '%') + ' → ' + N(Math.round(r.pa1) + '%') + '</td><td>' + d(r.pa0, r.pa1) + '</td></tr>' +
+      '<tr><td>' + ic('vote') + 'Standing</td><td>' + N(Math.round(r.s0) + '%') + ' → ' + N(Math.round(r.s1) + '%') + '</td><td>' + d(r.s0, r.s1) + '</td></tr>' +
+      '<tr><td>' + ic('base') + 'Base</td><td>' + N(Math.round(r.b0)) + ' → ' + N(Math.round(r.b1)) + '</td><td>' + d(r.b0, r.b1) + '</td></tr>' +
+      '<tr><td>' + ic('heat') + 'Heat</td><td>' + N(Math.round(r.h0)) + ' → ' + N(Math.round(r.h1)) + '</td><td>' + d(r.h0, r.h1) + '</td></tr>' +
+      '<tr><td>' + ic('clout') + 'Clout</td><td>' + N(Math.round(r.c0)) + ' → ' + N(Math.round(r.c1)) + '</td><td>' + numify('pay ' + (r.income.net >= 0 ? '+' : '') + r.income.net) + '</td></tr></table>';
+    const nx = E.OP.mid > r.q ? E.OP.mid - r.q : E.OP.gen - r.q;
+    h += '<p class="op-next-vote">' + numify(r.q < E.OP.mid ? 'Midterms in ' + nx + (nx === 1 ? ' quarter' : ' quarters') : r.q < E.OP.gen ? 'Election day in ' + nx + (nx === 1 ? ' quarter' : ' quarters') : '') + '</p></div>' +
+      '<button class="btn gold" id="op-nextq" data-opp-go>Next quarter ' + ic('right') + '</button>';
+    $('opp-body').innerHTML = h;
+    $('op-nextq').addEventListener('click', () => { SFX.click(); if (E.opNext(OPR)) { opSave(); opRender(); } });
+  }
+  function opOver() {
+    const o = OPR, cause = o.over ? o.over.cause : 'lost', gl = E.opGoals(o), st = E.opStars(o);
+    $('opp-prog').innerHTML = numify(st + (st === 1 ? ' STAR' : ' STARS'));
+    let h = '<div class="op-paper op-final" id="op-over" data-cause="' + cause + '"><p class="op-dl">FINAL EDITION · THE WIRE</p><h3 class="op-head">' + esc(OP_END[cause] || OP_END.lost) + '</h3>' +
+      '<div class="op-brief"><canvas class="px op-me" width="24" height="24" data-opwho="oppo" aria-hidden="true"></canvas><div><b>LEADER HOLLOWAY</b><span>' + esc(OP_WHY[cause] || '') + '</span></div></div>' +
+      '<div class="op-pres"><canvas class="px" width="32" height="32" id="op-pres-face" aria-hidden="true"></canvas><div><b>' + esc(E.opPresName(o)) + '</b><span>' + ic('approval') + 'APPROVAL AT THE END ' + N(Math.round(o.pa) + '%') + '</span></div></div>' +
+      '<ul class="op-goals" id="op-goals">' + gl.map((x) => '<li class="' + (x.ok ? 'ok' : 'no') + '" data-goal="' + x.id + '">' + ic(x.ok ? 'star' : 'x') + numify(x.t) + '</li>').join('') + '</ul></div>' +
+      '<button class="btn gold" id="op-again" data-opp-go>Play again</button><button class="btn" id="op-title">Title</button>';
+    $('opp-body').innerHTML = h;
+    opDrawFaces();
+    $('op-again').addEventListener('click', () => { SFX.good(); opStart(); });
+    $('op-title').addEventListener('click', () => { SFX.click(); OPR = null; showTitle(); });
+  }
+  function opKey(e) {
+    if (screen !== 'scr-opp' || !$('modal').hidden) return false;
+    if (e.key === 'Escape') { opSave(); OPR = null; showTitle(); return true; }
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && OPR && OPR.phase === 'desk' && !opSlip) { e.preventDefault(); opPick(e.key === 'ArrowLeft' ? 'L' : 'R'); return true; }
+    if (e.key === 'Enter' || e.key === ' ') { const b = document.querySelector('#opp-body [data-opp-go]'); if (b) { e.preventDefault(); b.click(); return true; } }
+    return false;
+  }
+  /* ===== OPPOSITION UI END ===== */
   function wire() {
     $('l-a').innerHTML = ic('approval') + 'APPROVAL'; $('l-c').innerHTML = ic('clout') + 'CLOUT';
     $('l-b').innerHTML = ic('base') + 'BASE'; $('l-h').innerHTML = ic('heat') + 'HEAT';
     $('btn-pause').innerHTML = ic('pause'); $('btn-pause-r').innerHTML = ic('pause');
     $('btn-key').innerHTML = ic('help') + '<span class="kl">KEY</span>';
     $('sign-l').innerHTML = ic('left'); $('sign-r').innerHTML = ic('right');
-    ['origin-back', 'machine-back', 'how-back', 'camp-back', 'daily-back', 'hall-back', 'medals-back'].forEach((id) => { $(id).innerHTML = ic('left'); });
+    ['origin-back', 'machine-back', 'how-back', 'camp-back', 'daily-back', 'hall-back', 'medals-back', 'opp-back'].forEach((id) => { $(id).innerHTML = ic('left'); });
     $('btn-next').innerHTML = 'Next quarter ' + ic('right');
     $('ch-undo').addEventListener('click', () => { SFX.click(); takeBack(); });
     $('btn-machine').innerHTML = 'The Machine ' + ic('right');
@@ -10679,6 +11157,8 @@ var CREATOR = (function (F, N, mix) {
       else showMachine();
     });
     $('btn-camp').addEventListener('click', () => { SFX.click(); showCamp(); });
+    $('btn-opp').addEventListener('click', () => { SFX.click(); showOpp(); });   /* v9.0 */
+    $('opp-back').addEventListener('click', () => { SFX.click(); opSave(); OPR = null; showTitle(); });
     $('btn-daily').addEventListener('click', () => { SFX.click(); showDaily(); });
     $('daily-back').addEventListener('click', () => { SFX.click(); showTitle(); });
     $('hall-back').addEventListener('click', () => { SFX.click(); showTitle(); });   /* v8.1 */
@@ -10703,6 +11183,7 @@ var CREATOR = (function (F, N, mix) {
     document.addEventListener('keydown', (e) => {
       /* v7.4: D shows or hides the FPS readout, anywhere but in a text box */
       if ((e.key === 'd' || e.key === 'D') && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) { fpsShow(!fpsOn); return; }
+      if (opKey(e)) return;   /* v9.0: The Opposition's sheet */
       if (e.key === 'Escape') {
         if (COACH.on && $('modal').hidden) return;
         if (!$('modal').hidden && modalKind !== 'notice' && modalKind !== 'mandate') { closeModal(); return; }
@@ -10762,7 +11243,7 @@ var CREATOR = (function (F, N, mix) {
   try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ g: G })); } catch (e) { /* hot reload unavailable */ }
   if (hot && typeof hot.ready === 'function') { try { hot.ready(start); } catch (e) { start({}); } }
   else start((hot && hot.data) || {});
-  window.__httc = { get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), over: () => showOver(), seize: (id) => doSeize(id), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle(), hall: () => showHall(), get hallData() { return getHall(); }, medals: () => showMedals(), get medalData() { return getMedals(); }, MEDALS: MEDALS, AMBITIONS: AMBITIONS, get starData() { return getStars(); }, ambPick: (id) => { const ok = pickAmbition(id); if (ok) save(); return ok; }, ambTick: () => ambTick(G), origins: () => { renderOrigins(); show('scr-origin'); }, originOpen: (id, n) => originOpen(E.ORIG[id], n), get starsTotal() { return starsTotal(); }, get origData() { return JSON.parse(JSON.stringify(origOf())); }, CR: CR, creator: () => openCreator(), get cr() { return crSt; }, get made() { return madeNow(); } };
+  window.__httc = { opp: { get o() { return OPR; }, show: () => showOpp(), start: (seed) => opStart(seed), pick: (s) => opPick(s), call: () => opCall(), get slip() { return opSlip; }, get best() { return opBest(); } }, get g() { return G; }, E: E, finish: finishAll, get busy() { return busy; }, get coach() { return COACH.on; }, get holding() { return !!holding; }, next: () => dismissResult(null), brief: (n) => storyBrief(n), start: (n) => startStory(n), reloadPrefs: () => loadPrefs(), camp: () => showCamp(), cbrief: (n) => campBrief(n), cstart: (n) => startChap(n), cfinish: () => finishRun(), daily: () => showDaily(), dstart: (off) => startDaily(off !== false), today: () => today(), setCal: (v) => { calOverride = v || null; }, retire: () => doRetire(), over: () => showOver(), seize: (id) => doSeize(id), drawFace: (c, f, d) => A.card(c, A.president(f, E.ORIG[d] ? d : 'pol'), false, 0), drawCast: (c, id) => A.portrait(c, id, false, 0), get mood() { return moodNow(); }, moodOf: (res, before) => moodOf(res, before), get tick() { return tick; }, pres: () => presNow(), frame: FRAME, get fuse() { return { on: FUSE.on, left: FUSE.left, total: FUSE.total }; }, fps: (on) => fpsShow(on !== false), countUp: (el, a, b, ms) => countUp(el, a, b, ms, (v) => String(Math.round(v * 1000) / 1000)), report: () => showReport(false), resume: () => resume(), title: () => showTitle(), hall: () => showHall(), get hallData() { return getHall(); }, medals: () => showMedals(), get medalData() { return getMedals(); }, MEDALS: MEDALS, AMBITIONS: AMBITIONS, get starData() { return getStars(); }, ambPick: (id) => { const ok = pickAmbition(id); if (ok) save(); return ok; }, ambTick: () => ambTick(G), origins: () => { renderOrigins(); show('scr-origin'); }, originOpen: (id, n) => originOpen(E.ORIG[id], n), get starsTotal() { return starsTotal(); }, get origData() { return JSON.parse(JSON.stringify(origOf())); }, CR: CR, creator: () => openCreator(), get cr() { return crSt; }, get made() { return madeNow(); } };
 })();
 /* ===== UI END ===== */
 
