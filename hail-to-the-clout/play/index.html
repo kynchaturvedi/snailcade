@@ -1207,6 +1207,22 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 .op-st b { color: var(--gold); font-family: var(--f-body); font-size: 18px; letter-spacing: 0; }
 .op-pres, .op-brief { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--navy2); border: 2px solid var(--ink); color: var(--sky); }
 .op-pres canvas { box-sizing: content-box; width: 48px; height: 48px; border: 2px solid var(--ink); image-rendering: pixelated; flex: none; }
+.op-pres .op-rv, .op-pres .op-mem { display: block; font-family: var(--f-lbl); font-size: 8px; letter-spacing: 0.04em; color: var(--sky); overflow-wrap: anywhere; }
+.op-pres .op-rv .ico { width: 9px; height: 9px; }
+.op-pres .op-mem { color: #c9c6a0; }
+.hall-frame.hall-op > canvas { width: 48px; height: 48px; background: var(--paper); }
+.op-shelf { display: grid; gap: 8px; margin-top: 6px; padding-top: 8px; border-top: 3px solid var(--gold-d); }
+.op-case { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; padding: 8px 12px; background: var(--paper); color: var(--ink); border: 3px solid #23477a; box-shadow: 3px 3px 0 #000; }
+.op-case:not(.got) { opacity: 0.55; }
+.op-case:not(.got) .medal { background: #8a8fa8; }
+.op-case .mc-t { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.op-case .mc-name { font-weight: 700; font-size: 15px; line-height: 1.15; text-transform: uppercase; overflow-wrap: anywhere; }
+.op-case .mc-how { font-size: 14px; line-height: 1.3; }
+.op-case .mc-rec { font-family: var(--f-lbl); font-size: 9px; letter-spacing: 0.06em; color: #5a4a22; }
+.op-md { margin: 4px 0; }
+.op-final .hall-hung { margin: 6px 0 0; display: block; font-family: var(--f-lbl); font-size: 10px; letter-spacing: 0.06em; color: #6a3fa0; }
+.op-final .hall-hung .ico { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; }
+.op-shelf .st-head .ico { width: 16px; height: 16px; }
 .op-brief canvas { box-sizing: content-box; width: 48px; height: 48px; border: 2px solid var(--ink); image-rendering: pixelated; flex: none; background: var(--paper); }
 .op-pres div, .op-brief div { display: grid; gap: 2px; min-width: 0; }
 .op-pres b, .op-brief b { color: var(--gold); font-family: var(--f-lbl); font-size: 11px; letter-spacing: 0.05em; }
@@ -1250,7 +1266,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 <div id="app" class="app">
 
   <section id="scr-title" class="scr title" aria-label="Title">
-    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v9.0</span></div>
+    <div class="title-art"><canvas id="title-scene" class="px" width="160" height="90" aria-hidden="true"></canvas><span class="ver-badge" id="ver-badge">BUILD v9.1</span></div>
     <div class="title-body">
       <p class="eyebrow">A GAME OF POLLS, DEALS AND DAMAGE CONTROL</p>
       <h1 class="logo">Hail to the Clout</h1>
@@ -1375,7 +1391,7 @@ button.mand-card:hover, button.mand-card:focus-visible { background: #fff4cf; bo
 </div>
 
 <script>
-/* HAIL TO THE CLOUT V9.0 */
+/* HAIL TO THE CLOUT V9.1 */
 /* ===== DATA BEGIN ===== */
 /* HAIL TO THE CLOUT: game data. Cards, origins, machine buildings, cast.
    Effect keys: a = approval, b = base, h = heat, c = clout.
@@ -5149,16 +5165,24 @@ var PRESNAMES = (function (mix) {
      against. One term of 16 quarters: win the House at the midterm, then the White House at the general. A run here is
      its own object (o.mode 'opp'), with its own dice (o.rs, seeded apart from any presidency), so no presidency, Daily or
      bot record moves: nothing here reads or writes a presidency's g. The president remembers your hot calls (a grudge,
-     as v8.8's rivals remember yours) and hits back at the close. ---------- */
+     as v8.8's rivals remember yours) and hits back at the close.
+     v9.1 (the second build of issue 2379 A): the president is a rival as v8.8's leader was, with a standing (o.pr.s, 0 to
+     100) that pulls each close toward its approval plus its grudge, and a memory of your last three hot calls. The midterm
+     moves it (a House flipped knocks it down, one held lifts it), and a strong president costs you seats at the midterm
+     and votes at the general, as a strong leader costs a president. Nothing new draws a die. ---------- */
   var OP = { q: 16, mid: 7, gen: 15, seats0: 205, need: 218, s0: 40, b0: 55, h0: 15, c0: 60, pa0: 54,
     paFat: 0.35, paAnchor: 50, paPull: 0.4, paLo: 28, paHi: 62, squeeze: 20, sAnchor: 30, sAnchorB: 0.2, sPull: 0.15, sGain: 0.35, bDrift: -1.5, bAnchor: 55, bPull: 0.1, hDrift: -3,
     gFade: 0.85, gMax: 10, gHeat: 0.4, gStand: 0.2, gridlock: 0.5,
     midPen: 0, midA: 1.2, midB: 0.25, midS: 0.3, midH: 0.15, hAt: 30, midSpread: 5, genInc: -9, genA: 0.6, genS: 0.1, genB: 0.12, genH: 0.08, genHouse: 1, genSpread: 2,
-    incS: 0.3, incSAt: 30, incB: 12, speaker: 6, upkeep: 6, hand: 3, hand2: 4, hand2At: 8, fresh: 6 };
+    incS: 0.3, incSAt: 30, incB: 12, speaker: 6, upkeep: 6, hand: 3, hand2: 4, hand2At: 8, fresh: 6,
+    prS0: 50, prPull: 0.25, prW: 1.5, prLo: 15, prHi: 85, prVote: 0.05, prSeats: 0.15, prMem: 3, prMidLost: -8, prMidHeld: 5 };
   var OPPO = {}; (D.OPPO || []).forEach(function (c) { OPPO[c.id] = c; });
   var OPP_NEWS = D.OPP_NEWS || [];
   function opOn() { return (D.OPPO || []).length > 0; }
-  function opPoint(o, ann) { return { q: o.q, pa: r1(o.pa), s: r1(o.s), b: Math.round(o.b), h: Math.round(o.h), c: Math.round(o.c), seats: o.seats, ann: ann || null }; }
+  function opPoint(o, ann) { return { q: o.q, pa: r1(o.pa), s: r1(o.s), b: Math.round(o.b), h: Math.round(o.h), c: Math.round(o.c), seats: o.seats, ps: r1(opPr(o).s), ann: ann || null }; }
+  /* v9.1: the president as a rival: standing, the deepest grudge it held, and what it remembers (a v9.0 save has none yet) */
+  function opPr(o) { if (!o.pr) o.pr = { s: OP.prS0, top: Math.round((o.pg || 0) * 10) / 10, mem: [] }; return o.pr; }
+  function opPrTarget(o) { return clamp(o.pa + OP.prW * o.pg, OP.prLo, OP.prHi); }
   function opNew(seed) {
     seed = seed | 0;
     var o = { schema: SCHEMA, mode: 'opp', seed: seed, rs: (mix(seed, 9001) | 0) || 1, q: 0, s: OP.s0, b: OP.b0, h: OP.h0, c: OP.c0, pa: OP.pa0,
@@ -5167,6 +5191,7 @@ var PRESNAMES = (function (mix) {
     var pf = newFace({ seed: seed, vp: { face: { k: 'okafor' } } }, 1);
     var pn = PRESNAMES.deal(seed, 1, pf, NAME_SC, { HOLLOWAY: 1, OKAFOR: 1 }) || { first: '', last: 'BRANDT' };
     o.pres = { face: pf, name: { first: pn.first, last: pn.last } };
+    opPr(o);
     var h0 = opPoint(o, null); h0.q = -1; o.hist.push(h0);
     opDeal(o);
     return o;
@@ -5206,7 +5231,10 @@ var PRESNAMES = (function (mix) {
     }
     if (opt.c < 0) o.stats.spent -= opt.c;
     opApply(o, fx);
-    if (opt.tag === 'hot') { o.stats.hot++; o.pg = Math.min(OP.gMax, o.pg + 1); }
+    if (opt.tag === 'hot') {
+      o.stats.hot++; o.pg = Math.min(OP.gMax, o.pg + 1);
+      var pr = opPr(o); pr.top = Math.max(pr.top, o.pg); pr.mem.unshift({ id: card.id, side: side }); if (pr.mem.length > OP.prMem) pr.mem.length = OP.prMem;
+    }
     if (opt.tag === 'mod') o.stats.mod++;
     o.stats.calls++; o.seen[card.id] = o.q;
     var call = { id: card.id, side: side, fx: fx, gamble: gamble, hl: (gamble && !gamble.won && opt.risk.hl) || opt.hl || null };
@@ -5216,9 +5244,11 @@ var PRESNAMES = (function (mix) {
     return { ok: true, call: call, card: card, opt: opt };
   }
   function opIsMid(o) { return o.q === OP.mid; }
+  /* v9.1: what the president's standing costs you (or gives you, when it is weak): seats at the midterm, votes at the general */
+  function opPrCost(o) { var d = opPr(o).s - 50; return opIsMid(o) ? d * OP.prSeats : d * OP.prVote; }
   function opProj(o) {
-    if (opIsMid(o)) return { type: 'mid', mean: OP.midPen + (50 - o.pa) * OP.midA + (o.b - 50) * OP.midB + (o.s - 50) * OP.midS - Math.max(0, o.h - OP.hAt) * OP.midH, spread: OP.midSpread, seats: o.seats };
-    return { type: 'gen', mean: 50 + OP.genInc + (49 - o.pa) * OP.genA + (o.s - 50) * OP.genS + (o.b - 50) * OP.genB - Math.max(0, o.h - OP.hAt) * OP.genH + (o.speaker ? OP.genHouse : 0), spread: OP.genSpread };
+    if (opIsMid(o)) return { type: 'mid', mean: OP.midPen + (50 - o.pa) * OP.midA + (o.b - 50) * OP.midB + (o.s - 50) * OP.midS - Math.max(0, o.h - OP.hAt) * OP.midH - opPrCost(o), spread: OP.midSpread, seats: o.seats, pr: r1(opPrCost(o)) };
+    return { type: 'gen', mean: 50 + OP.genInc + (49 - o.pa) * OP.genA + (o.s - 50) * OP.genS + (o.b - 50) * OP.genB - Math.max(0, o.h - OP.hAt) * OP.genH + (o.speaker ? OP.genHouse : 0) - opPrCost(o), spread: OP.genSpread, pr: r1(opPrCost(o)) };
   }
   function opAds(o, tier) {
     var t = ADS[tier] || ADS[0];
@@ -5252,7 +5282,12 @@ var PRESNAMES = (function (mix) {
     if (o.speaker) { o.pa -= OP.gridlock; rep.gridlock = true; }
     o.pa = clamp(o.pa, 5, 95);
     o.s = clamp(o.s + (paA - o.pa) * OP.sGain + (OP.sAnchor + o.b * OP.sAnchorB - o.s) * OP.sPull, 0, 100);
-    if (o.pg >= 1) { var hb = { h: r1(o.pg * OP.gHeat), s: r1(-o.pg * OP.gStand) }; o.h = clamp(o.h + hb.h, 0, 100); o.s = clamp(o.s + hb.s, 0, 100); rep.hitBack = hb; rep.pg = r1(o.pg); }
+    var pr = opPr(o);
+    if (o.pg >= 1) { var hb = { h: r1(o.pg * OP.gHeat), s: r1(-o.pg * OP.gStand), mem: pr.mem[0] || null }; o.h = clamp(o.h + hb.h, 0, 100); o.s = clamp(o.s + hb.s, 0, 100); rep.hitBack = hb; rep.pg = r1(o.pg); }
+    /* v9.1: the president's standing: the midterm moves it, then it pulls toward approval plus the grudge, before the grudge fades */
+    rep.ps0 = pr.s;
+    if (o.election && o.election.type === 'mid') pr.s = clamp(pr.s + (o.election.won ? OP.prMidLost : OP.prMidHeld), 0, 100);
+    pr.s = clamp(pr.s + (opPrTarget(o) - pr.s) * OP.prPull, 0, 100); rep.ps1 = pr.s;
     o.pg = o.pg * OP.gFade;
     /* the ends read your numbers as the quarter closes, before they settle */
     var fell = o.b <= 0 ? 'caucus' : o.h >= 100 ? 'censure' : null;
@@ -5552,7 +5587,7 @@ var PRESNAMES = (function (mix) {
     newGame: newGame, current: current, preview: preview, choose: choose,
     LOOKALIKES: LOOKALIKES, FACE_N: FACE_N, OKAFOR_KEY: OKAFOR_KEY, CAST_KEYS: CAST_KEYS, faceKey: faceKey, faceOf: faceOf, FACE2_N: FACE2_N, FACE2_LISTS: { SHAPES: SHAPES, EYES: EYES, NOSES: NOSES, BROWS: BROWS, MOUTHS: MOUTHS, HS_F: HS_F, HS_M: HS_M, FH: FH, AGES: AGES }, face2Of: deal, faceFill: faceFill, nameFill: nameFill, nameFor: nameFor, PRESNAMES: PRESNAMES, NAME_SC: NAME_SC, madeOk: madeOk, mix: mix, lookEarned: lookEarned, nextFace: nextFace, faceFor: faceFor,
     endQuarter: endQuarter, nextQuarter: nextQuarter,
-    OP: OP, OPPO: OPPO, opOn: opOn, opNew: opNew, opCard: opCard, opCan: opCan, opCost: opCost, opChoose: opChoose, opProj: opProj, opAds: opAds, opVote: opVote, opClose: opClose, opNext: opNext, opGoals: opGoals, opStars: opStars, opPresName: opPresName, opValid: opValid, opIsMid: opIsMid,
+    OP: OP, OPPO: OPPO, opOn: opOn, opNew: opNew, opCard: opCard, opCan: opCan, opCost: opCost, opChoose: opChoose, opProj: opProj, opAds: opAds, opVote: opVote, opClose: opClose, opNext: opNext, opGoals: opGoals, opStars: opStars, opPresName: opPresName, opValid: opValid, opIsMid: opIsMid, opPr: opPr, opPrCost: opPrCost,
     RV: RV, rvOn: rvOn, rvVote: rvVote, rvSeats: rvSeats, rvTarget: rvTarget, rvName: rvName,
     POW: POW, EP_LINE: EP_LINE, epOn: epOn, epMet: epMet, epFell: epFell, powerOn: powerOn, powersHeld: powersHeld, powersOpen: powersOpen, powerState: powerState, seize: seize,
     projection: projection, campaign: campaign, election: election, houseTier: houseTier, PTY: PTY, partyState: partyState, fundParty: fundParty, leaseLeft: leaseLeft, leaseOut: leaseOut, ARC: ARC, arcMult: arcMult, arcRun: arcRun, arcEnding: arcEnding, econMult: econMult, mktOn: mktOn, HOUSE_LV: HOUSE_LV, houseLevel: houseLevel, houseLevelOf: houseLevelOf, houseNext: houseNext, houseSeats: houseSeats, houseMove: houseMove, MKT_LV: MKT_LV, MKT_X: MKT_X, mktLevel: mktLevel, mktLevelOf: mktLevelOf, mktNext: mktNext, crashChance: crashChance, optCost: optCost, dismissChance: dismissChance, suitOpen: suitOpen,
@@ -7279,10 +7314,30 @@ var CREATOR = (function (F, N, mix) {
       { id: 'forlife', t: 'g', ico: 'crown', name: 'PRESIDENT FOR LIFE', how: 'Win a third term on emergency powers', ok: function (g) { return cause(g) === 'forlife'; } },
       { id: 'deposed', t: 'b', ico: 'heat', name: 'DEPOSED', how: 'Lose the office to the backlash against your powers', ok: function (g) { return cause(g) === 'deposed'; } }
     ];
-    var BY = {}; LIST.forEach(function (m) { BY[m.id] = m; });
+    /* v9.1: The Opposition's own medals (the second build of issue 2379 A), judged from a finished opposition run (E.opNew's
+       object: its votes, history line, goals and the president's record) and kept in the same case under ids of their own.
+       They are a shelf apart: the forty-two above count toward the Legacy stars, these do not, so no origin opens sooner. */
+    function ovote(o, t) { var v = null; (o.votes || []).forEach(function (x) { if (x.type === t) v = x; }); return v; }
+    function owon(o) { var v = ovote(o, 'gen'); return !!(v && v.won); }
+    var OPP = [
+      { id: 'op_gavel', t: 'b', ico: 'house', name: 'THE GAVEL', how: 'Take the House from the opposition at the midterm', ok: function (o) { var v = ovote(o, 'mid'); return !!(v && v.won); } },
+      { id: 'op_big', t: 's', ico: 'house', name: 'BIG GAVEL', how: 'Take the House with 240 seats or more', ok: function (o) { var v = ovote(o, 'mid'); return !!(v && v.won && v.seats >= 240); } },
+      { id: 'op_long', t: 'b', ico: 'cal', name: 'THE LONG GAME', how: 'Lead the opposition all four years, to election day', ok: function (o) { return !!ovote(o, 'gen'); } },
+      { id: 'op_wh', t: 's', ico: 'crown', name: 'PRESIDENT HOLLOWAY', how: 'Win the White House from the opposition', ok: owon },
+      { id: 'op_wave', t: 'g', ico: 'up', name: 'THE WAVE', how: 'Win the White House with 53% or more', ok: function (o) { var v = ovote(o, 'gen'); return !!(v && v.won && v.vote >= 53); } },
+      { id: 'op_sweep', t: 'g', ico: 'star', name: 'CLEAN SWEEP', how: 'Earn all three stars of The Opposition in one run', ok: function (o, E) { return E.opStars(o) >= 3; } },
+      { id: 'op_whisker', t: 's', ico: 'risk', name: 'PHOTO FINISH', how: 'Win the White House with under 51%', ok: function (o) { var v = ovote(o, 'gen'); return !!(v && v.won && v.vote < 51); } },
+      { id: 'op_cool', t: 'g', ico: 'leaf', name: 'COOL HEAD', how: 'Win the White House with your heat never over 30', ok: function (o) { return owon(o) && (o.hist || []).every(function (p) { return p.h <= 30; }); } },
+      { id: 'op_upset', t: 'g', ico: 'loop', name: 'THE UPSET', how: 'Beat a president whose standing is 55 or more', ok: function (o) { return owon(o) && !!o.pr && o.pr.s >= 55; } },
+      { id: 'op_nemesis', t: 's', ico: 'flag', name: 'NEMESIS', how: 'Give the White House a grudge of 8 or more', ok: function (o) { return !!o.pr && o.pr.top >= 8; } },
+      { id: 'op_censure', t: 'b', ico: 'heat', name: 'CENSURED', how: 'Get censured out of the chair', ok: function (o) { return o.over.cause === 'censure'; } },
+      { id: 'op_dumped', t: 'b', ico: 'base', name: 'DUMPED', how: 'Lose your caucus', ok: function (o) { return o.over.cause === 'caucus'; } }
+    ];
+    var BY = {}; LIST.concat(OPP).forEach(function (m) { BY[m.id] = m; });
     /* the medals a finished run earned, in the list's order; a judge that throws earns nothing */
     function judge(g, E) { if (!g || !g.over) return []; return LIST.filter(function (m) { try { return !!m.ok(g, E); } catch (e) { return false; } }).map(function (m) { return m.id; }); }
-    return { LIST: LIST, BY: BY, N: LIST.length, judge: judge };
+    function judgeOpp(o, E) { if (!o || o.mode !== 'opp' || !o.over) return []; return OPP.filter(function (m) { try { return !!m.ok(o, E); } catch (e) { return false; } }).map(function (m) { return m.id; }); }
+    return { LIST: LIST, BY: BY, N: LIST.length, judge: judge, OPP: OPP, judgeOpp: judgeOpp };
   })();
   /* ===== MEDALS END ===== */
   /* ===== AMBITIONS BEGIN ===== */
@@ -7392,10 +7447,33 @@ var CREATOR = (function (F, N, mix) {
     if (fr.md.length) lsSet(KEYS.medals, JSON.stringify(mc));
     return Object.assign({}, fr, { fresh: fresh });
   }
+  /* v9.1: an Opposition run hangs in the Hall too (the second build of issue 2379 A): LEADER HOLLOWAY's frame, its stars,
+     the House and the vote, and the president it faced as its rival, with standing, grudge and how it ended. The same
+     numbering as every other frame; its id starts opp. so a reload hangs nothing new. Copied from the run: no die. */
+  function hallOppFrame(o) {
+    const gl = E.opGoals(o), mid = (o.votes || []).filter((v) => v.type === 'mid').pop(), gen = (o.votes || []).filter((v) => v.type === 'gen').pop(), pr = E.opPr(o);
+    return { mode: 'opp', id: 'opp.' + o.seed + '.' + o.over.q + '.' + o.over.cause, at: Date.now(), cause: o.over.cause, q: o.over.q, years: Math.round((o.over.q + 1) / 4 * 100) / 100,
+      stars: E.opStars(o), gl: gl.filter((x) => x.ok).map((x) => x.id), seats: mid ? mid.seats : null, house: !!(mid && mid.won), vote: gen ? gen.vote : null,
+      head: OP_END[o.over.cause] || OP_END.lost, hl: (o.report && o.report.headline) || '',
+      pr: { last: o.pres.name.last, f: JSON.parse(JSON.stringify(o.pres.face)), s: Math.round(pr.s), g: Math.round(pr.top), why: o.over.cause === 'won' ? 'beaten' : gen ? 'kept' : '' } };
+  }
+  function hangOppInHall(o) {
+    if (!o || o.mode !== 'opp' || !o.over) return null;
+    const h = getHall(), fr = hallOppFrame(o), had = h.runs.find((x) => x.id === fr.id);
+    if (had) return had;
+    fr.md = MEDALS.judgeOpp(o, E);
+    fr.no = h.n + 1; h.n = fr.no; h.runs.unshift(fr); if (h.runs.length > HALL_MAX) h.runs.length = HALL_MAX;
+    if (!lsSet(KEYS.hall, JSON.stringify(h))) return null;
+    const mc = getMedals(), fresh = [];
+    fr.md.forEach((id) => { const r = mc.got[id]; if (!r) fresh.push(id); mc.got[id] = { n: (r ? r.n : 0) + 1, first: r ? r.first : fr.no, at: r ? r.at : fr.at }; });
+    if (fr.md.length) lsSet(KEYS.medals, JSON.stringify(mc));
+    return Object.assign({}, fr, { fresh: fresh });
+  }
   /* v8.2: the medal case, httc.medals.v1 as { got: { id: { n, first, at } } }: how often each medal was won, the Hall
      frame that first won it and when. A corrupt or missing case reads as empty. */
   function getMedals() { try { const m = JSON.parse(lsGet(KEYS.medals)); if (m && m.got && typeof m.got === 'object' && !Array.isArray(m.got)) return m; } catch (e) { /* corrupt */ } return { got: {} }; }
   function medalWon() { const g = getMedals().got; return MEDALS.LIST.filter((m) => g[m.id] && g[m.id].n > 0).length; }
+  function oppMedalWon() { const g = getMedals().got; return MEDALS.OPP.filter((m) => g[m.id] && g[m.id].n > 0).length; }   /* v9.1 */
   function medalHTML(id, named) {
     const m = MEDALS.BY[id]; if (!m) return '';
     return '<span class="medal-chip" data-medal="' + m.id + '"><span class="medal t-' + m.t + '" title="' + esc(m.name) + '">' + ic(m.ico) + '</span>' + (named ? '<span class="md-name">' + esc(m.name) + '</span>' : '') + '</span>';
@@ -10157,14 +10235,31 @@ var CREATOR = (function (F, N, mix) {
     const sub = fr.cause === 'forlife' ? (pw.length ? 'HELD: ' + pw.join(', ') : '') : (fr.pn ? 'SEIZED ' + fr.pn + (fr.pn === 1 ? ' POWER' : ' POWERS') : '');
     return '<p class="hf-mark mk-' + fr.cause + '" data-mark="' + fr.cause + '">' + ic(m[0]) + '<b>' + m[1] + '</b><span>' + m[2] + '</span>' + (sub ? '<i>' + numify(sub) + '</i>' : '') + '</p>';
   }
+  /* v9.1: an Opposition run's frame: LEADER HOLLOWAY on the cast's 24 at 48 px, the run's stars, the House and the vote,
+     the president faced as its rival, the final headline and the medals */
+  const OP_HALL_WHY = { beaten: 'BEATEN AT THE POLLS', kept: 'WON A SECOND TERM', '': 'STILL IN OFFICE' };
+  function hallOppHTML(fr, latest) {
+    const yrs = String(fr.years).replace(/\.00$/, ''), p = fr.pr || {};
+    let h = '<article class="hall-frame hall-op' + (latest ? ' latest' : '') + ' op-' + esc(fr.cause) + '" data-hall="' + esc(fr.id) + '" data-hall-mode="opp"><canvas class="px" width="24" height="24" aria-hidden="true"></canvas>' +
+      '<div class="hf-t"><span class="hf-no">' + N('No. ' + fr.no) + '</span><b class="hf-name">LEADER HOLLOWAY</b><span class="hf-sub">THE OPPOSITION</span></div>' +
+      '<div class="hf-facts"><span>' + N(yrs) + ' YEARS</span><span>' + ic('star') + N(fr.stars + ' OF 3') + '</span>' +
+      (fr.seats !== null && fr.seats !== undefined ? '<span>' + (fr.house ? 'HOUSE WON · ' : 'HOUSE LOST · ') + N(fr.seats + ' SEATS') + '</span>' : '') +
+      (fr.vote !== null && fr.vote !== undefined ? '<span>VOTE ' + N(fr.vote + '%') + '</span>' : '') + '</div>' +
+      '<div class="hf-rv" data-hall-rv="1"><span class="hf-rv-sum">' + ic('flag') + 'YOUR RIVAL</span><span class="hf-rv-who" data-hrv-who="PRESIDENT"><canvas class="px" width="32" height="32" data-hrv="0" aria-hidden="true"></canvas><b>' + esc('PRESIDENT ' + (p.last || '')) + '</b><i>' + esc((OP_HALL_WHY[p.why] || OP_HALL_WHY['']) + ' · ') + N('STANDING ' + p.s + ' · GRUDGE ' + p.g) + '</i></span></div>' +
+      '<p class="hf-hl">' + esc(fr.head) + '</p>' + (fr.hl && fr.hl !== fr.head ? '<p class="hf-end">' + esc(fr.hl) + '</p>' : '') +
+      (fr.md && fr.md.length ? '<div class="hf-medals md-row">' + fr.md.map((id) => medalHTML(id, true)).join('') + '</div>' : '');
+    return h + '</article>';
+  }
   function showHall() {
     show('scr-hall');
     const h = getHall();
     $('hall-count').innerHTML = h.runs.length ? N(h.n) : '';
-    $('hall-list').innerHTML = h.runs.length ? h.runs.map((fr, i) => hallFrameHTML(fr, i === 0)).join('') +
+    $('hall-list').innerHTML = h.runs.length ? h.runs.map((fr, i) => fr.mode === 'opp' ? hallOppHTML(fr, i === 0) : hallFrameHTML(fr, i === 0)).join('') +
       (h.n > h.runs.length ? '<p class="hall-empty">THE HALL KEEPS THE NEWEST ' + N(HALL_MAX) + ' PORTRAITS.</p>' : '')
       : '<p class="hall-empty">No portraits yet. Every New presidency, good or bad, hangs its president here when the run ends.</p>';
-    $('hall-list').querySelectorAll('.hall-frame').forEach((el, i) => { const fr = h.runs[i]; A.card(el.querySelector('canvas'), A.president(fr.f || { k: 'default' }, E.ORIG[fr.origin] ? fr.origin : 'pol'), false, 0);
+    $('hall-list').querySelectorAll('.hall-frame').forEach((el, i) => { const fr = h.runs[i];
+      if (fr.mode === 'opp') { A.portrait(el.querySelector('canvas'), 'oppo', false, 0); const c = el.querySelector('canvas[data-hrv]'); if (c && fr.pr && fr.pr.f) rvFace(c, fr.pr.f, 0); return; }   /* v9.1 */
+      A.card(el.querySelector('canvas'), A.president(fr.f || { k: 'default' }, E.ORIG[fr.origin] ? fr.origin : 'pol'), false, 0);
       el.querySelectorAll('canvas[data-hrv]').forEach((c) => { const w = fr.rv && fr.rv.who[+c.getAttribute('data-hrv')]; if (w) rvFace(c, w.f, 0); }); });   /* v8.9: the rivals' faces */
     $('hall-list').scrollTop = 0;
   }
@@ -10182,7 +10277,13 @@ var CREATOR = (function (F, N, mix) {
       '<div class="st-list">' + AMBITIONS.LIST.map((x) => { const n = sg.got[x.id] || 0; return '<div class="st-row' + (n ? ' got' : '') + '" data-amb-case="' + x.id + '">' + starHTML(x.id, false) + '<span class="st-t"><b>' + esc(x.name) + '</b><span>' + numify(x.how) + '</span></span><i>' + (n ? N('×' + n) : '') + '</i></div>'; }).join('') + '</div></section>';
     $('medals-list').innerHTML = stars + MEDALS.LIST.map((m) => { const r = got[m.id], on = !!(r && r.n > 0);
       return '<article class="md-case' + (on ? ' got' : '') + '" data-case="' + m.id + '">' + medalHTML(m.id, false) + '<div class="mc-t"><b class="mc-name">' + esc(m.name) + '</b><span class="mc-how">' + esc(m.how) + '</span>' +
-        '<span class="mc-rec">' + (on ? numify('WON ' + (r.n === 1 ? 'ONCE' : r.n + ' TIMES') + ' · FIRST ON No. ' + r.first) : 'NOT YET WON') + '</span></div></article>'; }).join('');
+        '<span class="mc-rec">' + (on ? numify('WON ' + (r.n === 1 ? 'ONCE' : r.n + ' TIMES') + ' · FIRST ON No. ' + r.first) : 'NOT YET WON') + '</span></div></article>'; }).join('') +
+      /* v9.1: The Opposition's shelf, apart from the forty-two (its medals earn no Legacy star) */
+      '<section class="op-shelf" id="op-shelf"><div class="st-head">' + ic('flag') + '<b>' + N('THE OPPOSITION · ' + oppMedalWon() + ' / ' + MEDALS.OPP.length) + '</b></div>' +
+      '<p class="mc-how">' + numify('Won leading the other side. These sit on their own shelf and count toward no Legacy star.') + '</p>' +
+      MEDALS.OPP.map((m) => { const r = got[m.id], on = !!(r && r.n > 0);
+        return '<article class="op-case' + (on ? ' got' : '') + '" data-opcase="' + m.id + '">' + medalHTML(m.id, false) + '<div class="mc-t"><b class="mc-name">' + esc(m.name) + '</b><span class="mc-how">' + esc(m.how) + '</span>' +
+          '<span class="mc-rec">' + (on ? numify('WON ' + (r.n === 1 ? 'ONCE' : r.n + ' TIMES') + ' · FIRST ON No. ' + r.first) : 'NOT YET WON') + '</span></div></article>'; }).join('') + '</section>';
     $('medals-list').scrollTop = 0;
   }
 
@@ -10195,7 +10296,7 @@ var CREATOR = (function (F, N, mix) {
     if (s) { cont.hidden = false; cont.innerHTML = 'Continue · ' + numify(dateLabel(s.q)); } else cont.hidden = true;
     $('btn-load').hidden = !anySlot();
     const hl = getHall(); $('btn-hall').hidden = !hl.runs.length; $('btn-hall').innerHTML = 'Hall of Presidents' + (hl.runs.length ? ' · ' + N(hl.n) : '');   /* v8.1 */
-    const mw = medalWon(), lsw = starsTotal(); $('btn-medals').hidden = !mw && !lsw; $('btn-medals').innerHTML = 'Medal case' + (mw ? ' · ' + N(mw + ' of ' + MEDALS.N) : '') + (lsw ? ' · ' + N(lsw + (lsw === 1 ? ' STAR' : ' STARS')) : '');   /* v8.2; v8.3 its Legacy stars */
+    const mw = medalWon(), lsw = starsTotal(); $('btn-medals').hidden = !mw && !lsw && !oppMedalWon();   /* v9.1: or an Opposition medal */ $('btn-medals').innerHTML = 'Medal case' + (mw ? ' · ' + N(mw + ' of ' + MEDALS.N) : '') + (lsw ? ' · ' + N(lsw + (lsw === 1 ? ' STAR' : ' STARS')) : '');   /* v8.2; v8.3 its Legacy stars */
     const sd = Object.keys(storyDone()).length, cd = Object.keys(campRes()).length;
     $('story-hint').hidden = !!(b || s || sd || cd);
     $('story-hint').innerHTML = 'NEW HERE? THE CAMPAIGN OPENS WITH ' + N(D.STORY.length) + ' QUICK TRAINING LESSONS.';
@@ -10590,7 +10691,7 @@ var CREATOR = (function (F, N, mix) {
      replay finds the same. Three initials and a random device id travel, nothing else. Offline or refused, the local
      board and the codes work as before ---------- */
   const BOARD = String((typeof window !== 'undefined' && window.__httcBoard) || 'https://httc-board.kyn-a14.workers.dev').replace(/\/+$/, '');
-  const GAME_BUILD = 'v9.0';
+  const GAME_BUILD = 'v9.1';
   const boardOn = () => /^https:\/\/[^\s]+$/.test(BOARD);
   function boardDev() {
     prefs.daily = prefs.daily || {};
@@ -10950,7 +11051,7 @@ var CREATOR = (function (F, N, mix) {
   /* v9.0: The Opposition (the Director's answer A on issue 2379). You are LEADER HOLLOWAY; the president governs off
      screen. The run (OPR) is the engine's opposition object, never G, saved under its own key. Its screen is one sheet
      redrawn per phase: the folder, the result of a call, the war chest, the quarter's report and the final edition. */
-  let OPR = null, opSlip = false, opTier = 0;
+  let OPR = null, opSlip = false, opTier = 0, opHung = null;
   const OP_STAT = { p: ['approval', 'President'], s: ['vote', 'Standing'], b: ['base', 'Base'], h: ['heat', 'Heat'] };
   const OP_TH = { p: [0.5, 2.5, 4], s: [0.5, 2.5, 4], b: [0.5, 3, 6], h: [0.5, 3, 6] };
   const opGood = (k, v) => (k === 'p' || k === 'h') ? v < 0 : v > 0;
@@ -10984,6 +11085,9 @@ var CREATOR = (function (F, N, mix) {
     if (Math.abs(fx.c || 0) >= 0.5) s += '<b class="' + (fx.c > 0 ? 'g' : 'b') + '">' + C(fx.c, true) + '</b>';
     return s || '<b class="m">NO CHANGE</b>';
   }
+  /* v9.1: the president as your rival: standing, grudge and the last hot call it remembers */
+  function opMemLine(m) { const c = m && E.OPPO[m.id], t = c && c[m.side]; return t ? 'REMEMBERS · YOU CHOSE ' + t.t.toUpperCase() : 'REMEMBERS NOTHING YET'; }
+  function opRivalLine(o) { const pr = E.opPr(o); return 'YOUR RIVAL · STANDING ' + Math.round(pr.s) + ' · GRUDGE ' + Math.round(o.pg) + ' OF ' + E.OP.gMax; }
   function opHUD(o) {
     const seat = o.speaker ? 'SPEAKER · ' + N(o.seats) + ' SEATS' : N(o.seats) + ' SEATS · ' + N(E.OP.need) + ' WIN THE HOUSE';
     return '<div class="op-hud" id="op-hud">' +
@@ -10991,10 +11095,12 @@ var CREATOR = (function (F, N, mix) {
       '<span class="op-st" data-ops="b">' + ic('base') + 'BASE<b>' + N(Math.round(o.b)) + '</b></span>' +
       '<span class="op-st" data-ops="h">' + ic('heat') + 'HEAT<b>' + N(Math.round(o.h)) + '</b></span>' +
       '<span class="op-st" data-ops="c">' + ic('clout') + 'CLOUT<b>' + N(Math.round(o.c)) + '</b></span></div>' +
-      '<div class="op-pres" id="op-pres"><canvas class="px" width="32" height="32" id="op-pres-face" aria-hidden="true"></canvas><div><b>' + esc(E.opPresName(o)) + '</b><span>' + ic('approval') + 'APPROVAL ' + N(Math.round(o.pa) + '%') + '</span><span class="op-seats">' + ic('house') + seat + '</span></div></div>';
+      '<div class="op-pres" id="op-pres"><canvas class="px" width="32" height="32" id="op-pres-face" aria-hidden="true"></canvas><div><b>' + esc(E.opPresName(o)) + '</b><span>' + ic('approval') + 'APPROVAL ' + N(Math.round(o.pa) + '%') + '</span><span class="op-seats">' + ic('house') + seat + '</span>' +
+      '<span class="op-rv" id="op-rv">' + ic('flag') + esc(opRivalLine(o)) + '</span><span class="op-mem" id="op-mem">' + esc(opMemLine(E.opPr(o).mem[0])) + '</span></div></div>';
   }
   function opDrawFaces() {
     const c = $('op-pres-face'); if (c && OPR) A.card(c, A.president(OPR.pres.face, 'pol'), false, tick);
+    const rc = $('op-rv-face'); if (rc && OPR) rvFace(rc, OPR.pres.face, tick);   /* v9.1 */
     document.querySelectorAll('#opp-body canvas[data-opwho]').forEach((cv) => A.portrait(cv, cv.getAttribute('data-opwho'), false, tick));
   }
   function showOpp() {
@@ -11066,6 +11172,7 @@ var CREATOR = (function (F, N, mix) {
     let h = opHUD(o) + '<div class="op-war" id="op-war"><h3>' + (mid ? 'Midterms' : 'Election day') + '</h3><p class="sub">' + numify(mid ? 'The House is on the ballot. Your party holds ' + o.seats + ' seats; ' + E.OP.need + ' takes the gavel.' : 'You against the president. 50% wins the White House.') + '</p>';
     if (mid) { const after = Math.round(E.OP.seats0 + mean); h += '<div class="proj"><span class="pl">PROJECTED SEATS FOR YOUR PARTY</span><span class="pv num">' + after + ' ±' + pj.spread + '</span><span>' + numify(after >= E.OP.need ? 'You would take the House.' : 'You would fall ' + (E.OP.need - after) + ' short.') + '</span></div>'; }
     else h += '<div class="proj"><span class="pl">PROJECTED SHARE OF THE VOTE</span><span class="pv num">' + (Math.round(mean * 10) / 10) + '% ±' + pj.spread + '</span><span>' + numify('50% wins.') + '</span></div>';
+    h += '<p class="op-news" id="op-prcost">' + ic('flag') + numify(Math.abs(pj.pr) < 0.05 ? 'The president\'s standing (' + Math.round(E.opPr(o).s) + ') costs you nothing here.' : pj.pr > 0 ? 'The president\'s standing (' + Math.round(E.opPr(o).s) + ') costs you ' + Math.abs(pj.pr) + (mid ? ' seats.' : '% of the vote.') : 'A weak president (standing ' + Math.round(E.opPr(o).s) + ') is worth +' + Math.abs(pj.pr) + (mid ? ' seats' : '% of the vote') + ' to you.') + '</p>';   /* v9.1 */
     h += '<div class="war-bank"><span>' + ic('clout') + 'YOUR CLOUT <b>' + C(o.c) + '</b></span>' + (ad.cost ? '<span>AFTER ' + esc(ad.name) + ' <b>' + C(o.c - ad.cost) + '</b></span>' : '') + '</div><div class="ads">';
     E.ADS.forEach((t) => {
       const can = !t.cost || o.c >= t.cost;
@@ -11084,7 +11191,7 @@ var CREATOR = (function (F, N, mix) {
     if (el.won) SFX.fanfare(); else SFX.sad();
     E.opClose(o); opAfterClose(); return true;
   }
-  function opAfterClose() { if (OPR.phase === 'over') opRecord(OPR); opSave(); if (OPR.phase === 'over') opOver(); else opReport(); }
+  function opAfterClose() { if (OPR.phase === 'over') { opRecord(OPR); opHung = hangOppInHall(OPR); } opSave(); if (OPR.phase === 'over') opOver(); else opReport(); }   /* v9.1: the run hangs in the Hall */
   function opReport() {
     const o = OPR, r = o.report, el = r.election, d = (a, b) => { const v = b - a; return Math.abs(v) < 0.5 ? N('±0') : N((v > 0 ? '+' : '−') + Math.abs(Math.round(v))); };
     $('opp-prog').innerHTML = numify(dateLabel(r.q));
@@ -11092,12 +11199,13 @@ var CREATOR = (function (F, N, mix) {
     if (el) h += '<div class="op-el ' + (el.won ? 'g' : 'b') + '" id="op-el" data-el="' + el.type + '"><b>' + esc(el.ann) + '</b><span>' + numify(el.type === 'mid' ? 'Your party: ' + el.seats + ' seats (' + (el.gain >= 0 ? '+' : '') + el.gain + ').' + (el.won ? ' You hold the gavel: Speaker folders join your desk.' : '') : 'Your share: ' + el.vote + '%.') + '</span></div>';
     if (r.news) h += '<p class="op-news">' + ic('approval') + 'AT THE WHITE HOUSE: ' + esc(r.news.t) + '</p>';
     if (r.gridlock) h += '<p class="op-news">' + ic('house') + 'GRIDLOCK: your House slows the president down.</p>';
-    if (r.hitBack) h += '<p class="op-news b" id="op-hitback">' + ic('flag') + numify('THE WHITE HOUSE HITS BACK: it remembers your hot calls (grudge ' + r.pg + '). Heat +' + r.hitBack.h + ', standing ' + r.hitBack.s + '.') + '</p>';
+    if (r.hitBack) h += '<p class="op-news b" id="op-hitback">' + ic('flag') + numify('THE WHITE HOUSE HITS BACK: it remembers your hot calls (grudge ' + r.pg + ')' + (r.hitBack.mem ? '; the last: ' + opMemLine(r.hitBack.mem).replace('REMEMBERS · ', '') : '') + '. Heat +' + r.hitBack.h + ', standing ' + r.hitBack.s + '.') + '</p>';
     h += '<table class="op-tab"><tr><td>' + ic('approval') + 'President</td><td>' + N(Math.round(r.pa0) + '%') + ' → ' + N(Math.round(r.pa1) + '%') + '</td><td>' + d(r.pa0, r.pa1) + '</td></tr>' +
       '<tr><td>' + ic('vote') + 'Standing</td><td>' + N(Math.round(r.s0) + '%') + ' → ' + N(Math.round(r.s1) + '%') + '</td><td>' + d(r.s0, r.s1) + '</td></tr>' +
       '<tr><td>' + ic('base') + 'Base</td><td>' + N(Math.round(r.b0)) + ' → ' + N(Math.round(r.b1)) + '</td><td>' + d(r.b0, r.b1) + '</td></tr>' +
       '<tr><td>' + ic('heat') + 'Heat</td><td>' + N(Math.round(r.h0)) + ' → ' + N(Math.round(r.h1)) + '</td><td>' + d(r.h0, r.h1) + '</td></tr>' +
-      '<tr><td>' + ic('clout') + 'Clout</td><td>' + N(Math.round(r.c0)) + ' → ' + N(Math.round(r.c1)) + '</td><td>' + numify('pay ' + (r.income.net >= 0 ? '+' : '') + r.income.net) + '</td></tr></table>';
+      '<tr><td>' + ic('clout') + 'Clout</td><td>' + N(Math.round(r.c0)) + ' → ' + N(Math.round(r.c1)) + '</td><td>' + numify('pay ' + (r.income.net >= 0 ? '+' : '') + r.income.net) + '</td></tr>' +
+      (r.ps0 !== undefined ? '<tr id="op-prrow"><td>' + ic('flag') + 'Rival</td><td>' + N(Math.round(r.ps0)) + ' → ' + N(Math.round(r.ps1)) + '</td><td>' + d(r.ps0, r.ps1) + '</td></tr>' : '') + '</table>';   /* v9.1: the president's standing */
     const nx = E.OP.mid > r.q ? E.OP.mid - r.q : E.OP.gen - r.q;
     h += '<p class="op-next-vote">' + numify(r.q < E.OP.mid ? 'Midterms in ' + nx + (nx === 1 ? ' quarter' : ' quarters') : r.q < E.OP.gen ? 'Election day in ' + nx + (nx === 1 ? ' quarter' : ' quarters') : '') + '</p></div>' +
       '<button class="btn gold" id="op-nextq" data-opp-go>Next quarter ' + ic('right') + '</button>';
@@ -11110,12 +11218,23 @@ var CREATOR = (function (F, N, mix) {
     let h = '<div class="op-paper op-final" id="op-over" data-cause="' + cause + '"><p class="op-dl">FINAL EDITION · THE WIRE</p><h3 class="op-head">' + esc(OP_END[cause] || OP_END.lost) + '</h3>' +
       '<div class="op-brief"><canvas class="px op-me" width="24" height="24" data-opwho="oppo" aria-hidden="true"></canvas><div><b>LEADER HOLLOWAY</b><span>' + esc(OP_WHY[cause] || '') + '</span></div></div>' +
       '<div class="op-pres"><canvas class="px" width="32" height="32" id="op-pres-face" aria-hidden="true"></canvas><div><b>' + esc(E.opPresName(o)) + '</b><span>' + ic('approval') + 'APPROVAL AT THE END ' + N(Math.round(o.pa) + '%') + '</span></div></div>' +
-      '<ul class="op-goals" id="op-goals">' + gl.map((x) => '<li class="' + (x.ok ? 'ok' : 'no') + '" data-goal="' + x.id + '">' + ic(x.ok ? 'star' : 'x') + numify(x.t) + '</li>').join('') + '</ul></div>' +
+      '<ul class="op-goals" id="op-goals">' + gl.map((x) => '<li class="' + (x.ok ? 'ok' : 'no') + '" data-goal="' + x.id + '">' + ic(x.ok ? 'star' : 'x') + numify(x.t) + '</li>').join('') + '</ul>' + opOverRival(o) + opOverHall(o) + '</div>' +
       '<button class="btn gold" id="op-again" data-opp-go>Play again</button><button class="btn" id="op-title">Title</button>';
     $('opp-body').innerHTML = h;
     opDrawFaces();
     $('op-again').addEventListener('click', () => { SFX.good(); opStart(); });
     $('op-title').addEventListener('click', () => { SFX.click(); OPR = null; showTitle(); });
+  }
+  /* v9.1: the final edition keeps the president as your rival, and says where the run hangs and what it won */
+  function opOverRival(o) {
+    const pr = E.opPr(o), why = o.over && o.over.cause === 'won' ? 'BEATEN AT THE POLLS' : (o.votes || []).some((v) => v.type === 'gen') ? 'WON A SECOND TERM' : 'STILL IN OFFICE';
+    return '<section class="rvbox ov-rv" id="op-rival"><div class="rv-top"><b>' + ic('flag') + 'YOUR RIVAL</b><span>' + esc(why) + '</span></div><ul><li class="rv-opp"><canvas class="px rv-face" width="32" height="32" id="op-rv-face" aria-hidden="true"></canvas><div><b>' + esc(E.opPresName(o)) + '</b>' +
+      '<span class="rv-role">' + N('STANDING ' + Math.round(pr.s) + ' · DEEPEST GRUDGE ' + Math.round(pr.top) + ' OF ' + E.OP.gMax) + '</span><span class="rv-mem">' + esc(opMemLine(pr.mem[0])) + '</span></div></li></ul></section>';
+  }
+  function opOverHall(o) {
+    const hg = opHung && o.over && opHung.id === 'opp.' + o.seed + '.' + o.over.q + '.' + o.over.cause ? opHung : null; if (!hg) return '';
+    return '<p class="hall-hung" id="op-hall">' + ic('crown') + 'YOUR PORTRAIT HANGS IN THE HALL OF PRESIDENTS · ' + N('No. ' + hg.no) + '</p>' +
+      (hg.md && hg.md.length ? '<div class="md-row op-md" id="op-medals">' + hg.md.map((id) => medalHTML(id, true)).join('') + '</div>' : '');
   }
   function opKey(e) {
     if (screen !== 'scr-opp' || !$('modal').hidden) return false;
