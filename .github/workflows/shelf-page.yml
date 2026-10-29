@@ -1,9 +1,10 @@
-# shelf-page.yml v1.00 | THE SHELF BOT (the Director's yes, 2026-09-29; doc 13 section 11): after every merge to main that
+# shelf-page.yml v1.01 | THE SHELF BOT (the Director's yes, 2026-09-29; doc 13 section 11): after every merge to main that
 # touches test/ or the generator, rebuild test/index.html (the device-test shelf page) with .github/shelf/shelf-page.js and
 # commit that one file to main. The only writer of test/index.html: seats commit builds only, so two shelf pull requests
 # can no longer leave the page stale or conflict over it. Fails closed: if the rebuild changed any other file, it commits
 # nothing. Its own push uses GITHUB_TOKEN, which never starts another workflow run, so it cannot loop. If another merge
 # lands while it runs, it rebuilds on the new main and retries (3 tries). Modelled on the studio repo's checklist bot.
+# v1.01 (2026-10-29): actions/checkout at v5, its first major on Node.js 24; GitHub ran checkout v4 on Node 24 with a deprecation warning on every run (the studio Studio Head's backlog item 15). Nothing else changes.
 name: shelf page
 on:
   push:
@@ -20,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Rebuild and commit the shelf page (that file only)
