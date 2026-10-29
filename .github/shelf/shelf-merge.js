@@ -1,4 +1,4 @@
-// shelf-merge.js v1.01 | THE SHELF MERGE BOT (snailcade's half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's answer
+// shelf-merge.js v1.02 | THE SHELF MERGE BOT (snailcade's half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's answer
 // "A" on studio issue 321, 2026-10-03; studio doc 13 section 15.2). With `shelfmerge: on` in .github/shelf/AUTOPILOT.md it
 // merges a seat's shelf pull request without waiting for the Director when it ONLY ADDS versioned builds under test/<slug>/,
 // or (v1.01, the Director's answer "A" on studio issue 1437, 2026-10-14) ONLY ADDS versioned device labs under <slug>/labs/;
@@ -18,11 +18,15 @@
 // check-in catches a slip. A merge is pinned to the head it judged. Its token starts no workflow, so after a merge it starts
 // the shelf bot itself (shelf-page.yml). A refused pull request from this repository gets one comment per head commit; one
 // from a fork gets none. `shelfmerge: off`: nothing is merged or commented; the run summary says what it would do.
+// v1.02 (ECHO ESCAPE's MEMO-ECHO-ESCAPE-SHELF-PULL-REF-v1.00): GitHub sometimes makes no refs/pull/N/head for a pull
+// request (#392 on 2026-10-28: clean and green, it waited at every sweep with no comment). fetchHead takes the pull ref
+// first and, when there is none, the branch itself, only when the branch's commit is the pull request's head.sha (a
+// branch that has moved on waits for the next sweep, when GitHub's head has moved with it).
 //   node .github/shelf/shelf-merge.js --sweep   (the workflow; GH_TOKEN, GITHUB_REPOSITORY). It runs main's code and only
 //   reads each pull request with git. SHELFMERGE_ROOT=<dir> reads another checkout (the studio's test uses it).
 'use strict';
 const fs = require('fs'), path = require('path'), cp = require('child_process');
-const VERSION = 'v1.01';
+const VERSION = 'v1.02';
 const ROOT = path.resolve(process.env.SHELFMERGE_ROOT || path.join(__dirname, '..', '..'));
 const git = (a) => { const r = cp.spawnSync('git', a, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 }); return r.status === 0 ? r.stdout : null; };
 const switchOn = (text) => /^shelfmerge: on\s*$/m.test(text || '');
@@ -38,6 +42,17 @@ function gitFacts(headRef, mainRef) {
   if (diff === null) return { error: 'git could not read ' + base.slice(0, 7) + '..' + headRef };
   const changes = diff.split('\n').filter(Boolean).map((l) => { const c = l.split('\t'); return { st: c[0], from: c[1], to: c[2] || c[1] }; });
   return { changes, content: (p) => git(['show', headRef + ':' + p]) };
+}
+
+/* v1.02: the pull request's head, from its pull ref or, when GitHub made none, from its branch at the pull request's head.sha */
+function fetchHead(pr, g) {
+  g = g || git;
+  const ref = 'refs/shelfmerge/pr' + pr.number;
+  if (g(['fetch', '-q', 'origin', '+refs/pull/' + pr.number + '/head:' + ref]) !== null) return { ref, via: 'pull' };
+  if (g(['fetch', '-q', 'origin', '+refs/heads/' + pr.head.ref + ':' + ref]) === null) return { error: 'git could not fetch the pull request\'s head, from its pull ref or its branch' };
+  const at = (g(['rev-parse', ref]) || '').trim();
+  if (at !== pr.head.sha) return { error: 'GitHub made no pull ref, and the branch ' + pr.head.ref + ' is at ' + at.slice(0, 7) + ', not the pull request\'s head ' + pr.head.sha.slice(0, 7) };
+  return { ref, via: 'branch' };
 }
 
 /* MERGE, WAIT (no comment) or DIRECTOR (his to merge) */
@@ -99,7 +114,7 @@ async function sweep(env) {
   return { merged, lines };
 }
 
-module.exports = { VERSION, switchOn, decide, sweep, gitFacts };
+module.exports = { VERSION, switchOn, decide, sweep, gitFacts, fetchHead };
 
 if (require.main === module) {
   if (!process.argv.includes('--sweep')) { console.log('usage: node .github/shelf/shelf-merge.js --sweep'); process.exit(1); }
@@ -111,9 +126,10 @@ if (require.main === module) {
     return { status: r.status, json };
   };
   const facts = (pr) => {
-    const ref = 'refs/shelfmerge/pr' + pr.number;
-    if (git(['fetch', '-q', 'origin', '+refs/pull/' + pr.number + '/head:' + ref]) === null) return { error: 'git could not fetch the pull request\'s head' };
-    return gitFacts(ref, 'origin/main');
+    const h = fetchHead(pr);
+    if (h.error) return { error: h.error };
+    if (h.via === 'branch') console.log('#' + pr.number + ': GitHub made no pull ref; read from the branch ' + pr.head.ref + ' at the pull request\'s head');
+    return gitFacts(h.ref, 'origin/main');
   };
   let autopilot = ''; try { autopilot = fs.readFileSync(path.join(ROOT, '.github', 'shelf', 'AUTOPILOT.md'), 'utf8'); } catch (e) { autopilot = ''; }
   sweep({ api, repo, facts, autopilot, log: (l) => console.log(l), sleep: (ms) => new Promise((r) => setTimeout(r, ms)) })
