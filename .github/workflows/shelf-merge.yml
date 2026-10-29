@@ -1,4 +1,4 @@
-# shelf-merge.yml v1.01 | THE SHELF MERGE BOT (the snailcade half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's
+# shelf-merge.yml v1.02 | THE SHELF MERGE BOT (the snailcade half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's
 # answer "A" on studio issue 321, 2026-10-03; studio doc 13 section 15.2): when a pull request opens, moves or leaves draft,
 # every 15 minutes, and when started by hand, run .github/shelf/shelf-merge.js --sweep from main over every open pull request into main. With
 # `shelfmerge: on` in .github/shelf/AUTOPILOT.md it merges a claude/ branch that only adds versioned builds under
@@ -12,6 +12,7 @@
 #   41 minutes that way. So it also sweeps every 15 minutes, off the hour (7, 22, 37 and 52 past; GitHub may start a
 #   scheduled run late, never early). A sweep with nothing to merge changes nothing, and a refused pull request is still
 #   commented once. This repository is public, so its scheduled runs use no paid Actions minutes.
+# v1.02 (2026-10-29): actions/checkout at v5, its first major on Node.js 24; GitHub ran checkout v4 on Node 24 with a deprecation warning on every run (the studio Studio Head's backlog item 15). Nothing else changes.
 name: shelf merge
 on:
   pull_request_target:
@@ -32,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main
           fetch-depth: 0
