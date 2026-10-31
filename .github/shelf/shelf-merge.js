@@ -22,11 +22,14 @@
 // request (#392 on 2026-10-28: clean and green, it waited at every sweep with no comment). fetchHead takes the pull ref
 // first and, when there is none, the branch itself, only when the branch's commit is the pull request's head.sha (a
 // branch that has moved on waits for the next sweep, when GitHub's head has moved with it).
+// v1.03 (STUDIO OPERATIONS' MEMO-STUDIO-OPERATIONS-SHELF-BOT-STALE-MAIN-v1.00, the studio bot's fault on #3344): the workflow
+// checks main out once, and a sweep after a slow checkout read a branch updated with a newer main as changing main's own
+// files. fetchHead fetches main in the same fetch as the head, so the base is never older than the head.
 //   node .github/shelf/shelf-merge.js --sweep   (the workflow; GH_TOKEN, GITHUB_REPOSITORY). It runs main's code and only
 //   reads each pull request with git. SHELFMERGE_ROOT=<dir> reads another checkout (the studio's test uses it).
 'use strict';
 const fs = require('fs'), path = require('path'), cp = require('child_process');
-const VERSION = 'v1.02';
+const VERSION = 'v1.03';
 const ROOT = path.resolve(process.env.SHELFMERGE_ROOT || path.join(__dirname, '..', '..'));
 const git = (a) => { const r = cp.spawnSync('git', a, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 }); return r.status === 0 ? r.stdout : null; };
 const switchOn = (text) => /^shelfmerge: on\s*$/m.test(text || '');
@@ -44,12 +47,13 @@ function gitFacts(headRef, mainRef) {
   return { changes, content: (p) => git(['show', headRef + ':' + p]) };
 }
 
-/* v1.02: the pull request's head, from its pull ref or, when GitHub made none, from its branch at the pull request's head.sha */
+/* v1.02: the pull request's head, from its pull ref or, when GitHub made none, from its branch at the pull request's head.sha;
+   v1.03: main fetched with it, so the base is never older than the head */
 function fetchHead(pr, g) {
   g = g || git;
-  const ref = 'refs/shelfmerge/pr' + pr.number;
-  if (g(['fetch', '-q', 'origin', '+refs/pull/' + pr.number + '/head:' + ref]) !== null) return { ref, via: 'pull' };
-  if (g(['fetch', '-q', 'origin', '+refs/heads/' + pr.head.ref + ':' + ref]) === null) return { error: 'git could not fetch the pull request\'s head, from its pull ref or its branch' };
+  const ref = 'refs/shelfmerge/pr' + pr.number, main = '+refs/heads/main:refs/remotes/origin/main';
+  if (g(['fetch', '-q', 'origin', main, '+refs/pull/' + pr.number + '/head:' + ref]) !== null) return { ref, via: 'pull' };
+  if (g(['fetch', '-q', 'origin', main, '+refs/heads/' + pr.head.ref + ':' + ref]) === null) return { error: 'git could not fetch the pull request\'s head, from its pull ref or its branch' };
   const at = (g(['rev-parse', ref]) || '').trim();
   if (at !== pr.head.sha) return { error: 'GitHub made no pull ref, and the branch ' + pr.head.ref + ' is at ' + at.slice(0, 7) + ', not the pull request\'s head ' + pr.head.sha.slice(0, 7) };
   return { ref, via: 'branch' };
