@@ -1,4 +1,4 @@
-// shelf-merge.js v1.02 | THE SHELF MERGE BOT (snailcade's half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's answer
+// shelf-merge.js v1.04 | THE SHELF MERGE BOT (snailcade's half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's answer
 // "A" on studio issue 321, 2026-10-03; studio doc 13 section 15.2). With `shelfmerge: on` in .github/shelf/AUTOPILOT.md it
 // merges a seat's shelf pull request without waiting for the Director when it ONLY ADDS versioned builds under test/<slug>/,
 // or (v1.01, the Director's answer "A" on studio issue 1437, 2026-10-14) ONLY ADDS versioned device labs under <slug>/labs/;
@@ -25,15 +25,22 @@
 // v1.03 (STUDIO OPERATIONS' MEMO-STUDIO-OPERATIONS-SHELF-BOT-STALE-MAIN-v1.00, the studio bot's fault on #3344): the workflow
 // checks main out once, and a sweep after a slow checkout read a branch updated with a newer main as changing main's own
 // files. fetchHead fetches main in the same fetch as the head, so the base is never older than the head.
+// v1.04 (the Studio Head's MEMO-STUDIO-HEAD-SHELF-PAYLOAD-ANSWER-v1.00, SNAILCADE's v1.53 memo item 3): a build under the
+// payload law (studio doc 01 v3) loads its parts from payload-vX.YZ/ beside it, and the studio's tools/snailcade.js v1.09 copies
+// that folder with the build. A builds pull request may now also add new files directly in test/<slug>/payload-vX.YZ/, when
+// it adds a versioned build under the same test/<slug>/; a payload folder alone, a file in a subfolder of one, or one beside
+// another title's build stays the Director's. Each added payload file is read for a secret too. That the folder is the
+// studio's, file for file, is the session's check (snailcade.js check), as for builds.
 //   node .github/shelf/shelf-merge.js --sweep   (the workflow; GH_TOKEN, GITHUB_REPOSITORY). It runs main's code and only
 //   reads each pull request with git. SHELFMERGE_ROOT=<dir> reads another checkout (the studio's test uses it).
 'use strict';
 const fs = require('fs'), path = require('path'), cp = require('child_process');
-const VERSION = 'v1.03';
+const VERSION = 'v1.04';
 const ROOT = path.resolve(process.env.SHELFMERGE_ROOT || path.join(__dirname, '..', '..'));
 const git = (a) => { const r = cp.spawnSync('git', a, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 }); return r.status === 0 ? r.stdout : null; };
 const switchOn = (text) => /^shelfmerge: on\s*$/m.test(text || '');
 const BUILD = /^test\/[a-z0-9][a-z0-9-]*\/[^/]+[-_]v\d+(?:[._]\d+)*\.html$/i;
+const PAYLOAD = /^test\/([a-z0-9][a-z0-9-]*)\/payload-v\d+\.\d+\/[^/]+$/i;   /* v1.04: a file of a build's payload folder, flat */
 const LAB = /^(?!test\/)[a-z0-9][a-z0-9-]*\/labs\/[^/]+[-_]v\d+(?:[._]\d+)*\.html$/i;   /* v1.01: a title's device lab, never under test/ */
 const SECRETS = [[/\bcredential\s*:\s*["'](?!openrelayproject["'])[^"']{4,}["']/i, 'a relay or ICE login'],
   [/\b(?:api[_-]?key|apikey|client[_-]?secret|secret[_-]?key|access[_-]?token|auth[_-]?token|bearer)\s*[:=]\s*["'][A-Za-z0-9_\-\/+=.]{16,}["']/i, 'a key or token']];
@@ -70,12 +77,15 @@ function decide(f) {
   const changes = f.changes || [];
   if (!changes.length) wait.push('it changes nothing');
   const added = (re) => changes.filter((c) => c.st === 'A' && re.test(c.to)).length;
-  const kind = changes.length && added(BUILD) === changes.length ? 'builds' : changes.length && added(LAB) === changes.length ? 'labs' : ''; /* v1.01: one kind only */
-  const bad = kind ? [] : changes.filter((c) => !(c.st === 'A' && (BUILD.test(c.to) || LAB.test(c.to)))).map((c) => c.st[0] + ' ' + (c.st[0] === 'R' ? c.from + ' -> ' + c.to : c.to));
+  /* v1.04: a payload file counts with the builds only beside a build this pull request adds under the same test/<slug>/ */
+  const buildSlugs = new Set(changes.filter((c) => c.st === 'A' && BUILD.test(c.to)).map((c) => c.to.split('/')[1]));
+  const payload = (c) => c.st === 'A' && PAYLOAD.test(c.to) && buildSlugs.has(c.to.split('/')[1]);
+  const kind = changes.length && changes.every((c) => (c.st === 'A' && BUILD.test(c.to)) || payload(c)) && buildSlugs.size ? 'builds' : changes.length && added(LAB) === changes.length ? 'labs' : ''; /* v1.01: one kind only */
+  const bad = kind ? [] : changes.filter((c) => !(c.st === 'A' && (BUILD.test(c.to) || LAB.test(c.to))) && !payload(c)).map((c) => c.st[0] + ' ' + (c.st[0] === 'R' ? c.from + ' -> ' + c.to : c.to) + (c.st === 'A' && PAYLOAD.test(c.to) ? ' (a payload file with no new build beside it)' : ''));
   if (!kind && changes.length && !bad.length) refuse.push('it adds both builds and labs: one kind per pull request (tools/snailcade.js v1.07), so this one is the Director\'s');
-  if (bad.length) refuse.push('it does more than add versioned builds under test/<slug>/ or versioned labs under <slug>/labs/: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; and ' + (bad.length - 4) + ' more' : ''));
+  if (bad.length) refuse.push('it does more than add versioned builds under test/<slug>/ (with their payload folders) or versioned labs under <slug>/labs/: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; and ' + (bad.length - 4) + ' more' : ''));
   const held = [];
-  for (const c of changes.filter((x) => x.st === 'A' && /\.html$/i.test(x.to))) { const src = f.content(c.to) || ''; const k = SECRETS.filter(([re]) => re.test(src)).map(([, n]) => n); if (k.length) held.push(c.to + ' (' + k.join(', ') + ')'); }
+  for (const c of changes.filter((x) => x.st === 'A' && (/\.html$/i.test(x.to) || PAYLOAD.test(x.to)))) { const src = f.content(c.to) || ''; const k = SECRETS.filter(([re]) => re.test(src)).map(([, n]) => n); if (k.length) held.push(c.to + ' (' + k.join(', ') + ')'); }
   if (held.length) refuse.push('a page holds a secret: ' + held.join('; ') + ': never publish it without the Director\'s word for that page');
   return { verdict: refuse.length ? 'DIRECTOR' : wait.length ? 'WAIT' : 'MERGE', reasons: refuse.concat(wait), fork: f.sameRepo === false, kind };
 }
