@@ -1,4 +1,4 @@
-// shelf-merge.js v1.04 | THE SHELF MERGE BOT (snailcade's half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's answer
+// shelf-merge.js v1.05 | THE SHELF MERGE BOT (snailcade's half of THE STUDIO RUNS ON ITS OWN, part 2; the Director's answer
 // "A" on studio issue 321, 2026-10-03; studio doc 13 section 15.2). With `shelfmerge: on` in .github/shelf/AUTOPILOT.md it
 // merges a seat's shelf pull request without waiting for the Director when it ONLY ADDS versioned builds under test/<slug>/,
 // or (v1.01, the Director's answer "A" on studio issue 1437, 2026-10-14) ONLY ADDS versioned device labs under <slug>/labs/;
@@ -31,11 +31,16 @@
 // it adds a versioned build under the same test/<slug>/; a payload folder alone, a file in a subfolder of one, or one beside
 // another title's build stays the Director's. Each added payload file is read for a secret too. That the folder is the
 // studio's, file for file, is the session's check (snailcade.js check), as for builds.
+// v1.05 (the Studio Head's [AHEAD] line after the studio merge bot's v1.11, MEMO-STUDIO-HEAD-MERGEBOT-FETCH-RETRY-v1.00): every
+// GitHub call goes through makeApi, the studio bot's own: a network error that threw, with no response, is retried three times,
+// 2, 4 and 8 seconds apart; a response with a status is returned as it is and never retried, so the rules see real 4xx and 5xx
+// statuses; an error that escapes names its cause code and the path that failed. Before it, one dropped connection ended a
+// sweep RED (the studio bot's runs of 2026-11-03 on "fetch failed").
 //   node .github/shelf/shelf-merge.js --sweep   (the workflow; GH_TOKEN, GITHUB_REPOSITORY). It runs main's code and only
 //   reads each pull request with git. SHELFMERGE_ROOT=<dir> reads another checkout (the studio's test uses it).
 'use strict';
 const fs = require('fs'), path = require('path'), cp = require('child_process');
-const VERSION = 'v1.04';
+const VERSION = 'v1.05';
 const ROOT = path.resolve(process.env.SHELFMERGE_ROOT || path.join(__dirname, '..', '..'));
 const git = (a) => { const r = cp.spawnSync('git', a, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 }); return r.status === 0 ? r.stdout : null; };
 const switchOn = (text) => /^shelfmerge: on\s*$/m.test(text || '');
@@ -128,17 +133,32 @@ async function sweep(env) {
   return { merged, lines };
 }
 
-module.exports = { VERSION, switchOn, decide, sweep, gitFacts, fetchHead };
+/* v1.05: one GitHub call, retried on a network error only (the studio's tools/mergebot.js v1.11 makeApi, its User-Agent this bot's) */
+function makeApi({ token, fetchFn, sleep, base = 'https://api.github.com' }) {
+  const f = fetchFn || fetch;
+  return async (method, url, body) => {
+    let lastErr = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      if (attempt > 0) await sleep(2000 * Math.pow(2, attempt - 1));
+      let r;
+      try {
+        r = await f(base + url, { method, headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'snail-shelfmerge' }, body: body ? JSON.stringify(body) : undefined });
+      } catch (e) { lastErr = e; continue; }
+      let json = null; try { json = await r.json(); } catch (e) { json = null; }
+      return { status: r.status, json };
+    }
+    const code = (lastErr && lastErr.cause && lastErr.cause.code) || (lastErr && lastErr.code) || 'no code';
+    throw new Error('fetch failed (' + code + ') for ' + method + ' ' + url + ' after 4 tries: ' + (lastErr && lastErr.message));
+  };
+}
+
+module.exports = { VERSION, switchOn, decide, sweep, gitFacts, fetchHead, makeApi };
 
 if (require.main === module) {
   if (!process.argv.includes('--sweep')) { console.log('usage: node .github/shelf/shelf-merge.js --sweep'); process.exit(1); }
   const token = process.env.GH_TOKEN, repo = process.env.GITHUB_REPOSITORY;
   if (!token || !repo) { console.log('SHELF MERGE BOT RED: GH_TOKEN and GITHUB_REPOSITORY are needed'); process.exit(1); }
-  const api = async (method, url, body) => {
-    const r = await fetch('https://api.github.com' + url, { method, headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'snail-shelfmerge' }, body: body ? JSON.stringify(body) : undefined });
-    let json = null; try { json = await r.json(); } catch (e) { json = null; }
-    return { status: r.status, json };
-  };
+  const api = makeApi({ token, sleep: (ms) => new Promise((r) => setTimeout(r, ms)) }); /* v1.05 */
   const facts = (pr) => {
     const h = fetchHead(pr);
     if (h.error) return { error: h.error };
