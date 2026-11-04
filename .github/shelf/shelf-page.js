@@ -1,4 +1,4 @@
-// shelf-page.js v1.00 | THE SHELF BOT's generator (the Director's yes, 2026-09-29; doc 13 section 11): builds test/index.html,
+// shelf-page.js v1.01 | THE SHELF BOT's generator (the Director's yes, 2026-09-29; doc 13 section 11): builds test/index.html,
 // the device-test shelf page, from what test/ holds. The page logic is lifted verbatim from the studio's tools/snailcade.js
 // v1.05, which now calls this file, so the tool and the bot can never write two different pages.
 //   node .github/shelf/shelf-page.js     (from the snailcade repo root) writes test/index.html; prints the build count
@@ -6,15 +6,18 @@
 // builds only. Plain node, no packages. The page carries its own version (PAGE); bump it only when the page changes.
 'use strict';
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
-const VERSION = 'v1.00';
-const PAGE = 'v1.04';
+const VERSION = 'v1.01';
+const PAGE = 'v1.05';
 const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const VRX = /-v(\d+(?:[._]\d+)*)\.html$/;   /* v1.03: -v1.62.html and -v1_62.html both read 1.62 */
 const vparts = (f) => ((f.match(VRX) || [])[1] || '0').split(/[._]/).map(Number);   /* for sorting only */
 const vlabel = (f) => 'v' + ((f.match(VRX) || [])[1] || '0').replace(/_/g, '.');   /* v1.05: the card keeps the name's digits */
 const vcmp = (a, b) => { const x = vparts(a), y = vparts(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (y[i] || 0) - (x[i] || 0); if (d) return d; } return a < b ? -1 : 1; };
-const display = (slug) => slug.split('-').join(' ').toUpperCase();
+/* v1.01 (page v1.05): a title the Director renamed shows his name; its folder keeps its slug, so every link holds
+   (SECTOR SIEGE shown as PULSAR PATROL, his "Pulsar Patrol" on #1996; the studio's roadmap row titles-2) */
+const NAMES = { 'sector-siege': 'PULSAR PATROL' };
+const display = (slug) => NAMES[slug] || slug.split('-').join(' ').toUpperCase();
 
 /* every playable build on the shelf: test/<slug>/<file>.html, newest version first within a title */
 function builds(shelf) {
