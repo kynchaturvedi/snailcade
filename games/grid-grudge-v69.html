@@ -194,6 +194,52 @@
      scale with cell size. Applies everywhere blocks draw. Visuals only;
      full ten-gate chain green.
 ---------------------------------------------------------------------
+ v69  REFRESH  (the draw writes nothing that outlives the frame)
+   - THE DRAW AUDIT (doc 11 section 5 rule 1; SNAILCADE's cabinet
+     audit, MEMO-SNAILCADE-DRAW-AUDIT-GRID-WELL-AT-30-HZ): the gravity
+     well's ease and the callout's countdown move from the drawing
+     into step(), counted by the step's own time. Until v68 drawField
+     eased the well and drawAnnounce counted the callout each time
+     they drew, so in the arcade cabinet, which steps the game at a
+     fixed rate, a 30 Hz screen drawing over two steps saw one well
+     target, up to 1.07 cells from 60 Hz. In this game a step is a
+     drawn frame, so play, the well and the callout look as on v68.
+     FX.gs carries the well's speed to the draw; FX.gwT and the
+     callout's lt are gone. What the draw still writes is the title's
+     and the over screen's seven tap rectangles, rewritten every
+     frame and read only by the tap handler.
+   - GATES: refreshtest v1.01 adds 30 and 50 Hz (a 1/10 s grid at
+     30, 50, 60 and 120 Hz, SCREEN and capped), the pace (FX.t equal
+     at every rate), the draw audit (render() changes nothing lasting
+     but the tap rectangles) and the poison proof (-999 in those
+     before every frame changes nothing); redproof v1.33 rewrites the
+     two frame law tampers and adds the step capped at one 60 Hz
+     step, a bare draw write and a step that reads a draw cache (121).
+---------------------------------------------------------------------
+ v68  MUSIC ROTATION  (MIDNIGHT GLASS II and STARFALL join the match)
+   - Director (issue #506, "b MIDNIGHT GLASS II and Starfall",
+     verbatim): both tracks from the audio lab v15 join the in-match
+     rotation (MUSIC_PLAY_POOL), copied byte for byte, so a match now
+     picks from eight tracks. Neither track has a spoken lane, so the
+     lab's VOICE panel has nothing to drive; the MASTER, MUSIC and
+     SFX levels stay the game's own (the lab's defaults). The menu
+     keeps NEON HOLD. The pick still takes one fxRand draw, so the
+     dice stream and every bot match replay as on v67.
+   - GATES: audiotest v1.02 pins both tracks byte for byte to the lab
+     and hears every lane they carry; redproof v1.32 drops each track
+     and alters each one's notes (118).
+---------------------------------------------------------------------
+ v67  GENTLER MISTAKES  (SPUD and ROOKIE take more clean placements)
+   - Director (issue #508, "B", verbatim): SPUD's mistake chance is
+     20 percent, not 30; ROOKIE's is 12, not 28. A mistake still
+     picks among the worst 60 percent of placements. Their weights,
+     think times and self-help rules stay the same. The full bot
+     suite before and after uses the same seeds: reports/v66 and v67.
+   - GATES: vscputest v1.09 drives their own O into a pinned well:
+     rolls at and above the new thresholds clear the double; just
+     below still miss. Published v66 reds four checks. redproof
+     v1.28 restores each old roll and removes each mistake roll (106).
+---------------------------------------------------------------------
  v66  SHARK THINK TIME  (SHARK, the Hard CPU, thinks 1.2 s a piece)
    - Director (issue #1058, "B"): SHARK thinks 1200 ms a piece, not
      1500 (each think still varies from 0.65 to 1.35 of it). Aiming
@@ -1054,7 +1100,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e14">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
-<title>GRID GRUDGE - BUILD 66</title>
+<title>GRID GRUDGE - BUILD 69</title>
 <style>
   :root { --safe: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
   html, body {
@@ -1079,7 +1125,7 @@
 /* =====================================================================
    BUILD STAMP
 ===================================================================== */
-var BUILD = 66;
+var BUILD = 69;
 
 /* =====================================================================
    TUNABLES  (single-knob, intent-commented; codex SYSTEMS mirrors these)
@@ -1168,7 +1214,7 @@ var FX = { t: 0, ripY: -1, ripT: 0, surgeT: 0,      // LIVING GRID energy (v21, 
   shake: 0,              // v24: field shake magnitude 0..1 (field only; controls never shake)
   pop: null,             // v24: floating callout {txt, t, big} for clears
   frameT: 0,             // v25: field-frame blaze on clears
-  gx: 6, gy: 4,          // v25: render-side smoothed piece position for the grid wake (never read by logic)
+  gx: 6, gy: 4, gs: 0,   // v25: smoothed piece position for the grid wake (never read by logic); v69: eased in step(), gs its speed
   wellT: 0,              // v26: gravity-well impulse (locks, hard drops, garbage deepen the well; distinct from STATE.gravT, the fall timer)
   quadT: 0,              // v31: the QUADRUPLE full-field wash (the top celebration tier)
   linesPop: 0 };         // v24: HUD counter pop
@@ -1670,6 +1716,14 @@ function step(dt){
   for (var fxJ = FX.parts.length - 1; fxJ >= 0; fxJ--){ var fxP = FX.parts[fxJ];
     fxP.t -= fxDs; if (fxP.t <= 0){ FX.parts.splice(fxJ, 1); continue; }
     fxP.x += fxP.vx*fxDs; fxP.y += fxP.vy*fxDs; fxP.vy += 22*fxDs; }
+  // v69 THE DRAW AUDIT (doc 11 section 5 rule 1; MEMO-SNAILCADE-DRAW-AUDIT-GRID-WELL-AT-30-HZ): the gravity well eases and the
+  // callout counts down here, once a step by the step's own time, so render() writes nothing that outlives the frame (until v68
+  // drawField eased the well and drawAnnounce counted the callout per drawn frame: a 30 Hz draw over two cabinet steps saw one target)
+  var gwAp = STATE.active, gwX = gwAp ? gwAp.x + gwAp.m.length/2 : FIELD_W/2, gwY = gwAp ? gwAp.y + gwAp.m.length/2 : 4;
+  FX.gs = Math.abs(gwX - FX.gx) + Math.abs(gwY - FX.gy);   // the well's speed this step, before it eases (drawField reads it)
+  var gwK = 1 - Math.pow(1 - 0.16, fxDs * 60);           // 0.16 a 60 Hz step, the same pace at any step length
+  FX.gx += (gwX - FX.gx) * gwK; FX.gy += (gwY - FX.gy) * gwK;
+  if (FX.spName && FX.spName.t > 0) FX.spName.t -= fxDs * 0.96;   // the callout: 0.96 of its life a second
   if (STATE.infoOpen){ STATE.infoT += dt; if (STATE.infoT > 4000){ STATE.infoOpen = false; } return; }   // bubble pauses play
   if (HAS_OPPONENT){ NET.snapT += dt; if (NET.snapT >= NET_SNAP_MS){ NET.snapT = 0; netSend({ t:'snap', f:snapField(STATE.field), l:STATE.lines }); } }
   if (STATE.mode !== 'play' || !STATE.active) return;
@@ -1972,8 +2026,8 @@ var VSCPU = false, cpu = null, cpuLevel = 'MED', menuScreen = null;
 var CLEAR_SCORE = [0, 0.4, 2.0, 3.5, 7.0];
 var SWITCH_EDGE = 3;   // v59 SMART SWITCH: Switch fires only from a stack at least this many rows taller than the rival's
 var AI_PRESETS = {
-  PEASY: { name:'SPUD',   label:'PEASY', color:'#9ad94b', thinkMs:4000, errorRate:0.30, wLines:1.2, wHoles:4.0, wHeight:0.40, wBump:0.30, wWell:0,    offense:false, taunts:['oops','my bad','uh oh'] },
-  EASY:  { name:'ROOKIE', label:'EASY',  color:'#5aa9ff', thinkMs:3500, errorRate:0.28, wLines:1.3, wHoles:4.5, wHeight:0.45, wBump:0.35, wWell:0,    offense:false, taunts:['not bad','getting there'] },
+  PEASY: { name:'SPUD',   label:'PEASY', color:'#9ad94b', thinkMs:4000, errorRate:0.20, wLines:1.2, wHoles:4.0, wHeight:0.40, wBump:0.30, wWell:0,    offense:false, taunts:['oops','my bad','uh oh'] },
+  EASY:  { name:'ROOKIE', label:'EASY',  color:'#5aa9ff', thinkMs:3500, errorRate:0.12, wLines:1.3, wHoles:4.5, wHeight:0.45, wBump:0.35, wWell:0,    offense:false, taunts:['not bad','getting there'] },
   MED:   { name:'ACE',    label:'MED',   color:'#b58bff', thinkMs:2500, errorRate:0.10, wLines:1.6, wHoles:6.0, wHeight:0.50, wBump:0.40, wWell:0.35, wSpec:4, offense:true,  lookahead:true, hold:true, finesse:true, taunts:['take that','keep up'] },
   HARD:  { name:'SHARK',  label:'HARD',  color:'#ff5a5a', thinkMs:1200, errorRate:0.02, wLines:2.0, wHoles:8.0, wHeight:0.60, wBump:0.50, wWell:0.8,  wSpec:4, offense:true,  lookahead:true, hold:true, finesse:true, taunts:['too slow','game over'] }   // v66 (Director, issue #1058 B): SHARK thinks 1200 ms, was 1500 (v54 to v65)
 };
@@ -2120,11 +2174,10 @@ function suddenDeath(){
   FX.surgeT = 1; FX.gflash = 1; FX.gn = n; FX.shake = Math.max(FX.shake, 0.35); FX.wellT = Math.max(FX.wellT, 0.8);
   if (applyGarbage(STATE, n, gap)) topOut();
 }
-function announce(text, col){ FX.spName = { text: text, col: col || '#e8eef7', t: 1.3, lt: FX.t }; }   // v65: lt, its birth on the FX clock (drawAnnounce counts from it)   // v54: flash a special / line-clear name over the field
+function announce(text, col){ FX.spName = { text: text, col: col || '#e8eef7', t: 1.3 }; }   // v69: step() counts it down   // v54: flash a special / line-clear name over the field
 function drawAnnounce(){
   var a = FX.spName; if (!a || a.t <= 0) return;
-  var aDt = Math.max(0, FX.t - (a.lt == null ? FX.t : a.lt)); a.lt = FX.t;   // v65 THE FRAME LAW (doc 11 section 5): counted by elapsed time (FX.t, which step() advances) from its birth (announce stamps it), not 0.016 a drawn frame, which ran the callout 2x fast at 120 Hz (SNAILCADE's finding)
-  a.t -= aDt * 0.96;                                    // 0.016 a frame at 60 Hz is 0.96 a second: at 60 Hz the callout is as it was
+  // v69 THE DRAW AUDIT: step() counts the callout down (0.96 a second); the draw only reads it
   var f = L.field, cx = f.x + f.w/2, cy = f.y + f.h*0.34 - (1.3 - a.t)*22, al = Math.max(0, Math.min(1, a.t*1.7));
   ctx.save(); ctx.globalAlpha = al; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.font = '900 ' + Math.max(14, Math.round(f.w*0.11)) + 'px Impact, "Arial Narrow", sans-serif';
@@ -2307,10 +2360,7 @@ function drawField(){
   // Grid points are pulled toward it with a smooth falloff, so the lines visibly
   // bow around the piece as it moves; locks, hard drops, and garbage deepen the
   // well for a beat (FX.wellT). FX.gx/gy are render-side smoothing, never logic.
-  var wSpd = Math.abs(pcx - FX.gx) + Math.abs(pcy - FX.gy);
-  var wDt = Math.max(0, FX.t - (FX.gwT || 0)); FX.gwT = FX.t;   // v65 THE FRAME LAW (doc 11 section 5): eased by the time since it last drew (FX.t, which step() advances; from the start when it never has), not 0.16 of the way a drawn frame, which eased 2x fast at 120 Hz
-  var wK = 1 - Math.pow(1 - 0.16, wDt * 60);           // 0.16 a frame at 60 Hz, the same pace at any refresh rate
-  FX.gx += (pcx - FX.gx) * wK; FX.gy += (pcy - FX.gy) * wK;
+  var wSpd = FX.gs || 0;   // v69 THE DRAW AUDIT: step() eases FX.gx/gy and measures the speed (FX.gs); the draw only reads them
   var gAmp = Math.min(0.45, 0.16 + wSpd * 0.35 + FX.wellT * 0.30);   // cells of pull at the well centre
   function grav(px2, py2){
     var dx2 = FX.gx - px2, dy2 = FX.gy - py2, d2 = dx2*dx2 + dy2*dy2;
@@ -3277,7 +3327,25 @@ var MUSIC_PLAY_POOL = [ MUSIC_TRACKS.play, MUSIC_TRACKS.menu,   // v45/v46: rand
   { name: 'NIGHT CIRCUIT', bpm: 122, steps: 64, kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], ohat: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], hat: [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1], sub: [0,0,33,0,0,0,33,0,0,0,33,0,0,0,33,0,0,0,33,0,0,0,33,0,0,0,33,0,0,0,33,0,0,0,36,0,0,0,36,0,0,0,36,0,0,0,36,0,0,0,31,0,0,0,31,0,0,0,31,0,0,0,31,0], stab: [0,0,0,0,[40,47,52],0,0,0,0,0,[40,47,52],0,0,0,0,0,0,0,0,0,[40,47,52],0,0,0,0,0,[40,47,52],0,0,0,0,0,0,0,0,0,[40,47,52],0,0,0,0,0,[40,47,52],0,0,0,0,0,0,0,0,0,[40,47,52],0,0,0,0,0,[40,47,52],0,0,0,0,0], pad: [[40,47,52,55],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[43,50,55,59],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
   { name: 'SKYGLIDE', bpm: 128, steps: 64, kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], ohat: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], bass: [0,0,28,28,0,0,28,28,0,0,28,28,0,0,28,28,0,0,28,28,0,0,28,28,0,0,28,28,0,0,28,28,0,0,31,31,0,0,31,31,0,0,31,31,0,0,31,31,0,0,26,26,0,0,26,26,0,0,26,26,0,0,26,26], pad: [[40,47,52,55],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[38,45,50,53],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[43,50,55,59],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[41,48,52,55],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], arp: [52,0,0,0,59,0,0,0,55,0,0,0,62,0,0,0,50,0,0,0,57,0,0,0,53,0,0,0,60,0,0,0,55,0,0,0,62,0,0,0,59,0,0,0,64,0,0,0,52,0,0,0,59,0,0,0,55,0,0,0,60,0,0,0] },
   { name: 'HORIZON', bpm: 128, steps: 64, kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], ohat: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], bass: [0,0,33,33,0,0,33,33,0,0,33,33,0,0,33,33,0,0,31,31,0,0,31,31,0,0,31,31,0,0,31,31,0,0,36,36,0,0,36,36,0,0,36,36,0,0,36,36,0,0,28,28,0,0,28,28,0,0,28,28,0,0,28,28], pad: [[45,52,57],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[43,50,55],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[41,48,53],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[40,47,52,55],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], arp: [57,0,0,0,0,0,0,0,60,0,0,0,0,0,0,0,55,0,0,0,0,0,60,0,62,0,0,0,0,0,0,0,53,0,0,60,0,0,64,0,65,0,0,0,0,0,60,0,52,0,55,0,59,0,64,0,67,0,64,0,60,0,55,0] },
-  { name: 'GLASS FIELDS', bpm: 104, steps: 64, kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], ohat: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], sub: [40,0,0,0,0,0,0,0,40,0,0,0,0,0,0,0,38,0,0,0,0,0,0,0,38,0,0,0,0,0,0,0,36,0,0,0,0,0,0,0,36,0,0,0,0,0,0,0,43,0,0,0,0,0,0,0,43,0,0,0,0,0,0,0], pad: [[52,59,64],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[50,57,62],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[48,55,60],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[55,62,67],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], pluck: [0,0,0,0,0,0,64,0,0,0,0,0,71,0,0,0,0,0,0,0,0,0,62,0,0,0,0,0,69,0,0,0,0,0,0,0,0,0,60,0,0,0,0,0,67,0,0,0,0,0,0,0,0,0,67,0,0,0,0,0,74,0,71,0], arp: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,0,0,0,0,0,55,0,0,0,0,0,0,0,0,0,59,0,0,0,0,0,55,0,0,0,52,0,0,0,0,0,57,0,0,0,0,0,60,0,0,0,55,0] }
+  { name: 'GLASS FIELDS', bpm: 104, steps: 64, kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], ohat: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], sub: [40,0,0,0,0,0,0,0,40,0,0,0,0,0,0,0,38,0,0,0,0,0,0,0,38,0,0,0,0,0,0,0,36,0,0,0,0,0,0,0,36,0,0,0,0,0,0,0,43,0,0,0,0,0,0,0,43,0,0,0,0,0,0,0], pad: [[52,59,64],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[50,57,62],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[48,55,60],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[55,62,67],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], pluck: [0,0,0,0,0,0,64,0,0,0,0,0,71,0,0,0,0,0,0,0,0,0,62,0,0,0,0,0,69,0,0,0,0,0,0,0,0,0,60,0,0,0,0,0,67,0,0,0,0,0,0,0,0,0,67,0,0,0,0,0,74,0,71,0], arp: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,0,0,0,0,0,55,0,0,0,0,0,0,0,0,0,59,0,0,0,0,0,55,0,0,0,52,0,0,0,0,0,57,0,0,0,0,0,60,0,0,0,55,0] },
+  // v68 (the Director's answer on #506, "b MIDNIGHT GLASS II and Starfall"): two tracks from the audio lab v15, byte for byte, join the match rotation
+  { name: 'MIDNIGHT GLASS II', bpm: 104, steps: 64,
+    kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
+    hat: [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+    ohat: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],
+    snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+    sub: [0,0,40,0,0,0,40,0,0,0,40,0,0,0,40,0,0,0,38,0,0,0,38,0,0,0,38,0,0,0,38,0,0,0,36,0,0,0,36,0,0,0,36,0,0,0,36,0,0,0,43,0,0,0,43,0,0,0,43,0,0,0,43,0],
+    pad: [[52,59,64],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[50,57,62],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[48,55,60],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[55,62,67],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    pluck: [0,0,0,0,64,0,0,0,0,0,71,0,0,0,64,0,0,0,0,0,62,0,0,0,0,0,69,0,0,0,62,0,0,0,0,0,60,0,0,0,0,0,67,0,0,0,60,0,0,0,0,0,67,0,0,0,0,0,74,0,0,0,67,0] },
+  { name: 'STARFALL', bpm: 100, steps: 128,
+    kick: [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+    snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+    hat: [0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0],
+    ohat: [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    sub: [28,0,0,0,0,0,0,0,28,0,0,0,0,0,0,0,28,0,0,0,0,0,0,0,28,0,0,0,0,0,0,0,36,0,0,0,0,0,0,0,36,0,0,0,0,0,0,0,36,0,0,0,0,0,0,0,36,0,0,0,0,0,0,0,31,0,0,0,0,0,0,0,31,0,0,0,0,0,0,0,31,0,0,0,0,0,0,0,31,0,0,0,0,0,0,0,26,0,0,0,0,0,0,0,26,0,0,0,0,0,0,0,26,0,0,0,0,0,0,0,26,0,0,0,0,0,0,0],
+    arp: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,62,0,0,0,59,0,0,0,55,0,0,0,59,0,0,0,62,0,0,0,59,0,0,0,55,0,0,0,59,0,0,0,62,0,0,0,57,0,0,0,54,0,0,0,57,0,0,0,62,0,0,0,57,0,0,0,54,0,0,0,57,0,0,0],
+    pluck: [0,0,0,67,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,64,0,0,0,0,0,0,71,0,0,0,0,62,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,67,0,0,0,0,59,0,0,0,0,0,64,0,0,0,0,0,0,0,0,0,0,0,0,71,0,0,0,0,0,0,0,0,0,67,0,0,0,0,0,0,0,0,0,0,62,0,0,0,0,0,0,0,0,0,0,0,0,59,0,0,0,0,0,0,55,0,0,0,52,0],
+    pad: [[52,55,62,66],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[48,55,59,62],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[55,59,62,69],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[50,54,57,64],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] }
 ];
 var MUS = { track: null, step: 0, nextT: 0, timer: null, lastMode: null };
 var pendingResumeTrack = null;   // v50: on a solo resume, continue THIS track (by object) instead of suppressing or picking a new one
